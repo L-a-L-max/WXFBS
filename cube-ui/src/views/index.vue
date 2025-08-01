@@ -502,18 +502,21 @@ export default {
         deepseek: false,
         qw: false,
         minimax: false,
+        kimi: false,
       },
       accounts: {
         doubao: "",
         deepseek: "",
         minimax: "",
         qw: "",
+        kimi: "",
       },
       isClick: {
         doubao: false,
         deepseek: false,
         qw: false,
         minimax: false,
+        kimi: false
       },
       aiLoginDialogVisible: false,
       currentAiType: "",
@@ -526,6 +529,7 @@ export default {
         deepseek: true,
         qw: true,
         minimax: true,
+        kimi: true,
       },
       resetStatusTimeout: null, // 状态检查超时定时器
 
@@ -578,6 +582,7 @@ export default {
         deepseek: "DeepSeek登录",
         minimax: "MiniMax登录",
         qw: "通义千问登录",
+        kimi: "Kimi登录",
       };
       return titles[this.currentAiType] || "登录";
     },
@@ -617,10 +622,12 @@ export default {
         this.isClick.deepseek = false;
         this.isClick.minimax = false;
         this.isClick.qw = false;
+        this.isClick.kimi = false;
         this.isLoading.doubao = true;
         this.isLoading.deepseek = true;
         this.isLoading.minimax = true;
         this.isLoading.qw = true;
+        this.isLoading.kimi = true;
         this.mediaIsClick.zhihu = false;
         this.mediaIsLoading.zhihu = true;
         this.mediaIsClick.toutiao = false;
@@ -652,6 +659,12 @@ export default {
             type: 'PLAY_CHECK_QW_LOGIN',
             userId: this.userId,
             corpId: this.corpId
+          });
+          // 检查Kimi登录状态
+          this.sendMessage({
+            type: "PLAY_CHECK_KIMI_LOGIN",
+            userId: this.userId,
+            corpId: this.corpId,
           });
           // 检查知乎登录状态
           this.sendMessage({
@@ -804,6 +817,13 @@ export default {
           corpId: this.corpId
         });
       }
+      if (type == "kimi") {
+        this.sendMessage({
+          type: "PLAY_GET_KIMI_QRCODE",
+          userId: this.userId,
+          corpId: this.corpId,
+        });
+      }
       this.$message({
         message: "正在获取登录二维码...",
         type: "info",
@@ -815,6 +835,7 @@ export default {
         deepseek: require("@/assets/logo/Deepseek.png"),
         minimax: require("@/assets/logo/MiniMax.png"),
         qw: require('@/assets/logo/qw.png'),
+        kimi: require("@/assets/logo/Kimi.png"),
       };
       return icons[type] || "";
     },
@@ -824,6 +845,7 @@ export default {
         deepseek: "DeepSeek",
         minimax: "MiniMax",
         qw: "通义千问",
+        kimi: "Kimi",
       };
       return names[type] || "";
     },
@@ -989,6 +1011,21 @@ export default {
           this.isLoading.minimax = false;
         }
       } else if (
+        datastr.includes("RETURN_KIMI_STATUS") &&
+        dataObj.status != ""
+      ){
+        if (!datastr.includes("false")) {
+          this.aiLoginDialogVisible = false;
+          this.aiLoginStatus.kimi = true;
+          this.accounts.kimi = dataObj.status;
+          this.isLoading.kimi = false;
+          this.isClick.kimi = true; // 检测成功后设为true
+          console.log(this.isLoading.kimi);
+        } else {
+          this.isClick.kimi = true;
+          this.isLoading.kimi = false;
+        }
+      }else if (
         datastr.includes("RETURN_ZHIHU_STATUS") &&
         dataObj.status != ""
       ) {
@@ -1066,11 +1103,13 @@ export default {
       this.isLoading.doubao = true;
       this.isLoading.deepseek = true;
       this.isLoading.minimax = true;
+      this.isLoading.kimi = true;
       this.isLoading.qw = true;
       this.isClick.doubao = false;
       this.isClick.deepseek = false;
       this.isClick.minimax = false;
       this.isClick.qw = false;
+      this.isClick.kimi = false;
       // 清除上一次的超时定时器
       if (this.resetStatusTimeout) clearTimeout(this.resetStatusTimeout);
       // 超时自动恢复（20秒）
@@ -1090,6 +1129,7 @@ export default {
       this.sendMessage({ type: "PLAY_CHECK_MAX_LOGIN", userId: this.userId, corpId: this.corpId });
       this.sendMessage({ type: "PLAY_CHECK_DEEPSEEK_LOGIN", userId: this.userId, corpId: this.corpId });
       this.sendMessage({ type: "PLAY_CHECK_QW_LOGIN", userId: this.userId, corpId: this.corpId });
+      this.sendMessage({ type: "PLAY_CHECK_KIMI_LOGIN", userId: this.userId, corpId: this.corpId });
     },
      handleRefreshMedia() {
       if (!this.userId || !this.corpId) return;
