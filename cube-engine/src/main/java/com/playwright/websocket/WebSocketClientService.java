@@ -158,6 +158,16 @@ public class WebSocketClientService {
                                 }
                             }).start();
                         }
+                        // 处理包含"kimi"的消息
+                        if(message.contains("kimi")){
+                            new Thread(() -> {
+                                try {
+                                    aigcController.startKimi(userInfoRequest);
+                                } catch (Exception e) {
+                                    e.printStackTrace();
+                                }
+                            }).start();
+                        }
                     }
 
                     // 处理包含"AI评分"的消息
@@ -312,6 +322,19 @@ public class WebSocketClientService {
                                 String checkLogin = browserController.checkMaxLogin(userInfoRequest.getUserId());
                                 userInfoRequest.setStatus(checkLogin);
                                 userInfoRequest.setType("RETURN_MAX_STATUS");
+                                sendMessage(JSON.toJSONString(userInfoRequest));
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
+                        }).start();
+                    }
+                    // 处理检查Kimi登录状态的信息
+                    if (message.contains("CHECK_KIMI_LOGIN")) {
+                        new Thread(() -> {
+                            try {
+                                String checkLogin = browserController.checkKimiLogin(userInfoRequest.getUserId());
+                                userInfoRequest.setStatus(checkLogin);
+                                userInfoRequest.setType("RETURN_KIMI_STATUS");
                                 sendMessage(JSON.toJSONString(userInfoRequest));
                             } catch (Exception e) {
                                 e.printStackTrace();

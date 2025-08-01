@@ -655,6 +655,18 @@ export default {
           isExpanded: true,
         },
         {
+          name: "Kimi",
+          avatar: require("../../../assets/ai/Kimi.png"),
+          capabilities: [
+            { label: "深度研究", value: "deep_thinking" },
+          ],
+          selectedCapabilities: [],
+          enabled: true,
+          status: "idle",
+          progressLogs: [],
+          isExpanded: true,
+        },
+        {
           name: '通义千问',
           avatar: require('../../../assets/ai/qw.png'),
           capabilities: [
@@ -834,6 +846,12 @@ export default {
             this.userInfoReq.roles = this.userInfoReq.roles + 'ty-qw-sdsk,'
           } else if (ai.selectedCapability.includes("web_search")) {
             this.userInfoReq.roles = this.userInfoReq.roles + 'ty-qw-lwss,';
+          }
+        }
+        if (ai.name === "Kimi") {
+          this.userInfoReq.roles = this.userInfoReq.roles + "kimi";
+          if (ai.selectedCapabilities.includes("deep_thinking")) {
+            this.userInfoReq.roles = this.userInfoReq.roles + "kimi-sdyj,";
           }
         }
       });
@@ -1020,6 +1038,8 @@ export default {
         this.userInfoReq.tyChatId = dataObj.chatId;
       } else if (dataObj.type === "RETURN_MAX_CHATID" && dataObj.chatId) {
         this.userInfoReq.maxChatId = dataObj.chatId;
+      } else if (dataObj.type === "RETURN_KIMI_CHATID" && dataObj.chatId){
+        this.userInfoReq.kimiChatId = dataObj.chatId;
       }
 
       // 处理进度日志消息
@@ -1518,6 +1538,7 @@ export default {
         dbChatId: "",
         tyChatId: "",
         maxChatId: "",
+        kimiChatId: "",
         isNewChat: true,
       };
       // 重置AI列表为初始状态
@@ -1570,6 +1591,18 @@ export default {
           status: 'idle',
           progressLogs: [],
           isExpanded: true
+        },
+        {
+          name: "Kimi",
+          avatar: require("../../../assets/ai/Kimi.png"),
+          capabilities: [
+            { label: "深度研究", value: "deep_thinking" },
+          ],
+          selectedCapabilities: ["deep_thinking"],
+          enabled: true,
+          status: "idle",
+          progressLogs: [],
+          isExpanded: true,
         },
       ];
       // 展开相关区域

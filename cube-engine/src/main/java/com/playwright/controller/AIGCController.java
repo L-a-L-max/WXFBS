@@ -83,6 +83,10 @@ public class AIGCController {
     @Autowired
     private QwenUtil qwenUtil;
 
+    // KIMI相关操作工具类
+    @Autowired
+    private KimiUtil kimiUtil;
+
     // 日志记录工具类
     @Autowired
     private LogMsgUtil logInfo;
@@ -546,6 +550,71 @@ public class AIGCController {
             e.printStackTrace();
         }
         return "获取内容失败";
+    }
+
+    /**
+     * 处理Kimi的常规请求
+     * @param userInfoRequest 包含会话ID和用户指令
+     * @return AI生成的文本内容
+     */
+    @Operation(summary = "启动KimiAI生成", description = "调用Kimi平台生成内容并抓取结果")
+    @ApiResponse(responseCode = "200", description = "处理成功", content = @Content(mediaType = "application/json"))
+    @PostMapping("/startKimi")
+    public String startKimi(@io.swagger.v3.oas.annotations.parameters.RequestBody(description = "用户信息请求体", required = true,
+            content = @Content(schema = @Schema(implementation = UserInfoRequest.class))) @RequestBody UserInfoRequest userInfoRequest){
+
+        try (
+                BrowserContext context = browserUtil.createPersistentBrowserContext(false,userInfoRequest.getUserId(),"Kimi Chat")) {
+            // 初始化变量
+            String userId = userInfoRequest.getUserId();
+            String kimiChatId = userInfoRequest.getMaxChatId();
+            logInfo.sendTaskLog( "Kimi准备就绪，正在打开页面",userId,"Kimi");
+            // 获取是否开启深度思考和联网搜索
+            String roles = userInfoRequest.getRoles();
+            String userPrompt = userInfoRequest.getUserPrompt();
+
+            Page page=context.newPage();
+            page.navigate("https://www.kimi.com/");
+
+            // 获取输入框并输入内容
+            Thread.sleep(1000);
+            page.locator("div.chat-input-editor").click();
+            Thread.sleep(1000);
+            page.locator("div.chat-input-editor").fill(userPrompt);
+            logInfo.sendTaskLog( "用户指令已自动输入完成",userId,"Kimi Chat");
+            Thread.sleep(1000);
+            page.locator("div.send-button").click();
+            logInfo.sendTaskLog("指令已自动发送成功", userId, "Kimi Chat");
+
+            // 创建定时截图线程
+            AtomicInteger i = new AtomicInteger(0);
+            ScheduledExecutorService screenshotExecutor = Executors.newSingleThreadScheduledExecutor();
+            // 启动定时任务，每5秒执行一次截图
+            ScheduledFuture<?> screenshotFuture = screenshotExecutor.scheduleAtFixedRate(() -> {
+                try {
+                    int currentCount = i.getAndIncrement(); // 获取当前值并自增
+                    logInfo.sendImgData(page, userId + "Kimi执行过程截图"+currentCount, userId);
+
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }, 0, 8, TimeUnit.SECONDS);
+
+            logInfo.sendTaskLog( "开启自动监听任务，持续监听Kimi回答中",userId,"Kimi Chat");
+            String kimi = kimiUtil.waitKimiResponse(page, userId, "Kimi");
+            //关闭截图
+            screenshotFuture.cancel(false);
+            screenshotExecutor.shutdown();
+
+            return kimi;
+
+
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+
+
+//        return "获取内容失败";
     }
 
     /**

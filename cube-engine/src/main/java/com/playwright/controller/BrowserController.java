@@ -49,6 +49,43 @@ public class BrowserController {
     @Autowired
     private BrowserUtil browserUtil;
 
+
+    /**
+     * 检查Kimi登录状态
+     * @param userId 用户唯一标识
+     * @return 登录状态："false"表示未登录，用户昵称表示已登录
+     */
+    @Operation(summary = "检查Kimi登录状态", description = "返回用户昵称表示已登录，false 表示未登录")
+    @GetMapping("/checkKimiLogin")
+    public String checkKimiLogin(@Parameter(description = "用户唯一标识") @RequestParam("userId") String userId) {
+        try (BrowserContext context = browserUtil.createPersistentBrowserContext(false,userId,"kimi")) {
+            Page page = context.newPage();
+            page.navigate("https://www.kimi.com/");
+            Thread.sleep(5000);
+            Locator loginLocator = page.locator("span.user-name:has-text('登录')");
+            if (loginLocator.count() > 0 && loginLocator.isVisible()) {
+                return "false";
+            } else {
+                Thread.sleep(500);
+
+                page.locator("div.user-info").click();
+                Thread.sleep(500);
+                page.locator("span:has-text('设置')").click();
+                Thread.sleep(500);
+                Locator nameLocator = page.locator("div.name");
+                if(nameLocator.count()>0){
+                    String nameText = nameLocator.textContent();
+                    return nameText;
+                }else{
+                    return "false";
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return "false";
+    }
+
     /**
      * 检查MiniMax主站登录状态
      * @param userId 用户唯一标识
