@@ -1512,7 +1512,7 @@ BEGIN;
 COMMIT;
 
 -- ----------------------------
--- Table structure for wc_chat_history
+--  Table structure for wc_chat_history
 -- ----------------------------
 DROP TABLE IF EXISTS `wc_chat_history`;
 CREATE TABLE `wc_chat_history` (

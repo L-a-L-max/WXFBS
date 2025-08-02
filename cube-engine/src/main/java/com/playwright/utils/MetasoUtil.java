@@ -32,7 +32,7 @@ public class MetasoUtil {
         try {
             String currentContent = "";
             String lastContent = "";
-            long timeout = 1200000; // 20分钟超时设置
+            long timeout = 1200000; //  20分钟超时设置
             long startTime = System.currentTimeMillis();
 
             while (true) {
