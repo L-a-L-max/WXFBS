@@ -4072,7 +4072,7 @@ export default {
   line-height: 1.4;
 }
 
-/* 微头条按钮样式 */
+/* 微头条按钮样式  */
 .media-radio-item.active {
   background: linear-gradient(135deg, #ff6b35, #f7931e);
 }
