@@ -1930,7 +1930,7 @@ export default {
         this.enabledAIs.unshift(zhihu);
       }
 
-      // 发送知乎投递请求
+      //  发送知乎投递请求
       const zhihuRequest = {
         jsonrpc: "2.0",
         id: uuidv4(),

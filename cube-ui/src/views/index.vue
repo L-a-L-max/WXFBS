@@ -335,7 +335,7 @@
         @pagination="getUserPointsRecord"
       />
     </el-dialog>
-    <!-- 公众号配置弹窗 -->
+    <!-- 公众号配置弹窗  -->
     <el-dialog
       title="绑定微信公众号"
       :visible.sync="dialogFormVisible"
