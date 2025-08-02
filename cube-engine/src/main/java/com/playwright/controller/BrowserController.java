@@ -322,7 +322,7 @@ public class BrowserController {
             jsonObject.put("type","RETURN_PC_METASO_QRURL");
             // 发送二维码URL
             webSocketClientService.sendMessage(jsonObject.toJSONString());
-            // 查找登录后的元素是否存在，不存在则发送登录成功的消息
+            //  查找登录后的元素是否存在，不存在则发送登录成功的消息
             Thread.sleep(3000);
             Locator login = page.locator("#left-menu > div > div.LeftMenu_footer__qsJdJ > div > div > div > span");
             Locator phone = page.locator("#left-menu > div > div.LeftMenu_footer__qsJdJ > div > div > div > span");
