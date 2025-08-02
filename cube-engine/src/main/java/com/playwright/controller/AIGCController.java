@@ -447,7 +447,7 @@ public class AIGCController {
 
                 clipboardLockManager.runWithClipboardLock(() -> {
                     try {
-                        // 点击分享链接按钮
+                        //  点击分享链接按钮
                         page.locator(
                                 "(//div[contains(@class,'system-operation-box')])[last()]//div[" +
                                         "contains(@class,'md:hover:bg-col_bg03') and " +
