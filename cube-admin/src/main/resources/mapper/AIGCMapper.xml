@@ -16,6 +16,7 @@
         wd.promptNum,
         MAX(CASE WHEN aiName = '豆包' THEN answer END) AS doubao,
         MAX(CASE WHEN aiName = '豆包' THEN answerNum END) AS doubaoNum,
+        MAX(CASE WHEN aiName = '秘塔' THEN answerNum END) AS metaso,
         MAX(CASE WHEN aiName = '知乎直答' THEN answer END) AS zhihu,
         MAX(CASE WHEN aiName = '知乎直答' THEN answerNum END) AS zhihuNum,
         MAX(CASE WHEN aiName = '天工' THEN answer END) AS tiangong,
@@ -29,10 +30,10 @@
         u.nick_name nickName
         FROM
         wc_chrome_data wd left join sys_user u on wd.user_name = u.user_name
-      where
+        where
         aiName !='嘟嘟'
         <if test="username !='o3lds67b1zyFvifHTC_32epnmzqM'">
-           and wd.user_name = #{username}
+            and wd.user_name = #{username}
         </if>
         <if test="keyWord !=null and keyWord !=''">
             and (wd.prompt like '%${keyWord}%' or u.nick_name like '%${keyWord}%')
@@ -56,13 +57,13 @@
         wck.title,
         wck.author,
         wck.text,
-            case when isPush =0 then '未收录' else '已收录' end isPush,
+        case when isPush =0 then '未收录' else '已收录' end isPush,
         wck.create_time createTime,
         u.nick_name nickName
-from wc_chrome_hotlink wck left join sys_user u on wck.user_name = u.user_name
+        from wc_chrome_hotlink wck left join sys_user u on wck.user_name = u.user_name
 
         where
-              1=1
+        1=1
         <if test="username !='o3lds67b1zyFvifHTC_32epnmzqM'">
             and wck.user_name = #{username}
         </if>
@@ -94,18 +95,18 @@ from wc_chrome_hotlink wck left join sys_user u on wck.user_name = u.user_name
 
     <select id="getChromeLinkListFor" parameterType="com.cube.wechat.selfapp.app.domain.WcChromeData" resultType="java.util.Map">
         SELECT
-            link_id id,
-            answer
+        link_id id,
+        answer
         FROM
-            wc_chrome_hotlink
+        wc_chrome_hotlink
         WHERE
-            user_name = #{username} and summary is  null
+        user_name = #{username} and summary is  null
         <if test="selVal ==4">
             GROUP BY
             answer
         </if>
         ORDER BY
-            create_time DESC
+        create_time DESC
     </select>
     <select id="getChromeLinkListByTaskId" parameterType="com.cube.wechat.selfapp.app.domain.WcChromeData" resultType="java.util.Map">
         SELECT
@@ -120,50 +121,50 @@ from wc_chrome_hotlink wck left join sys_user u on wck.user_name = u.user_name
     </select>
     <select id="getChromeKeyWordFor" parameterType="com.cube.wechat.selfapp.app.domain.WcChromeData" resultType="java.util.Map">
         SELECT
-               id,
+            id,
             CONCAT(prompt,',',answer) hotword
         FROM
             wc_chrome_hotword where isFetch = 0
-       and
+                                and
             user_name = #{username}
-    and prompt is not null and answer is not null
+                                and prompt is not null and answer is not null
         ORDER BY
             create_time DESC
     </select>
     <select id="getChromeKeyWordByTaskId"  parameterType="java.lang.String" resultType="java.util.Map">
         SELECT
-               id,
-               CASE
-                   WHEN prompt = answer THEN prompt
-                   ELSE CONCAT(prompt, ',', answer)
-                   END AS hotword
+            id,
+            CASE
+                WHEN prompt = answer THEN prompt
+                ELSE CONCAT(prompt, ',', answer)
+                END AS hotword
         FROM
             wc_chrome_hotword where isFetch = 0
-       and
-           id = #{taskId}
-    and prompt is not null and answer is not null
+                                and
+            id = #{taskId}
+                                and prompt is not null and answer is not null
     </select>
 
     <select id="getPlayWrightDraftList" resultType="java.util.Map">
         SELECT
-            wpd.task_id taskId,
-            u.nick_name userName,
-            u.avatar userAvatar,
-            wpd.user_prompt question,
-            DATE_FORMAT( wpd.create_time, '%Y-%c-%d %H:%i:%s') questionTime
+        wpd.task_id taskId,
+        u.nick_name userName,
+        u.avatar userAvatar,
+        wpd.user_prompt question,
+        DATE_FORMAT( wpd.create_time, '%Y-%c-%d %H:%i:%s') questionTime
         FROM
-            wc_playwright_draft  wpd
-                left join sys_user u on wpd.user_name = u.user_id
+        wc_playwright_draft  wpd
+        left join sys_user u on wpd.user_name = u.user_id
         WHERE
-           1 = 1
-          <if test="keyWord !=null and keyWord !=''">
-              and wpd.user_prompt like '%${keyWord}%'
-          </if>
-          <if test="userId !=22">
-              and wpd.user_name = #{userId}
-          </if>
+        1 = 1
+        <if test="keyWord !=null and keyWord !=''">
+            and wpd.user_prompt like '%${keyWord}%'
+        </if>
+        <if test="userId !=22">
+            and wpd.user_name = #{userId}
+        </if>
         group by wpd.task_id
-         order by wpd.create_time desc
+        order by wpd.create_time desc
     </select>
 
     <select id="getNodeLogList" resultType="java.util.Map">
@@ -176,8 +177,8 @@ from wc_chrome_hotlink wck left join sys_user u on wck.user_name = u.user_name
             res preview,
             res content,
             DATE_FORMAT(create_time, '%Y-%c-%d %H:%i:%s')  responseTime
-            from wc_node_log where user_prompt = #{userPrompt} order by create_time
-        </select>
+        from wc_node_log where user_prompt = #{userPrompt} order by create_time
+    </select>
 
     <select id="getPlayWrightDraftAiList" parameterType="java.lang.String" resultType="java.util.Map">
 
@@ -195,6 +196,7 @@ from wc_chrome_hotlink wck left join sys_user u on wck.user_name = u.user_name
                          when 'Agent-cube-sogou-agent' then '搜狗搜索@元器'
                          when 'Agent-cube-lwss-agent' then 'KIMI@元器'
                          when '豆包' then '豆包'
+                         when '秘塔' then '秘塔'
                          when '智能评分' then '智能排版'
                          else ai_name end name,
             draft_content preview,
@@ -208,18 +210,19 @@ from wc_chrome_hotlink wck left join sys_user u on wck.user_name = u.user_name
     </select>
 
 
+
     <select id="getHotKeyWordList" parameterType="com.cube.wechat.selfapp.app.domain.WcChromeData" resultType="java.util.Map">
         SELECT
-            wch.id,
-            wch.prompt,
-            wch.userPrompt,
-            wch.answer,
-            wch.aiName,
-            case when wch.isFetch =1 then '已抓取' else '未抓取' end isFetch,
-            u.nick_name nickName,
-            DATE_FORMAT(wch.create_time, '%Y-%c-%d %H:%i:%s') createTime
+        wch.id,
+        wch.prompt,
+        wch.userPrompt,
+        wch.answer,
+        wch.aiName,
+        case when wch.isFetch =1 then '已抓取' else '未抓取' end isFetch,
+        u.nick_name nickName,
+        DATE_FORMAT(wch.create_time, '%Y-%c-%d %H:%i:%s') createTime
         FROM
-            wc_chrome_hotword wch left join sys_user u on wch.user_name = u.user_name
+        wc_chrome_hotword wch left join sys_user u on wch.user_name = u.user_name
         where
         1 =1
         <if test="username !='o3lds67b1zyFvifHTC_32epnmzqM'">
@@ -241,7 +244,7 @@ from wc_chrome_hotlink wck left join sys_user u on wck.user_name = u.user_name
         FROM
             wc_chrome_hotword wch
         where
-         wch.id = #{id} limit 1
+            wch.id = #{id} limit 1
     </select>
 
     <select id="getHotKeyWordLog" parameterType="java.lang.String" resultType="java.util.Map">
@@ -254,7 +257,7 @@ from wc_chrome_hotlink wck left join sys_user u on wck.user_name = u.user_name
             DATE_FORMAT(wch.create_time, '%Y-%c-%d %H:%i:%s') createTime
         from
             wc_chrome_hotword_log wch left join sys_user u on wch.user_name = u.user_name
-          where key_id = #{id}
+        where key_id = #{id}
     </select>
 
     <update id="updateHotKeyWord" parameterType="java.util.Map">
@@ -268,7 +271,7 @@ from wc_chrome_hotlink wck left join sys_user u on wck.user_name = u.user_name
     <insert id="saveHotKeyWord" parameterType="java.util.Map">
         insert into wc_chrome_hotword(id,prompt,answer,aiName,isFetch,create_time,user_name)
         values
-               (uuid(),#{prompt},#{answer},'自建',0,now(),#{username})
+            (uuid(),#{prompt},#{answer},'自建',0,now(),#{username})
     </insert>
 
     <update id="updateArticleLink">
@@ -280,7 +283,7 @@ from wc_chrome_hotlink wck left join sys_user u on wck.user_name = u.user_name
     <insert id="saveDraftContent" parameterType="java.util.Map">
         insert into wc_playwright_draft (id,task_id,keyword,user_prompt,draft_content,is_push,ai_name,create_time,user_name,share_url,share_img_url)
         values
-        (uuid(),#{taskId},#{keyWord},#{userPrompt},#{draftContent},0,#{aiName},now(),#{userId},#{shareUrl},#{shareImgUrl})
+            (uuid(),#{taskId},#{keyWord},#{userPrompt},#{draftContent},0,#{aiName},now(),#{userId},#{shareUrl},#{shareImgUrl})
     </insert>
 
     <select id="getDraftContent" parameterType="java.lang.String" resultType="java.lang.String">
@@ -317,13 +320,13 @@ from wc_chrome_hotlink wck left join sys_user u on wck.user_name = u.user_name
     </select>
 
     <insert id="saveUserChatData" parameterType="java.util.Map">
-       delete from wc_chat_history where userPrompt = #{userPrompt};
-        insert into wc_chat_history values (uuid(),#{userId},#{userPrompt},#{data},now(),#{toneChatId},#{ybDsChatId},#{dbChatId},#{tyChatId},#{maxChatId},#{chatId});
+        delete from wc_chat_history where userPrompt = #{userPrompt};
+        insert into wc_chat_history values (uuid(),#{userId},#{userPrompt},#{data},now(),#{toneChatId},#{ybDsChatId},#{dbChatId},#{tyChatId},#{maxChatId},#{metasoChatId},#{chatId});
     </insert>
 
     <select id="getChatHistory" parameterType="java.lang.String" resultType="java.util.Map">
-        select userPrompt,data,DATE_FORMAT(create_time, '%Y-%c-%d %H:%i:%s') createTime,chat_id chatId,tone_chat_id toneChatId,ybds_chat_id ybDsChatId,db_chat_id dbChatId,ty_chat_id tyChatId,max_chat_id maxChatId
-   from wc_chat_history where user_id =#{userId} order by create_time desc
+        select userPrompt,data,DATE_FORMAT(create_time, '%Y-%c-%d %H:%i:%s') createTime,chat_id chatId,tone_chat_id toneChatId,ybds_chat_id ybDsChatId,db_chat_id dbChatId,ty_chat_id tyChatId,max_chat_id maxChatId,metaso_chat_id metasoChatId
+        from wc_chat_history where user_id =#{userId} order by create_time desc
         <if test="isAll == 0">
             limit 1
         </if>

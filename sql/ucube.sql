@@ -1512,7 +1512,7 @@ BEGIN;
 COMMIT;
 
 -- ----------------------------
--- Table structure for wc_chat_history
+--  Table structure for wc_chat_history
 -- ----------------------------
 DROP TABLE IF EXISTS `wc_chat_history`;
 CREATE TABLE `wc_chat_history` (
@@ -1526,6 +1526,7 @@ CREATE TABLE `wc_chat_history` (
   `db_chat_id` varchar(100) DEFAULT NULL COMMENT '豆包会话ID',
   `ty_chat_id`   varchar(100) null comment '通义会话ID',
   `max_chat_id` varchar(100) DEFAULT NULL COMMENT 'MiniMax会话ID',
+  `metaso_chat_id` varchar(100) DEFAULT NULL COMMENT '秘塔会话ID',
   `chat_id` varchar(36) DEFAULT NULL COMMENT '内部chatID'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
