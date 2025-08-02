@@ -210,6 +210,7 @@
     </select>
 
 
+
     <select id="getHotKeyWordList" parameterType="com.cube.wechat.selfapp.app.domain.WcChromeData" resultType="java.util.Map">
         SELECT
         wch.id,
