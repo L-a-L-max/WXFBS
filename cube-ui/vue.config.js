@@ -44,10 +44,13 @@ module.exports = {
     },
   },
   css: {
-  loaderOptions: {
-    postcss: {
-      postcssOptions: {
-        plugins: [
+    loaderOptions: {
+      sass: {
+        additionalData: `@import "@/assets/styles/variables.scss";`
+      },
+      postcss: {
+        postcssOptions: {
+          plugins: [
           require("autoprefixer")
         ]
       }
