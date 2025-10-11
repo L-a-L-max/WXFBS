@@ -44,13 +44,10 @@ module.exports = {
     },
   },
   css: {
-    loaderOptions: {
-      sass: {
-        additionalData: `@import "@/assets/styles/variables.scss";`
-      },
-      postcss: {
-        postcssOptions: {
-          plugins: [
+  loaderOptions: {
+    postcss: {
+      postcssOptions: {
+        plugins: [
           require("autoprefixer")
         ]
       }
@@ -74,7 +71,7 @@ module.exports = {
 
     }
   },
-    
+
     plugins: [
       // http://doc.ruoyi.vip/ruoyi-vue/other/faq.html#使用gzip解压缩静态文件
       new CompressionPlugin({
