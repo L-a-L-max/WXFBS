@@ -12,6 +12,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.client.HttpClientErrorException;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Map;
@@ -148,6 +150,7 @@ public class OfficeAccountLogin {
 
     }
 
+    // 将 getQrCode 方法中的调用改为：
     @GetMapping("/getQrCode")
     public Map<String, Object> getQrCode() {
         //获取临时二维码
@@ -158,7 +161,8 @@ public class OfficeAccountLogin {
         Map tabMap = RestUtils.post(url, param);
         return tabMap;
     }
-    
+
+
     /**
      * 根据消息查询用户UnionID
      * @param timestamp 消息发送的时间戳（10位数字）或时间格式字符串

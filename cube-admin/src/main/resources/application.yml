@@ -133,8 +133,8 @@ wechat:
 
 # 此处替换为你自己的服务号秘钥
 office:
-  appId:
-  appSecret:
+  appId: wx5d97258384669944
+  appSecret: 507c5273f0798c18c5931dec728e4c60
 upload:
   # 上传文件路径
   url: http://localhost:8081/profile/
