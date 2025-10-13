@@ -846,16 +846,17 @@ CREATE TABLE `sys_role` (
   `update_time` datetime DEFAULT NULL COMMENT '更新时间',
   `remark` varchar(500) DEFAULT NULL COMMENT '备注',
   PRIMARY KEY (`role_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=102 DEFAULT CHARSET=utf8mb4 COMMENT='角色信息表';
+) ENGINE=InnoDB AUTO_INCREMENT=103 DEFAULT CHARSET=utf8mb4 COMMENT='角色信息表';
 
 -- ----------------------------
 -- Records of sys_role
 -- ----------------------------
 BEGIN;
 INSERT INTO `sys_role` (`role_id`, `role_name`, `role_key`, `role_sort`, `data_scope`, `menu_check_strictly`, `dept_check_strictly`, `status`, `del_flag`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (1, '超级管理员', 'admin', 1, '1', 1, 1, '0', '0', 'admin', '2024-08-08 14:05:51', '', NULL, '超级管理员');
-INSERT INTO `sys_role` (`role_id`, `role_name`, `role_key`, `role_sort`, `data_scope`, `menu_check_strictly`, `dept_check_strictly`, `status`, `del_flag`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (2, '普通角色', 'common', 2, '2', 1, 1, '0', '0', 'admin', '2024-08-08 14:05:51', 'admin', '2025-05-24 09:38:11', '普通角色');
+INSERT INTO `sys_role` (`role_id`, `role_name`, `role_key`, `role_sort`, `data_scope`, `menu_check_strictly`, `dept_check_strictly`, `status`, `del_flag`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (2, '最高权限', 'common', 2, '2', 1, 1, '0', '0', 'admin', '2024-08-08 14:05:51', 'admin', '2025-10-13 13:47:56', '系统管理员');
 INSERT INTO `sys_role` (`role_id`, `role_name`, `role_key`, `role_sort`, `data_scope`, `menu_check_strictly`, `dept_check_strictly`, `status`, `del_flag`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (100, '内容角色', 'wechat', 3, '1', 1, 1, '0', '2', 'admin', '2024-08-09 14:15:41', 'o3lds67b1zyFvifHTC_32epnmzqM', '2025-02-20 17:07:30', NULL);
 INSERT INTO `sys_role` (`role_id`, `role_name`, `role_key`, `role_sort`, `data_scope`, `menu_check_strictly`, `dept_check_strictly`, `status`, `del_flag`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (101, '优立方主机岗', 'plugin', 3, '1', 1, 1, '0', '0', 'YangHangHang', '2024-11-29 08:58:00', 'admin', '2025-05-24 09:37:11', NULL);
+INSERT INTO `sys_role` (`role_id`, `role_name`, `role_key`, `role_sort`, `data_scope`, `menu_check_strictly`, `dept_check_strictly`, `status`, `del_flag`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (102, '百家谱用户', 'bjp', 4, '1', 1, 1, '0', '0', 'admin', '2025-10-13 13:47:04', '', NULL, '百家谱用户');
 COMMIT;
 
 -- ----------------------------
@@ -898,7 +899,7 @@ CREATE TABLE `sys_user` (
 -- Records of sys_user
 -- ----------------------------
 BEGIN;
-INSERT INTO `sys_user` (`user_id`, `open_id`, `union_id`, `qw_id`, `dept_id`, `user_name`, `nick_name`, `user_type`, `email`, `phonenumber`, `sex`, `avatar`, `password`, `status`, `del_flag`, `login_ip`, `login_date`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`, `corp_id`, `points`, `agent_id`, `agent_token`, `space_id`, `space_name`) VALUES (22, 'oVGjb7fE0Dl0xmFUg8JgxuBQvr5s', 'ovZrQ673x1GGaP6cX5XUnfzu7TmE', 'YangHangHang', NULL, 'admin', 'AspireLife', '00', '', '16637176666', '0', 'chatfile/2025/05/24/yanghangxing_20250524155024A001.png', '$2a$10$7JB720yubVSZvUI0rEqK/.VqGOZTH.ulu33dHOiBE8ByOhJIrdAu2', '0', '0', '127.0.0.1', '2025-06-05 15:59:37', '微信小程序用户', '2024-09-11 08:36:25', 'admin', '2025-06-05 15:51:38', NULL, 'ylf100002', 9822, 'a3hwTZsnf2GT', 'RwnD2sWyGbdghbKIIqJNUsBV8oENrSgM', 'spL2k3iQPMPL', 'Meooota');
+INSERT INTO `sys_user` (`user_id`, `open_id`, `union_id`, `qw_id`, `dept_id`, `user_name`, `nick_name`, `user_type`, `email`, `phonenumber`, `sex`, `avatar`, `password`, `status`, `del_flag`, `login_ip`, `login_date`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`, `corp_id`, `points`, `agent_id`, `agent_token`, `space_id`, `space_name`) VALUES (22, 'oVGjb7fE0Dl0xmFUg8JgxuBQvr5s', 'ovZrQ673x1GGaP6cX5XUnfzu7TmE', 'YangHangHang', NULL, 'admin', 'AspireLife', '00', '', '16637176666', '0', 'chatfile/2025/05/24/yanghangxing_20250524155024A001.png', '$2a$10$7JB720yubVSZvUI0rEqK/.VqGOZTH.ulu33dHOiBE8ByOhJIrdAu2', '0', '0', '127.0.0.1', '2025-06-05 15:59:37', '微信小程序用户', '2024-09-11 08:36:25', 'admin', '2025-10-13 13:44:38', NULL, 'office01', 9822, 'a3hwTZsnf2GT', 'RwnD2sWyGbdghbKIIqJNUsBV8oENrSgM', 'spL2k3iQPMPL', 'Meooota');
 COMMIT;
 
 -- ----------------------------

@@ -213,6 +213,10 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		insert into sys_user_role values(#{userId},101);
 	</insert>
 
+	<insert id="saveUserRoleBJP">
+		insert into sys_user_role values(#{userId},102);
+	</insert>
+
 	<update id="updateUser" parameterType="SysUser">
  		update sys_user
  		<set>

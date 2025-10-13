@@ -135,6 +135,11 @@ wechat:
 office:
   appId:
   appSecret:
+# 微信小程序配置
+miniapp:
+  appId:   # 小程序AppID
+  appSecret:   # 小程序AppSecret
+
 upload:
   # 上传文件路径
   url: http://localhost:8081/profile/

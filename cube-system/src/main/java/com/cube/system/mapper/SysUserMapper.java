@@ -65,6 +65,14 @@ public interface SysUserMapper
     public int saveUserRole(Long userId);
 
     /**
+     * 保存用户角色关系（百家谱用户）
+     *
+     * @param userId 用户ID
+     * @return 结果
+     */
+    public int saveUserRoleBJP(Long userId);
+
+    /**
      * 修改用户信息
      *
      * @param user 用户信息
