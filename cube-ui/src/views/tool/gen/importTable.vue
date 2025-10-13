@@ -32,12 +32,13 @@
         <el-table-column prop="updateTime" label="更新时间"></el-table-column>
       </el-table>
       <pagination
-        v-show="total>0"
-        :total="total"
-        :page.sync="queryParams.pageNum"
-        :limit.sync="queryParams.pageSize"
-        @pagination="getList"
-      />
+  v-show="total>0"
+  :total="total"
+  v-model:current-page="queryParams.pageNum"
+  v-model:page-size="queryParams.pageSize"
+  @current-change="getList"
+  @size-change="getList"
+/>
     </el-row>
     <div slot="footer" class="dialog-footer">
       <el-button type="primary" @click="handleImportTable">确 定</el-button>
