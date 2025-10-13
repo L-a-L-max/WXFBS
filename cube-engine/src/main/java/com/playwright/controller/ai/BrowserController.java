@@ -396,6 +396,7 @@ public class BrowserController {
                 page.navigate("https://yuanbao.tencent.com/chat/naQivTmsDa/");
                 page.waitForLoadState(LoadState.LOAD);
                 Thread.sleep(3000);
+
                 Locator phone = page.locator("//p[@class='nick-info-name']");
                 if (phone.count() > 0) {
                     String phoneText = phone.textContent();
@@ -454,28 +455,41 @@ public class BrowserController {
             Page page = context.pages().get(0);
             page.navigate("https://yuanbao.tencent.com/chat/naQivTmsDa");
             page.locator("//span[contains(text(),'登录')]").click();
-            Thread.sleep(4000);
-            boolean isLogin = false;
+
+            // 短暂等待确保页面开始加载
+            Thread.sleep(2000);
+
+            // 立即获取并发送二维码
             String url = screenshotUtil.screenshotAndUpload(page, "checkYBLogin.png");
             JSONObject jsonObject = new JSONObject();
             jsonObject.put("url", url);
             jsonObject.put("userId", userId);
             jsonObject.put("type", "RETURN_PC_YB_QRURL");
             webSocketClientService.sendMessage(jsonObject.toJSONString());
+
+            // 尝试处理账号类型选择弹窗（初始检查）
+            handleAccountTypeSelection(page);
+
+            boolean isLogin = false;
             Locator phone = page.locator("//p[@class='nick-info-name']");
             String phoneText = phone.textContent();
+
             for (int i = 0; i < 6; i++) {
-//                每十秒刷新一次
                 if (phoneText.contains("未登录")) {
                     Thread.sleep(10000);
+                    // 刷新二维码截图
                     url = screenshotUtil.screenshotAndUpload(page, "checkYBLogin.png");
                     jsonObject.put("url", url);
                     webSocketClientService.sendMessage(jsonObject.toJSONString());
+
+                    // 再次尝试处理账号类型选择弹窗
+                    handleAccountTypeSelection(page);
                 } else {
                     break;
                 }
                 phoneText = phone.textContent();
             }
+
             if (phone.count() > 0) {
                 JSONObject jsonObjectTwo = new JSONObject();
                 if (phoneText.contains("未登录")) {
@@ -490,10 +504,48 @@ public class BrowserController {
             }
             return isLogin ? phoneText : "false";
         } catch (Exception e) {
+            log.error("获取元宝二维码失败", e);
             throw e;
         }
     }
 
+    // 提取账号选择处理为独立方法，增强异常处理
+    private void handleAccountTypeSelection(Page page) {
+        try {
+            Locator accountTypeModal = page.locator(".choose-content:has-text('选择账号类型')");
+            // 使用较短的超时时间
+            accountTypeModal.waitFor(new Locator.WaitForOptions().setTimeout(3000));
+
+            if (accountTypeModal.count() > 0 && accountTypeModal.isVisible()) {
+                Locator personalAccountBtn = page.locator(".ybc-login-account-list_personal");
+                if (personalAccountBtn.count() > 0 && !isElementDisabled(personalAccountBtn)) {
+                    log.info("找到个人账号按钮，准备点击");
+                    personalAccountBtn.click();
+                    log.info("点击操作完成");
+                    Thread.sleep(2000);
+                } else {
+                    log.warn("未找到个人账号按钮，尝试使用文本选择器");
+                    Locator textBasedBtn = page.locator("//span[contains(text(),'个人账号')]");
+                    if (textBasedBtn.count() > 0) {
+                        textBasedBtn.click();
+                        Thread.sleep(2000);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            // 不抛出异常，仅记录日志
+            log.debug("账号类型选择弹窗处理失败或未出现: " + e.getMessage());
+        }
+    }
+
+    // 辅助方法：检查元素是否被禁用
+    private boolean isElementDisabled(Locator locator) {
+        try {
+            return locator.getAttribute("class").contains("ybc-login-account-list_disable");
+        } catch (Exception e) {
+            return false;
+        }
+    }
 
     /**
      * 检查豆包登录状态
