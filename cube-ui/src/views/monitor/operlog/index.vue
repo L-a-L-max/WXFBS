@@ -152,12 +152,13 @@
     </el-table>
 
     <pagination
-      v-show="total>0"
-      :total="total"
-      :page.sync="queryParams.pageNum"
-      :limit.sync="queryParams.pageSize"
-      @pagination="getList"
-    />
+  v-show="total>0"
+  :total="total"
+  v-model:current-page="queryParams.pageNum"
+  v-model:page-size="queryParams.pageSize"
+  @current-change="getList"
+  @size-change="getList"
+/>
 
     <!-- 操作日志详细 -->
     <el-dialog title="操作日志详细" v-model="open" width="800px" append-to-body>
