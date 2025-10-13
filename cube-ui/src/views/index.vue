@@ -333,13 +333,14 @@
           prop="remark"
         />
       </el-table>
-      <pagination
-        v-show="pointtotal > 0"
-        :total="pointtotal"
-        :page.sync="queryPointForm.page"
-        :limit.sync="queryPointForm.limit"
-        @pagination="getUserPointsRecord"
-      />
+    <pagination
+  v-show="total>0"
+  :total="total"
+  v-model:current-page="queryParams.pageNum"
+  v-model:page-size="queryParams.pageSize"
+  @current-change="getList"
+  @size-change="getList"
+/>
     </el-dialog>
     <!-- 公众号配置弹窗 -->
     <el-dialog

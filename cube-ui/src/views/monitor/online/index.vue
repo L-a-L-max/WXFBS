@@ -58,7 +58,14 @@
       </el-table-column>
     </el-table>
 
-    <pagination v-show="total>0" :total="total" :page.sync="pageNum" :limit.sync="pageSize" />
+    <pagination
+  v-show="total>0"
+  :total="total"
+  v-model:current-page="queryParams.pageNum"
+  v-model:page-size="queryParams.pageSize"
+  @current-change="getList"
+  @size-change="getList"
+/>
   </div>
 </template>
 
