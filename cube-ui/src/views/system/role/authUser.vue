@@ -89,12 +89,13 @@
     </el-table>
 
     <pagination
-      v-show="total>0"
-      :total="total"
-      :page.sync="queryParams.pageNum"
-      :limit.sync="queryParams.pageSize"
-      @pagination="getList"
-    />
+  v-show="total>0"
+  :total="total"
+  v-model:current-page="queryParams.pageNum"
+  v-model:page-size="queryParams.pageSize"
+  @current-change="getList"
+  @size-change="getList"
+/>
     <select-user ref="select" :roleId="queryParams.roleId" @ok="handleQuery" />
   </div>
 </template>
