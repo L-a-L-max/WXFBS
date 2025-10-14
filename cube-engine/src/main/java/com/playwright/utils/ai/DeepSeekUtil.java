@@ -82,23 +82,64 @@ public class DeepSeekUtil {
             // 侧边栏可能已经关闭或不存在
         }
 
-        // 特别针对用户昵称"Obvious"的检测
+        // 特别针对用户昵称的检测
+        String userName = null;
         try {
             Locator avatarLocator = page.locator("img.fdf01f38").first();
             if (avatarLocator.count() > 0 && avatarLocator.isVisible()) {
                 avatarLocator.click();
-                page.waitForTimeout(1500);
+                page.waitForTimeout(1000);
 
                 Locator userNameElement = page.locator("div._9d8da05").first();
-
                 if (userNameElement.count() > 0 && userNameElement.isVisible()) {
                     String name = userNameElement.textContent();
                     if (name != null && !name.trim().isEmpty() &&
                             !name.trim().equals("登录") && !name.trim().equals("Login")) {
-                        return name.trim();
+                        userName = name.trim();
                     }
                 }
-                return "已登录用户";
+                
+                // 如果没有获取到用户名，且用户名元素不存在，可能是侧边栏被关闭了
+                if (userName == null && userNameElement.count() == 0) {
+                    try {
+                        // 先按ESC关闭可能已打开的面板
+                        page.keyboard().press("Escape");
+                        page.waitForTimeout(300);
+                        
+                        // 检查头像是否还可见，如果不可见说明侧边栏被关闭了
+                        Locator avatarCheck = page.locator("img.fdf01f38").first();
+                        if (avatarCheck.count() == 0 || !avatarCheck.isVisible()) {
+                            // 尝试打开侧边栏 - 使用更精确的选择器（侧边栏展开按钮包含特定的SVG路径）
+                            try {
+                                page.click("div.ds-icon-button._4f3769f[role='button']:has(svg path[d*='M9.67269'])", 
+                                    new Page.ClickOptions().setTimeout(2000));
+                                page.waitForTimeout(500);
+                            } catch (Exception clickEx) {
+                                // 点击失败，忽略
+                            }
+                        }
+                        
+                        // 重新尝试获取用户信息
+                        Locator avatarLocator2 = page.locator("img.fdf01f38").first();
+                        if (avatarLocator2.count() > 0 && avatarLocator2.isVisible()) {
+                            avatarLocator2.click();
+                            page.waitForTimeout(1000);
+                            
+                            Locator userNameElement2 = page.locator("div._9d8da05").first();
+                            if (userNameElement2.count() > 0 && userNameElement2.isVisible()) {
+                                String name = userNameElement2.textContent();
+                                if (name != null && !name.trim().isEmpty() &&
+                                        !name.trim().equals("登录") && !name.trim().equals("Login")) {
+                                    userName = name.trim();
+                                }
+                            }
+                        }
+                    } catch (Exception retryEx) {
+                        // 重试失败，继续使用默认值
+                    }
+                }
+                
+                return userName != null ? userName : "已登录用户";
             }
         } catch (Exception e) {
             // 头像检测失败，继续其他方法
