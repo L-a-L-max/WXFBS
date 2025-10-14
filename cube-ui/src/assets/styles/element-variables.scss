@@ -1,3 +1,8 @@
+/* icon font path, required */
+$--font-path: '~element-plus/theme-chalk/fonts';
+
+@use "~element-plus/theme-chalk/src/index" as *;
+
 /**
 * I think element-ui's default theme color is too light for long-term use.
 * So I modified the default color and you can modify it to your liking.
@@ -18,11 +23,6 @@ $--border-color-light: #dfe4ed;
 $--border-color-lighter: #e6ebf5;
 
 $--table-border: 1px solid #dfe6ec;
-
-/* icon font path, required */
-$--font-path: '~element-plus/theme-chalk/fonts';
-
-@use "~element-plus/theme-chalk/src/index" as *;
 
 // the :export directive is the magic sauce for webpack
 // https://www.bluematador.com/blog/how-to-share-variables-between-js-and-sass

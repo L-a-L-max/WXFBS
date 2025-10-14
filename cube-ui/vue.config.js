@@ -7,7 +7,7 @@ function resolve(dir) {
 
 const CompressionPlugin = require('compression-webpack-plugin')
 
-const name = process.env.VUE_APP_TITLE || '若依管理系统' // 网页标题
+const name = 'U3W优立方AI平台' // 网页标题
 
 const port = process.env.port || process.env.npm_config_port || 80 // 端口
 
@@ -46,7 +46,8 @@ module.exports = {
   css: {
     loaderOptions: {
       sass: {
-        additionalData: `@import "@/assets/styles/variables.scss";`
+        additionalData: ``,
+        sassOptions: { outputStyle: "expanded" }
       },
       postcss: {
         postcssOptions: {
@@ -54,9 +55,6 @@ module.exports = {
             require("autoprefixer")
           ]
         }
-      },
-      sass: {
-        sassOptions: { outputStyle: "expanded" }
       }
     }
   },

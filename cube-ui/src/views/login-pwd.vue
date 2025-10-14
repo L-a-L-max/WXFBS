@@ -70,7 +70,7 @@ export default {
   name: "Login",
   data() {
     return {
-      title: process.env.VUE_APP_TITLE,
+      title: 'U3W优立方AI平台',
       codeUrl: "",
       loginForm: {
         username: "",

@@ -1,8 +1,8 @@
 {
   "name": "anal",
   "version": "3.8.8",
-  "description": "若依管理系统",
-  "author": "若依",
+  "description": "U3W优立方AI平台",
+  "author": "优立方",
   "license": "MIT",
   "scripts": {
     "dev": "vue-cli-service serve",
