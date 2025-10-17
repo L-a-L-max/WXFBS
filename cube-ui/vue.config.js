@@ -7,7 +7,7 @@ function resolve(dir) {
 
 const CompressionPlugin = require('compression-webpack-plugin')
 
-const name = 'U3W优立方AI平台' // 网页标题
+const name = 'U3W优立方AI平台-悟空共创' // 网页标题
 
 const port = process.env.port || process.env.npm_config_port || 80 // 端口
 

@@ -117,13 +117,13 @@
   }
 
   .hideSidebar {
-    .sidebar-container {
-      width: 64px !important; // Element Plus 默认折叠宽度
-    }
-
-    .main-container {
-      margin-left: 64px; // 与侧边栏折叠宽度一致
-    }
+  .sidebar-container {
+    width: 0 !important;
+    overflow: hidden !important; // 确保内容隐藏
+  }
+  .main-container {
+    margin-left: 0 !important;
+  }
 
     // 修复折叠状态下的样式
     :deep(.submenu-title-noDropdown) {
