@@ -69,7 +69,7 @@ CREATE DATABASE IF NOT EXISTS ucube DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb
 
 ### 2.2 导入SQL文件
 ```bash
-mysql -u root -p ucube < sql/lite.sql
+mysql -u root -p ucube < sql/ucube.sql
 ```
 
 ### 2.3 添加主机ID到白名单
