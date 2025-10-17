@@ -87,19 +87,14 @@ export default {
     position: absolute;
     z-index: 999;
   }
+.fixed-header {
+  width: calc(100% - #{variables.$base-sidebar-width});
 
-  .fixed-header {
-    position: fixed;
-    top: 0;
-    right: 0;
-    z-index: 9;
-    width: calc(100% - #{variables.$base-sidebar-width});
-    transition: width 0.28s;
-  }
+}
 
-  .hideSidebar .fixed-header {
-    width: calc(100% - 54px);
-  }
+.hideSidebar .fixed-header {
+  width: 100%; // 侧边栏隐藏时头部宽度为 100%
+}
 
   .sidebarHide .fixed-header {
     width: 100%;

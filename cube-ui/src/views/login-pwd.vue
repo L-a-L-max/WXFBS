@@ -70,7 +70,7 @@ export default {
   name: "Login",
   data() {
     return {
-      title: 'U3W优立方AI平台',
+      title: 'U3W优立方AI平台-悟空共创',
       codeUrl: "",
       loginForm: {
         username: "",
