@@ -15,7 +15,7 @@ export default {
     return {
       title: this.$store.state.settings.dynamicTitle && this.$store.state.settings.title,
       titleTemplate: title => {
-        return title ? `${title} - U3W优立方AI平台` : 'U3W优立方AI平台'
+        return title ? `${title} - U3W优立方AI平台-悟空共创` : 'U3W优立方AI平台-悟空共创'
       }
     }
   }
