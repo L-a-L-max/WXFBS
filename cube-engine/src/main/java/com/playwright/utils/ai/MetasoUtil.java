@@ -70,7 +70,7 @@ public class MetasoUtil {
             String currentContent = "";
             String lastContent = "";
             String textContent = "";
-            long timeout = 60000 * 3; //  3分钟超时设置
+            long timeout = 270000; //  4.5分钟超时设置 (延长50%: 180000 -> 270000)
             long startTime = System.currentTimeMillis();
 
             while (true) {
@@ -93,7 +93,7 @@ public class MetasoUtil {
                 Locator contentLocator = page.locator("div.MuiBox-root .markdown-body").last();
                 // 设置 20 分钟超时时间获取 innerHTML
                 currentContent = contentLocator.innerHTML(new Locator.InnerHTMLOptions()
-                        .setTimeout(1200000) // 20分钟 = 1200000毫秒
+                        .setTimeout(1800000) // 30分钟 = 1800000毫秒 (延长50%: 1200000 -> 1800000)
                 );
                 textContent = contentLocator.textContent();
                 

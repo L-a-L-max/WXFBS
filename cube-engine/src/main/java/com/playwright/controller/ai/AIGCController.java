@@ -17,8 +17,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Lazy;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -179,41 +179,30 @@ public class AIGCController {
 
             // 初始化页面并导航到指定会话
             Page page = browserUtil.getOrCreatePage(context);
-            if (dbchatId != null) {
-                page.navigate("https://www.doubao.com/chat/" + dbchatId);
-            } else {
-                page.navigate("https://www.doubao.com/chat/");
+            String targetUrl = (dbchatId != null) ? ("https://www.doubao.com/chat/" + dbchatId) : "https://www.doubao.com/chat/";
+            
+
+            
+            try {
+                page.navigate(targetUrl);
+                System.out.println("✅ URL导航成功");
+            } catch (Exception e) {
+                System.err.println("❌ URL导航失败: " + e.getMessage());
+                throw e;
             }
 
             page.waitForLoadState(LoadState.LOAD);
-            Thread.sleep(500);
+
+            
             logInfo.sendTaskLog("智能评分页面打开完成", userId, "智能评分");
-            // 定位深度思考按钮
-            Locator deepThoughtButton = page.locator("button.semi-button:has-text('深度思考')");
-            // 检查按钮是否包含以 active- 开头的类名
-            Boolean isActive = (Boolean) deepThoughtButton.evaluate("element => {\n" +
-                    "    const classList = Array.from(element.classList);\n" +
-                    "    return classList.some(cls => cls.startsWith('active-'));\n" +
-                    "}");
 
-            // 确保 isActive 不为 null
-            if (isActive != null && !isActive && roles.contains("db-sdsk")) {
-                deepThoughtButton.click();
-                // 点击后等待一段时间，确保按钮状态更新
-                Thread.sleep(1000);
-
-                // 再次检查按钮状态
-                isActive = (Boolean) deepThoughtButton.evaluate("element => {\n" +
-                        "    const classList = Array.from(element.classList);\n" +
-                        "    return classList.some(cls => cls.startsWith('active-'));\n" +
-                        "}");
-                if (isActive != null && !isActive) {
-                    deepThoughtButton.click();
-                    Thread.sleep(1000);
-                }
-                logInfo.sendTaskLog("已启动深度思考模式", userId, "智能评分");
-            }
-            Thread.sleep(1000);
+            
+            // 智能切换AI模式（根据用户是否选择深度思考能力）
+            boolean needDeepThinking = roles != null && roles.contains("zj-db-sdsk");
+            System.out.println("🧠 是否需要深度思考: " + needDeepThinking + " (检测标识: zj-db-sdsk)");
+            System.out.println("====================================================");
+            
+            douBaoUtil.switchAIMode(page, userId, needDeepThinking);
             page.locator("[data-testid='chat_input_input']").click();
             Thread.sleep(1000);
             page.locator("[data-testid='chat_input_input']").fill(userPrompt);
@@ -345,43 +334,29 @@ public class AIGCController {
 
             // 初始化页面并导航到指定会话
             Page page = browserUtil.getOrCreatePage(context);
-            if (!"true".equalsIgnoreCase(userInfoRequest.getIsNewChat()) && dbchatId != null) {
-                page.navigate("https://www.doubao.com/chat/" + dbchatId);
-            } else {
-                page.navigate("https://www.doubao.com/chat/");
+            boolean isNewChat = "true".equalsIgnoreCase(userInfoRequest.getIsNewChat());
+            String targetUrl = (!isNewChat && dbchatId != null) ? ("https://www.doubao.com/chat/" + dbchatId) : "https://www.doubao.com/chat/";
+
+            
+            try {
+                page.navigate(targetUrl);
+                System.out.println("✅ URL导航成功");
+            } catch (Exception e) {
+                System.err.println("❌ URL导航失败: " + e.getMessage());
+                throw e;
             }
 
             page.waitForLoadState(LoadState.LOAD);
-            Thread.sleep(500);
+            
             logInfo.sendTaskLog("豆包页面打开完成", userId, dynamicAiName);
-            // 定位深度思考按钮
-            Locator deepThoughtButton = page.locator("button.semi-button:has-text('深度思考')");
-            // 检查按钮是否包含以 active- 开头的类名
-            Boolean isActive = (Boolean) deepThoughtButton.evaluate("element => {\n" +
-                    "    const classList = Array.from(element.classList);\n" +
-                    "    return classList.some(cls => cls.startsWith('active-'));\n" +
-                    "}");
 
-            // 确保 isActive 不为 null
-            if (isActive != null && !isActive && roles.contains("db-sdsk")) {
-                deepThoughtButton.click();
-                // 点击后等待一段时间，确保按钮状态更新
-                Thread.sleep(1000);
-
-                // 再次检查按钮状态
-                isActive = (Boolean) deepThoughtButton.evaluate("element => {\n" +
-                        "    const classList = Array.from(element.classList);\n" +
-                        "    return classList.some(cls => cls.startsWith('active-'));\n" +
-                        "}");
-                if (isActive != null && !isActive) {
-                    deepThoughtButton.click();
-                    Thread.sleep(1000);
-                }
-                logInfo.sendTaskLog("已启动深度思考模式", userId, dynamicAiName);
-            } else if(isActive != null && isActive && !roles.contains("db-sdsk")){
-                deepThoughtButton.click();
-            }
-            Thread.sleep(1000);
+            
+            // 智能切换AI模式（根据用户是否选择深度思考能力）
+            boolean needDeepThinking = roles != null && roles.contains("zj-db-sdsk");
+            System.out.println("🧠 是否需要深度思考: " + needDeepThinking + " (检测标识: zj-db-sdsk)");
+            System.out.println("====================================================");
+            
+            douBaoUtil.switchAIMode(page, userId, needDeepThinking);
             page.locator("[data-testid='chat_input_input']").click();
             Thread.sleep(1000);
             page.locator("[data-testid='chat_input_input']").fill(userPrompt);
@@ -520,11 +495,34 @@ public class AIGCController {
             }
             
             logInfo.sendTaskLog("执行完成", userId, dynamicAiName);
+            
+            // 发送豆包会话ID到前端
             logInfo.sendChatData(page, "/chat/([^/?#]+)", userId, "RETURN_DB_CHATID", 1);
+            
+            // 构造豆包分享链接
+            String douBaoShareUrl = shareUrl;
+            String currentUrl = page.url();
+            System.out.println("📎 当前页面URL: " + currentUrl);
+            
+            // 从URL中提取会话ID并构造分享链接
+            if (currentUrl != null && currentUrl.contains("/chat/")) {
+                java.util.regex.Pattern pattern = java.util.regex.Pattern.compile("/chat/([^/?#]+)");
+                java.util.regex.Matcher matcher = pattern.matcher(currentUrl);
+                if (matcher.find()) {
+                    String chatId = matcher.group(1);
+                    douBaoShareUrl = "https://www.doubao.com/chat/" + chatId;
+                    System.out.println("✅ 成功获取豆包分享链接: " + douBaoShareUrl);
+                    logInfo.sendTaskLog("成功获取豆包分享链接: " + douBaoShareUrl, userId, dynamicAiName);
+                } else {
+                    System.out.println("⚠️  未能从URL中提取会话ID");
+                }
+            }
+            
+            // 发送结果到前端
             if(userInfoRequest.getSelectedMedia() != null && userInfoRequest.getSelectedMedia().contains("wechat")) {
-                logInfo.sendResData(aiResult.getTextContent(), userId, "豆包", dynamicAiType, shareUrl, sharImgUrl);
+                logInfo.sendResData(aiResult.getTextContent(), userId, "豆包", dynamicAiType, douBaoShareUrl, sharImgUrl);
             } else {
-                logInfo.sendResData(aiResult.getHtmlContent(), userId, "豆包", dynamicAiType, shareUrl, sharImgUrl);
+                logInfo.sendResData(aiResult.getHtmlContent(), userId, "豆包", dynamicAiType, douBaoShareUrl, sharImgUrl);
             }
 
             //保存数据库
@@ -1216,37 +1214,26 @@ public class AIGCController {
 
             // 初始化页面并导航到指定会话
             Page page = browserUtil.getOrCreatePage(context);
-            page.navigate("https://www.doubao.com/chat/");
+            String targetUrl = "https://www.doubao.com/chat/";
+
+            try {
+                page.navigate(targetUrl);
+                System.out.println("✅ URL导航成功");
+            } catch (Exception e) {
+                System.err.println("❌ URL导航失败: " + e.getMessage());
+                throw e;
+            }
 
             page.waitForLoadState(LoadState.LOAD);
-            Thread.sleep(500);
+            
             logInfo.sendTaskLog("豆包页面打开完成", userId, "豆包");
-            // 定位深度思考按钮
-            Locator deepThoughtButton = page.locator("button.semi-button:has-text('深度思考')");
-            // 检查按钮是否包含以 active- 开头的类名
-            Boolean isActive = (Boolean) deepThoughtButton.evaluate("element => {\n" +
-                    "    const classList = Array.from(element.classList);\n" +
-                    "    return classList.some(cls => cls.startsWith('active-'));\n" +
-                    "}");
 
-            // 确保 isActive 不为 null
-            if (isActive != null && !isActive && roles.contains("db-sdsk")) {
-                deepThoughtButton.click();
-                // 点击后等待一段时间，确保按钮状态更新
-                Thread.sleep(1000);
+            
+            // 智能切换AI模式（根据用户是否选择深度思考能力）
+            boolean needDeepThinking = roles != null && roles.contains("zj-db-sdsk");
 
-                // 再次检查按钮状态
-                isActive = (Boolean) deepThoughtButton.evaluate("element => {\n" +
-                        "    const classList = Array.from(element.classList);\n" +
-                        "    return classList.some(cls => cls.startsWith('active-'));\n" +
-                        "}");
-                if (isActive != null && !isActive) {
-                    deepThoughtButton.click();
-                    Thread.sleep(1000);
-                }
-                logInfo.sendTaskLog("已启动深度思考模式", userId, "豆包");
-            }
-            Thread.sleep(1000);
+            
+            douBaoUtil.switchAIMode(page, userId, needDeepThinking);
             page.locator("[data-testid='chat_input_input']").click();
             Thread.sleep(1000);
             page.locator("[data-testid='chat_input_input']").fill(userPrompt);
@@ -1278,6 +1265,16 @@ public class AIGCController {
                 if(mcpResult == null) {
                     return McpResult.fail("图片生成失败", "");
                 }
+                
+                // 构造豆包图片生成的分享链接
+                String douBaoImgShareUrl = page.url();
+                System.out.println("📎 豆包图片生成页面URL: " + douBaoImgShareUrl);
+                logInfo.sendTaskLog("成功获取豆包图片生成链接: " + douBaoImgShareUrl, userId, "豆包");
+                logInfo.sendTaskLog("执行完成", userId, "豆包");
+                
+                // 提取会话ID并发送
+                logInfo.sendChatData(page, "/chat/([^/?#]+)", userId, "RETURN_DB_CHATID", 1);
+                
                 return mcpResult;
             } catch (Exception e) {
             }

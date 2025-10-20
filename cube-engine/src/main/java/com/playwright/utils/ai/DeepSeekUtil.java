@@ -218,19 +218,19 @@ public class DeepSeekUtil {
             int checkInterval = 200; // 默认检查间隔
             
             if (isDeepThinkingMode && isWebSearchMode) {
-                maxTimeout = 1200000; // 深度思考+联网模式20分钟
+                maxTimeout = 1800000; // 深度思考+联网模式30分钟 (延长50%: 1200000 -> 1800000)
                 requiredStableCount = 2; // 需要更多的稳定确认
-                checkInterval = 300; // 增加检查间隔
+                checkInterval = 450; // 增加检查间隔 (延长50%: 300 -> 450)
                 logInfo.sendTaskLog("启用深度思考+联网模式监听，等待时间可能较长", userId, aiName);
             } else if (isDeepThinkingMode) {
-                maxTimeout = 900000; // 深度思考模式15分钟
+                maxTimeout = 1350000; // 深度思考模式22.5分钟 (延长50%: 900000 -> 1350000)
                 requiredStableCount = 2; // 需要更多的稳定确认
-                checkInterval = 250; // 增加检查间隔
+                checkInterval = 375; // 增加检查间隔 (延长50%: 250 -> 375)
                 logInfo.sendTaskLog("启用深度思考模式监听，等待时间可能较长", userId, aiName);
             } else if (isWebSearchMode) {
-                maxTimeout = 600000; // 联网模式10分钟
+                maxTimeout = 900000; // 联网模式15分钟 (延长50%: 600000 -> 900000)
                 requiredStableCount = 2; // 需要更多的稳定确认
-                checkInterval = 250; // 增加检查间隔
+                checkInterval = 375; // 增加检查间隔 (延长50%: 250 -> 375)
                 logInfo.sendTaskLog("启用联网搜索模式监听", userId, aiName);
             }
 

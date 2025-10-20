@@ -41,6 +41,202 @@ public class DouBaoUtil {
     @Value("${cube.url}")
     private String url;
 
+    /**
+     * 检测并点击超能模式的"试一试"按钮
+     * 如果登录后出现超能模式提示，自动点击试一试按钮
+     *
+     * @param page Playwright页面实例
+     * @param userId 用户ID
+     */
+    public void checkAndClickSuperModeButton(Page page, String userId) {
+        try {
+            // 等待一下，确保页面加载完成
+            page.waitForTimeout(2000);
+            
+            // 通过文本内容定位"试一试"按钮
+            Locator tryButton = page.locator("button:has-text(\"试一试\")");
+            
+            // 检查按钮是否存在且可见
+            if (tryButton.count() > 0 && tryButton.isVisible()) {
+                logInfo.sendTaskLog("检测到超能模式提示，正在自动点击试一试", userId, "豆包");
+                tryButton.click();
+                page.waitForTimeout(1000); // 等待点击完成
+                logInfo.sendTaskLog("已成功进入超能模式", userId, "豆包");
+                
+                // 记录成功日志
+                UserLogUtil.sendAIBusinessLog(userId, "豆包", "超能模式", "成功点击试一试按钮进入超能模式", System.currentTimeMillis(), url + "/saveLogInfo");
+            }
+        } catch (Exception e) {
+            // 如果按钮不存在或点击失败，记录但不抛出异常，不影响后续流程
+            UserLogUtil.sendAIBusinessLog(userId, "豆包", "超能模式检测", "超能模式按钮检测或点击失败：" + e.getMessage(), System.currentTimeMillis(), url + "/saveLogInfo");
+        }
+    }
+
+    /**
+     * 智能切换AI模式（极速/思考/超能）
+     * 根据是否需要深度思考以及是否为超能内测用户来决定使用哪个模式
+     *
+     * @param page Playwright页面实例
+     * @param userId 用户ID
+     * @param needDeepThinking 是否需要深度思考
+     */
+    public void switchAIMode(Page page, String userId, boolean needDeepThinking) {
+        try {
+            System.out.println("\n🔄 ==================== AI模式切换开始 ====================");
+            System.out.println("👤 用户ID: " + userId);
+            System.out.println("🧠 需要深度思考: " + needDeepThinking);
+            System.out.println("🌐 当前页面URL: " + page.url());
+            
+            // 等待页面加载完成，给足够时间让按钮渲染
+            System.out.println("⏳ 等待模式切换按钮渲染...");
+            page.waitForTimeout(2000);  // 增加等待时间到2秒
+            
+            // 尝试等待至少一个模式按钮出现（最多等待5秒）
+            try {
+                page.locator(".switch-button-qHPwBT").first().waitFor(new Locator.WaitForOptions().setTimeout(5000));
+                System.out.println("✅ 模式切换按钮已渲染");
+            } catch (Exception e) {
+                System.err.println("⚠️  警告：5秒内未检测到模式切换按钮，可能页面加载异常");
+            }
+            
+            // 定位所有模式按钮
+            Locator speedModeButton = page.locator(".switch-button-qHPwBT:has-text(\"极速\")").first();
+            Locator thinkModeButton = page.locator(".switch-button-qHPwBT:has-text(\"思考\")");
+            Locator superModeButton = page.locator("[data-testid='super-agent-mode-switch']");
+            
+            boolean hasSuperMode = superModeButton.count() > 0;
+            System.out.println("🔍 检测到的按钮数量:");
+            System.out.println("   - 极速模式按钮: " + speedModeButton.count());
+            System.out.println("   - 思考模式按钮: " + thinkModeButton.count());
+            System.out.println("   - 超能模式按钮: " + superModeButton.count());
+            System.out.println("   - 是否有超能权限: " + hasSuperMode);
+            
+            if (hasSuperMode) {
+                // ========== 内测用户（有超能权限）==========
+                System.out.println("\n📍 用户类型: 内测用户（有超能权限）");
+                logInfo.sendTaskLog("检测到超能模式，当前为内测用户", userId, "豆包");
+                
+                if (needDeepThinking) {
+                    // 需要深度思考：使用超能模式
+                    boolean superActive = isModeActive(superModeButton);
+                    System.out.println("🎯 目标模式: 超能模式（深度思考）");
+                    System.out.println("📊 当前超能模式激活状态: " + superActive);
+                    
+                    if (!superActive) {
+                        // 超能模式未激活，需要切换
+                        System.out.println("🔄 执行操作: 切换到超能模式");
+                        logInfo.sendTaskLog("任务需要深度思考，正在切换到超能模式", userId, "豆包");
+                        superModeButton.click();
+                        page.waitForTimeout(500);
+                        System.out.println("✅ 超能模式切换成功");
+                        logInfo.sendTaskLog("✓ 已启用超能模式", userId, "豆包");
+                        UserLogUtil.sendAIBusinessLog(userId, "豆包", "模式切换", "已切换到超能模式（深度思考）", System.currentTimeMillis(), url + "/saveLogInfo");
+                    } else {
+                        System.out.println("✅ 超能模式已经激活，无需切换");
+                        logInfo.sendTaskLog("✓ 超能模式已启用（无需切换）", userId, "豆包");
+                    }
+                } else {
+                    // 不需要深度思考：必须使用极速模式
+                    boolean superActive = isModeActive(superModeButton);
+                    boolean speedActive = speedModeButton.count() > 0 && isModeActive(speedModeButton);
+                    
+                    System.out.println("🎯 目标模式: 极速模式（无需深度思考）");
+                    System.out.println("📊 当前模式状态:");
+                    System.out.println("   - 超能模式激活: " + superActive);
+                    System.out.println("   - 极速模式激活: " + speedActive);
+                    
+                    if (superActive) {
+                        // 当前是超能模式，需要切换到极速模式
+                        System.out.println("⚠️  检测到当前为超能模式，需要切换到极速模式");
+                        logInfo.sendTaskLog("当前为超能模式，但任务无需深度思考，正在切换到极速模式", userId, "豆包");
+                        if (speedModeButton.count() > 0) {
+                            System.out.println("🔄 执行操作: 点击极速模式按钮");
+                            speedModeButton.click();
+                            page.waitForTimeout(500);
+                            System.out.println("✅ 成功从超能模式切换到极速模式");
+                            logInfo.sendTaskLog("✓ 已从超能模式切换到极速模式", userId, "豆包");
+                            UserLogUtil.sendAIBusinessLog(userId, "豆包", "模式切换", "从超能模式切换到极速模式", System.currentTimeMillis(), url + "/saveLogInfo");
+                        }
+                    } else if (!speedActive && speedModeButton.count() > 0) {
+                        // 既不是超能也不是极速，切换到极速
+                        System.out.println("🔄 执行操作: 切换到极速模式");
+                        logInfo.sendTaskLog("正在切换到极速模式", userId, "豆包");
+                        speedModeButton.click();
+                        page.waitForTimeout(500);
+                        System.out.println("✅ 极速模式切换成功");
+                        logInfo.sendTaskLog("✓ 已启用极速模式", userId, "豆包");
+                        UserLogUtil.sendAIBusinessLog(userId, "豆包", "模式切换", "已切换到极速模式", System.currentTimeMillis(), url + "/saveLogInfo");
+                    } else {
+                        System.out.println("✅ 极速模式已经激活，无需切换");
+                        logInfo.sendTaskLog("✓ 极速模式已启用（无需切换）", userId, "豆包");
+                    }
+                }
+            } else {
+                // ========== 普通用户（无超能权限）==========
+                System.out.println("\n📍 用户类型: 普通用户（无超能权限）");
+                
+                if (needDeepThinking) {
+                    // 需要深度思考：使用思考模式
+                    boolean thinkActive = thinkModeButton.count() > 0 && isModeActive(thinkModeButton);
+                    System.out.println("🎯 目标模式: 思考模式（深度思考）");
+                    System.out.println("📊 当前思考模式激活状态: " + thinkActive);
+                    
+                    if (thinkModeButton.count() > 0 && !thinkActive) {
+                        System.out.println("🔄 执行操作: 切换到思考模式");
+                        logInfo.sendTaskLog("任务需要深度思考，正在切换到思考模式", userId, "豆包");
+                        thinkModeButton.click();
+                        page.waitForTimeout(500);
+                        System.out.println("✅ 思考模式切换成功");
+                        logInfo.sendTaskLog("✓ 已启用思考模式", userId, "豆包");
+                        UserLogUtil.sendAIBusinessLog(userId, "豆包", "模式切换", "已切换到思考模式（深度思考）", System.currentTimeMillis(), url + "/saveLogInfo");
+                    } else {
+                        System.out.println("✅ 思考模式已经激活，无需切换");
+                        logInfo.sendTaskLog("✓ 思考模式已启用（无需切换）", userId, "豆包");
+                    }
+                } else {
+                    // 不需要深度思考：使用极速模式
+                    boolean speedActive = speedModeButton.count() > 0 && isModeActive(speedModeButton);
+                    System.out.println("🎯 目标模式: 极速模式（无需深度思考）");
+                    System.out.println("📊 当前极速模式激活状态: " + speedActive);
+                    
+                    if (speedModeButton.count() > 0 && !speedActive) {
+                        System.out.println("🔄 执行操作: 切换到极速模式");
+                        logInfo.sendTaskLog("任务无需深度思考，正在切换到极速模式", userId, "豆包");
+                        speedModeButton.click();
+                        page.waitForTimeout(500);
+                        System.out.println("✅ 极速模式切换成功");
+                        logInfo.sendTaskLog("✓ 已启用极速模式", userId, "豆包");
+                        UserLogUtil.sendAIBusinessLog(userId, "豆包", "模式切换", "已切换到极速模式", System.currentTimeMillis(), url + "/saveLogInfo");
+                    } else {
+                        System.out.println("✅ 极速模式已经激活，无需切换");
+                        logInfo.sendTaskLog("✓ 极速模式已启用（无需切换）", userId, "豆包");
+                    }
+                }
+            }
+            System.out.println("🏁 ==================== AI模式切换结束 ====================\n");
+        } catch (Exception e) {
+            // 如果模式切换失败，记录但不抛出异常，不影响后续流程
+            System.err.println("❌ AI模式切换失败: " + e.getMessage());
+            e.printStackTrace();
+            UserLogUtil.sendAIBusinessLog(userId, "豆包", "模式切换", "AI模式切换失败：" + e.getMessage(), System.currentTimeMillis(), url + "/saveLogInfo");
+        }
+    }
+
+    /**
+     * 检查按钮是否处于激活状态
+     *
+     * @param button 按钮定位器
+     * @return 如果按钮激活返回true，否则返回false
+     */
+    private boolean isModeActive(Locator button) {
+        try {
+            String dataActive = button.getAttribute("data-active");
+            return "true".equals(dataActive);
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
     public void waitAndClickDBScoreCopyButton(Page page, String userId) throws InterruptedException {
         long startTime = System.currentTimeMillis();
         try {

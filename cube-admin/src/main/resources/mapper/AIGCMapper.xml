@@ -322,15 +322,26 @@ from wc_chrome_hotlink wck left join sys_user u on wck.user_name = u.user_name
     </select>
 
     <insert id="saveUserChatData" parameterType="java.util.Map">
-        	 delete
-                from wc_chat_history
-                where userPrompt = #{userPrompt};
-                insert into wc_chat_history(id, user_id, userPrompt, data, create_time, tone_chat_id, ybds_chat_id, db_chat_id,
-	                                    ty_chat_id, deepseek_chat_id, max_chat_id, metaso_chat_id, kimi_chat_id,
-	                                    baidu_chat_id, zhzd_chat_id, chat_id)
-                values (uuid(), #{userId}, #{userPrompt}, #{data}, now(), #{toneChatId}, #{ybDsChatId}, #{dbChatId},
-        	                #{tyChatId}, #{deepseekChatId}, #{maxChatId}, #{metasoChatId}, #{kimiChatId}, #{baiduChatId},
-        	                #{zhzdChatId}, #{chatId});
+        INSERT INTO wc_chat_history(id, user_id, userPrompt, data, create_time, tone_chat_id, ybds_chat_id, db_chat_id,
+                                    ty_chat_id, deepseek_chat_id, max_chat_id, metaso_chat_id, kimi_chat_id,
+                                    baidu_chat_id, zhzd_chat_id, chat_id)
+        VALUES (uuid(), #{userId}, #{userPrompt}, #{data}, now(), #{toneChatId}, #{ybDsChatId}, #{dbChatId},
+                #{tyChatId}, #{deepseekChatId}, #{maxChatId}, #{metasoChatId}, #{kimiChatId}, #{baiduChatId},
+                #{zhzdChatId}, #{chatId})
+        ON DUPLICATE KEY UPDATE
+            userPrompt = #{userPrompt},
+            data = #{data},
+            create_time = now(),
+            tone_chat_id = #{toneChatId},
+            ybds_chat_id = #{ybDsChatId},
+            db_chat_id = #{dbChatId},
+            ty_chat_id = #{tyChatId},
+            deepseek_chat_id = #{deepseekChatId},
+            max_chat_id = #{maxChatId},
+            metaso_chat_id = #{metasoChatId},
+            kimi_chat_id = #{kimiChatId},
+            baidu_chat_id = #{baiduChatId},
+            zhzd_chat_id = #{zhzdChatId}
    </insert>
     <insert id="saveLogInfo" parameterType="java.util.Map">
         INSERT INTO wc_log_info (
@@ -355,10 +366,29 @@ from wc_chrome_hotlink wck left join sys_user u on wck.user_name = u.user_name
     </insert>
 
     <select id="getChatHistory" parameterType="java.lang.String" resultType="java.util.Map">
-        select userPrompt,data,DATE_FORMAT(create_time, '%Y-%c-%d %H:%i:%s') createTime,chat_id chatId,tone_chat_id toneChatId,ybds_chat_id ybDsChatId,db_chat_id dbChatId,ty_chat_id tyChatId,max_chat_id maxChatId,metaso_chat_id metasoChatId,zhzd_chat_id zhzdChatId,kimi_chat_id kimiChatId,baidu_chat_id baiduChatId,deepseek_chat_id deepseekChatId
-        from wc_chat_history where user_id =#{userId} order by create_time desc
+        select 
+            userPrompt,
+            data,
+            DATE_FORMAT(create_time, '%Y-%c-%d %H:%i:%s') createTime,
+            chat_id chatId,
+            tone_chat_id toneChatId,
+            ybds_chat_id ybDsChatId,
+            db_chat_id dbChatId,
+            ty_chat_id tyChatId,
+            max_chat_id maxChatId,
+            metaso_chat_id metasoChatId,
+            zhzd_chat_id zhzdChatId,
+            kimi_chat_id kimiChatId,
+            baidu_chat_id baiduChatId,
+            deepseek_chat_id deepseekChatId
+        from wc_chat_history 
+        where user_id = #{userId}
+        order by create_time desc
         <if test="isAll == 0">
             limit 1
+        </if>
+        <if test="isAll == 1">
+            limit 50
         </if>
     </select>
 </mapper>

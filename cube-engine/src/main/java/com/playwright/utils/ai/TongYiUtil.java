@@ -235,7 +235,7 @@ public class TongYiUtil {
             String lastContent = "";
             String textContent = "";
 
-            long timeout = 600000;
+            long timeout = 900000; // 15分钟 (延长50%: 600000 -> 900000)
             long operationStartTime = System.currentTimeMillis();
 
             Thread.sleep(3000);

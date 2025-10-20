@@ -320,7 +320,7 @@ public class ZHZDUtil {
         }
 
         try {
-            long timeout = 600000; // 10分钟超时
+            long timeout = 900000; // 15分钟超时 (延长50%: 600000 -> 900000)
             long startTime = System.currentTimeMillis();
 
             // 等待5秒

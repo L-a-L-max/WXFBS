@@ -781,7 +781,7 @@ public class TencentUtil {
             String lastContent = "";
             String textContent = "";
             // 设置最大等待时间（单位：毫秒），比如 10 分钟
-            long timeout = 600000; // 10 分钟
+            long timeout = 900000; // 15 分钟 (延长50%: 600000 -> 900000)
             long startTime = System.currentTimeMillis();  // 获取当前时间戳
             
             // 先等待5秒，确保AI开始响应
