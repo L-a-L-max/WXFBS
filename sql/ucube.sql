@@ -352,7 +352,7 @@ INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`
 INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (2001, '粉丝管理', 2000, 1, 'company', 'wechat/company/index', NULL, '', 1, 0, 'C', '0', '0', 'wechat:company:list', 'tree-table', 'admin', '2024-08-08 14:17:40', 'admin', '2025-05-13 09:48:53', '');
 INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (2007, '积分设置', 2001, 1, '', NULL, NULL, '', 1, 0, 'F', '0', '0', 'wechat:points:edit', '#', 'DuHongChao-YuanTouShe', '2024-09-13 14:35:36', '', NULL, '');
 INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (2017, '主机', 2000, 0, 'chrome', 'wechat/chrome/index', NULL, '', 1, 0, 'C', '0', '0', 'wechat:chrome:list', 'international', 'YangHangHang', '2024-11-22 09:59:55', 'admin', '2025-05-29 14:50:16', '');
-INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (2019, '节点日志', 2000, 7, 'keyword', 'wechat/keyword/index', NULL, '', 1, 0, 'C', '0', '0', '', 'icon', 'o3lds67b1zyFvifHTC_32epnmzqM', '2024-12-17 09:10:03', 'admin', '2025-04-30 15:47:18', '');
+-- 已删除节点日志菜单(menu_id=2019)
 INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (2021, '稿库', 2000, 1, 'drafts', 'wechat/drafts/index', NULL, '', 1, 0, 'C', '0', '0', '', 'log', 'o3lds60Lfe6_MaGyB-COxgGcItnM', '2025-01-06 17:23:00', 'admin', '2025-06-06 08:46:16', '');
 INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`)
 VALUES (2022, '用户日志', 108, 1, 'userLog', 'monitor/userLog/index', NULL, '', 1, 0, 'C', '0', '0', 'monitor:userLog:list', '#', 'admin', sysdate(), '', NULL, '用户日志菜单');
@@ -367,12 +367,12 @@ VALUES (2026, '用户日志删除', 2022, 4, '#', '', NULL, '', 1, 0, 'F', '0', 
 INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`)
 VALUES (2027, '用户日志导出', 2022, 5, '#', '', NULL, '', 1, 0, 'F', '0', '0', 'monitor:userLog:export', '#', 'admin', sysdate(), '', NULL, '');
 
-INSERT INTO `sys_menu`(`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (2028, '平台提示词配置', 2000, 1, 'callWord', 'wechat/callWord/index', NULL, '', 1, 0, 'C', '0', '0', 'wechat:callWord:list', '#', 'admin', sysdate(), '', NULL, '平台提示词配置菜单');
+INSERT INTO `sys_menu`(`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (2028, '平台提示词配置', 2000, 1, 'callWord', 'wechat/callWord/index', NULL, '', 1, 0, 'C', '0', '0', 'wechat:callWord:list', 'guide', 'admin', sysdate(), '', NULL, '平台提示词配置菜单');
 INSERT INTO `sys_menu`(`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (2029, '平台提示词配置新增', 2028, 2, '#', '', NULL, '', 1, 0, 'F', '0', '0', 'wechat:callWord:add', '#', 'admin', sysdate(), '', NULL, '');
 INSERT INTO `sys_menu`(`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (2030, '平台提示词配置修改', 2028, 3, '#', '', NULL, '', 1, 0, 'F', '0', '0', 'wechat:callWord:edit', '#', 'admin', sysdate(), '', NULL, '');
 INSERT INTO `sys_menu`(`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (2031, '平台提示词配置删除', 2028, 4, '#', '', NULL, '', 1, 0, 'F', '0', '0', 'wechat:callWord:remove', '#', 'admin', sysdate(), '', NULL, '');
 INSERT INTO `sys_menu`(`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (2032, '平台提示词配置导出', 2028, 5, '#', '', NULL, '', 1, 0, 'F', '0', '0', 'wechat:callWord:export', '#', 'admin', sysdate(), '', NULL, '');
-INSERT INTO `sys_menu`(`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (2033, '评分模板配置', 2000, 1, 'prompt', 'wechat/prompt/index', NULL, '', 1, 0, 'C', '0', '0', 'wechat:prompt:list', '#', 'admin', sysdate(), '', NULL, '评分模板配置菜单');
+INSERT INTO `sys_menu`(`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (2033, '评分模板配置', 2000, 1, 'prompt', 'wechat/prompt/index', NULL, '', 1, 0, 'C', '0', '0', 'wechat:prompt:list', 'star', 'admin', sysdate(), '', NULL, '评分模板配置菜单');
 INSERT INTO `sys_menu`(`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (2034, '评分模板配置查询', 2033, 1, '#', '', NULL, '', 1, 0, 'F', '0', '0', 'wechat:prompt:query', '#', 'admin', sysdate(), '', NULL, '');
 INSERT INTO `sys_menu`(`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (2035, '评分模板配置新增', 2033, 2, '#', '', NULL, '', 1, 0, 'F', '0', '0', 'wechat:prompt:add', '#', 'admin', sysdate(), '', NULL, '');
 INSERT INTO `sys_menu`(`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (2036, '评分模板配置修改', 2033, 3, '#', '', NULL, '', 1, 0, 'F', '0', '0', 'wechat:prompt:edit', '#', 'admin', sysdate(), '', NULL, '');
@@ -898,7 +898,8 @@ CREATE TABLE `sys_user` (
 -- Records of sys_user
 -- ----------------------------
 BEGIN;
-INSERT INTO `sys_user` (`user_id`, `open_id`, `union_id`, `qw_id`, `dept_id`, `user_name`, `nick_name`, `user_type`, `email`, `phonenumber`, `sex`, `avatar`, `password`, `status`, `del_flag`, `login_ip`, `login_date`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`, `corp_id`, `points`, `agent_id`, `agent_token`, `space_id`, `space_name`) VALUES (22, 'oVGjb7fE0Dl0xmFUg8JgxuBQvr5s', 'ovZrQ673x1GGaP6cX5XUnfzu7TmE', 'YangHangHang', NULL, 'admin', 'AspireLife', '00', '', '16637176666', '0', 'chatfile/2025/05/24/yanghangxing_20250524155024A001.png', '$2a$10$7JB720yubVSZvUI0rEqK/.VqGOZTH.ulu33dHOiBE8ByOhJIrdAu2', '0', '0', '127.0.0.1', '2025-06-05 15:59:37', '微信小程序用户', '2024-09-11 08:36:25', 'admin', '2025-06-05 15:51:38', NULL, 'ylf100002', 9822, 'a3hwTZsnf2GT', 'RwnD2sWyGbdghbKIIqJNUsBV8oENrSgM', 'spL2k3iQPMPL', 'Meooota');
+-- admin用户基础数据，企业ID设置为office01
+INSERT INTO `sys_user` VALUES (22, NULL, NULL, NULL, 1, 'admin', 'admin', '00', '', '', '0', '', '$2a$10$7JB720yubVSZvUI0rEqK/.VqGOZTH.ulu33dHOiBE8ByOhJIrdAu2', '0', '0', '127.0.0.1', sysdate(), 'admin', sysdate(), 'admin', sysdate(), NULL, 'office01', 0, '', '', '', '');
 COMMIT;
 
 -- ----------------------------
@@ -1564,23 +1565,26 @@ COMMIT;
 -- ----------------------------
 DROP TABLE IF EXISTS `wc_chat_history`;
 CREATE TABLE `wc_chat_history` (
-  `id` varchar(255) DEFAULT NULL COMMENT '主建ID',
-  `user_id` varchar(10) DEFAULT NULL COMMENT '用户ID',
-  `userPrompt` longtext COMMENT '用户指令',
-  `data` longtext COMMENT '全部数据',
-  `create_time` datetime DEFAULT NULL COMMENT '创建时间',
-  `tone_chat_id` varchar(100) DEFAULT NULL COMMENT '元宝T1会话ID',
-  `ybds_chat_id` varchar(100) DEFAULT NULL COMMENT '元宝DS会话ID',
-  `db_chat_id` varchar(100) DEFAULT NULL COMMENT '豆包会话ID',
-  `ty_chat_id`   varchar(100) null comment '通义会话ID',
-  `deepseek_chat_id`  varchar(100) null comment 'DeepSeek会话ID',
-  `max_chat_id` varchar(100) DEFAULT NULL COMMENT 'MiniMax会话ID',
-  `metaso_chat_id` varchar(100) DEFAULT NULL COMMENT '秘塔会话ID',
-  `kimi_chat_id` varchar(100) DEFAULT NULL COMMENT 'KiMi会话ID',
-  `baidu_chat_id` varchar(100) DEFAULT NULL COMMENT '百度会话ID',
-  `zhzd_chat_id` varchar(100) DEFAULT NULL COMMENT '知乎直答会话ID',
-  `chat_id` varchar(36) DEFAULT NULL COMMENT '内部chatID'
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `id` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '主键ID',
+  `user_id` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '用户ID',
+  `userPrompt` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL COMMENT '用户指令',
+  `data` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL COMMENT '全部数据',
+  `create_time` datetime(0) NULL DEFAULT NULL COMMENT '创建时间',
+  `tone_chat_id` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '元宝T1会话ID',
+  `ybds_chat_id` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '元宝DS会话ID',
+  `db_chat_id` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '豆包会话ID',
+  `ty_chat_id` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '通义会话ID',
+  `deepseek_chat_id` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT 'DeepSeek会话ID',
+  `max_chat_id` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT 'MiniMax会话ID',
+  `metaso_chat_id` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '秘塔会话ID',
+  `kimi_chat_id` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT 'KiMi会话ID',
+  `baidu_chat_id` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '百度会话ID',
+  `zhzd_chat_id` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '知乎直答会话ID',
+  `chat_id` varchar(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '内部chatID',
+  PRIMARY KEY (`id`) USING BTREE,
+  UNIQUE INDEX `uk_user_chat`(`user_id`, `chat_id`) USING BTREE,
+  INDEX `idx_user_create_time`(`user_id`, `create_time`) USING BTREE
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '聊天历史记录表' ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Records of wc_chat_history
