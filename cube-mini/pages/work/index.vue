@@ -270,7 +270,15 @@
 						<text class="drawer-title">历史会话记录</text>
 						<text class="close-icon" @tap="closeHistoryDrawer">✕</text>
 					</view>
-					<scroll-view class="history-list" scroll-y>
+					
+					<!-- 加载状态 -->
+					<view v-if="historyLoading" class="history-loading">
+						<image class="loading-icon" src="https://u3w.com/chatfile/loading.gif" mode="aspectFit"></image>
+						<text class="loading-text">加载中...</text>
+					</view>
+					
+					<!-- 历史记录列表 -->
+					<scroll-view v-else-if="chatHistory.length > 0" class="history-list" scroll-y>
 						<view v-for="(group, date) in groupedHistory" :key="date" class="history-group">
 							<text class="history-date">{{ date }}</text>
 							<view v-for="(item, index) in group" :key="index" class="history-item"
@@ -280,6 +288,12 @@
 							</view>
 						</view>
 					</scroll-view>
+					
+					<!-- 空状态 -->
+					<view v-else class="history-empty">
+						<image class="empty-icon" src="https://u3w.com/chatfile/empty.png" mode="aspectFit"></image>
+						<text class="empty-text">暂无历史记录</text>
+					</view>
 				</view>
 			</view>
 		</view>
@@ -684,6 +698,7 @@
 
 				// 历史记录
 				chatHistory: [],
+				historyLoading: false,
 
 				// 评分
 				selectedResults: [],
@@ -1277,8 +1292,8 @@
 			this.isConnecting = true;
 
 			// 使用PC端的WebSocket连接方式
-		    const wsUrl = `${process.env.VUE_APP_WS_API || 'wss://u3w.com/cubeServer/websocket?clientId='}mypc-${this.userId}`;
-			// const wsUrl = `${process.env.VUE_APP_WS_API || 'ws://127.0.0.1:8081/websocket?clientId='}mypc-${this.userId}`;
+		   // const wsUrl = `${process.env.VUE_APP_WS_API || 'wss://u3w.com/cubeServer/websocket?clientId='}mypc-${this.userId}`;
+			const wsUrl = `${process.env.VUE_APP_WS_API || 'ws://127.0.0.1:8081/websocket?clientId='}mypc-${this.userId}`;
 			console.log('WebSocket URL:', wsUrl);
 
 			this.socketTask = uni.connectSocket({
@@ -1951,17 +1966,19 @@
 
 			if (targetAI) {
 			console.log(`✅ 找到目标AI: ${targetAI.name}, 当前状态: ${targetAI.status}`);
+			console.log(`📋 当前taskId: ${this.userInfoReq.taskId}, 消息taskId: ${dataObj.taskId}`);
 			
 				// 只处理当前任务的结果
 				if (dataObj.taskId && dataObj.taskId !== this.userInfoReq.taskId) {
-					console.log(`⚠️ 忽略其他任务的消息, 当前taskId: ${this.userInfoReq.taskId}, 消息taskId: ${dataObj.taskId}`);
+					console.log(`⚠️ 忽略其他任务的消息`);
 					return;
 				}
 				
 				// 检查AI是否还在运行状态，避免重复处理
 				if (targetAI.status !== 'running') {
-					console.log(`⚠️ AI状态不是running，跳过处理, 当前状态: ${targetAI.status}`);
-					return;
+					console.log(`⚠️ AI状态不是running: ${targetAI.status}`);
+					// 如果状态已经是completed，但收到新结果，说明是重复消息或延迟消息
+					// 不返回，继续处理，确保结果能被保存
 				}
 			
 				// 更新AI状态为已完成
@@ -2253,6 +2270,7 @@
 			},
 
 			async loadChatHistory(isAll) {
+				this.historyLoading = true;
 				try {
 					const res = await getChatHistory(this.userId, isAll);
 					if (res.code === 200) {
@@ -2264,12 +2282,18 @@
 						title: '加载历史记录失败',
 						icon: 'none'
 					});
+				} finally {
+					this.historyLoading = false;
 				}
 			},
 
 			loadHistoryItem(item) {
 				try {
+					console.log('📖 [历史记录] 开始加载历史记录项:', item);
+					
 					const historyData = JSON.parse(item.data);
+					console.log('📋 [历史记录] 解析后的数据:', historyData);
+					
 					// 恢复AI选择配置
 					this.aiList = historyData.aiList || this.aiList;
 					// 恢复提示词输入
@@ -2280,17 +2304,24 @@
 					this.screenshots = historyData.screenshots || [];
 					// 恢复执行结果
 					this.results = historyData.results || [];
+					
+					console.log('✅ [历史记录] 恢复结果数量:', this.results.length);
+					
 					// 恢复chatId
 					this.chatId = item.chatId || this.chatId;
 					this.userInfoReq.toneChatId = item.toneChatId || '';
 					this.userInfoReq.ybDsChatId = item.ybDsChatId || '';
 					this.userInfoReq.dbChatId = item.dbChatId || '';
-          // this.userInfoReq.tyChatId = item.tyChatId || '';
-
-          this.userInfoReq.metasoChatId = item.metasoChatId || "";
-
-
-          this.userInfoReq.isNewChat = false;
+					this.userInfoReq.tyChatId = item.tyChatId || '';
+					this.userInfoReq.metasoChatId = item.metasoChatId || '';
+					this.userInfoReq.baiduChatId = item.baiduChatId || '';
+					this.userInfoReq.deepseekChatId = item.deepseekChatId || '';
+					this.userInfoReq.zhzdChatId = item.zhzdChatId || '';
+					this.userInfoReq.kimiChatId = item.kimiChatId || '';
+					this.userInfoReq.maxChatId = item.maxChatId || '';
+					this.userInfoReq.isNewChat = false;
+					
+					console.log('🔗 [历史记录] 恢复chatId:', this.chatId);
 
 					// 不再根据AI登录状态更新AI启用状态，保持原有选择
 
@@ -2305,10 +2336,13 @@
 						title: '历史记录加载成功',
 						icon: 'success'
 					});
+					console.log('✨ [历史记录] 历史记录加载完成');
 				} catch (error) {
-					console.error('加载历史记录失败:', error);
+					console.error('❌ [历史记录] 加载历史记录失败:', error);
+					console.error('❌ [历史记录] 错误详情:', error.stack);
+					console.error('❌ [历史记录] item数据:', item);
 					uni.showToast({
-						title: '加载失败',
+						title: '加载失败:' + error.message,
 						icon: 'none'
 					});
 				}
@@ -4441,6 +4475,47 @@
 		font-size: 16px;
 		font-weight: 600;
 		color: #303133;
+	}
+
+	/* 历史记录加载状态 */
+	.history-loading {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		padding: 60rpx 0;
+	}
+
+	.history-loading .loading-icon {
+		width: 80rpx;
+		height: 80rpx;
+		margin-bottom: 20rpx;
+	}
+
+	.history-loading .loading-text {
+		font-size: 28rpx;
+		color: #909399;
+	}
+
+	/* 历史记录空状态 */
+	.history-empty {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		padding: 80rpx 0;
+	}
+
+	.history-empty .empty-icon {
+		width: 200rpx;
+		height: 200rpx;
+		margin-bottom: 30rpx;
+		opacity: 0.5;
+	}
+
+	.history-empty .empty-text {
+		font-size: 28rpx;
+		color: #909399;
 	}
 
 	.history-list {
