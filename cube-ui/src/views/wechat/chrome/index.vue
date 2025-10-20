@@ -23,35 +23,48 @@
     <el-drawer title="历史会话记录" v-model="historyDrawerVisible" direction="rtl" size="30%"
       :before-close="handleHistoryDrawerClose">
       <div class="history-content">
-        <div v-for="(group, date) in groupedHistory" :key="date" class="history-group">
-          <div class="history-date">{{ date }}</div>
-          <div class="history-list">
-            <div v-for="(item, index) in group" :key="index" class="history-item">
-              <div class="history-parent" @click="loadHistoryItem(item)">
-                <div class="history-header">
-                  <i :class="[
-                    'el-icon-arrow-right',
-                    { 'is-expanded': item.isExpanded },
-                  ]" @click.stop="toggleHistoryExpansion(item)"></i>
-                  <div class="history-prompt">{{ item.userPrompt }}</div>
-                </div>
-                <div class="history-time">
-                  {{ formatHistoryTime(item.createTime) }}
-                </div>
-              </div>
-              <div v-if="
-                item.children && item.children.length > 0 && item.isExpanded
-              " class="history-children">
-                <div v-for="(child, childIndex) in item.children" :key="childIndex" class="history-child-item"
-                  @click="loadHistoryItem(child)">
-                  <div class="history-prompt">{{ child.userPrompt }}</div>
+        <!-- 加载状态 -->
+        <div v-if="historyLoading" class="history-loading">
+          <i class="el-icon-loading"></i>
+          <span>加载中...</span>
+        </div>
+        <!-- 历史记录列表 -->
+        <div v-else-if="chatHistory.length > 0">
+          <div v-for="(group, date) in groupedHistory" :key="date" class="history-group">
+            <div class="history-date">{{ date }}</div>
+            <div class="history-list">
+              <div v-for="(item, index) in group" :key="index" class="history-item">
+                <div class="history-parent" @click="loadHistoryItem(item)">
+                  <div class="history-header">
+                    <i :class="[
+                      'el-icon-arrow-right',
+                      { 'is-expanded': item.isExpanded },
+                    ]" @click.stop="toggleHistoryExpansion(item)"></i>
+                    <div class="history-prompt">{{ item.userPrompt }}</div>
+                  </div>
                   <div class="history-time">
-                    {{ formatHistoryTime(child.createTime) }}
+                    {{ formatHistoryTime(item.createTime) }}
+                  </div>
+                </div>
+                <div v-if="
+                  item.children && item.children.length > 0 && item.isExpanded
+                " class="history-children">
+                  <div v-for="(child, childIndex) in item.children" :key="childIndex" class="history-child-item"
+                    @click="loadHistoryItem(child)">
+                    <div class="history-prompt">{{ child.userPrompt }}</div>
+                    <div class="history-time">
+                      {{ formatHistoryTime(child.createTime) }}
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
           </div>
+        </div>
+        <!-- 空状态 -->
+        <div v-else class="history-empty">
+          <i class="el-icon-document"></i>
+          <p>暂无历史记录</p>
         </div>
       </div>
     </el-drawer>
@@ -59,12 +72,12 @@
     <div class="main-content">
       <el-collapse v-model="activeCollapses">
         <el-collapse-item name="ai-selection">
-          <template slot="title">
-            <div class="ai-config-header">
+          <template #title>
+            <div class="ai-config-header" @click.stop="">
               <span>AI选择配置</span>
               <div class="global-controls">
-                <el-button size="mini" type="primary" @click.stop="toggleAllAIs" class="global-control-btn">
-                  {{ allAIsEnabled ? '全部关闭' : '全部启动' }}
+                <el-button size="small" :type="allAIsEnabled ? 'danger' : 'success'" @click.stop="toggleAllAIs" class="global-control-btn">
+                  {{ allAIsEnabled ? '全部关闭' : '全部开启' }}
                 </el-button>
               </div>
             </div>
@@ -197,9 +210,11 @@
         <el-row :gutter="20">
           <el-col :span="12">
             <el-card class="task-flow-card">
-              <div slot="header" class="card-header">
-                <span>任务流程</span>
-              </div>
+              <template #header>
+                <div class="card-header">
+                  <span>任务流程</span>
+                </div>
+              </template>
               <div class="task-flow">
                 <div v-for="(ai, index) in enabledAIs" :key="index" class="task-item">
                   <div class="task-header" @click="toggleAIExpansion(ai)">
@@ -241,13 +256,15 @@
           </el-col>
           <el-col :span="12">
             <el-card class="screenshots-card">
-              <div slot="header" class="card-header">
-                <span>主机可视化</span>
-                <div class="controls">
-                  <el-switch v-model="autoPlay" active-text="自动轮播" inactive-text="手动切换">
-                  </el-switch>
+              <template #header>
+                <div class="card-header">
+                  <span>主机可视化</span>
+                  <div class="controls">
+                    <el-switch v-model="autoPlay" active-text="自动轮播" inactive-text="手动切换">
+                    </el-switch>
+                  </div>
                 </div>
-              </div>
+              </template>
               <div class="screenshots">
                 <el-carousel :interval="3000" :autoplay="false" indicator-position="outside" height="700px">
                   <el-carousel-item v-for="(screenshot, index) in screenshots" :key="index">
@@ -274,20 +291,22 @@
               <div class="result-header" v-if="result.shareUrl">
                 <div class="result-title">{{ result.aiName }}的执行结果</div>
                 <div class="result-buttons">
-                  <el-button size="mini" type="primary" icon="el-icon-link" @click="openShareUrl(result.shareUrl)"
+                  <el-button size="mini" type="primary" @click="openShareUrl(result.shareUrl)"
                     class="share-link-btn">
-                    查看原链接
+                    <i class="el-icon-link"></i>
+                    <span>查看原链接</span>
                   </el-button>
                   <el-button v-if="!result.aiName.includes('智能排版')" size="mini" type="success"
-                    icon="el-icon-s-promotion" @click="handlePushToMedia(result)" class="push-media-btn"
+                    @click="handlePushToMedia(result)" class="push-media-btn"
                     :loading="pushingToMedia" :disabled="pushingToMedia">
-                    智能排版
+                    <i class="el-icon-s-promotion" v-if="!pushingToMedia"></i>
+                    <span>智能排版</span>
                   </el-button>
-                  <el-button v-else size="mini" type="success" icon="el-icon-s-promotion"
+                  <el-button v-else size="mini" type="success"
                     @click="pushToMediaWithContent(result)" class="push-media-btn" :loading="pushingToMedia && false"
                     :disabled="pushingToMedia && false">
-                    <!-- 投递到{{ result.aiName.substring(4)}} -->
-                    投递到公众号/媒体
+                    <i class="el-icon-s-promotion"></i>
+                    <span>投递到公众号/媒体</span>
                   </el-button>
                 </div>
               </div>
@@ -302,8 +321,9 @@
                 </iframe>
                 <!-- 其他文件类型显示链接 -->
                 <div v-else class="share-file">
-                  <el-button type="primary" icon="el-icon-document" @click="openShareUrl(result.shareImgUrl)">
-                    查看文件
+                  <el-button type="primary" @click="openShareUrl(result.shareImgUrl)">
+                    <i class="el-icon-document"></i>
+                    <span>查看文件</span>
                   </el-button>
                 </div>
               </div>
@@ -366,12 +386,14 @@
           </el-checkbox-group>
         </div>
       </div>
-      <span slot="footer" class="dialog-footer">
-        <el-button @click="scoreDialogVisible = false">取 消</el-button>
-        <el-button type="primary" @click="handleScore" :disabled="!canScore">
-          开始评分
-        </el-button>
-      </span>
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="scoreDialogVisible = false">取 消</el-button>
+          <el-button type="primary" @click="handleScore" :disabled="!canScore">
+            开始评分
+          </el-button>
+        </span>
+      </template>
     </el-dialog>
 
     <!-- 投递到媒体弹窗 -->
@@ -420,12 +442,14 @@
 
 
       </div>
-      <span slot="footer" class="dialog-footer">
-        <el-button @click="layoutDialogVisible = false">取 消</el-button>
-        <el-button type="primary" @click="handleLayout" :disabled="!canLayout">
-          开始排版
-        </el-button>
-      </span>
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="layoutDialogVisible = false">取 消</el-button>
+          <el-button type="primary" @click="handleLayout" :disabled="!canLayout">
+            开始排版
+          </el-button>
+        </span>
+      </template>
     </el-dialog>
 
 
@@ -630,6 +654,7 @@
         currentLayoutResult: null, // 当前要排版的结果
         historyDrawerVisible: false,
         chatHistory: [],
+        historyLoading: false, // 历史记录加载状态
         pushOfficeNum: 0, // 投递到公众号的递增编号
         pushingToWechat: false, // 投递到公众号的loading状态
         selectedMedia: "wechat_layout", // 默认选择公众号
@@ -1349,18 +1374,26 @@
         }
 
         if(targetAI) {
+          console.log(`🎯 [结果处理] 找到目标AI: ${targetAI.name}`);
+          console.log(`📋 [结果处理] 当前taskId: ${this.userInfoReq.taskId}, 消息taskId: ${dataObj.taskId}`);
+          console.log(`📊 [结果处理] AI当前状态: ${targetAI.status}`);
+          
           // 只处理当前任务的结果
           if(dataObj.taskId && dataObj.taskId !== this.userInfoReq.taskId) {
+            console.warn(`⚠️ [结果处理] 忽略其他任务的消息`);
             return; // 忽略其他任务的消息
           }
 
           // 检查AI是否还在运行状态，避免重复处理
           if(targetAI.status !== "running") {
-            return;
+            console.warn(`⚠️ [结果处理] AI状态不是running，跳过处理: ${targetAI.status}`);
+            // 如果状态已经是completed，但收到新结果，说明是重复消息或延迟消息
+            // 不返回，继续处理，确保结果能被保存
           }
 
           // 更新AI状态为已完成
           targetAI.status = "completed";
+          console.log(`✅ [结果处理] 更新${targetAI.name}状态为completed`);
 
           // 将最后一条进度消息标记为已完成
           if(targetAI.progressLogs.length > 0) {
@@ -1371,7 +1404,10 @@
           const resultIndex = this.results.findIndex(
             (r) => r.aiName === targetAI.name && r.taskId === this.userInfoReq.taskId
           );
+          console.log(`🔍 [结果处理] 检查是否已存在结果, 索引: ${resultIndex}`);
+          
           if(resultIndex === -1) {
+            console.log(`➕ [结果处理] 添加新结果到results`);
             this.results.unshift({
               aiName: targetAI.name,
               content: dataObj.draftContent,
@@ -1382,6 +1418,7 @@
             });
             this.activeResultTab = "result-0";
           } else {
+            console.log(`🔄 [结果处理] 更新已存在的结果`);
             this.results.splice(resultIndex, 1);
             this.results.unshift({
               aiName: targetAI.name,
@@ -1393,7 +1430,11 @@
             });
             this.activeResultTab = "result-0";
           }
+          console.log(`💾 [结果处理] 保存历史记录`);
           this.saveHistory();
+          console.log(`✨ [结果处理] ${targetAI.name}结果处理完成`);
+        } else {
+          console.warn(`⚠️ [结果处理] 未找到目标AI，消息类型: ${dataObj.type}`);
         }
 
 
@@ -1608,7 +1649,10 @@
       // 显示历史记录抽屉
       showHistoryDrawer() {
         this.historyDrawerVisible = true;
-        this.loadChatHistory(1);
+        // 延迟加载历史记录，避免阻塞UI
+        this.$nextTick(() => {
+          this.loadChatHistory(1);
+        });
       },
 
       // 关闭历史记录抽屉
@@ -1618,6 +1662,7 @@
 
       // 加载历史记录
       async loadChatHistory(isAll) {
+        this.historyLoading = true;
         try {
           const res = await getChatHistory(this.userId, isAll);
           if(res.code === 200) {
@@ -1626,6 +1671,8 @@
         } catch(error) {
           console.error("加载历史记录失败:", error);
           this.$message.error("加载历史记录失败");
+        } finally {
+          this.historyLoading = false;
         }
       },
 
@@ -2396,10 +2443,17 @@
     margin: 0 auto;
   }
 
+  /* Element Plus 折叠面板样式 */
   :deep(.el-collapse-item__header) {
     font-size: 16px;
     color: #333;
-    padding-left: 20px;
+    padding: 12px 20px;
+    height: auto !important;
+    line-height: normal !important;
+  }
+
+  :deep(.el-collapse-item__wrap) {
+    overflow: visible;
   }
 
   .section-title {
@@ -2408,21 +2462,61 @@
     margin-bottom: 15px;
   }
 
+  /* AI配置头部样式 */
   .ai-config-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     width: 100%;
+    padding: 0;
   }
 
+  .ai-config-header > span {
+    flex: 1;
+    font-weight: 600;
+    font-size: 16px;
+  }
+
+  /* 全局控制按钮容器 */
   .global-controls {
-    margin-right: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding-left: 30px;  /* 增加左边距，与箭头距离更远 */
+    margin-right: 15px;  /* 增加右边距，与折叠箭头保持距离 */
   }
 
+  /* 全局控制按钮样式 */
   .global-control-btn {
-    font-size: 12px;
-    padding: 4px 8px;
-    border-radius: 3px;
+    font-size: 13px !important;
+    padding: 8px 16px !important;
+    border-radius: 6px !important;
+    white-space: nowrap !important;
+    font-weight: 500 !important;
+  }
+  
+  /* 开启状态按钮（绿色） */
+  .global-control-btn.el-button--success {
+    background-color: #67c23a !important;
+    border-color: #67c23a !important;
+    color: #fff !important;
+  }
+  
+  .global-control-btn.el-button--success:hover {
+    background-color: #85ce61 !important;
+    border-color: #85ce61 !important;
+  }
+  
+  /* 关闭状态按钮（红色） */
+  .global-control-btn.el-button--danger {
+    background-color: #f56c6c !important;
+    border-color: #f56c6c !important;
+    color: #fff !important;
+  }
+  
+  .global-control-btn.el-button--danger:hover {
+    background-color: #f78989 !important;
+    border-color: #f78989 !important;
   }
 
   /* 腾讯元宝模型选择样式 */
@@ -2978,6 +3072,40 @@
 
   .history-content {
     padding: 20px;
+  }
+
+  .history-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 20px;
+    color: #909399;
+    font-size: 14px;
+  }
+
+  .history-loading i {
+    font-size: 32px;
+    margin-bottom: 12px;
+  }
+
+  .history-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 20px;
+    color: #c0c4cc;
+  }
+
+  .history-empty i {
+    font-size: 48px;
+    margin-bottom: 12px;
+  }
+
+  .history-empty p {
+    font-size: 14px;
+    margin: 0;
   }
 
   .history-group {

@@ -66,8 +66,14 @@
 
         <el-divider/>
 
-        <el-button size="small" type="primary" plain icon="el-icon-document-add" @click="saveSetting">保存配置</el-button>
-        <el-button size="small" plain icon="el-icon-refresh" @click="resetSetting">重置配置</el-button>
+        <el-button size="small" type="primary" plain @click="saveSetting">
+          <i class="el-icon-document-add"></i>
+          <span>保存配置</span>
+        </el-button>
+        <el-button size="small" plain @click="resetSetting">
+          <i class="el-icon-refresh"></i>
+          <span>重置配置</span>
+        </el-button>
       </div>
     </div>
   </el-drawer>

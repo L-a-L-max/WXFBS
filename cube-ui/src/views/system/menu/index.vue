@@ -136,15 +136,18 @@
                 @show="$refs['iconSelect'].reset()"
               >
                 <IconSelect ref="iconSelect" @selected="selected" :active-icon="form.icon" />
-                <el-input slot="reference" v-model="form.icon" placeholder="点击选择图标" readonly>
-                  <svg-icon
-                    v-if="form.icon"
-                    slot="prefix"
-                    :icon-class="form.icon"
-                    style="width: 25px;"
-                  />
-                  <i v-else slot="prefix" class="el-icon-search el-input__icon" />
-                </el-input>
+                <template #reference>
+                  <el-input v-model="form.icon" placeholder="点击选择图标" readonly>
+                    <template #prefix>
+                      <svg-icon
+                        v-if="form.icon"
+                        :icon-class="form.icon"
+                        style="width: 25px;"
+                      />
+                      <i v-else class="el-icon-search el-input__icon" />
+                    </template>
+                  </el-input>
+                </template>
               </el-popover>
             </el-form-item>
           </el-col>
@@ -160,12 +163,14 @@
           </el-col>
           <el-col :span="12" v-if="form.menuType != 'F'">
             <el-form-item prop="isFrame">
-              <span slot="label">
-                <el-tooltip content="选择是外链则路由地址需要以`http(s)://`开头" placement="top">
-                <i class="el-icon-question"></i>
-                </el-tooltip>
-                是否外链
-              </span>
+              <template #label>
+                <span>
+                  <el-tooltip content="选择是外链则路由地址需要以`http(s)://`开头" placement="top">
+                  <i class="el-icon-question"></i>
+                  </el-tooltip>
+                  是否外链
+                </span>
+              </template>
               <el-radio-group v-model="form.isFrame">
                 <el-radio label="0">是</el-radio>
                 <el-radio label="1">否</el-radio>
@@ -174,56 +179,66 @@
           </el-col>
           <el-col :span="12" v-if="form.menuType != 'F'">
             <el-form-item prop="path">
-              <span slot="label">
-                <el-tooltip content="访问的路由地址，如：`user`，如外网地址需内链访问则以`http(s)://`开头" placement="top">
-                <i class="el-icon-question"></i>
-                </el-tooltip>
-                路由地址
-              </span>
+              <template #label>
+                <span>
+                  <el-tooltip content="访问的路由地址，如：`user`，如外网地址需内链访问则以`http(s)://`开头" placement="top">
+                  <i class="el-icon-question"></i>
+                  </el-tooltip>
+                  路由地址
+                </span>
+              </template>
               <el-input v-model="form.path" placeholder="请输入路由地址" />
             </el-form-item>
           </el-col>
           <el-col :span="12" v-if="form.menuType == 'C'">
             <el-form-item prop="component">
-              <span slot="label">
-                <el-tooltip content="访问的组件路径，如：`system/user/index`，默认在`views`目录下" placement="top">
-                <i class="el-icon-question"></i>
-                </el-tooltip>
-                组件路径
-              </span>
+              <template #label>
+                <span>
+                  <el-tooltip content="访问的组件路径，如：`system/user/index`，默认在`views`目录下" placement="top">
+                  <i class="el-icon-question"></i>
+                  </el-tooltip>
+                  组件路径
+                </span>
+              </template>
               <el-input v-model="form.component" placeholder="请输入组件路径" />
             </el-form-item>
           </el-col>
           <el-col :span="12" v-if="form.menuType != 'M'">
             <el-form-item prop="perms">
+              <template #label>
+                <span>
+                  <el-tooltip content="控制器中定义的权限字符，如：@PreAuthorize(`@ss.hasPermi('system:user:list')`)" placement="top">
+                  <i class="el-icon-question"></i>
+                  </el-tooltip>
+                  权限字符
+                </span>
+              </template>
               <el-input v-model="form.perms" placeholder="请输入权限标识" maxlength="100" />
-              <span slot="label">
-                <el-tooltip content="控制器中定义的权限字符，如：@PreAuthorize(`@ss.hasPermi('system:user:list')`)" placement="top">
-                <i class="el-icon-question"></i>
-                </el-tooltip>
-                权限字符
-              </span>
             </el-form-item>
           </el-col>
           <el-col :span="12" v-if="form.menuType == 'C'">
             <el-form-item prop="query">
+              <template #label>
+                <span>
+                  <el-tooltip content='访问路由的默认传递参数，如：`{"id": 1, "name": "ry"}`' placement="top">
+                  <i class="el-icon-question"></i>
+                  </el-tooltip>
+                  路由参数
+                </span>
+              </template>
               <el-input v-model="form.query" placeholder="请输入路由参数" maxlength="255" />
-              <span slot="label">
-                <el-tooltip content='访问路由的默认传递参数，如：`{"id": 1, "name": "ry"}`' placement="top">
-                <i class="el-icon-question"></i>
-                </el-tooltip>
-                路由参数
-              </span>
             </el-form-item>
           </el-col>
           <el-col :span="12" v-if="form.menuType == 'C'">
             <el-form-item prop="isCache">
-              <span slot="label">
-                <el-tooltip content="选择是则会被`keep-alive`缓存，需要匹配组件的`name`和地址保持一致" placement="top">
-                <i class="el-icon-question"></i>
-                </el-tooltip>
-                是否缓存
-              </span>
+              <template #label>
+                <span>
+                  <el-tooltip content="选择是则会被`keep-alive`缓存，需要匹配组件的`name`和地址保持一致" placement="top">
+                  <i class="el-icon-question"></i>
+                  </el-tooltip>
+                  是否缓存
+                </span>
+              </template>
               <el-radio-group v-model="form.isCache">
                 <el-radio label="0">缓存</el-radio>
                 <el-radio label="1">不缓存</el-radio>
@@ -232,12 +247,14 @@
           </el-col>
           <el-col :span="12" v-if="form.menuType != 'F'">
             <el-form-item prop="visible">
-              <span slot="label">
-                <el-tooltip content="选择隐藏则路由将不会出现在侧边栏，但仍然可以访问" placement="top">
-                <i class="el-icon-question"></i>
-                </el-tooltip>
-                显示状态
-              </span>
+              <template #label>
+                <span>
+                  <el-tooltip content="选择隐藏则路由将不会出现在侧边栏，但仍然可以访问" placement="top">
+                  <i class="el-icon-question"></i>
+                  </el-tooltip>
+                  显示状态
+                </span>
+              </template>
               <el-radio-group v-model="form.visible">
                 <el-radio
                   v-for="dict in dict.type.sys_show_hide"
@@ -249,12 +266,14 @@
           </el-col>
           <el-col :span="12">
             <el-form-item prop="status">
-              <span slot="label">
-                <el-tooltip content="选择停用则路由将不会出现在侧边栏，也不能被访问" placement="top">
-                <i class="el-icon-question"></i>
-                </el-tooltip>
-                菜单状态
-              </span>
+              <template #label>
+                <span>
+                  <el-tooltip content="选择停用则路由将不会出现在侧边栏，也不能被访问" placement="top">
+                  <i class="el-icon-question"></i>
+                  </el-tooltip>
+                  菜单状态
+                </span>
+              </template>
               <el-radio-group v-model="form.status">
                 <el-radio
                   v-for="dict in dict.type.sys_normal_disable"
@@ -266,10 +285,12 @@
           </el-col>
         </el-row>
       </el-form>
-      <div slot="footer" class="dialog-footer">
-        <el-button type="primary" @click="submitForm">确 定</el-button>
-        <el-button @click="cancel">取 消</el-button>
-      </div>
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button type="primary" @click="submitForm">确 定</el-button>
+          <el-button @click="cancel">取 消</el-button>
+        </div>
+      </template>
     </el-dialog>
   </div>
 </template>

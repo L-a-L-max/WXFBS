@@ -27,6 +27,7 @@
 <!--      </template>-->
       <el-dropdown class="avatar-container right-menu-item hover-effect" trigger="click">
         <div class="avatar-wrapper">
+          <i class="el-icon-user-solid" style="margin-right: 5px; font-size: 16px;"></i>
           <span id="userName" style="top:0;display: none"> {{ name }}</span>
           <span style="top:0"> {{ nickname }}</span>
           <i class="el-icon-caret-bottom" />

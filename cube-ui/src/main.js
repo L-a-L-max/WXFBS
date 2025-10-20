@@ -58,9 +58,14 @@ import { createHead } from '@vueuse/head'
 import DictData from '@/components/DictData'
 // SVG 图标组件
 import { SvgIcon } from '@/assets/icons'
+// Vue3兼容性配置
+import setupVue3Compat from '@/utils/vue3-compat'
 
 // 创建应用实例
 const app = createApp(App)
+
+// 应用Vue3兼容性配置
+setupVue3Compat(app)
 
 // 全局方法挂载 (Vue 3 方式)
 app.config.globalProperties.getDicts = getDicts
