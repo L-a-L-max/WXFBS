@@ -262,7 +262,17 @@ public class AIGCController {
                         page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("公开分享")).click();
                         Thread.sleep(500);
                     } else {
-                        page.locator("button[data-testid='message_action_share']").last().click();
+                        // 🔥 优化：等待分享按钮出现（智能评分场景）
+                        Locator shareButton = page.locator("button[data-testid='message_action_share']").last();
+                        logInfo.sendTaskLog("等待智能评分分享按钮出现...", userId, "智能评分");
+                        
+                        shareButton.waitFor(new Locator.WaitForOptions()
+                            .setState(WaitForSelectorState.VISIBLE)
+                            .setTimeout(120000)); // 等待120秒
+                        
+                        shareButton.click();
+                        logInfo.sendTaskLog("✅ 已点击分享按钮", userId, "智能评分");
+                        
                         Thread.sleep(2000);
                         page.locator("button[data-testid='thread_share_copy_btn']").first().click();
                     }
@@ -285,14 +295,21 @@ public class AIGCController {
                     page.getByTestId("popover_select_option_item").nth(1).click();
                 });
             } else {
-                page.locator("button[data-testid='message_action_share']").last().click();
-                Thread.sleep(2000);
-                Locator shareLocator = page.locator("(//span[contains(@class,'semi-button-content')][contains(text(),'分享图片')])[1]");
-                shareLocator.click();
-                Thread.sleep(5000);
-                sharImgUrl = ScreenshotUtil.downloadAndUploadFile(page, uploadUrl, () -> {
-                    page.locator("button:has-text(\"下载图片\")").click();
-                });
+                try {
+                    // 🔥 优化：复制链接和分享图片在同一个对话框，不需要再次点击分享按钮
+                    logInfo.sendTaskLog("准备生成智能评分分享图片...", userId, "智能评分");
+                    Thread.sleep(1000);
+                    
+                    Locator shareLocator = page.locator("(//span[contains(@class,'semi-button-content')][contains(text(),'分享图片')])[1]");
+                    shareLocator.click();
+                    Thread.sleep(5000);
+                    sharImgUrl = ScreenshotUtil.downloadAndUploadFile(page, uploadUrl, () -> {
+                        page.locator("button:has-text(\"下载图片\")").click();
+                    });
+                    logInfo.sendTaskLog("✅ 智能评分分享图片已生成", userId, "智能评分");
+                } catch (Exception e) {
+                    UserLogUtil.sendExceptionLog(userId, "智能评分分享图片", "startDBScore", e, url + "/saveLogInfo");
+                }
             }
 
             logInfo.sendTaskLog("执行完成", userId, "智能评分");
@@ -413,17 +430,29 @@ public class AIGCController {
 
             clipboardLockManager.runWithClipboardLock(() -> {
                 try {
-                    // 🔥 优化分享按钮点击逻辑
+                    // 🔥 优化分享按钮点击逻辑：支持深度思考模式（超能模式）
                     Locator shareButton = page.locator("button[data-testid='message_action_share']").last();
                     
-                    // 等待分享按钮可见并可交互，减少超时时间
-//                    shareButton.waitFor(new Locator.WaitForOptions()
-//                        .setState(WaitForSelectorState.VISIBLE)
-//                        .setTimeout(20000)); // 从30秒减少到20秒
+                    // ✅ 等待分享按钮出现（深度思考模式需要更长时间）
+                    // 最多等待120秒（2分钟），因为内容已经稳定，分享按钮应该会出现
+                    try {
+                        logInfo.sendTaskLog("等待分享按钮出现（深度思考模式可能需要较长时间）...", userId, dynamicAiName);
+                        shareButton.waitFor(new Locator.WaitForOptions()
+                            .setState(WaitForSelectorState.VISIBLE)
+                            .setTimeout(120000)); // 等待120秒
+                        logInfo.sendTaskLog("分享按钮已出现，准备点击", userId, dynamicAiName);
+                    } catch (TimeoutError e) {
+                        // 如果分享按钮120秒后仍未出现，记录警告并尝试继续
+                        UserLogUtil.sendAIWarningLog(userId, dynamicAiName, "分享按钮等待", 
+                            "等待120秒后分享按钮仍未出现，可能页面结构已更新", url + "/saveLogInfo");
+                        logInfo.sendTaskLog("⚠️ 分享按钮未出现，尝试其他方式获取分享链接", userId, dynamicAiName);
+                    }
 
-                    if(shareButton.count()>0){
+                    if(shareButton.count()>0 && shareButton.isVisible()){
                         shareButton.click();
+                        logInfo.sendTaskLog("✅ 已点击分享按钮", userId, dynamicAiName);
                     }else{
+                        logInfo.sendTaskLog("⚠️ 分享按钮不可用，跳过分享链接获取", userId, dynamicAiName);
                         return;
                     }
                     
@@ -470,14 +499,23 @@ public class AIGCController {
             Thread.sleep(1000);
             String shareUrl = shareUrlRef.get();
             if(sharImgUrl == null) {
-                page.locator("button[data-testid='message_action_share']").last().click();
-                Thread.sleep(2000);
-                Locator shareLocator = page.locator("(//span[contains(@class,'semi-button-content')][contains(text(),'分享图片')])[1]");
-                shareLocator.click();
-                Thread.sleep(5000);
-                sharImgUrl = ScreenshotUtil.downloadAndUploadFile(page, uploadUrl, () -> {
-                    page.locator("button:has-text(\"下载图片\")").click();
-                });
+                try {
+                    // 🔥 优化：复制链接和分享图片在同一个对话框，不需要再次点击分享按钮
+                    // 直接点击"分享图片"按钮（它和"复制链接"按钮是相邻的）
+                    logInfo.sendTaskLog("准备生成分享图片...", userId, dynamicAiName);
+                    Thread.sleep(1000);
+                    
+                    Locator shareLocator = page.locator("(//span[contains(@class,'semi-button-content')][contains(text(),'分享图片')])[1]");
+                    shareLocator.click();
+                    Thread.sleep(5000);
+                    sharImgUrl = ScreenshotUtil.downloadAndUploadFile(page, uploadUrl, () -> {
+                        page.locator("button:has-text(\"下载图片\")").click();
+                    });
+                    logInfo.sendTaskLog("✅ 分享图片已生成", userId, dynamicAiName);
+                } catch (Exception e) {
+                    UserLogUtil.sendExceptionLog(userId, "豆包分享图片", "startDB", e, url + "/saveLogInfo");
+                    logInfo.sendTaskLog("⚠️ 分享图片生成失败：" + e.getMessage(), userId, dynamicAiName);
+                }
             }
 
             // 🔥 提取豆包会话ID并保存
@@ -1063,26 +1101,26 @@ public class AIGCController {
             screenshotFuture.cancel(false);
             screenshotExecutor.shutdown();
 
-            AtomicReference<String> shareUrlRef = new AtomicReference<>();
+            // 🔥 重构：使用新的内容和链接获取方法
             String formattedContent = textContent;
+            String shareUrl = null;
 
-            Locator container = page.locator(".containerWrap--r2_gRwLP").last();
-//            page.locator("div[class*='btn--YtZqkWMA']:not([class*='reloadBtn--PQnoOpqJ'])").last().click();
-            Locator share = container.locator("div.btn--YtZqkWMA").nth(3);
-            share.click();
-            page.waitForTimeout(1000);
-
-            page.locator("//button[@class='ant-btn css-12jjqpr ant-btn-primary ant-btn-color-primary ant-btn-variant-solid ty-button shareButNew--hk8DBL2T']").click();
-            page.waitForTimeout(1000);
-            String rawHtmlContent = "";
-            Locator outputLocator = container.locator(".tongyi-markdown");
-            if(outputLocator.count()>0) {
-                rawHtmlContent = outputLocator.last().innerHTML();
-            }else{
-                throw new RuntimeException("未检测到回复");
-            }
-            // 获取干净回答并封装
+            // 步骤1：获取HTML内容并格式化
             try {
+                Locator container = page.locator(".containerWrap--r2_gRwLP").last();
+                Locator outputLocator = container.locator(".tongyi-markdown");
+                
+                String rawHtmlContent = "";
+                if (outputLocator.count() > 0) {
+                    rawHtmlContent = outputLocator.last().innerHTML();
+                    logInfo.sendTaskLog("已提取回答的HTML内容", userId, aiName);
+                } else {
+                    UserLogUtil.sendAIWarningLog(userId, aiName, "内容提取", 
+                        "未找到回答内容容器 | 页面URL: " + page.url(), url + "/saveLogInfo");
+                    throw new RuntimeException("未检测到回复");
+                }
+
+                // 格式化HTML内容
                 if (!rawHtmlContent.startsWith("获取内容失败") && !rawHtmlContent.isEmpty()) {
                     Object finalFormattedContent = page.evaluate("""
                             (content) => {
@@ -1153,24 +1191,26 @@ public class AIGCController {
                 UserLogUtil.sendExceptionLog(userId, "通义千问内容格式化", "startTYQianwen", e, url + "/saveLogInfo");
             }
 
-            // 获取分享链接
+            // 步骤2：获取分享链接（使用剪贴板锁）
+            AtomicReference<String> shareUrlRef = new AtomicReference<>();
             clipboardLockManager.runWithClipboardLock(() -> {
                 try {
-                    logInfo.sendTaskLog("正在获取分享链接...", userId, aiName);
-
-                    page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("复制链接")).click();
-                    page.waitForTimeout(500);
-
-                    String shareUrl = (String) page.evaluate("navigator.clipboard.readText()");
-                    shareUrlRef.set(shareUrl);
-                    logInfo.sendTaskLog("成功获取分享链接: " + shareUrl, userId, aiName);
+                    // 🔥 使用新的分享链接获取方法
+                    String obtainedShareUrl = tongYiUtil.getTongYiShareLink(page, userId, aiName);
+                    shareUrlRef.set(obtainedShareUrl);
+                    
+                    if (obtainedShareUrl != null && !obtainedShareUrl.isEmpty()) {
+                        logInfo.sendTaskLog("✓ 成功获取分享链接", userId, aiName);
+                    } else {
+                        logInfo.sendTaskLog("⚠ 获取分享链接失败或返回为空", userId, aiName);
+                    }
                 } catch (Exception e) {
-                    logInfo.sendTaskLog("获取分享链接失败", userId, aiName);
-                    UserLogUtil.sendExceptionLog(userId, "通义千问获取分型链接", "startTYQianwen", e, url + "/saveLogInfo");
+                    logInfo.sendTaskLog("获取分享链接时发生异常: " + e.getMessage(), userId, aiName);
+                    UserLogUtil.sendExceptionLog(userId, "通义千问获取分享链接", "startTYQianwen", e, url + "/saveLogInfo");
                 }
             });
 
-            String shareUrl = shareUrlRef.get();
+            shareUrl = shareUrlRef.get();
             String sharImgUrl = "";
 
             // 🔥 通知用户会话ID已保存

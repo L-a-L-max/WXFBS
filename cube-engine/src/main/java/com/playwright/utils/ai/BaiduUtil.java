@@ -642,6 +642,7 @@ public class BaiduUtil {
     private void sendPromptToBaidu(Page page, String userPrompt, String userId) throws Exception {
         // 检查页面是否已关闭
         if (page.isClosed()) {
+            UserLogUtil.sendAIWarningLog(userId, "百度AI", "提示词发送", "页面已关闭，无法发送提示词", url + "/saveLogInfo");
             throw new RuntimeException("页面已关闭，无法发送提示词");
         }
 
@@ -649,24 +650,63 @@ public class BaiduUtil {
             // 百度对话AI输入框 XPath
             String inputSelector = "//*[@id=\"chat-input-box\"]";
 
-            Locator inputBox = page.locator(inputSelector);
-            if (inputBox.count() == 0) {
-                inputBox = page.locator("#chat-textarea");
-                if (inputBox.count() > 0 && inputBox.isVisible()) {
-                    Thread.sleep(500);
-                    inputBox.fill(userPrompt);
+            // 🔥 修复：尝试多种输入框选择器，减少不必要的警告日志
+            Locator inputBox = null;
+            String[] inputSelectors = {
+                "//*[@id=\"chat-input-box\"]",  // 主输入框
+                "#chat-textarea",  // 备用输入框1
+                "textarea[placeholder*='请输入']",  // 备用输入框2
+                ".chat-input",  // 备用输入框3
+                "#chat-input"  // 备用输入框4
+            };
+            
+            boolean inputBoxFound = false;
+            String usedSelector = "";
+            
+            for (String selector : inputSelectors) {
+                try {
+                    Locator tempInputBox = page.locator(selector);
+                    if (tempInputBox.count() > 0 && tempInputBox.isVisible()) {
+                        inputBox = tempInputBox;
+                        usedSelector = selector;
+                        inputBoxFound = true;
+                        break;
+                    }
+                } catch (Exception e) {
+                    // 静默失败，尝试下一个选择器
+                    continue;
                 }
-            } else {
-                // 点击输入框并输入内容
+            }
+            
+            if (!inputBoxFound || inputBox == null) {
+                // 🔥 优化：添加更详细的上下文信息
+                UserLogUtil.sendAIWarningLogWithDedup(userId, "百度AI", "提示词发送", 
+                    "未找到任何可用的输入框元素 | 页面URL：" + page.url() + " | 已尝试多个选择器", 
+                    url + "/saveLogInfo", 30000);
+                throw new RuntimeException("未找到可用的输入框");
+            }
+            
+            // 点击输入框并输入内容（减少异常日志输出）
+            try {
                 inputBox.click();
-                Thread.sleep(500);
+            } catch (Exception e) {
+                // 点击失败不影响功能，静默处理
+            }
+            
+            Thread.sleep(500);
+            
+            try {
                 inputBox.fill(userPrompt);
+            } catch (Exception e) {
+                UserLogUtil.sendAIWarningLog(userId, "百度AI", "提示词发送", "输入框填充失败", url + "/saveLogInfo");
+                throw e;
             }
 
             logInfo.sendTaskLog("用户指令已输入完成", userId, "百度AI");
 
             // 检查页面状态
             if (page.isClosed()) {
+                UserLogUtil.sendAIWarningLog(userId, "百度AI", "提示词发送", "页面在输入提示词后已关闭", url + "/saveLogInfo");
                 throw new RuntimeException("页面在输入提示词后已关闭");
             }
 
@@ -678,25 +718,40 @@ public class BaiduUtil {
                 // 检查按钮状态
                 String buttonClass = sendButton.getAttribute("class");
                 if (buttonClass != null && buttonClass.contains("cos-icon-arrow-up-circle-fill send-icon")) {
-                    sendButton.click();
-                    logInfo.sendTaskLog("指令已发送成功", userId, "百度AI");
+                    try {
+                        sendButton.click();
+                        logInfo.sendTaskLog("指令已发送成功", userId, "百度AI");
+                    } catch (Exception e) {
+                        UserLogUtil.sendAIWarningLog(userId, "百度AI", "提示词发送", "发送按钮点击失败：" + e.getMessage(), url + "/saveLogInfo");
+                        // 尝试按Enter键发送
+                        inputBox.press("Enter");
+                        logInfo.sendTaskLog("点击失败后已尝试通过Enter键发送", userId, "百度AI");
+                    }
                 } else {
+                    UserLogUtil.sendAIWarningLog(userId, "百度AI", "提示词发送", "发送按钮未就绪，按钮状态: " + buttonClass, url + "/saveLogInfo");
                     logInfo.sendTaskLog("发送按钮未就绪，按钮状态: " + buttonClass, userId, "百度AI");
                     // 尝试按Enter键发送
                     inputBox.press("Enter");
                     logInfo.sendTaskLog("已尝试通过Enter键发送", userId, "百度AI");
                 }
             } else {
+                // 🔥 优化：添加页面状态信息
+                UserLogUtil.sendAIWarningLogWithDedup(userId, "百度AI", "提示词发送", 
+                    "未找到发送按钮元素 | 页面URL：" + page.url(), 
+                    url + "/saveLogInfo", 30000);
                 // 如果没找到发送按钮，尝试按Enter键
                 inputBox.press("Enter");
                 logInfo.sendTaskLog("未找到发送按钮，已尝试Enter键发送", userId, "百度AI");
             }
 
         } catch (com.microsoft.playwright.impl.TargetClosedError e) {
+            UserLogUtil.sendAIWarningLog(userId, "百度AI", "提示词发送", "页面目标已关闭，WebSocket可能断联", url + "/saveLogInfo");
             throw new RuntimeException("页面在发送提示词时已关闭", e);
         } catch (TimeoutError e) {
+            UserLogUtil.sendAITimeoutLog(userId, "百度AI", "提示词发送", e, "发送提示词操作", url + "/saveLogInfo");
             throw new RuntimeException("发送提示词超时", e);
         } catch (Exception e) {
+            UserLogUtil.sendAIExceptionLog(userId, "百度AI", "sendPromptToBaidu", e, System.currentTimeMillis(), "发送提示词失败", url + "/saveLogInfo");
             throw e;
         }
     }
@@ -711,13 +766,24 @@ public class BaiduUtil {
     private String extractBaiduContent(Page page, String userId) throws Exception {
         // 检查页面是否已关闭
         if (page.isClosed()) {
+            UserLogUtil.sendAIWarningLog(userId, "百度AI", "内容提取", "页面已关闭，无法提取内容", url + "/saveLogInfo");
             throw new RuntimeException("页面已关闭，无法提取内容");
         }
 
         try {
             logInfo.sendTaskLog("等待百度对话AI回复...", userId, "百度AI");
 
-            Locator container = page.locator("div.chat-qa-container").last();
+            Locator container = null;
+            try {
+                container = page.locator("div.chat-qa-container").last();
+            } catch (Exception e) {
+                // 🔥 优化：添加页面状态和详细错误信息
+                UserLogUtil.sendAIWarningLogWithDedup(userId, "百度AI", "内容提取", 
+                    "未找到对话容器元素 | 页面URL：" + page.url() + " | 错误：" + e.getClass().getSimpleName() + " - " + e.getMessage(), 
+                    url + "/saveLogInfo", 30000);
+                throw new RuntimeException("未找到对话容器", e);
+            }
+            
             // 百度对话AI回复内容选择器
             String[] replySelectors = {
                     "div.data-show-ext"
@@ -732,6 +798,7 @@ public class BaiduUtil {
                     try {
                         // 检查页面状态
                         if (page.isClosed()) {
+                            UserLogUtil.sendAIWarningLog(userId, "百度AI", "内容提取", "页面在查找回复元素时已关闭", url + "/saveLogInfo");
                             throw new RuntimeException("页面在查找回复元素时已关闭");
                         }
 
@@ -745,6 +812,10 @@ public class BaiduUtil {
                 }
 
                 if (!replyFound) {
+                    // 🔥 优化：添加更多上下文信息
+                    UserLogUtil.sendAIWarningLogWithDedup(userId, "百度AI", "内容提取", 
+                        "未找到回复元素 | 页面URL：" + page.url() + " | 已尝试多个选择器", 
+                        url + "/saveLogInfo", 30000);
                     logInfo.sendTaskLog("未找到百度对话AI回复内容", userId, "百度AI");
                     return "未能获取到百度对话AI的回复内容";
                 }
@@ -757,6 +828,7 @@ public class BaiduUtil {
                         try {
                             // 检查页面状态
                             if (page.isClosed()) {
+                                UserLogUtil.sendAIWarningLog(userId, "百度AI", "内容提取", "页面在等待生成完成时已关闭", url + "/saveLogInfo");
                                 throw new RuntimeException("页面在等待生成完成时已关闭");
                             }
 
@@ -766,6 +838,9 @@ public class BaiduUtil {
                                 logInfo.sendTaskLog("百度对话AI生成完成", userId, "百度AI");
                                 break;
                             }
+                        } catch (com.microsoft.playwright.impl.TargetClosedError e) {
+                            UserLogUtil.sendAIWarningLog(userId, "百度AI", "内容提取", "页面目标已关闭，WebSocket可能断联", url + "/saveLogInfo");
+                            throw e;
                         } catch (Exception e) {
                             // 按钮可能已经消失或变化，生成可能完成
                             logInfo.sendTaskLog("按钮状态变化，百度对话AI生成完成", userId, "百度AI");
@@ -778,6 +853,7 @@ public class BaiduUtil {
 
                 } catch (Exception e) {
                     // 如果没有检测到暂停按钮变化，使用内容稳定性检测
+                    UserLogUtil.sendAIWarningLog(userId, "百度AI", "内容提取", "未检测到暂停按钮，使用内容稳定性检测", url + "/saveLogInfo");
                     logInfo.sendTaskLog("未检测到暂停按钮变化，使用内容稳定性检测", userId, "百度AI");
 
                     String lastContent = "";
@@ -786,6 +862,7 @@ public class BaiduUtil {
                     for (int i = 0; i < 30; i++) { // 最多等待30秒
                         // 检查页面状态
                         if (page.isClosed()) {
+                            UserLogUtil.sendAIWarningLog(userId, "百度AI", "内容提取", "页面在内容稳定性检测时已关闭", url + "/saveLogInfo");
                             throw new RuntimeException("页面在内容稳定性检测时已关闭");
                         }
 
@@ -804,6 +881,7 @@ public class BaiduUtil {
                                 lastContent = currentContent;
                             }
                         } catch (Exception contentException) {
+                            UserLogUtil.sendAIWarningLog(userId, "百度AI", "内容提取", "读取内容HTML失败：" + contentException.getMessage(), url + "/saveLogInfo");
                             // 继续等待
                             continue;
                         }
@@ -820,6 +898,7 @@ public class BaiduUtil {
 
             // 检查页面状态
             if (page.isClosed()) {
+                UserLogUtil.sendAIWarningLog(userId, "百度AI", "内容提取", "页面在提取最终内容时已关闭", url + "/saveLogInfo");
                 throw new RuntimeException("页面在提取最终内容时已关闭");
             }
 
@@ -829,36 +908,89 @@ public class BaiduUtil {
             if (editor.count() > 0) {
                 Locator copyButton = page.locator("i.cos-icon.cos-icon-copy.button_AxaRd");
                 if (copyButton.count() > 0 && copyButton.isVisible()) {
-                    copyButton.click();
-                    Thread.sleep(1000);
-                    content = (String) page.evaluate("navigator.clipboard.readText()");
+                    try {
+                        copyButton.click();
+                        Thread.sleep(1000);
+                        content = (String) page.evaluate("navigator.clipboard.readText()");
+                        // 🔥 优化：不再记录剪贴板为空的警告（可能是AI正常响应）
+                        // 只有在真正出错时才记录
+                    } catch (Exception e) {
+                        UserLogUtil.sendAIWarningLog(userId, "百度AI", "内容提取", 
+                            "复制按钮操作失败（编辑器模式）：" + e.getClass().getSimpleName() + " - " + e.getMessage(), 
+                            url + "/saveLogInfo");
+                    }
+                } else {
+                    UserLogUtil.sendAIWarningLogWithDedup(userId, "百度AI", "内容提取", 
+                        "编辑器模式下未找到可用的复制按钮", url + "/saveLogInfo", 30000);
                 }
             } else if (comate.count() > 0) {
                 Locator copyButton = page.locator("i.cos-icon.cos-icon-copy.button_f81z6_14");
                 if (copyButton.count() > 0 && copyButton.isVisible()) {
-                    copyButton.click();
-                    Thread.sleep(1000);
-                    content = (String) page.evaluate("navigator.clipboard.readText()");
+                    try {
+                        copyButton.click();
+                        Thread.sleep(1000);
+                        content = (String) page.evaluate("navigator.clipboard.readText()");
+                        // 🔥 优化：不再记录剪贴板为空的警告
+                    } catch (Exception e) {
+                        UserLogUtil.sendAIWarningLog(userId, "百度AI", "内容提取", 
+                            "复制按钮操作失败（comate模式）：" + e.getClass().getSimpleName() + " - " + e.getMessage(), 
+                            url + "/saveLogInfo");
+                    }
+                } else {
+                    UserLogUtil.sendAIWarningLogWithDedup(userId, "百度AI", "内容提取", 
+                        "comate模式下未找到可用的复制按钮", url + "/saveLogInfo", 30000);
                 }
             } else {
                 Locator locator = page.locator("div.chat-qa-container");
                 Locator element = locator.last().locator(".answer-box.last-answer-box");
-                Locator copyButton = element.locator("i.cos-icon.cos-icon-copy.icon_1nicr_12").last();
+                // 更新复制按钮选择器以适配新的DOM结构
+                String[] copyButtonSelectors = {
+                    "i.cos-icon.cos-icon-copy.icon_jk2b1_12",  // 新的class名称
+                    "i.cos-icon.cos-icon-copy.icon_1nicr_12",  // 旧的class名称（备用）
+                    ".menu-item_jk2b1_1 i.cos-icon-copy",     // 通过父元素定位
+                    "span.menu-item_jk2b1_1 i.cos-icon.cos-icon-copy" // 完整路径
+                };
+                
+                Locator copyButton = null;
+                for (String selector : copyButtonSelectors) {
+                    try {
+                        Locator tempButton = element.locator(selector).last();
+                        if (tempButton.count() > 0 && tempButton.isVisible()) {
+                            copyButton = tempButton;
+                            break;
+                        }
+                    } catch (Exception e) {
+                        // 继续尝试下一个选择器
+                    }
+                }
                 // 百度AI无法分享的组件也有分享按钮只是不可见，不可用
-                if (copyButton.count() > 0 && copyButton.isVisible()) {
-                    copyButton.click();
-                    Thread.sleep(1000);
-                    content = (String) page.evaluate("navigator.clipboard.readText()");
+                if (copyButton != null && copyButton.count() > 0 && copyButton.isVisible()) {
+                    try {
+                        copyButton.click();
+                        Thread.sleep(1000);
+                        content = (String) page.evaluate("navigator.clipboard.readText()");
+                        // 🔥 优化：不再记录剪贴板为空的警告
+                    } catch (Exception e) {
+                        UserLogUtil.sendAIWarningLog(userId, "百度AI", "内容提取", 
+                            "复制按钮操作失败（标准模式）：" + e.getClass().getSimpleName() + " - " + e.getMessage(), 
+                            url + "/saveLogInfo");
+                    }
+                } else {
+                    UserLogUtil.sendAIWarningLogWithDedup(userId, "百度AI", "内容提取", 
+                        "标准模式下未找到可用的复制按钮", url + "/saveLogInfo", 30000);
                 }
             }
 
             return content;
 
         } catch (com.microsoft.playwright.impl.TargetClosedError e) {
+            UserLogUtil.sendAIWarningLog(userId, "百度AI", "内容提取", "页面目标已关闭，WebSocket可能断联", url + "/saveLogInfo");
             throw new RuntimeException("页面在提取内容时已关闭", e);
         } catch (TimeoutError e) {
+            UserLogUtil.sendAITimeoutLog(userId, "百度AI", "内容提取", e, "等待内容提取完成", url + "/saveLogInfo");
             throw new RuntimeException("提取内容超时", e);
         } catch (Exception e) {
+            UserLogUtil.sendAIExceptionLog(userId, "百度AI", "extractBaiduContent", e, System.currentTimeMillis(), "提取内容失败", url + "/saveLogInfo");
             throw e;
         }
     }
@@ -1639,8 +1771,21 @@ public class BaiduUtil {
             userInfoRequest.setAiName(parseBaiduRoles(roles));
             userInfoRequest.setShareUrl(shareUrl != null ? shareUrl : "");
             userInfoRequest.setShareImgUrl(shareImgUrl);
-            // 保存到数据库
-            RestUtils.post(url + "/saveDraftContent", userInfoRequest);
+            
+            // 保存到数据库，增加异常处理
+            try {
+                logInfo.sendTaskLog("正在保存百度AI内容到稿库...", userId, "百度AI");
+                RestUtils.post(url + "/saveDraftContent", userInfoRequest);
+                logInfo.sendTaskLog("百度AI内容保存成功", userId, "百度AI");
+            } catch (Exception saveException) {
+                // 记录保存失败异常，包含详细信息
+                UserLogUtil.sendAIExceptionLog(userId, "百度AI", "saveBaiduContent->RestUtils.post", 
+                    saveException, System.currentTimeMillis(), 
+                    "保存内容到稿库失败，URL: " + url + "/saveDraftContent", 
+                    url + "/saveLogInfo");
+                logInfo.sendTaskLog("百度AI内容保存失败: " + saveException.getMessage(), userId, "百度AI");
+                throw new RuntimeException("保存百度AI内容到稿库超时或失败", saveException);
+            }
 
             // 发送ori_lid到前端更新baiduChatId，使用直接发送方法
             if (oriLid != null && !oriLid.trim().isEmpty()) {

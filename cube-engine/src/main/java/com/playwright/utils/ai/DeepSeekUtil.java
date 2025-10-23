@@ -735,7 +735,7 @@ public class DeepSeekUtil {
             
             boolean navigationSucceeded = false;
             int retries = 0;
-            final int MAX_RETRIES = 3; // 增加重试次数
+            final int MAX_RETRIES = 2; // 🔥 优化：降低重试次数，加快失败返回（从3降至2）
             
             // 如果有会话ID，则直接导航到该会话
             if (chatId != null && !chatId.isEmpty()) {
@@ -1343,7 +1343,7 @@ public class DeepSeekUtil {
 
                 // 等待状态变化
                 boolean stateChanged = false;
-                for (int i = 0; i < 15; i++) { // 增加重试次数和超时
+                for (int i = 0; i < 10; i++) { // 🔥 优化：降低重试次数（从15降至10），加快响应
                     page.waitForTimeout(200);
 
                     String newClasses = (String) button.evaluate("el => el.className");

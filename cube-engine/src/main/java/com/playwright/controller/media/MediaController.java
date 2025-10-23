@@ -714,6 +714,7 @@ public class MediaController {
     @Operation(summary = "获取微头条登录二维码", description = "返回二维码截图 URL 或 false 表示失败")
     @GetMapping("/getTTHQrCode")
     public String getTTHQrCode(@Parameter(description = "用户唯一标识") @RequestParam("userId") String userId) {
+        Long startTime = System.currentTimeMillis();
         try (BrowserContext context = browserUtil.createPersistentBrowserContext(false, userId, "tth")) {
             Page page = browserUtil.getOrCreatePage(context);
             // 首先检查当前登录状态
@@ -725,7 +726,7 @@ public class MediaController {
                 statusObject.put("userId", userId);
                 statusObject.put("type", "RETURN_TOUTIAO_STATUS");
                 webSocketClientService.sendMessage(statusObject.toJSONString());
-                logMsgUtil.sendTTHFlow("微头条已登录", userId);
+                // 不再记录成功日志，按照用户要求
                 // 截图返回当前页面
                 return screenshotUtil.screenshotAndUpload(page, "pphLoggedIn.png");
             }
@@ -759,7 +760,7 @@ public class MediaController {
                         webSocketClientService.sendMessage(jsonObjectTwo.toJSONString());
 
                         // 登录成功，跳出循环
-                        logMsgUtil.sendTTHFlow("微头条登录成功: " + loginStatus, userId);
+                        // 不再记录成功日志，按照用户要求
                         break;
                     }
                     // 每5次尝试重新截图一次，可能二维码已更新

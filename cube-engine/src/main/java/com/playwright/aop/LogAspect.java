@@ -78,7 +78,8 @@ public class LogAspect {
             UserLogUtil.sendExceptionLog("无", "aop异常", "logAround", e, url + "/saveLogInfo");
         }
         Object result = null;
-        for(int i = 0; i < 2; i++) {
+        // 最多重试1次（i=0首次执行，i=1重试1次）
+        for(int i = 0; i <= 1; i++) {
             try {
                 result = joinPoint.proceed();
 //            执行成功
@@ -99,12 +100,32 @@ public class LogAspect {
                         break;
                     }
 
-                    if(i < 2) {
-                        log.info(logInfo.getMethodName() + "执行错误，尝试重试");
+                    if(i < 1) {
+                        // 记录详细的错误原因
+                        String errorDetail = mcpResult != null ? mcpResult.getResult() : resultStr;
+                        log.warn("{}执行失败，准备重试 [第{}次失败，错误详情: {}]", logInfo.getMethodName(), i + 1, errorDetail);
+                        
+                        // 发送详细的错误日志
+                        UserLogUtil.sendAIBusinessLog(
+                            logInfo.getUserId(), 
+                            extractAIName(description), 
+                            logInfo.getMethodName(), 
+                            "执行失败，准备重试 - 错误详情: " + errorDetail, 
+                            System.currentTimeMillis(), 
+                            url + "/saveLogInfo"
+                        );
+                        
                         sendTaskLog(description, logInfo.getUserId(), ",尝试重试");
                         continue;
                     }
                 }
+                
+                // 如果是登录检查方法，不记录成功日志
+                if (logInfo.getMethodName().contains("check") && (logInfo.getMethodName().contains("Login") || logInfo.getMethodName().contains("login"))) {
+                    log.info(logInfo.getMethodName() + "为登录检查方法，不记录成功日志");
+                    break;
+                }
+                
                 if(mcpResult != null) {
                     logInfo.setExecutionResult(mcpResult.getResult());
                 } else {
@@ -115,27 +136,55 @@ public class LogAspect {
                 RestUtils.post(url + "/saveLogInfo", logInfo);
                 break;
             } catch (Throwable e) {
-                if(i < 2) {
+                if(i < 1) {
 //              如果是登录方法，跳过检测
                     if (logInfo.getMethodName().contains("check")) {
                         log.info(logInfo.getMethodName() + "为登录方法,不再检测");
                         return "false";
                     }
-                    log.info(logInfo.getMethodName() + "执行错误，尝试重试");
+                    
+                    // 记录详细的异常信息
+                    String exceptionDetail = e.getClass().getSimpleName() + " | " + e.getMessage();
+                    log.warn("{}执行异常，准备重试 [第{}次失败，异常类型: {}, 异常信息: {}]", 
+                        logInfo.getMethodName(), i + 1, e.getClass().getSimpleName(), e.getMessage());
+                    
+                    // 发送详细的异常日志
+                    Exception exception = (e instanceof Exception) ? (Exception) e : new RuntimeException(e);
+                    UserLogUtil.sendAIExceptionLog(
+                        logInfo.getUserId(), 
+                        extractAIName(description), 
+                        logInfo.getMethodName(), 
+                        exception,
+                        System.currentTimeMillis(),
+                        "执行失败，准备重试（第" + (i + 1) + "次失败）",
+                        url + "/saveLogInfo"
+                    );
+                    
                     sendTaskLog(description, logInfo.getUserId(), ",尝试重试");
                     continue;
                 }
-//            执行失败
+//            执行失败（重试后仍然失败）
                 logInfo.setExecutionResult(e.getMessage());
                 logInfo.setIsSuccess(0);
                 logInfo.setExecutionTimeMillis(System.currentTimeMillis() - start);
-                log.info(logInfo.getMethodName() + "方法出现错误，详情:" + logInfo.getDescription() + ",用户id" + logInfo.getUserId());
+                log.error("{}方法执行失败（已重试），详情: {}, 用户ID: {}, 异常: {}", 
+                    logInfo.getMethodName(), logInfo.getDescription(), logInfo.getUserId(), e.getMessage());
+                
+                // 记录最终失败的日志
                 RestUtils.post(url + "/saveLogInfo", logInfo);
-//            执行失败
-                logInfo.setExecutionResult(e.getMessage());
-                logInfo.setIsSuccess(0);
-                logInfo.setExecutionTimeMillis(System.currentTimeMillis() - start);
-                RestUtils.post(url + "/saveLogInfo", logInfo);
+                
+                // 发送最终失败的异常日志
+                Exception finalException = (e instanceof Exception) ? (Exception) e : new RuntimeException(e);
+                UserLogUtil.sendAIExceptionLog(
+                    logInfo.getUserId(), 
+                    extractAIName(description), 
+                    logInfo.getMethodName(), 
+                    finalException,
+                    System.currentTimeMillis(),
+                    "执行最终失败（已重试1次仍失败）",
+                    url + "/saveLogInfo"
+                );
+                
                 //             传递不同ai的错误信息
                 sendTaskLog(description, logInfo.getUserId(), "");
                 if (description.contains("检查")) {
@@ -195,6 +244,28 @@ public class LogAspect {
         if (description.contains("知乎直答")) {
             logMsgUtil.sendTaskLog(description + "执行失败" + isTryAgain, userId, "知乎直答");
         }
+    }
+
+    /**
+     * 从描述中提取AI名称
+     * @param description 方法描述
+     * @return AI名称，如果没有匹配则返回"未知"
+     */
+    private String extractAIName(String description) {
+        if (description == null) {
+            return "未知";
+        }
+        if (description.contains("DeepSeek")) return "DeepSeek";
+        if (description.contains("豆包")) return "豆包";
+        if (description.contains("MiniMax")) return "MiniMax";
+        if (description.contains("秘塔")) return "秘塔";
+        if (description.contains("KiMi")) return "KiMi";
+        if (description.contains("通义千问")) return "通义千问";
+        if (description.contains("百度AI")) return "百度AI";
+        if (description.contains("腾讯元宝T1")) return "腾讯元宝T1";
+        if (description.contains("腾讯元宝DS")) return "腾讯元宝DS";
+        if (description.contains("知乎直答")) return "知乎直答";
+        return "未知";
     }
 
 }

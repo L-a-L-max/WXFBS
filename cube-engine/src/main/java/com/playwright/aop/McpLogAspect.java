@@ -160,9 +160,14 @@ public class McpLogAspect {
                 UserLogUtil.sendExceptionLog(logInfo.getUserId(), "MCP业务执行失败-" + description, methodName, businessException, start, url + "/saveLogInfo");
                 log.warn("MCP方法{}执行失败，用户：{}, 错误码：{}, 错误信息：{}", methodName, logInfo.getUserId(), mcpResult.getCode(), mcpResult.getResult());
             } else {
-                // 记录成功日志
-                UserLogUtil.sendNormalLog(logInfo.getUserId(), "MCP方法执行成功-" + description, methodName, start, resultContent, url + "/saveLogInfo");
-                log.info("MCP方法{}执行成功，用户：{}", methodName, logInfo.getUserId());
+                // 如果是登录检查方法，不记录成功日志
+                if (methodName.contains("check") && (methodName.contains("Login") || methodName.contains("login"))) {
+                    log.info("MCP登录检查方法{}执行成功，不记录成功日志，用户：{}", methodName, logInfo.getUserId());
+                } else {
+                    // 记录成功日志
+                    UserLogUtil.sendNormalLog(logInfo.getUserId(), "MCP方法执行成功-" + description, methodName, start, resultContent, url + "/saveLogInfo");
+                    log.info("MCP方法{}执行成功，用户：{}", methodName, logInfo.getUserId());
+                }
             }
             
             return result;

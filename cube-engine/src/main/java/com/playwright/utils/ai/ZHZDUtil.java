@@ -366,6 +366,10 @@ public class ZHZDUtil {
         }
     }
 
+    /**
+     * 🔥 修复：获取复制/分享按钮数量 - 支持新版HTML结构
+     * 使用多种选择器来适应页面结构变化
+     */
     private int getCopyButtonCount(Page page) throws Exception {
         // 检查页面是否已关闭
         if (page.isClosed()) {
@@ -373,8 +377,26 @@ public class ZHZDUtil {
         }
 
         try {
-        Locator copyButton = page.locator("[data-testid='Button:Share:zhida_message_share_btn']");
-        return copyButton == null ? 0 : copyButton.count();
+            // 优先使用复制文本按钮
+            String[] buttonSelectors = {
+                "[data-testid='Button:zhida_message_copy_btn']",  // 复制文本按钮
+                "[data-testid='Button:Share:zhida_message_share_btn']",  // 分享按钮
+                "//div[@tabindex='0'][@data-testid='Button:zhida_message_copy_btn']",  // XPath复制按钮
+                "//div[@tabindex='0'][@data-testid='Button:Share:zhida_message_share_btn']"  // XPath分享按钮
+            };
+            
+            for (String selector : buttonSelectors) {
+                try {
+                    Locator button = page.locator(selector);
+                    if (button != null && button.count() > 0) {
+                        return button.count();
+                    }
+                } catch (Exception e) {
+                    // 继续尝试下一个选择器
+                }
+            }
+            
+            return 0;
         } catch (Exception e) {
             return 0;
         }

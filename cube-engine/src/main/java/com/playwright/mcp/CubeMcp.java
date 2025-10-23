@@ -173,7 +173,7 @@ public class CubeMcp {
                 }
 
                 // 记录AI调用成功
-                UserLogUtil.sendAISuccessLog(userId, aiName, "AI调用", "成功调用并获取分享链接", startTime, url + "/saveLogInfo");
+                // 不再记录成功日志，按照用户要求
                 return McpResult.success(aiName + "调用成功", mcpResult.getShareUrl());
             }
             // 记录不支持的AI类型

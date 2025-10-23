@@ -74,21 +74,20 @@ public class TencentUtil {
             if (phone.count() > 0) {
                 String phoneText = phone.textContent();
                 if (phoneText.equals("未登录")) {
-                    // 记录登录状态异常
-                    UserLogUtil.sendLoginStatusLog(userId, "腾讯元宝", "用户未登录", url + "/saveLogInfo");
+                     // 用户未登录是正常状态，不记录日志
                     return "false";
                 }
                 // 记录登录检查成功
-                UserLogUtil.sendAISuccessLog(userId, "腾讯元宝", "登录检查", "登录状态正常：" + phoneText, startTime, url + "/saveLogInfo");
+                // 不再记录成功日志，按照用户要求
                 return phoneText;
             } else {
                 // 记录元素不可见异常
-                UserLogUtil.sendElementNotVisibleLog(userId, "腾讯元宝", "//p[@class='nick-info-name']", page.url(), url + "/saveLogInfo");
+                UserLogUtil.sendElementErrorLog(userId, "腾讯元宝", "登录状态检查", "//p[@class='nick-info-name']", "用户昵称元素不可见", url + "/saveLogInfo");
                 return "false";
             }
         } catch (TimeoutError e) {
-            // 记录超时异常
-            UserLogUtil.sendAITimeoutLog(userId, "腾讯元宝", "登录检查", e, "页面加载或元素定位", url + "/saveLogInfo");
+            // 记录网络超时异常
+            UserLogUtil.sendNetworkErrorLog(userId, "腾讯元宝", "登录检查", "页面加载或元素定位超时: " + e.getMessage(), url + "/saveLogInfo");
             throw e;
         } catch (Exception e) {
             // 记录其他异常
@@ -107,8 +106,8 @@ public class TencentUtil {
                 String errorMsg = "浏览器上下文创建失败，无法执行腾讯元宝任务";
                 logInfo.sendTaskLog(errorMsg, userId, "腾讯元宝");
 
-                // 使用增强日志记录
-                UserLogUtil.sendAIBusinessLog(userId, "腾讯元宝", "浏览器初始化", errorMsg, startTime, url + "/saveLogInfo");
+                // 记录页面错误
+                UserLogUtil.sendPageErrorLog(userId, "腾讯元宝", "浏览器初始化", errorMsg, url + "/saveLogInfo");
 
                 // 发送错误响应
                 try {
@@ -127,8 +126,8 @@ public class TencentUtil {
                 String errorMsg = "浏览器页面不可用，当前页面数: " + (pages != null ? pages.size() : 0);
                 logInfo.sendTaskLog(errorMsg, userId, "腾讯元宝");
 
-                // 使用增强日志记录
-                UserLogUtil.sendAIBusinessLog(userId, "腾讯元宝", "页面检查", errorMsg, startTime, url + "/saveLogInfo");
+                // 记录页面错误
+                UserLogUtil.sendPageErrorLog(userId, "腾讯元宝", "页面状态检查", errorMsg, url + "/saveLogInfo");
 
                 // 发送错误响应
                 try {
@@ -144,7 +143,7 @@ public class TencentUtil {
 
             if (targetPage != null) {
                 // 记录页面获取成功
-                UserLogUtil.sendAISuccessLog(userId, "腾讯元宝", "页面获取", "成功获取腾讯元宝页面", startTime, url + "/saveLogInfo");
+                // 不再记录成功日志，按照用户要求
             }
 
             return targetPage;
@@ -247,7 +246,7 @@ public class TencentUtil {
                     }
                     shareUrlRef.set(url);
                 } catch (Exception e) {
-                    UserLogUtil.sendExceptionLog(userId, agentName + "复制异常", "saveAgentDraftData", e, url + "/saveLogInfo");
+                    UserLogUtil.sendClipboardErrorLog(userId, agentName, "内容复制", "复制操作失败: " + e.getMessage(), url + "/saveLogInfo");
                 }
             });
             Thread.sleep(1000);
@@ -271,8 +270,8 @@ public class TencentUtil {
             RestUtils.post(url + "/saveDraftContent", userInfoRequest);
             return copiedText;
         } catch (TimeoutError e) {
-            // 记录超时异常
-            UserLogUtil.sendAITimeoutLog(userId, agentName, "智能体任务执行", e, "等待回答生成或分享操作", url + "/saveLogInfo");
+            // 记录网络超时异常
+            UserLogUtil.sendNetworkErrorLog(userId, agentName, "智能体任务执行", "等待回答生成或分享操作超时: " + e.getMessage(), url + "/saveLogInfo");
             logInfo.sendTaskLog("执行超时：" + e.getMessage(), userId, agentName);
         } catch (Exception e) {
             // 记录智能体业务执行异常
@@ -433,7 +432,7 @@ public class TencentUtil {
                     int currentCount = i.getAndIncrement(); // 获取当前值并自增
                     logInfo.sendImgData(page, userId + "元宝执行过程截图" + currentCount, userId);
                 } catch (Exception e) {
-                    UserLogUtil.sendExceptionLog(userId, "元宝截图", "saveDraftData", e, url + "/saveLogInfo");
+                    UserLogUtil.sendContentErrorLog(userId, "腾讯元宝", "截图保存", "截图保存失败: " + e.getMessage(), url + "/saveLogInfo");
                 }
             }, 0, 7, TimeUnit.SECONDS);
         }
@@ -505,11 +504,11 @@ public class TencentUtil {
                 } catch (TimeoutError e) {
                     // 记录分享操作超时
                     logInfo.sendTaskLog("分享按钮点击超时: " + e.getMessage(), finalUserId, finalAgentName);
-                    UserLogUtil.sendAITimeoutLog(finalUserId, finalAiName, "分享链接获取", e, "点击分享按钮或复制链接", finalUrl + "/saveLogInfo");
+                    UserLogUtil.sendNetworkErrorLog(finalUserId, finalAiName, "分享链接获取", "点击分享按钮或复制链接超时: " + e.getMessage(), finalUrl + "/saveLogInfo");
                 } catch (Exception e) {
                     // 记录分享操作异常
                     logInfo.sendTaskLog("分享操作异常: " + e.getMessage(), finalUserId, finalAgentName);
-                    UserLogUtil.sendAIBusinessLog(finalUserId, finalAiName, "分享操作", e.getMessage(), System.currentTimeMillis(), finalUrl + "/saveLogInfo");
+                    UserLogUtil.sendContentErrorLog(finalUserId, finalAiName, "分享操作", "分享操作失败: " + e.getMessage(), finalUrl + "/saveLogInfo");
                 }
             });
 
@@ -679,9 +678,7 @@ public class TencentUtil {
                 page.locator(deepThingDom).click();
                 Thread.sleep(1000);
                 
-                // 记录成功操作
-                UserLogUtil.sendAISuccessLog(userId, "腾讯元宝", "深度思考配置", 
-                    "成功切换深度思考模型到: " + targetModelId, startTime, url + "/saveLogInfo");
+                // 不再记录成功日志，按照用户要求
             }
         } catch (Exception e) {
             // 记录深度思考配置异常
@@ -756,9 +753,7 @@ public class TencentUtil {
                     Thread.sleep(1000);
                 }
                 
-                // 记录成功操作
-                UserLogUtil.sendAISuccessLog(userId, "腾讯元宝", "联网搜索配置", 
-                    "成功" + (needWebSearch ? "开启" : "关闭") + "联网搜索", startTime, url + "/saveLogInfo");
+                // 不再记录成功日志，按照用户要求
             }
         } catch (Exception e) {
             // 记录联网搜索配置异常

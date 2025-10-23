@@ -5,7 +5,9 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.*;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.util.MultiValueMap;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -19,7 +21,15 @@ import java.util.Objects;
 @Configuration
 public class RestUtils {
 
-    private static final RestTemplate restTemplate = new RestTemplate();
+    private static final RestTemplate restTemplate;
+    
+    static {
+        // 配置RestTemplate的超时时间
+        SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
+        factory.setConnectTimeout(30000); // 连接超时：30秒
+        factory.setReadTimeout(60000);    // 读取超时：60秒
+        restTemplate = new RestTemplate(factory);
+    }
 
     public static JSONObject get(String url, Map<String,String> urlParams){
         return get(urlToUri(url,urlParams));
@@ -42,7 +52,13 @@ public class RestUtils {
     }
 
     public static JSONObject post(String url, Object data){
-        return post(URI.create(url), JSONObject.parseObject(JSON.toJSONString(data)));
+        try {
+            return post(URI.create(url), JSONObject.parseObject(JSON.toJSONString(data)));
+        } catch (RestClientException e) {
+            // 捕获RestTemplate异常，包装为更友好的异常信息
+            String errorMsg = "RestUtils.post调用失败 | URL: " + url + " | 错误: " + e.getMessage();
+            throw new RuntimeException(errorMsg, e);
+        }
     }
 
     public static JSONObject aiPost(String url,JSONObject json,String bearerToken){
