@@ -115,17 +115,27 @@ public class DouBaoUtil {
                 logInfo.sendTaskLog("检测到超能模式，当前为内测用户", userId, "豆包");
                 
                 if (needDeepThinking) {
-                    // 需要深度思考：使用超能模式
-                    boolean superActive = isModeActive(superModeButton);
+                    // 🔥 优化：需要深度思考时，优先使用思考模式而不是超能模式
+                    boolean thinkActive = thinkModeButton.count() > 0 && isModeActive(thinkModeButton);
                     
-                    if (!superActive) {
-                        // 超能模式未激活，需要切换
-                        logInfo.sendTaskLog("任务需要深度思考，正在切换到超能模式", userId, "豆包");
-                        superModeButton.click();
+                    if (thinkModeButton.count() > 0 && !thinkActive) {
+                        logInfo.sendTaskLog("任务需要深度思考，正在切换到思考模式", userId, "豆包");
+                        thinkModeButton.click();
                         page.waitForTimeout(500);
-                        logInfo.sendTaskLog("✓ 已启用超能模式", userId, "豆包");
+                        logInfo.sendTaskLog("✓ 已启用思考模式", userId, "豆包");
+                    } else if (thinkActive) {
+                        logInfo.sendTaskLog("✓ 思考模式已启用（无需切换）", userId, "豆包");
                     } else {
-                        logInfo.sendTaskLog("✓ 超能模式已启用（无需切换）", userId, "豆包");
+                        // 如果思考模式按钮不存在，则使用超能模式作为备选
+                        boolean superActive = isModeActive(superModeButton);
+                        if (!superActive) {
+                            logInfo.sendTaskLog("思考模式不可用，切换到超能模式", userId, "豆包");
+                            superModeButton.click();
+                            page.waitForTimeout(500);
+                            logInfo.sendTaskLog("✓ 已启用超能模式（备选）", userId, "豆包");
+                        } else {
+                            logInfo.sendTaskLog("✓ 超能模式已启用（无需切换）", userId, "豆包");
+                        }
                     }
                 } else {
                     // 不需要深度思考：必须使用极速模式
@@ -404,6 +414,11 @@ public class DouBaoUtil {
                 UserLogUtil.sendAIWarningLog(userId, aiName, "HTML内容监控", "页面已关闭，无法监控内容", url + "/saveLogInfo");
                 throw new RuntimeException("页面已关闭");
             }
+            
+            // 🔥 关键修复：等待5秒让新消息开始生成，避免获取到历史消息
+            logInfo.sendTaskLog("等待AI开始生成新回复（5秒）...", userId, aiName);
+            Thread.sleep(5000);
+            logInfo.sendTaskLog("开始监听AI回复内容", userId, aiName);
             
             // 等待聊天框的内容稳定
             String currentContent = "";

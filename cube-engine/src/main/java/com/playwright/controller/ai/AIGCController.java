@@ -296,17 +296,53 @@ public class AIGCController {
                 });
             } else {
                 try {
-                    // 🔥 优化：复制链接和分享图片在同一个对话框，不需要再次点击分享按钮
-                    logInfo.sendTaskLog("准备生成智能评分分享图片...", userId, "智能评分");
-                    Thread.sleep(1000);
+                    // 🔥 问题修复：点击复制链接后对话框关闭了，需要重新打开分享对话框
+                     logInfo.sendTaskLog("准备生成智能评分分享图片，等待5秒让对话框完全关闭...", userId, "智能评分");
+                    Thread.sleep(5000); // 等待5秒，让对话框完全关闭
                     
-                    Locator shareLocator = page.locator("(//span[contains(@class,'semi-button-content')][contains(text(),'分享图片')])[1]");
-                    shareLocator.click();
-                    Thread.sleep(5000);
-                    sharImgUrl = ScreenshotUtil.downloadAndUploadFile(page, uploadUrl, () -> {
-                        page.locator("button:has-text(\"下载图片\")").click();
-                    });
-                    logInfo.sendTaskLog("✅ 智能评分分享图片已生成", userId, "智能评分");
+                    // 重新点击分享按钮打开对话框（使用.last()获取最新消息的分享按钮）
+                    Locator shareButton = page.locator("button[data-testid='message_action_share']").last();
+                    
+                    // 等待分享按钮可见
+                    shareButton.waitFor(new Locator.WaitForOptions()
+                        .setState(WaitForSelectorState.VISIBLE)
+                        .setTimeout(10000));
+                    
+                    if(shareButton.count() > 0 && shareButton.isVisible()){
+                        shareButton.click();
+                        logInfo.sendTaskLog("✅ 已重新打开分享对话框", userId, "智能评分");
+                        Thread.sleep(3000); // 等待对话框完全打开
+                    } else {
+                        logInfo.sendTaskLog("⚠️ 分享按钮不可用，跳过分享图片生成", userId, "智能评分");
+                    }
+                    
+                    // 在分享对话框中点击"分享图片"按钮
+                    Locator shareImgButton = page.locator("button:has-text(\"分享图片\")").first();
+                    
+                    // 等待分享图片按钮出现
+                    shareImgButton.waitFor(new Locator.WaitForOptions()
+                        .setState(WaitForSelectorState.VISIBLE)
+                        .setTimeout(10000));
+                    
+                    if (shareImgButton.count() > 0) {
+                        shareImgButton.click();
+                        logInfo.sendTaskLog("✅ 已点击分享图片按钮，等待图片生成...", userId, "智能评分");
+                        
+                        // 等待下载图片按钮出现（新的对话框）
+                        Thread.sleep(5000); // 增加等待时间，等待图片渲染完成
+                        Locator downloadButton = page.locator("button:has-text(\"下载图片\")");
+                        downloadButton.waitFor(new Locator.WaitForOptions()
+                            .setState(WaitForSelectorState.VISIBLE)
+                            .setTimeout(30000)); // 增加超时时间到30秒
+                        
+                        // 点击下载图片并上传
+                        sharImgUrl = ScreenshotUtil.downloadAndUploadFile(page, uploadUrl, () -> {
+                            downloadButton.click();
+                        });
+                        logInfo.sendTaskLog("✅ 智能评分分享图片已生成", userId, "智能评分");
+                    } else {
+                        logInfo.sendTaskLog("⚠️ 未找到分享图片按钮", userId, "智能评分");
+                    }
                 } catch (Exception e) {
                     UserLogUtil.sendExceptionLog(userId, "智能评分分享图片", "startDBScore", e, url + "/saveLogInfo");
                 }
@@ -498,20 +534,57 @@ public class AIGCController {
 
             Thread.sleep(1000);
             String shareUrl = shareUrlRef.get();
+            
+            // 🔥 问题修复：点击复制链接后对话框关闭了，需要重新打开分享对话框
             if(sharImgUrl == null) {
                 try {
-                    // 🔥 优化：复制链接和分享图片在同一个对话框，不需要再次点击分享按钮
-                    // 直接点击"分享图片"按钮（它和"复制链接"按钮是相邻的）
-                    logInfo.sendTaskLog("准备生成分享图片...", userId, dynamicAiName);
-                    Thread.sleep(1000);
+                    logInfo.sendTaskLog("准备生成分享图片，等待5秒让对话框完全关闭...", userId, dynamicAiName);
+                    Thread.sleep(5000); // 等待5秒，让对话框完全关闭
                     
-                    Locator shareLocator = page.locator("(//span[contains(@class,'semi-button-content')][contains(text(),'分享图片')])[1]");
-                    shareLocator.click();
-                    Thread.sleep(5000);
-                    sharImgUrl = ScreenshotUtil.downloadAndUploadFile(page, uploadUrl, () -> {
-                        page.locator("button:has-text(\"下载图片\")").click();
-                    });
-                    logInfo.sendTaskLog("✅ 分享图片已生成", userId, dynamicAiName);
+                    // 重新点击分享按钮打开对话框（使用.last()获取最新消息的分享按钮）
+                    Locator shareButton = page.locator("button[data-testid='message_action_share']").last();
+                    
+                    // 等待分享按钮可见
+                    shareButton.waitFor(new Locator.WaitForOptions()
+                        .setState(WaitForSelectorState.VISIBLE)
+                        .setTimeout(10000));
+                    
+                    if(shareButton.count() > 0 && shareButton.isVisible()){
+                        shareButton.click();
+                        logInfo.sendTaskLog("✅ 已重新打开分享对话框", userId, dynamicAiName);
+                        Thread.sleep(3000); // 等待对话框完全打开
+                    } else {
+                        logInfo.sendTaskLog("⚠️ 分享按钮不可用，跳过分享图片生成", userId, dynamicAiName);
+                        // 继续执行，不要 return
+                    }
+                    
+                    // 在分享对话框中点击"分享图片"按钮
+                    Locator shareImgButton = page.locator("button:has-text(\"分享图片\")").first();
+                    
+                    // 等待分享图片按钮出现
+                    shareImgButton.waitFor(new Locator.WaitForOptions()
+                        .setState(WaitForSelectorState.VISIBLE)
+                        .setTimeout(10000));
+                    
+                    if (shareImgButton.count() > 0) {
+                        shareImgButton.click();
+                        logInfo.sendTaskLog("✅ 已点击分享图片按钮，等待图片生成...", userId, dynamicAiName);
+                        
+                        // 等待下载图片按钮出现（新的对话框）
+                        Thread.sleep(5000); // 增加等待时间，等待图片渲染完成
+                        Locator downloadButton = page.locator("button:has-text(\"下载图片\")");
+                        downloadButton.waitFor(new Locator.WaitForOptions()
+                            .setState(WaitForSelectorState.VISIBLE)
+                            .setTimeout(30000)); // 增加超时时间到30秒
+                        
+                        // 点击下载图片并上传
+                        sharImgUrl = ScreenshotUtil.downloadAndUploadFile(page, uploadUrl, () -> {
+                            downloadButton.click();
+                        });
+                        logInfo.sendTaskLog("✅ 分享图片已生成", userId, dynamicAiName);
+                    } else {
+                        logInfo.sendTaskLog("⚠️ 未找到分享图片按钮", userId, dynamicAiName);
+                    }
                 } catch (Exception e) {
                     UserLogUtil.sendExceptionLog(userId, "豆包分享图片", "startDB", e, url + "/saveLogInfo");
                     logInfo.sendTaskLog("⚠️ 分享图片生成失败：" + e.getMessage(), userId, dynamicAiName);
