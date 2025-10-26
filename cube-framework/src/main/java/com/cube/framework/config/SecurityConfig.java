@@ -116,6 +116,7 @@ public class SecurityConfig
                             // 静态资源，可匿名访问
                             .requestMatchers(HttpMethod.GET, "/", "/*.html", "/**.html", "/**.css", "/**.js", "/profile/**").permitAll()
                             .requestMatchers("/swagger-ui.html", "/swagger-resources/**", "/webjars/**", "/*/api-docs", "/druid/**").permitAll()
+                            .requestMatchers("/facade/**").permitAll()// 开放mcp服务的facade接口
                             // 除上面外的所有请求全部需要鉴权认证
                             .anyRequest().authenticated();
                 })

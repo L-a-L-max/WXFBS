@@ -229,6 +229,7 @@
         <module>cube-quartz</module>
         <module>cube-generator</module>
         <module>cube-common</module>
+         <module>cube-engine</module>
     </modules>
     <packaging>pom</packaging>
 

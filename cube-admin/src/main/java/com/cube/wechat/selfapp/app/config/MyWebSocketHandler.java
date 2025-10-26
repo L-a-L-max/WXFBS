@@ -9,6 +9,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.cube.common.core.redis.RedisCache;
 import com.cube.common.entity.UserInfoRequest;
 import com.cube.common.utils.StringUtils;
+import com.cube.mcp.entities.McpResult;
 import com.cube.openAI.utils.SpringContextUtils;
 import com.cube.wechat.selfapp.app.mapper.UserInfoMapper;
 import lombok.extern.slf4j.Slf4j;
@@ -103,16 +104,38 @@ public class MyWebSocketHandler extends TextWebSocketHandler {
             log.info("保存openAI结果：" + payload);
             return;
         }
-
+        if(o != null && "mcp".equals(o.toString())) {
+            System.out.println("收到mcp调用结果：" + payload);
+            String userId = map.get("userId").toString();
+            String aiName = map.get("aiName").toString();
+            String content = map.get("message").toString();
+            String taskId = map.get("taskId").toString();
+            saveAiResponse("mcp:" + userId + ":" + aiName + ":" + taskId, content);
+            log.info("保存mcp结果：" + payload);
+            return;
+        }
         // 1.0
 //        sendMessageToClient(clientId,payload,null,null,null);
         sendMsgToClient(clientId,payload,new JSONObject());
     }
 
     public void saveAiResponse(String type, String message) {
+        McpResult mcpResult;
+        // 如果message是一个JSON字符串，则需要先将其解析为McpResult对象
+        if (message.startsWith("{") && message.endsWith("}")) {
+            try {
+                mcpResult = JSONObject.parseObject(message, McpResult.class);
+            } catch (Exception e) {
+                // 如果解析失败，则创建一个默认的McpResult对象
+                mcpResult = McpResult.fail("解析MCP结果失败"+e.getMessage(), "");
+            }
+        } else {
+            // 如果不是JSON字符串，则视为普通文本消息
+            mcpResult = McpResult.success(message, "");
+        }
 //        消息保存60秒
         RedisCache redisCache = SpringContextUtils.getBean(RedisCache.class);
-        redisCache.setCacheObject(type, message, 60, TimeUnit.SECONDS);
+        redisCache.setCacheObject(type, mcpResult, 60, TimeUnit.SECONDS);
     }
     /**
      * openAI与MCP规范专用方法
