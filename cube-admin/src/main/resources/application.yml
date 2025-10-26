@@ -80,7 +80,17 @@ spring:
           max-idle: 8
           max-active: 8
           max-wait: -1ms
-
+  # mcp服务:facade  从cube-engine 迁移到 cube-admin
+  ai:
+    mcp:
+      server:
+        enabled: true
+        name: cube-facade-mcp
+        version: 1.0.0
+        sse-endpoint: /facade/sse
+        sse-message-endpoint: /facade/mcp
+        capabilities:
+          tool: true
 # token配置
 token:
   # 令牌自定义标识
