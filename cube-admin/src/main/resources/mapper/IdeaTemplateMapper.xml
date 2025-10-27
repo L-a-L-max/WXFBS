@@ -2,9 +2,9 @@
 <!DOCTYPE mapper
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="com.cube.wechat.selfapp.app.mapper.PromptTemplateMapper">
+<mapper namespace="com.cube.wechat.selfapp.app.mapper.IdeaTemplateMapper">
 
-    <resultMap type="com.cube.wechat.selfapp.app.domain.PromptTemplate" id="PromptTemplateResult">
+    <resultMap type="com.cube.wechat.selfapp.app.domain.IdeaTemplate" id="IdeaTemplateResult">
         <result property="id"    column="id"    />
         <result property="name"    column="name"    />
         <result property="prompt"    column="prompt"    />
@@ -13,32 +13,32 @@
         <result property="isdel"    column="isdel"    />
     </resultMap>
 
-    <sql id="selectPromptTemplateVo">
-        select id, name, prompt, type, user_id, isdel from wc_prompt_template
+    <sql id="selectIdeaTemplateVo">
+        select id, name, prompt, type, user_id, isdel from wc_idea_template
     </sql>
 
-    <select id="getPromptTemplateList" parameterType="com.cube.wechat.selfapp.app.domain.query.ScorePromptQuery" resultMap="PromptTemplateResult">
-        <include refid="selectPromptTemplateVo"/>
+    <select id="getIdeaTemplateList" parameterType="com.cube.wechat.selfapp.app.domain.query.IdeaPromptQuery" resultMap="IdeaTemplateResult">
+        <include refid="selectIdeaTemplateVo"/>
         <where>
             <if test="name != null  and name != ''"> and name like concat('%', #{name}, '%')</if>
             <if test="prompt != null  and prompt != ''"> and prompt like concat('%', #{prompt}, '%')</if>
-             and isdel = 0
+            and isdel = 0
         </where>
     </select>
 
-    <select id="getScorePromptList" resultMap="PromptTemplateResult">
-        <include refid="selectPromptTemplateVo"/>
+    <select id="getIdeaPromptList" resultMap="IdeaTemplateResult">
+        <include refid="selectIdeaTemplateVo"/>
         <where>
             and type = 3
-            <if test="scorePromptQuery.name != null and scorePromptQuery.name != ''"> and name like concat('%', #{scorePromptQuery.name}, '%')</if>
-            <if test="scorePromptQuery.prompt != null  and scorePromptQuery.prompt != ''"> and prompt like concat('%', #{scorePromptQuery.prompt}, '%')</if>
-             and user_id = #{userId}
-             and isdel = 0
+            <if test="ideaPromptQuery.name != null and ideaPromptQuery.name != ''"> and name like concat('%', #{ideaPromptQuery.name}, '%')</if>
+            <if test="ideaPromptQuery.prompt != null  and ideaPromptQuery.prompt != ''"> and prompt like concat('%', #{ideaPromptQuery.prompt}, '%')</if>
+            and user_id = #{userId}
+            and isdel = 0
         </where>
     </select>
 
-    <select id="getAllScorePrompt" resultMap="PromptTemplateResult">
-        <include refid="selectPromptTemplateVo"/>
+    <select id="getAllIdeaPrompt" resultMap="IdeaTemplateResult">
+        <include refid="selectIdeaTemplateVo"/>
         <where>
             and type = 3
             and user_id = #{userId}
@@ -46,23 +46,23 @@
         </where>
     </select>
 
-    <select id="getPromptTemplateById" parameterType="Long" resultMap="PromptTemplateResult">
-        <include refid="selectPromptTemplateVo"/>
+    <select id="getIdeaTemplateById" parameterType="Long" resultMap="IdeaTemplateResult">
+        <include refid="selectIdeaTemplateVo"/>
         where id = #{id} and isdel = 0
     </select>
 
-    <select id="getScorePromptById" parameterType="Long" resultMap="PromptTemplateResult">
-        <include refid="selectPromptTemplateVo"/>
+    <select id="getIdeaPromptById" parameterType="Long" resultMap="IdeaTemplateResult">
+        <include refid="selectIdeaTemplateVo"/>
         where id = #{id} and type = 3 and isdel = 0
     </select>
-    <select id="getScoreWord" resultType="com.cube.wechat.selfapp.app.domain.PromptTemplate">
-        <include refid="selectPromptTemplateVo"/>
+    <select id="getIdeaWord" resultType="com.cube.wechat.selfapp.app.domain.IdeaTemplate">
+        <include refid="selectIdeaTemplateVo"/>
         where type = 4 and isdel = 0
     </select>
 
 
-    <insert id="savePromptTemplate" parameterType="com.cube.wechat.selfapp.app.domain.PromptTemplate" useGeneratedKeys="true" keyProperty="id">
-        insert into wc_prompt_template
+    <insert id="saveIdeaTemplate" parameterType="com.cube.wechat.selfapp.app.domain.IdeaTemplate" useGeneratedKeys="true" keyProperty="id">
+        insert into wc_idea_template
         <trim prefix="(" suffix=")" suffixOverrides=",">
             <if test="name != null and name != ''">name,</if>
             <if test="prompt != null and prompt != ''">prompt,</if>
@@ -79,8 +79,8 @@
         </trim>
     </insert>
 
-    <update id="updatePromptTemplate" parameterType="com.cube.wechat.selfapp.app.domain.PromptTemplate">
-        update wc_prompt_template
+    <update id="updateIdeaTemplate" parameterType="com.cube.wechat.selfapp.app.domain.IdeaTemplate">
+        update wc_idea_template
         <trim prefix="SET" suffixOverrides=",">
             <if test="name != null and name != ''">name = #{name},</if>
             <if test="prompt != null and prompt != ''">prompt = #{prompt},</if>
@@ -91,12 +91,12 @@
         where id = #{id}
     </update>
 
-    <update id="deletePromptTemplateById" parameterType="Long">
-        update wc_prompt_template set isdel=1 where id = #{id}
+    <update id="deleteIdeaTemplateById" parameterType="Long">
+        update wc_idea_template set isdel=1 where id = #{id}
     </update>
 
-    <update id="deletePromptTemplateByIds" parameterType="String">
-        update wc_prompt_template set isdel=1 where id in
+    <update id="deleteIdeaTemplateByIds" parameterType="String">
+        update wc_idea_template set isdel=1 where id in
         <foreach item="id" collection="array" open="(" separator="," close=")">
             #{id}
         </foreach>
