@@ -124,6 +124,111 @@ export function deleteScorePrompt(ids) {
   })
 }
 
+// 根据ID获取思路提示词
+export function getIdeaPrompt(id) {
+  return request({
+    url: `/mini/getIdeaPrompt/${id}`,
+    method: 'get'
+  })
+}
+
+// 根据所有思路提示词
+export function getAllIdeaPrompt() {
+  return request({
+    url: `/mini/getAllIdeaPrompt`,
+    method: 'get'
+  })
+}
+
+
+// 获取思路提示词列表
+export function getIdeaPromptList(params) {
+  return request({
+    url: `/mini/getIdeaPromptList`,
+    method: 'get',
+    params,
+  })
+}
+
+// 新增思路提示词
+export function saveIdeaPrompt(data) {
+  return request({
+    url: `/mini/saveIdeaPrompt`,
+    method: 'post',
+    data,
+  })
+}
+
+// 更新思路提示词
+export function updateIdeaPrompt(data) {
+  return request({
+    url: `/mini/updateIdeaPrompt`,
+    method: 'put',
+    data,
+  })
+}
+
+// 删除思路提示词
+export function deleteIdeaPrompt(ids) {
+  return request({
+    url: `/mini/deleteIdeaPrompt`,
+    method: 'delete',
+    data: ids,
+  })
+}
+
+// 根据ID获取文章提示词
+export function getArtPrompt(id) {
+  return request({
+    url: `/mini/getArtPrompt/${id}`,
+    method: 'get'
+  })
+}
+
+// 根据所有文章提示词
+export function getAllArtPrompt() {
+  return request({
+    url: `/mini/getAllArtPrompt`,
+    method: 'get'
+  })
+}
+
+
+// 获取文章提示词列表
+export function getArtPromptList(params) {
+  return request({
+    url: `/mini/getArtPromptList`,
+    method: 'get',
+    params,
+  })
+}
+
+// 新增文章提示词
+export function saveArtPrompt(data) {
+  return request({
+    url: `/mini/saveArtPrompt`,
+    method: 'post',
+    data,
+  })
+}
+
+// 更新文章提示词
+export function updateArtPrompt(data) {
+  return request({
+    url: `/mini/updateArtPrompt`,
+    method: 'put',
+    data,
+  })
+}
+
+// 删除文章提示词
+export function deleteArtPrompt(ids) {
+  return request({
+    url: `/mini/deleteArtPrompt`,
+    method: 'delete',
+    data: ids,
+  })
+}
 
 export function saveUserChatData(data) {
   return request({

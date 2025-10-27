@@ -42,6 +42,12 @@ module.exports = {
         }
       }
     },
+     client: {
+      overlay: {
+        warnings: false,
+        errors: true
+      }
+    }
   },
   css: {
     loaderOptions: {
