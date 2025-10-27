@@ -10,16 +10,18 @@ cube:
 spring:
   main:
     allow-circular-references: true
-  ai:
-    mcp:
-      server:
-        enabled: true
-        name: cube-engine-mcp
-        version: 1.0.0
-        sse-endpoint: /cubeServer/sse
-        sse-message-endpoint: /cubeServer/mcp
-        capabilities:
-          tool: true
+
+# mcp服务 从cube-engine 迁移到 cube-admin
+#  ai:
+#    mcp:
+#      server:
+#        enabled: true
+#        name: cube-engine-mcp
+#        version: 1.0.0
+#        sse-endpoint: /cubeServer/sse
+#        sse-message-endpoint: /cubeServer/mcp
+#        capabilities:
+#          tool: true
 
 
 #如果配置url是加了https证书的域名，则需要改为wss://你的域名/cubeServer/websocket?clientId=play-你的主机ID
