@@ -5,9 +5,10 @@ import com.cube.common.core.controller.BaseController;
 import com.cube.common.core.page.TableDataInfo;
 import com.cube.common.utils.StringUtils;
 import com.cube.wechat.selfapp.app.config.MyWebSocketHandler;
-import com.cube.wechat.selfapp.app.domain.*;
-import com.cube.wechat.selfapp.app.domain.query.ArtPromptQuery;
-import com.cube.wechat.selfapp.app.domain.query.IdeaPromptQuery;
+import com.cube.wechat.selfapp.app.domain.AINodeLog;
+import com.cube.wechat.selfapp.app.domain.AIParam;
+import com.cube.wechat.selfapp.app.domain.PromptTemplate;
+import com.cube.wechat.selfapp.app.domain.WcOfficeAccount;
 import com.cube.wechat.selfapp.app.domain.query.ScorePromptQuery;
 import com.cube.wechat.selfapp.app.service.AIGCService;
 import com.cube.wechat.selfapp.app.service.UserInfoService;
@@ -328,73 +329,5 @@ public class UserInfoController extends BaseController {
     public ResultBody deleteScorePrompt(@RequestBody Long[] ids){
         return userInfoService.deleteScorePrompt(ids);
     }
-
-    @GetMapping("/getIdeaPrompt/{id}")
-    public ResultBody getIdeaPrompt(@PathVariable Long id){
-        return userInfoService.getIdeaPrompt(id);
-    }
-
-    @GetMapping("/getIdeaPromptList")
-    public TableDataInfo getIdeaPromptList(IdeaPromptQuery ideaPromptQuery){
-        startPage();
-        List<IdeaTemplate> list = userInfoService.getIdeaPromptList(ideaPromptQuery);
-        return getDataTable(list);
-    }
-
-    //获取当前用户的所有评分提示词
-    @GetMapping("/getAllIdeaPrompt")
-    public ResultBody getAllIdeaPrompt(){
-        return userInfoService.getAllIdeaPrompt();
-    }
-
-    @PostMapping("/saveIdeaPrompt")
-    public ResultBody saveIdeaPrompt(@RequestBody IdeaTemplate ideaTemplate){
-        return userInfoService.saveIdeaPrompt(ideaTemplate);
-    }
-
-    @PutMapping("/updateIdeaPrompt")
-    public ResultBody updateIdeaPrompt(@RequestBody IdeaTemplate ideaTemplate){
-        return userInfoService.updateIdeaPrompt(ideaTemplate);
-    }
-
-    @DeleteMapping("/deleteIdeaPrompt")
-    public ResultBody deleteIdeaPrompt(@RequestBody Long[] ids){
-        return userInfoService.deleteIdeaPrompt(ids);
-    }
-
-    @GetMapping("/getArtPrompt/{id}")
-    public ResultBody getArtPrompt(@PathVariable Long id){
-        return userInfoService.getArtPrompt(id);
-    }
-
-    @GetMapping("/getArtPromptList")
-    public TableDataInfo getArtPromptList(ArtPromptQuery artPromptQuery){
-        startPage();
-        List<ArtTemplate> list = userInfoService.getArtPromptList(artPromptQuery);
-        return getDataTable(list);
-    }
-
-    //获取当前用户的所有艺术提示词
-    @GetMapping("/getAllArtPrompt")
-    public ResultBody getAllArtPrompt(){
-        return userInfoService.getAllArtPrompt();
-    }
-
-    @PostMapping("/saveArtPrompt")
-    public ResultBody saveArtPrompt(@RequestBody ArtTemplate artTemplate){
-        return userInfoService.saveArtPrompt(artTemplate);
-    }
-
-    @PutMapping("/updateArtPrompt")
-    public ResultBody updateArtPrompt(@RequestBody ArtTemplate artTemplate){
-        return userInfoService.updateArtPrompt(artTemplate);
-    }
-
-    @DeleteMapping("/deleteArtPrompt")
-    public ResultBody deleteArtPrompt(@RequestBody Long[] ids){
-        return userInfoService.deleteArtPrompt(ids);
-    }
-
-
 }
 

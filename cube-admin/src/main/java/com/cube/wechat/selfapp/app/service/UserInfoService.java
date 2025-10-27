@@ -1,8 +1,9 @@
 package com.cube.wechat.selfapp.app.service;
 
-import com.cube.wechat.selfapp.app.domain.*;
-import com.cube.wechat.selfapp.app.domain.query.ArtPromptQuery;
-import com.cube.wechat.selfapp.app.domain.query.IdeaPromptQuery;
+import com.cube.wechat.selfapp.app.domain.AINodeLog;
+import com.cube.wechat.selfapp.app.domain.AIParam;
+import com.cube.wechat.selfapp.app.domain.PromptTemplate;
+import com.cube.wechat.selfapp.app.domain.WcOfficeAccount;
 import com.cube.wechat.selfapp.app.domain.query.ScorePromptQuery;
 import com.cube.wechat.selfapp.corpchat.util.ResultBody;
 
@@ -28,8 +29,8 @@ public interface UserInfoService {
     ResultBody saveAINodeLog(AINodeLog aiNodeLog);
 
     /*
-     * 查询用户AI历史会话列表
-     * */
+    * 查询用户AI历史会话列表
+    * */
     ResultBody getUserChatHistoryList(String userId,String title);
 
     ResultBody getChatHistoryDetail(String conversationId);
@@ -95,29 +96,4 @@ public interface UserInfoService {
     ResultBody deleteScorePrompt(Long[] ids);
 
     ResultBody getAllScorePrompt();
-
-    List<ArtTemplate> getArtPromptList(ArtPromptQuery artPromptQuery);
-
-    ResultBody getArtPrompt(Long id);
-
-    ResultBody saveArtPrompt(ArtTemplate artTemplate);
-
-    ResultBody updateArtPrompt(ArtTemplate artTemplate);
-
-    ResultBody deleteArtPrompt(Long[] ids);
-
-    ResultBody getAllArtPrompt();
-
-    List<IdeaTemplate> getIdeaPromptList(IdeaPromptQuery ideaPromptQuery);
-
-    ResultBody getIdeaPrompt(Long id);
-
-    ResultBody saveIdeaPrompt(IdeaTemplate ideaTemplate);
-
-    ResultBody updateIdeaPrompt(IdeaTemplate ideaTemplate);
-
-    ResultBody deleteIdeaPrompt(Long[] ids);
-
-    ResultBody getAllIdeaPrompt();
-
 }
