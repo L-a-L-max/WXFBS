@@ -1,4 +1,5 @@
 <template>
+  
   <div class="ai-management-platform">
     <!-- 顶部导航区 -->
     <div class="top-nav">
@@ -9,7 +10,7 @@
       <div class="nav-buttons">
         <el-button type="primary" size="small" @click="createNewChat">
           <i class="el-icon-plus"></i>
-          创建新对话
+          创建新主题任务
         </el-button>
         <div class="history-button">
           <el-button type="text" @click="showHistoryDrawer">
@@ -192,16 +193,31 @@
         <!-- 提示词输入区 -->
         <el-collapse-item title="提示词输入" name="prompt-input">
           <div class="prompt-input-section">
-            <el-input type="textarea" :rows="5" placeholder="请输入提示词，支持Markdown格式" v-model="promptInput" resize="none"
+            <el-input type="textarea" :rows="5" placeholder="请输入提示词。主题示例提示词示例：请详细搜集刘氏起源，撰写一篇3000字的文章，要数据详尽" v-model="promptInput" resize="none"
               class="prompt-input">
             </el-input>
-            <div class="prompt-footer">
-              <div class="word-count">字数统计: {{ promptInput.length }}</div>
-              <el-button type="primary" @click="sendPrompt" :disabled="!canSend" class="send-button">
-                发送
-              </el-button>
-            </div>
+           <div class="prompt-footer">
+  <div class="word-count">字数统计: {{ promptInput.length }}</div>
+  <div class="current-prompt">
+    <span>当前提示词：{{ currentPrompt }}</span>
+  </div>
+  <div class="mode-switch">
+    <el-radio-group v-model="promptMode" size="small">
+      <el-radio-button label="idea">撰写思路模式</el-radio-button>
+      <el-radio-button label="article">撰写文章模式</el-radio-button>
+    </el-radio-group>
+  </div>
+  <div class="button-group">
+    <el-button type="info" @click="showPromptDialog" class="prompt-button">
+      常用提示词
+    </el-button>
+    <el-button type="primary" @click="sendPrompt" :disabled="!canSend" class="send-button">
+      发送
+    </el-button>
+  </div>
+</div>
           </div>
+
         </el-collapse-item>
       </el-collapse>
 
@@ -279,12 +295,23 @@
 
       <!-- 结果展示区 -->
       <div class="results-section" v-if="results.length > 0">
-        <div class="section-header">
-          <h2 class="section-title">执行结果</h2>
-          <el-button type="primary" @click="showScoreDialog" size="small">
-            智能评分
-          </el-button>
-        </div>
+       <div class="section-header">
+  <h2 class="section-title">执行结果</h2>
+  <div class="button-group">
+ <el-button v-if="firstReviewableResult" type="warning" @click="showReviewDialog(firstReviewableResult)" size="small">
+  <i class="el-icon-edit-outline"></i>
+  <span>审核</span>
+</el-button>
+
+    <el-button type="primary" @click="showScoreDialog" size="small">
+      智能评分
+    </el-button>
+    <el-button type="warning" @click="showVisibilityDialog" size="small">
+      可见度评估
+    </el-button>
+  </div>
+</div>
+
         <el-tabs v-model="activeResultTab" type="card">
           <el-tab-pane v-for="(result, index) in results" :key="index" :label="result.aiName" :name="'result-' + index">
             <div class="result-content">
@@ -296,6 +323,7 @@
                     <i class="el-icon-link"></i>
                     <span>查看原链接</span>
                   </el-button>
+            
                   <el-button v-if="!result.aiName.includes('智能排版')" size="mini" type="success"
                     @click="handlePushToMedia(result)" class="push-media-btn"
                     :loading="pushingToMedia" :disabled="pushingToMedia">
@@ -308,6 +336,7 @@
                     <i class="el-icon-s-promotion"></i>
                     <span>投递到公众号/媒体</span>
                   </el-button>
+   
                 </div>
               </div>
               <!-- 如果有shareImgUrl则渲染图片或PDF，否则渲染markdown -->
@@ -354,6 +383,95 @@
         </el-carousel>
       </div>
     </el-dialog>
+    <!-- 可见度评估弹窗 -->
+<el-dialog title="可见度评估" v-model="visibilityDialogVisible" width="60%" :close-on-click-modal="false">
+  <div class="visibility-dialog-content">
+    <div class="keyword-input-section">
+      <h3>输入评估关键词：</h3>
+      <el-input
+        type="textarea"
+        :rows="3"
+        v-model="visibilityKeyword"
+        placeholder="请输入要评估的关键词"
+        class="keyword-input"
+      ></el-input>
+    </div>
+    <div class="prompt-section">
+      <h3>评估提示词：</h3>
+      <el-input
+        type="textarea"
+        :rows="8"
+        v-model="visibilityPrompt"
+        class="prompt-input"
+      ></el-input>
+    </div>
+  </div>
+  <template #footer>
+    <span class="dialog-footer">
+      <el-button @click="visibilityDialogVisible = false">取 消</el-button>
+      <el-button type="primary" @click="handleVisibilityEvaluation" :disabled="!visibilityKeyword.trim()">
+        开始评估
+      </el-button>
+    </span>
+  </template>
+</el-dialog>
+
+<!-- 常用提示词弹窗 -->
+<el-dialog title="常用提示词" v-model="promptDialogVisible" width="60%" :close-on-click-modal="false">
+  <div class="prompt-dialog-content">
+    <div class="prompt-dialog-header">
+  <el-button type="primary" size="small" @click="handleAddPrompt">新增提示词</el-button>
+</div>
+
+    <!-- 模式切换 -->
+    <div class="mode-switch">
+      <el-radio-group v-model="promptMode" size="small">
+        <el-radio-button label="idea">撰写思路模式</el-radio-button>
+        <el-radio-button label="article">撰写文章模式</el-radio-button>
+      </el-radio-group>
+    </div>
+    <el-table :data="promptList" style="width: 100%">
+      <el-table-column prop="name" label="名称" width="180">
+      </el-table-column>
+      <el-table-column prop="prompt" label="提示词内容">
+        <template #default="scope">
+          <div class="prompt-content">{{ scope.row.prompt }}</div>
+        </template>
+      </el-table-column>
+    <el-table-column label="操作" width="240" fixed="right">
+  <template #default="scope">
+    <el-button size="mini" type="text" @click="usePrompt(scope.row)">
+      <i class="el-icon-check"></i> 使用
+    </el-button>
+    <el-button size="mini" type="text" @click="handleEditPrompt(scope.row)">
+      <i class="el-icon-edit"></i> 修改
+    </el-button>
+    <el-button size="mini" type="text" @click="handleDeletePrompt(scope.row)">
+      <i class="el-icon-delete"></i> 删除
+    </el-button>
+  </template>
+</el-table-column>
+
+    </el-table>
+  </div>
+</el-dialog>
+<!-- 新增/修改提示词对话框 -->
+<el-dialog :title="promptDialogTitle" v-model="promptFormDialogVisible" width="60%" append-to-body>
+  <el-form ref="promptForm" :model="promptForm" :rules="promptRules" label-width="80px">
+    <el-form-item label="提示词名称" prop="name">
+      <el-input v-model="promptForm.name" placeholder="请输入提示词名称" />
+    </el-form-item>
+    <el-form-item label="提示词内容" prop="prompt">
+      <el-input v-model="promptForm.prompt" type="textarea" :rows="4" placeholder="请输入提示词内容" />
+    </el-form-item>
+  </el-form>
+  <template #footer>
+    <span class="dialog-footer">
+      <el-button @click="promptFormDialogVisible = false">取 消</el-button>
+      <el-button type="primary" @click="submitPromptForm">确 定</el-button>
+    </span>
+  </template>
+</el-dialog>
 
     <!-- 评分弹窗 -->
     <el-dialog title="智能评分" v-model="scoreDialogVisible" width="60%" height="65%" :close-on-click-modal="false"
@@ -377,14 +495,23 @@
             resize="none" class="score-prompt-input">
           </el-input>
         </div>
-        <div class="selected-results">
-          <h3>选择要评分的内容：</h3>
-          <el-checkbox-group v-model="selectedResults">
-            <el-checkbox v-for="(result, index) in results" :key="index" :label="result.aiName" class="result-checkbox">
-              {{ result.aiName }}
-            </el-checkbox>
-          </el-checkbox-group>
-        </div>
+       <div class="selected-results">
+  <h3>选择要评分的内容：</h3>
+  <el-checkbox-group v-model="selectedResults">
+    <el-checkbox 
+      v-for="result in results.filter(r => 
+        !r.aiName.includes('智能评分') && 
+        !r.aiName.includes('智能排版') && 
+        !r.aiName.includes('可见度评估')
+      )" 
+      :key="result.aiName" 
+      :label="result.aiName" 
+      class="result-checkbox">
+      {{ result.aiName }}
+    </el-checkbox>
+  </el-checkbox-group>
+</div>
+
       </div>
       <template #footer>
         <span class="dialog-footer">
@@ -451,6 +578,111 @@
         </span>
       </template>
     </el-dialog>
+<!-- 审核弹窗 -->
+<el-dialog title="内容审核" v-model="reviewDialogVisible" width="60%" :close-on-click-modal="false">
+  <div class="review-dialog-content">
+  <!-- AI选择 -->
+<div class="ai-selector">
+  <div class="ai-button-group">
+    <el-button 
+      v-for="result in filteredResults"
+      :key="result.aiName"
+      :type="selectedReviewAI === result.aiName ? 'primary' : 'default'"
+      :class="{ 'is-active': selectedReviewAI === result.aiName }"
+      @click="switchReviewAI(result.aiName)"
+      class="ai-button"
+    >
+      {{ result.aiName }}
+    </el-button>
+  </div>
+</div>
+
+
+
+    <!-- 提示词选择按钮 -->
+    <div class="prompt-button-section">
+      <el-button type="info" @click="showReviewPromptDialog" class="prompt-button">
+        常用提示词
+      </el-button>
+      <div class="current-prompt">
+        <span>当前提示词：{{ currentPrompt }}</span>
+      </div>
+    </div>
+
+    <!-- 内容区域 -->
+    <div class="content-section">
+      <p>{{ promptMode === 'idea' ? '撰稿思路：' : '文章内容：' }}</p>
+      <el-input
+        type="textarea"
+        :rows="15"
+        v-model="editableContent"
+        class="review-content-input"
+      >
+      </el-input>
+    </div>
+
+    <div class="review-buttons">
+      <el-button v-if="promptMode === 'idea'" type="primary" @click="handleStartWriting">
+        开始撰稿
+      </el-button>
+      <el-button v-else type="primary" @click="handleSmartLayout">
+        智能排版
+      </el-button>
+      <el-button type="warning" @click="handleReject">
+        一键驳回
+      </el-button>
+    </div>
+  </div>
+</el-dialog>
+
+<!-- 审核提示词弹窗 -->
+<el-dialog title="常用提示词" v-model="reviewPromptDialogVisible" width="60%" :close-on-click-modal="false">
+  <div class="prompt-dialog-content">
+    <div class="prompt-dialog-header">
+  <el-button type="primary" size="small" @click="handleAddPrompt">新增提示词</el-button>
+</div>
+
+    <!-- 模式切换 -->
+    <div class="mode-switch">
+      <el-radio-group v-model="promptMode" size="small">
+        <el-radio-button label="idea">撰写思路模式</el-radio-button>
+        <el-radio-button label="article">撰写文章模式</el-radio-button>
+      </el-radio-group>
+    </div>
+    <el-table :data="reviewPromptList" style="width: 100%">
+      <el-table-column prop="name" label="名称" width="180">
+      </el-table-column>
+      <el-table-column prop="prompt" label="提示词内容">
+        <template #default="scope">
+          <div class="prompt-content">{{ scope.row.prompt }}</div>
+        </template>
+      </el-table-column>
+<el-table-column label="操作" width="240" fixed="right">
+  <template #default="scope">
+    <el-button size="mini" type="text" @click="usePrompt(scope.row)">
+      <i class="el-icon-check"></i> 使用
+    </el-button>
+    <el-button size="mini" type="text" @click="handleEditPrompt(scope.row)">
+      <i class="el-icon-edit"></i> 修改
+    </el-button>
+    <el-button size="mini" type="text" @click="handleDeletePrompt(scope.row)">
+      <i class="el-icon-delete"></i> 删除
+    </el-button>
+  </template>
+</el-table-column>
+
+
+    </el-table>
+  </div>
+</el-dialog>
+
+
+
+
+
+
+
+
 
 
   </div>
@@ -458,15 +690,25 @@
 
 <script>
   import { marked } from "marked";
-  import {
-    message,
-    saveUserChatData,
-    getChatHistory,
-    pushAutoOffice,
-    getMediaCallWord,
-    getAllScorePrompt,
-    getScoreWord,
-  } from "@/api/wechat/aigc";
+import {
+  message,
+  saveUserChatData,
+  getChatHistory,
+  pushAutoOffice,
+  getMediaCallWord,
+  getAllScorePrompt,
+  getScoreWord,
+  getAllIdeaPrompt,
+  getAllArtPrompt,
+  saveIdeaPrompt,    // 添加这个导入
+  updateIdeaPrompt,  // 添加这个导入
+  deleteIdeaPrompt,  // 添加这个导入
+  saveArtPrompt,     // 添加这个导入
+  updateArtPrompt,   // 添加这个导入
+  deleteArtPrompt    // 添加这个导入
+} from "@/api/wechat/aigc";
+
+
   import { v4 as uuidv4 } from "uuid";
   import websocketClient from "@/utils/websocket";
   import store from "@/store";
@@ -497,6 +739,13 @@
           zhzdChatId: "",
 
           isNewChat: true,
+          autoScoreAfterCompletion: true, // 自动评分开关
+    scorePromptList: [],
+    scoreAI: "DeepSeek",
+    visibilityEvaluationPrompt: "你是关键词可见度分析专家，需基于目标关键词，从 “基础结果量（40 分，500 万 +≤10 分、300-500 万 10-25 分、100-300 万 26-35 分、100 万以下 36-40 分）”“标题匹配量（30 分，intitle 结果占比超 30%21-30 分、10%-30%11-20 分、10% 以下 1-10 分）”“内容质量（30 分，高权重平台占比超 40%21-30 分、20%-40%11-20 分、20% 以下 1-10 分）” 三维度综合评估（满分 100 分），先输出总分，再分维度说明评分依据，最后总结该关键词可见度强弱及核心影响因素。", // 可见度评估提示词
+    selectedScorePrompt: "",
+     isFromReview: false, // 标记是否来自审核
+    scorePrompt: `请你深度阅读以下几篇内容，从多个维度对以下内容进行逐项打分，输出评分结果。`,
         },
         jsonRpcReqest: {
           jsonrpc: "2.0",
@@ -516,7 +765,7 @@
             isExpanded: true,
             isSingleSelect: false  // 添加单选标记
           },
-
+          
           {
             name: '百度AI',
             avatar: require('../../../assets/logo/Baidu.png'),
@@ -609,6 +858,7 @@
           },
 
         ],
+        
         mediaList: [
           {
             name: "wechat_layout",
@@ -646,11 +896,11 @@
         selectedResults: [],
         selectedScorePrompt: "",
         scorePromptList: [],
-        scorePrompt: `请你深度阅读以下几篇内容，从多个维度进行逐项打分，输出评分结果。并在以下各篇文章的基础上博采众长，综合整理一篇更全面的文章。`,
-        scoreAI: "豆包", // 默认选择豆包进行评分
+        scorePrompt: `请你深度阅读以下内容，从多个维度进行逐项打分，输出评分结果`,
+        scoreAI: "DeepSeek", // 默认选择DeepSeek进行评分
         layoutDialogVisible: false,
         layoutPrompt: "",
-        layoutAI: "豆包", // 当前选择的排版AI
+        layoutAI: "DeepSeek", // 当前选择的排版AI
         currentLayoutResult: null, // 当前要排版的结果
         historyDrawerVisible: false,
         chatHistory: [],
@@ -658,10 +908,67 @@
         pushOfficeNum: 0, // 投递到公众号的递增编号
         pushingToWechat: false, // 投递到公众号的loading状态
         selectedMedia: "wechat_layout", // 默认选择公众号
-        pushingToMedia: false // 投递到媒体的loading状态
-      };
+        pushingToMedia: false, // 投递到媒体的loading状态
+          // 在这里添加审核相关的数据属性
+         originalPrompt: '', // 保存原始提示词
+        reviewDialogVisible: false,
+        currentReviewResult: null,
+        reviewResult: '',
+         autoScoreEnabled: false, // 自动评分开关状态
+         draftPrompt: '', // 保存撰稿时的提示词
+         // 修改为只在新建任务时初始化
+         originalTaskPrompt: '', // 保存原始主题任务提示词
+         isPublished: false, // 是否已发布
+         promptMode: 'idea', // 模式：'idea'为撰写思路模式，'article'为撰写文章模式
+        promptDialogVisible: false,
+         promptList: [],
+       defaultIdeaPrompt: "根据主题任务撰写思路。", // 末尾加逗号便于拼接
+       defaultArticlePrompt: "根据以下撰稿思路完善一篇内容。", // 末尾加逗号便于拼接
+       currentPrompt: "", // 当前选中的提示词
+       autoScoreTimer: null, // 自动评分计时器
+       completedAICount: 0, // 已完成的AI数量
+       autoScoreTriggered: false, // 是否已触发自动评分
+       editableContent: '', // 可编辑的内容
+       reviewPromptDialogVisible: false,
+       reviewPromptList: [],
+       promptSource: '',
+       selectedReviewAI: null,
+        visibilityDialogVisible: false,
+    visibilityKeyword: '',
+    visibilityPrompt: `你是关键词可见度分析专家，需基于目标关键词，从 "基础结果量（40 分，500 万 +≤10 分、300-500 万 10-25 分、100-300 万 26-35 分、100 万以下 36-40 分）""标题匹配量（30 分，intitle 结果占比超 30%21-30 分、10%-30%11-20 分、10% 以下 1-10 分）""内容质量（30 分，高权重平台占比超 40%21-30 分、20%-40%11-20 分、20% 以下 1-10 分）" 三维度综合评估（满分 100 分），先输出总分，再分维度说明评分依据，最后总结该关键词可见度强弱及核心影响因素。`,
+      promptFormDialogVisible: false,
+    promptDialogTitle: '',
+    promptForm: {
+      id: null,
+      name: '',
+      prompt: ''
+    },
+    promptRules: {
+      name: [
+        { required: true, message: '提示词名称不能为空', trigger: 'blur' }
+      ],
+      prompt: [
+        { required: true, message: '提示词内容不能为空', trigger: 'blur' }
+      ]
+    }
+  
+  };
     },
     computed: {
+        firstReviewableResult() {
+    return this.results.find(result => 
+      !result.aiName.includes('智能评分') && 
+      !result.aiName.includes('智能排版') && 
+      !result.aiName.includes('可见度评估')
+    );
+  },
+        filteredResults() {
+    return this.results.filter(result => 
+      !result.aiName.includes('智能评分') && 
+      !result.aiName.includes('智能排版') &&
+      !result.aiName.includes('可见度评估')
+    );
+},
       canSend() {
         return (
           this.promptInput.trim().length > 0 &&
@@ -676,13 +983,19 @@
       canLayout() {
         return this.currentLayoutResult !== null;
       },
-      // 检查所有任务是否完成
-      allTasksCompleted() {
-        if(!this.taskStarted || this.enabledAIs.length === 0) {
-          return false;
-        }
-        return this.enabledAIs.every(ai => ai.status === 'completed' || ai.status === 'failed');
-      },
+allTasksCompleted() {
+  if (!this.taskStarted || this.enabledAIs.length === 0) {
+    return false;
+  }
+  // 确保所有启用的AI都已完成
+  const allCompleted = this.enabledAIs.every(ai => 
+    ai.status === 'completed'
+  );
+  const hasCompleted = this.enabledAIs.some(ai => 
+    ai.status === 'completed'
+  );
+  return allCompleted && hasCompleted;
+},
       // 检查是否有任务正在运行
       hasRunningTasks() {
         return this.enabledAIs.some(ai => ai.status === 'running');
@@ -735,7 +1048,7 @@
     },
     async created() {
       console.log(this.userId);
-
+this.currentPrompt = this.defaultIdeaPrompt; // 默认使用思路模式提示词
       // 使用企业ID工具确保获取最新的企业ID
       try {
         this.corpId = await getCorpId();
@@ -748,6 +1061,8 @@
       this.initWebSocket(this.userId);
       this.loadChatHistory(0); // 加载历史记录
       this.loadLastChat(); // 加载上次会话
+       this.completedAICount = 0;
+  this.autoScoreTriggered = false;
     },
     mounted() {
       // 监听企业ID更新事件
@@ -756,6 +1071,7 @@
     beforeDestroy() {
       // 移除事件监听
       window.removeEventListener('corpIdUpdated', this.handleCorpIdUpdated);
+       this.clearAutoScoreTimer();
     },
     watch: {
       // 监听媒体选择变化，自动加载对应的提示词
@@ -765,20 +1081,45 @@
         },
         immediate: false
       },
-      // 监听任务完成状态
-      allTasksCompleted: {
-        handler(newValue) {
-          if(newValue && this.taskStarted) {
-            // 所有任务完成时的处理
-            this.$nextTick(() => {
-              this.$message.success('所有AI任务已完成！');
-              // 可以考虑自动折叠任务流程区域或其他UI优化
-            });
-          }
-        },
-        immediate: false
+  promptMode: {
+    handler(newMode) {
+      this.currentPrompt = newMode === 'idea' ? this.defaultIdeaPrompt : this.defaultArticlePrompt;
+      // 如果弹窗打开，重新加载提示词列表
+      if (this.promptDialogVisible || this.reviewPromptDialogVisible) {
+        this.loadPromptList();
       }
     },
+    immediate: false
+  },
+      // 监听任务完成状态
+    // 监听任务完成状态
+allTasksCompleted: {
+ handler(newValue) {
+      if(newValue && this.taskStarted && !this.autoScoreTriggered) {
+        this.$nextTick(() => {
+          this.$message.success('所有AI任务已完成！');
+          // 检查是否开启自动评分
+          if(this.autoScoreEnabled) {
+            setTimeout(() => {
+              this.showScoreDialog();
+            }, 1500);
+          }
+        });
+      }
+    },
+    immediate: true
+  }, // 监听已完成的AI数量
+completedAICount: {
+  handler(newCount) {
+    console.log(`📊 [计数监听] AI完成数量变化: ${newCount}`);
+    if (newCount >= 4 && !this.autoScoreTriggered && !this.autoScoreTimer) {
+      console.log(`⏰ [计时器] 满足4个AI完成条件，启动计时器`);
+      this.startAutoScoreTimer();
+    }
+  }
+}
+},
+    
     methods: {
       // 全局AI控制方法
       toggleAllAIs() {
@@ -794,6 +1135,269 @@
           this.$message.success('已关闭全部AI智能体');
         }
       },
+      // 显示可见度评估弹窗
+showVisibilityDialog() {
+  this.visibilityDialogVisible = true;
+  // 使用原始主题任务作为默认关键词
+  this.visibilityKeyword = this.originalTaskPrompt || this.promptInput;
+},
+  // 新增提示词
+  handleAddPrompt() {
+    this.promptForm = {
+      id: null,
+      name: '',
+      prompt: ''
+    }
+    this.promptDialogTitle = '新增提示词'
+    this.promptFormDialogVisible = true
+  },
+
+  // 修改提示词
+  handleEditPrompt(row) {
+    this.promptForm = {
+      id: row.id,
+      name: row.name,
+      prompt: row.prompt
+    }
+    this.promptDialogTitle = '修改提示词'
+    this.promptFormDialogVisible = true
+    // 记录来源，用于提交后刷新对应的列表
+    this.promptSource = this.promptDialogVisible ? 'main' : 'review'
+  },
+
+  // 删除提示词
+  handleDeletePrompt(row) {
+    this.$confirm('是否确认删除该提示词？', '提示', {
+      type: 'warning'
+    }).then(() => {
+      const api = this.promptMode === 'idea' ? deleteIdeaPrompt : deleteArtPrompt
+      api([row.id]).then(() => {
+        this.$message.success('删除成功')
+        // 根据来源刷新对应的列表
+        if (this.promptDialogVisible) {
+          this.loadPromptList()
+        } else if (this.reviewPromptDialogVisible) {
+          this.showReviewPromptDialog()
+        }
+      })
+    })
+  },
+
+  // 提交提示词表单
+  submitPromptForm() {
+    this.$refs.promptForm.validate(valid => {
+      if (valid) {
+        const api = this.promptForm.id 
+          ? (this.promptMode === 'idea' ? updateIdeaPrompt : updateArtPrompt)
+          : (this.promptMode === 'idea' ? saveIdeaPrompt : saveArtPrompt)
+          
+        api(this.promptForm).then(() => {
+          this.$message.success(this.promptForm.id ? '修改成功' : '新增成功')
+          this.promptFormDialogVisible = false
+          // 根据来源刷新对应的列表
+          if (this.promptSource === 'main') {
+            this.loadPromptList()
+          } else if (this.promptSource === 'review') {
+            this.showReviewPromptDialog()
+          }
+        })
+      }
+    })
+  },
+      // 加载提示词列表
+async loadPromptList() {
+  try {
+    let response;
+    if (this.promptMode === 'idea') {
+      response = await getAllIdeaPrompt();
+      const list = [
+        { name: '默认', prompt: this.defaultIdeaPrompt },
+        ...(response.data || [])
+      ];
+      if (this.promptDialogVisible) {
+        this.promptList = list;
+      }
+      if (this.reviewPromptDialogVisible) {
+        this.reviewPromptList = list;
+      }
+    } else {
+      response = await getAllArtPrompt();
+      const list = [
+        { name: '默认', prompt: this.defaultArticlePrompt },
+        ...(response.data || [])
+      ];
+      if (this.promptDialogVisible) {
+        this.promptList = list;
+      }
+      if (this.reviewPromptDialogVisible) {
+        this.reviewPromptList = list;
+      }
+    }
+  } catch (error) {
+    console.error('获取提示词列表失败:', error);
+    this.$message.error('获取提示词列表失败');
+  }
+},
+
+      // 显示审核提示词弹窗
+async showReviewPromptDialog() {
+  this.reviewPromptDialogVisible = true;
+  try {
+    let response;
+    if (this.promptMode === 'idea') {
+      response = await getAllIdeaPrompt();
+      this.reviewPromptList = [
+        { name: '默认', prompt: this.defaultIdeaPrompt },
+        ...(response.data || [])
+      ];
+    } else {
+      response = await getAllArtPrompt();
+      this.reviewPromptList = [
+        { name: '默认', prompt: this.defaultArticlePrompt },
+        ...(response.data || [])
+      ];
+    }
+  } catch (error) {
+    console.error('获取提示词列表失败:', error);
+    this.$message.error('获取提示词列表失败');
+  }
+},
+
+// 使用审核提示词
+useReviewPrompt(prompt) {
+  this.currentPrompt = prompt.prompt;
+  this.reviewPromptDialogVisible = false;
+  this.$message.success('已选择提示词：' + prompt.name);
+},
+
+// 启动自动评分计时器
+startAutoScoreTimer() {
+  console.log(`⏰ [计时器] 启动3分钟自动评分计时器，当前已完成AI数量: ${this.completedAICount}`);
+  
+  // 清除可能存在的旧计时器
+  if (this.autoScoreTimer) {
+    clearTimeout(this.autoScoreTimer);
+  }
+
+  // 设置
+  // 3分钟计时器
+  this.autoScoreTimer = setTimeout(() => {
+    console.log(`⏰ [计时器] 3分钟计时器触发，当前状态：`);
+    console.log(`- 已完成AI数量: ${this.completedAICount}`);
+    console.log(`- 自动评分开关: ${this.autoScoreEnabled}`);
+    console.log(`- 是否已触发: ${this.autoScoreTriggered}`);
+    
+    if (this.completedAICount >= 4 && !this.autoScoreTriggered && this.autoScoreEnabled) {
+      console.log(`✅ [自动评分] 满足触发条件，开始自动评分`);
+      this.$message.success('已触发自动评分');
+      this.showScoreDialog();
+      this.autoScoreTriggered = true;
+    } else {
+      console.log(`❌ [自动评分] 未满足触发条件`);
+    }
+  }, 3 * 60 * 1000); // 3分钟
+},
+
+
+// 清除自动评分计时器
+clearAutoScoreTimer() {
+  if (this.autoScoreTimer) {
+    clearTimeout(this.autoScoreTimer);
+    this.autoScoreTimer = null;
+  }
+},
+
+    // 处理可见度评估
+
+handleVisibilityEvaluation() {
+  if(!this.visibilityKeyword.trim()) {
+    this.$message.warning('请输入评估关键词');
+    return;
+  }
+
+  // 确保提示词是字符串类型
+  let prompt = this.visibilityPrompt;
+  if (typeof prompt !== 'string') {
+    prompt = '你是关键词可见度分析专家，需基于目标关键词，从多个维度进行综合评估。';
+  }
+  
+  // 构建请求参数
+  const params = {
+    taskId: uuidv4(),
+    userId: this.userId,
+    corpId: this.corpId,
+    userPrompt: `关键词：${this.visibilityKeyword}\n${prompt}`,
+    roles: "zj-db",
+  };
+
+  const visibilityRequest = {
+    jsonrpc: "2.0",
+    id: uuidv4(),
+    method: "使用F8S",
+    params: params,
+  };
+
+  // 发送评估请求
+  this.message(visibilityRequest);
+
+  // 创建可见度评估任务节点
+  const visibilityAI = {
+    name: "可见度评估",
+    avatar: require("../../../assets/ai/豆包.png"),
+    capabilities: [],
+    selectedCapabilities: [],
+    enabled: true,
+    status: "running",
+    progressLogs: [
+      {
+        content: "可见度评估任务已提交，正在评估...",
+        timestamp: new Date(),
+        isCompleted: false,
+      },
+    ],
+    isExpanded: true,
+  };
+
+  this.enabledAIs.unshift(visibilityAI);
+  this.visibilityDialogVisible = false;
+  this.$message.success("可见度评估请求已发送，请等待结果");
+}
+,
+
+async showPromptDialog() {
+  this.promptDialogVisible = true;
+  try {
+    let response;
+    if (this.promptMode === 'idea') {
+      response = await getAllIdeaPrompt();
+      // 添加默认选项
+      this.promptList = [
+        { name: '默认', prompt: this.defaultIdeaPrompt },
+        ...(response.data || [])
+      ];
+    } else {
+      response = await getAllArtPrompt();
+      // 添加默认选项
+      this.promptList = [
+        { name: '默认', prompt: this.defaultArticlePrompt },
+        ...(response.data || [])
+      ];
+    }
+  } catch (error) {
+    console.error('获取提示词列表失败:', error);
+    this.$message.error('获取提示词列表失败');
+  }
+},
+
+
+usePrompt(prompt) {
+  this.currentPrompt = prompt.prompt;
+  this.promptDialogVisible = false;
+  this.$message.success('已选择提示词：' + prompt.name);
+},
+
+
+
       // 处理企业ID更新事件
       handleCorpIdUpdated(event) {
         const newCorpId = event.detail.corpId;
@@ -803,10 +1407,132 @@
           this.$message.success(`主机ID已自动更新: ${newCorpId}`);
         }
       },
+      // 切换审核AI
+switchReviewAI(aiName) {
+  this.selectedReviewAI = aiName; // 更新选中的AI
+  const result = this.results.find(r => r.aiName === aiName);
+  if (result) {
+    this.currentReviewResult = result;
+    // 直接使用markdown渲染后的纯文本内容
+    this.editableContent = this.htmlToText(result.content);
+  }
+},
 
-      // 确保企业ID最新
-      async ensureLatestCorpId() {
-        try {
+// 显示审核弹窗
+showReviewDialog(result) {
+  this.currentReviewResult = result;
+   this.selectedReviewAI = result.aiName; // 设置初始选中的AI
+  this.selectedReviewAI = result.aiName;
+  // 直接使用markdown渲染后的纯文本内容
+  this.editableContent = this.htmlToText(result.content);
+  this.reviewDialogVisible = true;
+},
+
+// 处理开始撰稿（撰写思路模式）
+handleStartWriting() {
+  // 切换到撰写文章模式
+  this.promptMode = 'article';
+  // 更新当前提示词为撰写文章模式的默认提示词
+  this.currentPrompt = this.defaultArticlePrompt;
+  // 直接使用编辑后的内容作为撰稿思路
+  this.promptInput = this.editableContent;
+  // 保存当前思路作为历史记录
+  this.draftPrompt = this.editableContent;
+  // 保存原始主题任务
+  this.originalTaskPrompt = this.originalPrompt;
+  // 标记为来自审核
+  this.isFromReview = true;
+  // 关闭审核弹窗
+  this.reviewDialogVisible = false;
+  // 自动发送
+  this.sendPrompt();
+},
+
+
+// 处理智能排版（撰写文章模式）
+handleSmartLayout() {
+  // 创建一个新的结果对象，使用编辑后的内容
+  const editedResult = {
+    ...this.currentReviewResult,
+    content: this.editableContent
+  };
+  // 直接调用智能排版
+  this.handlePushToMedia(editedResult);
+  this.reviewDialogVisible = false;
+},
+
+// 处理驳回修改
+handleReject() {
+  this.reviewDialogVisible = false;
+  
+  if (this.promptMode === 'idea') {
+    // 撰写思路模式：重新发送主题任务
+    this.promptInput = this.originalPrompt;
+    this.sendPrompt();
+  } else {
+    // 撰写文章模式：重新发送撰稿思路
+    this.promptInput = this.draftPrompt;
+    this.sendPrompt();
+  }
+},
+    handleReview() {
+    if(!this.reviewResult) {
+      this.$message.warning('请选择审核结果');
+      return;
+    }
+    
+    if(this.reviewResult === 'approve') {
+      // 确定后，将当前内容作为撰稿思路发送给AI
+      this.sendAsDraft();
+    } else {
+      // 驳回修改
+      const isEditingDraft = this.isFromReview; // 保存当前是否是撰稿状态
+      
+      // 清空当前审核结果
+      this.currentReviewResult = null;
+      this.reviewResult = '';
+      
+      if(isEditingDraft) {
+        // 如果是修改稿件，保持撰稿状态，只修改内容
+        this.promptInput = this.draftPrompt;
+        this.sendPrompt();
+      } else {
+        // 如果是修改思路，重置所有状态
+        this.createNewChat();
+        this.promptInput = this.originalPrompt;
+        this.sendPrompt();
+      }
+    }
+    
+    this.reviewDialogVisible = false;
+  },
+
+
+  sendAsDraft() {
+    // 获取当前结果的内容
+    const content = this.currentReviewResult.content;
+    this.isFromReview = true;
+    // 设置为提示词，添加指定的前缀
+    this.promptInput = `根据以下思路完善一篇内容。思路:${content}`;
+    // 保存撰稿提示词
+    this.draftPrompt = this.promptInput;
+    // 保存原始主题任务
+    this.originalTaskPrompt = this.originalPrompt;
+    // 标记为来自审核
+    this.isFromReview = true;
+    this.autoScoreEnabled = true; // 启用自动评分功能
+    // 发送给所有AI
+    this.sendPrompt();
+  },
+
+
+
+
+  // 确保企业ID最新
+
+  async ensureLatestCorpId() {
+
+    try {
           const result = await ensureLatestCorpId();
           if(result.corpId !== this.corpId) {
             this.corpId = result.corpId;
@@ -817,25 +1543,41 @@
         }
       },
 
-      async sendPrompt() {
-        if(!this.canSend) return;
+async sendPrompt() {
+  if(!this.canSend) return;
+    // 如果是撰写思路模式，保存原始提示词
+  if (this.promptMode === 'idea') {
+    this.originalPrompt = this.promptInput;
+  }
+  // 构建完整的提示词
+  let fullPrompt;
+  if (this.promptMode === 'idea') {
+    // 撰写思路模式：提示词 + "主题任务：" + 用户输入
+    fullPrompt = this.currentPrompt + "主题任务：" + this.promptInput;
+  } else {
+    // 撰写文章模式：提示词 + "撰稿思路：" + 用户输入
+    fullPrompt = this.currentPrompt + "撰稿思路：" + this.promptInput;
+  }
+    // 重置计数和状态
+  this.completedAICount = 0;
+  this.autoScoreTriggered = false;
+  this.clearAutoScoreTimer();
 
-        // 确保使用最新的企业ID
-        await this.ensureLatestCorpId();
+  
+  // 确保使用最新的企业ID
+  await this.ensureLatestCorpId();
+  
+  this.screenshots = [];
+  this.activeCollapses = ["ai-selection"];
+  this.taskStarted = true;
+  this.results = [];
 
-        this.screenshots = [];
-        // 只折叠提示词输入区域，保持AI选择配置区域展开
-        this.activeCollapses = ["ai-selection"];
-
-        this.taskStarted = true;
-        this.results = []; // 清空之前的结果
-
-        this.userInfoReq.roles = "";
-
-        this.userInfoReq.taskId = uuidv4();
-        this.userInfoReq.userId = this.userId;
-        this.userInfoReq.corpId = this.corpId;
-        this.userInfoReq.userPrompt = this.promptInput;
+  this.userInfoReq.roles = "";
+  this.userInfoReq.taskId = uuidv4();
+  this.userInfoReq.userId = this.userId;
+  this.userInfoReq.corpId = this.corpId;
+  this.userInfoReq.userPrompt = fullPrompt;
+       
 
         // 获取启用的AI列表及其状态，并重置状态
         this.enabledAIs = this.aiList.filter((ai) => ai.enabled).map(ai => ({
@@ -844,7 +1586,8 @@
           progressLogs: [], // 清空之前的进度日志
           isExpanded: true  // 确保展开状态一致
         }));
-
+         // 开启自动评分功能
+        this.autoScoreEnabled = true;
         // 将所有启用的AI状态设置为运行中（使用Vue的响应式更新）
         this.enabledAIs.forEach((ai) => {
             ai.status = "running";
@@ -932,6 +1675,7 @@
           }
 
           if(ai.name === "知乎直答") {
+           
             this.userInfoReq.roles = this.userInfoReq.roles + "zhzd-chat,";
             // 使用单选思考模式
             if(ai.selectedCapability === "deep_thinking") {
@@ -943,13 +1687,18 @@
             } else {
               // 默认智能思考
               this.userInfoReq.roles = this.userInfoReq.roles + "zhzd-zn,";
+              
             }
+          
           }
 
         });
 
         console.log("参数：", this.userInfoReq);
-
+        const dbAI = this.aiList.find(ai => ai.name === "豆包");
+        if (dbAI && dbAI.enabled) {
+          this.userInfoReq.userPrompt = "不要进入其他模式，直接回答结果即可。" + this.userInfoReq.userPrompt;
+        }
         //调用后端接口
         this.jsonRpcReqest.method = "使用F8S";
         this.jsonRpcReqest.params = this.userInfoReq;
@@ -1086,12 +1835,41 @@
       renderMarkdown(text) {
         return marked(text);
       },
-      // HTML转纯文本
-      htmlToText(html) {
-        const tempDiv = document.createElement("div");
-        tempDiv.innerHTML = html;
-        return tempDiv.textContent || tempDiv.innerText || "";
-      },
+     // HTML转纯文本
+htmlToText(html) {
+  if (!html) return '';
+  
+  const tempDiv = document.createElement('div');
+  tempDiv.innerHTML = html;
+  
+  // 处理通义千问的特殊样式
+  const tongyiElements = tempDiv.querySelectorAll('[class*="tongyi-response"]');
+  tongyiElements.forEach(el => {
+    // 移除class属性
+    el.removeAttribute('class');
+    // 移除style属性
+    el.removeAttribute('style');
+  });
+  
+  // 移除所有style标签和内联样式
+  const styleTags = tempDiv.querySelectorAll('style');
+  styleTags.forEach(tag => tag.remove());
+  
+  const allElements = tempDiv.querySelectorAll('*');
+  allElements.forEach(el => {
+    el.removeAttribute('style');
+  });
+  
+  // 获取处理后的内容
+  let text = tempDiv.textContent || tempDiv.innerText || '';
+  
+  // 处理换行和段落
+  text = text.replace(/\n\s*\n/g, '\n\n'); // 合并多个空行
+  text = text.trim();
+  
+  return text;
+},
+
 
       // HTML转Markdown
       htmlToMarkdown(html) {
@@ -1291,14 +2069,20 @@
 
         // 处理智能排版结果
         if(dataObj.type === "RETURN_ZNPB_RES") {
+           console.log('=== 排版返回原始数据 ===', dataObj); // 打印完整的返回数据
           const znpbAI = this.enabledAIs.find((ai) => ai.name === "智能排版");
           if(znpbAI) {
             znpbAI.status = "completed";
             if(znpbAI.progressLogs.length > 0) {
               znpbAI.progressLogs[0].isCompleted = true;
             }
-
-
+ // 检查返回的数据结构
+    console.log('=== draftContent字段 ===', dataObj.draftContent);
+    console.log('=== draftContent类型 ===', typeof dataObj.draftContent);
+    console.log('=== draftContent长度 ===', dataObj.draftContent?.length);
+  // 打印返回内容的长度
+    console.log('=== 排版返回内容长度 ===', dataObj.draftContent.length);
+    console.log('=== 排版返回内容预览 ===', dataObj.draftContent.substring(0, 200) + '...');
             // 添加排版结果到results最前面
             this.results.unshift({
               aiName: "智能排版" + this.mediaList.filter(media => media.name === this.selectedMedia)[0].label,
@@ -1346,10 +2130,62 @@
             console.log("收到腾讯元宝消息:", dataObj);
             targetAI = this.enabledAIs.find((ai) => ai.name === "腾讯元宝");
             break;
-          case "RETURN_DB_RES":
-            console.log("收到豆包消息:", dataObj);
-            targetAI = this.enabledAIs.find((ai) => ai.name === "豆包");
-            break;
+        case "RETURN_DB_RES":
+  console.log("收到豆包消息:", dataObj);
+  // 首先查找是否存在对应taskId的可见度评估任务
+  const visibilityAI = this.enabledAIs.find(ai => 
+    ai.name === "可见度评估" && 
+    ai.status === "running" && 
+    ai.taskId === dataObj.taskId
+  );
+  
+  if(visibilityAI) {
+    // 只处理匹配的可见度评估任务
+    visibilityAI.status = "completed";
+    if(visibilityAI.progressLogs.length > 0) {
+      visibilityAI.progressLogs[0].isCompleted = true;
+    }
+    this.results.unshift({
+      aiName: "可见度评估",
+      content: dataObj.draftContent,
+      shareUrl: dataObj.shareUrl || "",
+      shareImgUrl: dataObj.shareImgUrl || "",
+      timestamp: new Date(),
+    });
+    this.activeResultTab = "result-0";
+    return; // 处理完可见度评估直接返回
+  }
+
+  // 处理普通豆包任务
+  const normalAI = this.enabledAIs.find(ai => 
+    ai.name === "豆包" && 
+    ai.status === "running" && 
+    ai.taskId === dataObj.taskId
+  );
+  
+  if(normalAI) {
+    normalAI.status = "completed";
+    if(normalAI.progressLogs.length > 0) {
+      normalAI.progressLogs[0].isCompleted = true;
+    }
+        // 添加计数逻辑
+    if(!normalAI.hasCounted) {
+      this.completedAICount++;
+      normalAI.hasCounted = true;
+      console.log(`📊 [计数更新] ${normalAI.name}完成，当前已完成AI数量: ${this.completedAICount}`);
+    }
+    this.results.unshift({
+      aiName: "豆包",
+      content: dataObj.draftContent,
+      shareUrl: dataObj.shareUrl || "",
+      shareImgUrl: dataObj.shareImgUrl || "",
+      timestamp: new Date(),
+    });
+    this.activeResultTab = "result-0";
+  }
+  break;
+
+
           case "RETURN_BAIDU_RES":
             console.log("收到百度AI消息:", dataObj);
             targetAI = this.enabledAIs.find((ai) => ai.name === "百度AI");
@@ -1390,10 +2226,17 @@
             // 如果状态已经是completed，但收到新结果，说明是重复消息或延迟消息
             // 不返回，继续处理，确保结果能被保存
           }
-
-          // 更新AI状态为已完成
-          targetAI.status = "completed";
-          console.log(`✅ [结果处理] 更新${targetAI.name}状态为completed`);
+// 更新AI状态为已完成
+if(targetAI.status === "running") {
+  targetAI.status = "completed";
+  // 只有第一次完成时才计数
+  if(!targetAI.hasCounted) {
+    this.completedAICount++;
+    targetAI.hasCounted = true; // 标记已计数
+    console.log(`📊 [计数更新] ${targetAI.name}完成，当前已完成AI数量: ${this.completedAICount}`);
+  }
+  console.log(`✅ [结果处理] 更新${targetAI.name}状态为completed`);
+}
 
           // 将最后一条进度消息标记为已完成
           if(targetAI.progressLogs.length > 0) {
@@ -1432,7 +2275,7 @@
           }
           console.log(`💾 [结果处理] 保存历史记录`);
           this.saveHistory();
-          console.log(`✨ [结果处理] ${targetAI.name}结果处理完成`);
+          
         } else {
           console.warn(`⚠️ [结果处理] 未找到目标AI，消息类型: ${dataObj.type}`);
         }
@@ -1467,13 +2310,22 @@
           hour12: false,
         });
       },
-      showScoreDialog() {
-        this.scoreDialogVisible = true;
-        this.selectedResults = [];
-        getAllScorePrompt().then(response => {
-          this.scorePromptList = response.data || [];
-        });
-      },
+showScoreDialog() {
+  this.scoreDialogVisible = true;
+  // 自动选择所有已完成的结果
+  this.selectedResults = this.results
+    .filter(result => {
+      // 查找对应的AI是否已完成
+      const ai = this.enabledAIs.find(ai => ai.name === result.aiName);
+      return ai && ai.status === 'completed';
+    })
+    .map(result => result.aiName);
+  
+  // 加载评分提示词列表
+  getAllScorePrompt().then(response => {
+    this.scorePromptList = response.data || [];
+  });
+},
 
       async handleScore() {
         if(!this.canScore) return;
@@ -1489,9 +2341,12 @@
             return `${result.aiName}${response.data}${plainContent}\n`;
           })
           .join("\n");
+  // 根据是否来自审核选择不同的提示词
+    const basePrompt = this.isFromReview 
+      ? `请你深度阅读以下内容，从多个维度对以下内容进行逐项打分，输出评分结果`
+      : this.scorePrompt;
 
-        // 构建完整的评分提示内容
-        const fullPrompt = `${this.scorePrompt}\n${selectedContents}`;
+     const fullPrompt = `请你深度阅读以下内容，从多个维度对以下内容进行逐项打分，输出评分结果}\n\n${selectedContents}`;
 
         // 构建评分请求
         const scoreRequest = {
@@ -1608,7 +2463,7 @@
         console.log("参数", scoreRequest);
         this.message(scoreRequest);
         this.scoreDialogVisible = false;
-
+       this.autoScoreEnabled = false; // 关闭自动评分
         // 创建智能评分AI节点
         const wkpfAI = {
           name: "智能评分",
@@ -1762,12 +2617,14 @@
             });
           } else {
             // 如果没有历史记录，使用当前启用的AI，设置为idle状态
-            this.enabledAIs = this.aiList.filter((ai) => ai.enabled).map(ai => ({
-              ...ai,
-              status: "idle",
-              progressLogs: [],
-              isExpanded: true
-            }));
+         this.enabledAIs = this.aiList.filter((ai) => ai.enabled).map(ai => ({
+  ...ai,
+  status: "running",
+  taskId: this.userInfoReq.taskId, // 使用主任务的taskId
+  progressLogs: [],
+  isExpanded: true,
+  hasCounted: false  // 添加计数标记
+}));
           }
           // 恢复主机可视化
           this.screenshots = historyData.screenshots || [];
@@ -1853,6 +2710,14 @@
 
       // 创建新对话
       createNewChat() {
+           this.completedAICount = 0;
+  this.autoScoreTriggered = false;
+  this.clearAutoScoreTimer();
+  // 重置所有AI的计数标记
+  this.aiList.forEach(ai => {
+    ai.hasCounted = false;
+  });
+         const savedOriginalPrompt = this.originalPrompt;
         // 重置所有数据
         this.chatId = uuidv4();
         this.isNewChat = true;
@@ -1861,7 +2726,8 @@
         this.screenshots = [];
         this.results = [];
         this.enabledAIs = [];
-
+        this.isFromReview = false; // 重置是否来自审核标志
+        this.originalTaskPrompt = '';
         // 重置所有AI状态为初始状态
         this.aiList.forEach(ai => {
           ai.status = "idle";
@@ -1996,10 +2862,13 @@
           },
 
         ];
-        // 展开相关区域
-        this.activeCollapses = ["ai-selection", "prompt-input"];
-
+        this.originalPrompt = savedOriginalPrompt; // 恢复原始提示词
+        this.isFromReview = false; // 重置审核状态
+        this.autoScoreEnabled = false; // 重置自动评分状态
+        this.currentReviewResult = null; // 清空当前审核结果
+        this.reviewResult = ''; // 重置审核结果
         this.$message.success("已创建新对话");
+
       },
 
       // 加载上次会话
@@ -2058,11 +2927,17 @@
         };
       },
 
-      // 投递到媒体
-      handlePushToMedia(result) {
-        this.currentLayoutResult = result;
-        this.showLayoutDialog(result);
-      },
+ handlePushToMedia(result) {
+  // 创建一个新的结果对象，如果是通义千问就先清理内容
+  let processedResult = { ...result };
+  
+  // 不管是什么AI，都使用htmlToText方法清理内容
+  processedResult.content = this.htmlToText(result.content);
+  
+  this.currentLayoutResult = processedResult;
+  this.showLayoutDialog(processedResult);
+}
+,
 
       // 显示智能排版对话框
       showLayoutDialog(result) {
@@ -2124,10 +2999,12 @@
       handleLayout() {
         if(!this.canLayout || !this.currentLayoutResult) return;
         this.layoutDialogVisible = false;
-
+ // 打印原始内容长度
+  console.log('=== 排版前原始内容长度 ===', this.currentLayoutResult.content.length);
         // 公众号投递：创建排版任务
         this.createWechatLayoutTask();
-
+       // 关闭自动评分
+  this.autoScoreEnabled = false;
       },
 
 
@@ -2348,21 +3225,33 @@
             .finally(() => {
               this.pushingToWechat = false;
             });
-        } else if(mediaName.includes('zhihu')) {
-          // 构建知乎投递请求
-          const mediaRequest = {
-            jsonrpc: "2.0",
-            id: uuidv4(),
-            method: "媒体投递",
-            params: {
-              taskId: uuidv4(),
-              userId: this.userId,
-              corpId: this.corpId,
-              aiName: result.aiName,
-              userPrompt: result.content, // 传递排版后的内容
-              selectedMedia: "zhihu_layout",
-            },
-          };
+} else if(mediaName.includes('zhihu')) {
+    // 先打印原始HTML内容
+  console.log('=== 原始HTML内容 ===');
+  console.log(result.content);
+  console.log('=== 原始内容长度 ===', result.content.length);
+  // 将HTML内容转换为Markdown格式
+  const markdownContent = this.htmlToMarkdown(result.content);
+   // 打印转换后的Markdown内容到控制台
+  console.log('=== 转换后的Markdown内容 ===');
+  console.log(markdownContent);
+  console.log('=== 内容结束 ===');
+  // 构建知乎投递请求
+  const mediaRequest = {
+    jsonrpc: "2.0",
+    id: uuidv4(),
+    method: "媒体投递",
+    params: {
+      taskId: uuidv4(),
+      userId: this.userId,
+      corpId: this.corpId,
+      aiName: result.aiName,
+      userPrompt: markdownContent, // 使用转换后的Markdown内容
+      selectedMedia: "zhihu_layout",
+    },
+  };
+
+
           this.message(mediaRequest);
 
           // 创建媒体投递任务节点（类似智能排版）
@@ -3424,4 +4313,401 @@
   }
 
 
+  /* 审核弹窗样式 */
+  .review-dialog-content {
+    padding: 20px;
+  }
+
+  .review-dialog-content p {
+    margin-bottom: 15px;
+    color: #606266;
+  }
+  /* 可见度评估按钮样式 */
+.visibility-btn {
+  border-radius: 16px;
+  padding: 6px 12px;
+}
+
+.prompt-button {
+  margin-left: 10px;
+  background-color: #409eff !important;
+  border-color: #409eff !important;
+  color: #fff !important;
+}
+.prompt-button:hover {
+  background-color: #66b1ff !important;
+  border-color: #66b1ff !important;
+}
+.prompt-dialog-content {
+  padding: 20px;
+}
+
+.prompt-content {
+  max-height: 100px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+}
+.review-dialog-content {
+  padding: 20px;
+}
+
+.review-content {
+  margin: 15px 0;
+}
+
+.review-content :deep(.el-textarea__inner) {
+  font-family: monospace;
+  line-height: 1.5;
+}
+
+.review-buttons {
+  margin-top: 20px;
+  text-align: right;
+}
+
+.review-buttons .el-button {
+  margin-left: 10px;
+}
+.review-dialog-content {
+  padding: 20px;
+}
+
+.ai-selector {
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ai-selector span {
+  color: #606266;
+  font-size: 14px;
+}
+
+.markdown-content {
+  margin-bottom: 20px;
+  max-height: 400px;
+  overflow-y: auto;
+  padding: 15px 20px;
+  border: 1px solid #ebeef5;
+  border-radius: 4px;
+  background-color: #fff;
+}
+
+.markdown-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.markdown-content::-webkit-scrollbar-thumb {
+  background-color: #DCDFE6;
+  border-radius: 3px;
+}
+
+.markdown-content::-webkit-scrollbar-track {
+  background-color: #F5F7FA;
+}
+
+.review-buttons {
+  margin-top: 20px;
+  text-align: right;
+}
+
+.review-buttons .el-button {
+  margin-left: 10px;
+}
+
+/* 复用评分结果的样式 */
+:deep(.markdown-content h1),
+:deep(.markdown-content h2),
+:deep(.markdown-content h3),
+:deep(.markdown-content h4),
+:deep(.markdown-content h5),
+:deep(.markdown-content h6) {
+  margin-top: 24px;
+  margin-bottom: 16px;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+:deep(.markdown-content p) {
+  margin-bottom: 16px;
+}
+
+:deep(.markdown-content ul),
+:deep(.markdown-content ol) {
+  margin-bottom: 16px;
+  padding-left: 2em;
+}
+
+:deep(.markdown-content li) {
+  margin-bottom: 0.25em;
+}
+
+:deep(.markdown-content blockquote) {
+  padding: 0 1em;
+  color: #6a737d;
+  border-left: 0.25em solid #dfe2e5;
+  margin-bottom: 16px;
+}
+
+:deep(.markdown-content code) {
+  padding: 0.2em 0.4em;
+  margin: 0;
+  font-size: 85%;
+  background-color: rgba(27,31,35,0.05);
+  border-radius: 3px;
+}
+
+:deep(.markdown-content pre) {
+  padding: 16px;
+  overflow: auto;
+  font-size: 85%;
+  line-height: 1.45;
+  background-color: #f6f8fa;
+  border-radius: 6px;
+  margin-bottom: 16px;
+}
+
+:deep(.markdown-content pre code) {
+  display: inline;
+  max-width: auto;
+  padding: 0;
+  margin: 0;
+  overflow: visible;
+  line-height: inherit;
+  word-wrap: normal;
+  background-color: transparent;
+  border: 0;
+}
+.review-content-input {
+  margin: 15px 0;
+}
+
+.review-content-input :deep(.el-textarea__inner) {
+  font-family: monospace;
+  line-height: 1.6;
+  padding: 15px;
+  resize: vertical;
+}
+
+.review-buttons {
+  margin-top: 20px;
+  text-align: right;
+}
+
+.review-buttons .el-button {
+  margin-left: 10px;
+}
+.prompt-section {
+  margin-bottom: 15px;
+}
+
+.prompt-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.prompt-header span {
+  color: #606266;
+  font-size: 14px;
+}
+
+.current-prompt {
+  color: #909399;
+  font-size: 12px;
+  max-width: 300px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+
+.review-content-input {
+  margin: 15px 0;
+}
+
+.review-content-input :deep(.el-textarea__inner) {
+  font-family: monospace;
+  line-height: 1.6;
+  padding: 15px;
+  resize: vertical;
+}
+.prompt-section {
+  margin-bottom: 15px;
+}
+
+.prompt-section p {
+  margin-bottom: 10px;
+  color: #606266;
+}
+
+.review-content-input {
+  margin: 15px 0;
+}
+
+.review-content-input :deep(.el-textarea__inner) {
+  font-family: monospace;
+  line-height: 1.6;
+  padding: 15px;
+  resize: vertical;
+}
+.prompt-button-section {
+  margin: 15px 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.current-prompt {
+  color: #909399;
+  font-size: 12px;
+}
+
+.content-section {
+  margin-bottom: 20px;
+}
+
+.content-section p {
+  margin-bottom: 10px;
+  color: #606266;
+}
+
+.review-content-input {
+  margin: 15px 0;
+}
+
+.review-content-input :deep(.el-textarea__inner) {
+  font-family: monospace;
+  line-height: 1.6;
+  padding: 15px;
+  resize: vertical;
+}
+
+.review-buttons {
+  text-align: right;
+}
+
+.review-buttons .el-button {
+  margin-left: 10px;
+}
+.mode-switch {
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.prompt-dialog-content {
+  padding: 20px;
+}
+
+.prompt-content {
+  max-height: 100px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+}
+.ai-selector {
+  margin: 20px 0;
+}
+
+.ai-selector span {
+  display: block;
+  margin-bottom: 10px;
+  color: #606266;
+}
+
+.ai-button-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.ai-button {
+  margin: 0;
+}
+
+.review-buttons {
+  text-align: right;
+  margin-top: 20px;
+}
+
+.review-buttons .el-button {
+  margin-left: 10px;
+}
+.visibility-dialog-content {
+  padding: 20px;
+}
+
+.keyword-input-section {
+  margin-bottom: 20px;
+}
+
+.keyword-input-section h3 {
+  margin-bottom: 10px;
+  color: #303133;
+}
+
+.prompt-section h3 {
+  margin-bottom: 10px;
+  color: #303133;
+}
+
+.keyword-input,
+.prompt-input {
+  width: 100%;
+}
+
+.dialog-footer {
+  text-align: right;
+}
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.header-buttons {
+  display: flex;
+  gap: 10px;
+}
+.button-group {
+  display: flex;
+  gap: 10px;
+}
+.prompt-dialog-header {
+  margin-bottom: 20px;
+  display: flex;
+  justify-content: flex-end;
+}
+.el-table .el-button--text {
+  padding: 2px 4px;
+  margin-left: 2px;
+}
+
+.el-table .el-button--text:first-child {
+  margin-left: 0;
+}
+
+.el-table .el-button--text i {
+  margin-right: 2px;
+}
+
+/* 确保表格内容不换行 */
+.el-table .cell {
+  white-space: nowrap;
+}
+.ai-button.is-active {
+  background-color: #409eff !important;
+  border-color: #409eff !important;
+  color: #fff !important;
+}
+
+.ai-button {
+  transition: all 0.3s ease;
+}
+
+.ai-button:hover {
+  opacity: 0.8;
+}
 </style>
