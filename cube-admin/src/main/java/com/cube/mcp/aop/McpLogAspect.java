@@ -7,6 +7,7 @@ import com.cube.common.utils.ThreadUserInfo;
 import com.cube.common.utils.UserLogUtil;
 import com.cube.mcp.entities.McpResult;
 import com.cube.wechat.selfapp.app.controller.AIGCController;
+import com.cube.wechat.selfapp.app.mapper.UserInfoMapper;
 import com.cube.wechat.selfapp.app.util.UserInfoUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -35,6 +36,7 @@ import java.util.Arrays;
 public class McpLogAspect {
     private final UserInfoUtil userInfoUtil;
     private final AIGCController aigcController;
+    private final UserInfoMapper userInfoMapper;
     @Pointcut("execution(* com.cube.mcp.CubeMcp.*(..))")
     public void logPointCut() {
     }
@@ -79,7 +81,8 @@ public class McpLogAspect {
                         log.warn("UserInfoRequest中的unionId为空，方法：{}", methodName);
                     }
                     userId = userInfoUtil.getUserIdByUnionId(unionId);
-                    corpId = userInfoRequest.getCorpId();
+                    // 获取corpId
+                    corpId = userInfoMapper.getCorpIdByUserId(userId);
                     if(userId == null || userId.isEmpty()) {
                         return McpResult.fail("您无访问权限,请联系管理员", "");
                     }

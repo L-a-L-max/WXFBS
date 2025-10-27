@@ -646,6 +646,14 @@ public class WebSocketClientService {
                 result = mcpResult.getResult();
             }
             content.put("message", result);
+        } else if ("mcp".equals(userInfoRequest.getType())) {
+            McpResult result;
+            if (mcpResult == null || mcpResult.getResult() == null || mcpResult.getResult().isEmpty()) {
+                result = McpResult.fail(aiName + "执行错误,请稍后重试","");
+            } else {
+                result = mcpResult;
+            }
+            content.put("message", JSONObject.toJSONString(result));
         } else {
 //            TODO 其他情况
         }
