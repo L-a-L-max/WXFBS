@@ -5,11 +5,12 @@ import com.alibaba.fastjson.JSONObject;
 import com.cube.common.utils.SecurityUtils;
 import com.cube.common.utils.StringUtils;
 import com.cube.point.controller.PointsSystem;
-import com.cube.wechat.selfapp.app.domain.AINodeLog;
-import com.cube.wechat.selfapp.app.domain.AIParam;
-import com.cube.wechat.selfapp.app.domain.PromptTemplate;
-import com.cube.wechat.selfapp.app.domain.WcOfficeAccount;
+import com.cube.wechat.selfapp.app.domain.*;
+import com.cube.wechat.selfapp.app.domain.query.ArtPromptQuery;
+import com.cube.wechat.selfapp.app.domain.query.IdeaPromptQuery;
 import com.cube.wechat.selfapp.app.domain.query.ScorePromptQuery;
+import com.cube.wechat.selfapp.app.mapper.ArtTemplateMapper;
+import com.cube.wechat.selfapp.app.mapper.IdeaTemplateMapper;
 import com.cube.wechat.selfapp.app.mapper.PromptTemplateMapper;
 import com.cube.wechat.selfapp.app.mapper.UserInfoMapper;
 import com.cube.wechat.selfapp.app.service.UserInfoService;
@@ -61,6 +62,12 @@ public class UserInfoServiceImpl implements UserInfoService {
 
     @Autowired
     private RedisUtil redisUtil;
+
+    @Autowired
+    private ArtTemplateMapper artTemplateMapper;
+
+    @Autowired
+    private IdeaTemplateMapper ideaTemplateMapper;
 
     /**
      * 查询个人中心统计数据
@@ -286,6 +293,117 @@ public class UserInfoServiceImpl implements UserInfoService {
     public ResultBody getAllScorePrompt() {
         Long userId = SecurityUtils.getUserId();
         List<PromptTemplate> list = promptTemplateMapper.getAllScorePrompt(userId);
+        if (list != null) {
+            return ResultBody.success(list);
+        }
+        return ResultBody.FAIL;
+    }
+
+    @Override
+    public List<ArtTemplate> getArtPromptList(ArtPromptQuery artPromptQuery) {
+        Long userId = SecurityUtils.getUserId();
+        return artTemplateMapper.getArtPromptList(artPromptQuery, userId);
+    }
+
+    @Override
+    public ResultBody getArtPrompt(Long id) {
+        ArtTemplate artTemplate = artTemplateMapper.getArtPromptById(id);
+        if (artTemplate != null) {
+            return ResultBody.success(artTemplate);
+        }
+        return ResultBody.FAIL;
+    }
+
+    @Override
+    public ResultBody saveArtPrompt(ArtTemplate artTemplate) {
+        artTemplate.setType(3L);
+        artTemplate.setUserId(SecurityUtils.getUserId());
+        int count = artTemplateMapper.saveArtTemplate(artTemplate);
+        if (count > 0) {
+            return ResultBody.success("添加成功");
+        }
+        return ResultBody.FAIL;
+    }
+
+    @Override
+    public ResultBody updateArtPrompt(ArtTemplate artTemplate) {
+        artTemplate.setType(3L);
+        artTemplate.setUserId(SecurityUtils.getUserId());
+        int count = artTemplateMapper.updateArtTemplate(artTemplate);
+        if (count > 0) {
+            return ResultBody.success("修改成功");
+        }
+        return ResultBody.FAIL;
+    }
+
+    @Override
+    public ResultBody deleteArtPrompt(Long[] ids) {
+        int count = artTemplateMapper.deleteArtTemplateByIds(ids);
+        if (count > 0) {
+            return ResultBody.success("删除成功");
+        }
+        return ResultBody.FAIL;
+    }
+
+    @Override
+    public ResultBody getAllArtPrompt() {
+        Long userId = SecurityUtils.getUserId();
+        List<ArtTemplate> list = artTemplateMapper.getAllArtPrompt(userId);
+        if (list != null) {
+            return ResultBody.success(list);
+        }
+        return ResultBody.FAIL;
+    }
+    @Override
+    public List<IdeaTemplate> getIdeaPromptList(IdeaPromptQuery ideaPromptQuery) {
+        Long userId = SecurityUtils.getUserId();
+        return ideaTemplateMapper.getIdeaPromptList(ideaPromptQuery, userId);
+    }
+
+    @Override
+    public ResultBody getIdeaPrompt(Long id) {
+        IdeaTemplate ideaTemplate = ideaTemplateMapper.getIdeaPromptById(id);
+        if (ideaTemplate != null) {
+            return ResultBody.success(ideaTemplate);
+        }
+        return ResultBody.FAIL;
+    }
+
+    @Override
+    public ResultBody saveIdeaPrompt(IdeaTemplate ideaTemplate) {
+        ideaTemplate.setType(3L);
+        ideaTemplate.setUserId(SecurityUtils.getUserId());
+        int count = ideaTemplateMapper.saveIdeaTemplate(ideaTemplate);
+        if (count > 0) {
+            return ResultBody.success("添加成功");
+        }
+        return ResultBody.FAIL;
+    }
+
+    @Override
+    public ResultBody updateIdeaPrompt(IdeaTemplate ideaTemplate) {
+        ideaTemplate.setType(3L);
+        ideaTemplate.setUserId(SecurityUtils.getUserId());
+        int count = ideaTemplateMapper.updateIdeaTemplate(ideaTemplate);
+        if (count > 0) {
+            return ResultBody.success("修改成功");
+        }
+        return ResultBody.FAIL;
+    }
+
+    @Override
+    public ResultBody deleteIdeaPrompt(Long[] ids) {
+        int count = ideaTemplateMapper.deleteIdeaTemplateByIds(ids);
+        if (count > 0) {
+            return ResultBody.success("删除成功");
+        }
+        return ResultBody.FAIL;
+    }
+
+    @Override
+    public ResultBody getAllIdeaPrompt() {
+        Long userId = SecurityUtils.getUserId();
+        List<IdeaTemplate> list = ideaTemplateMapper.getAllIdeaPrompt(userId);
         if (list != null) {
             return ResultBody.success(list);
         }
