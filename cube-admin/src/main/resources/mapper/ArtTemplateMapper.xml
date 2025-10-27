@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cube.wechat.selfapp.app.mapper.ArtTemplateMapper">
+
+    <resultMap type="com.cube.wechat.selfapp.app.domain.ArtTemplate" id="ArtTemplateResult">
+        <result property="id"    column="id"    />
+        <result property="name"    column="name"    />
+        <result property="prompt"    column="prompt"    />
+        <result property="type"    column="type"    />
+        <result property="userId"    column="user_id"    />
+        <result property="isdel"    column="isdel"    />
+    </resultMap>
+
+    <sql id="selectArtTemplateVo">
+        select id, name, prompt, type, user_id, isdel from wc_art_template
+    </sql>
+
+    <select id="getArtTemplateList" parameterType="com.cube.wechat.selfapp.app.domain.query.ArtPromptQuery" resultMap="ArtTemplateResult">
+        <include refid="selectArtTemplateVo"/>
+        <where>
+            <if test="name != null  and name != ''"> and name like concat('%', #{name}, '%')</if>
+            <if test="prompt != null  and prompt != ''"> and prompt like concat('%', #{prompt}, '%')</if>
+            and isdel = 0
+        </where>
+    </select>
+
+    <select id="getArtPromptList" resultMap="ArtTemplateResult">
+        <include refid="selectArtTemplateVo"/>
+        <where>
+            and type = 3
+            <if test="artPromptQuery.name != null and artPromptQuery.name != ''"> and name like concat('%', #{artPromptQuery.name}, '%')</if>
+            <if test="artPromptQuery.prompt != null  and artPromptQuery.prompt != ''"> and prompt like concat('%', #{artPromptQuery.prompt}, '%')</if>
+            and user_id = #{userId}
+            and isdel = 0
+        </where>
+    </select>
+
+    <select id="getAllArtPrompt" resultMap="ArtTemplateResult">
+        <include refid="selectArtTemplateVo"/>
+        <where>
+            and type = 3
+            and user_id = #{userId}
+            and isdel = 0
+        </where>
+    </select>
+
+    <select id="getArtTemplateById" parameterType="Long" resultMap="ArtTemplateResult">
+        <include refid="selectArtTemplateVo"/>
+        where id = #{id} and isdel = 0
+    </select>
+
+    <select id="getArtPromptById" parameterType="Long" resultMap="ArtTemplateResult">
+        <include refid="selectArtTemplateVo"/>
+        where id = #{id} and type = 3 and isdel = 0
+    </select>
+    <select id="getArtWord" resultType="com.cube.wechat.selfapp.app.domain.ArtTemplate">
+        <include refid="selectArtTemplateVo"/>
+        where type = 4 and isdel = 0
+    </select>
+
+
+    <insert id="saveArtTemplate" parameterType="com.cube.wechat.selfapp.app.domain.ArtTemplate" useGeneratedKeys="true" keyProperty="id">
+        insert into wc_art_template
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="name != null and name != ''">name,</if>
+            <if test="prompt != null and prompt != ''">prompt,</if>
+            <if test="type != null">type,</if>
+            <if test="userId != null">user_id,</if>
+            <if test="isdel != null">isdel,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="name != null and name != ''">#{name},</if>
+            <if test="prompt != null and prompt != ''">#{prompt},</if>
+            <if test="type != null">#{type},</if>
+            <if test="userId != null">#{userId},</if>
+            <if test="isdel != null">#{isdel},</if>
+        </trim>
+    </insert>
+
+    <update id="updateArtTemplate" parameterType="com.cube.wechat.selfapp.app.domain.ArtTemplate">
+        update wc_art_template
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="name != null and name != ''">name = #{name},</if>
+            <if test="prompt != null and prompt != ''">prompt = #{prompt},</if>
+            <if test="type != null">type = #{type},</if>
+            <if test="userId != null">user_id = #{userId},</if>
+            <if test="isdel != null">isdel = #{isdel},</if>
+        </trim>
+        where id = #{id}
+    </update>
+
+    <update id="deleteArtTemplateById" parameterType="Long">
+        update wc_art_template set isdel=1 where id = #{id}
+    </update>
+
+    <update id="deleteArtTemplateByIds" parameterType="String">
+        update wc_art_template set isdel=1 where id in
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </update>
+</mapper>
