@@ -265,7 +265,7 @@ public class ZHZDUtil {
             if (inputBox == null || inputBox.count() <= 0) {
                 throw new RuntimeException("未找到输入框");
             }
-            
+
             // 切换思考模式: 深度思考、智能思考、快速回答
             handleCapabilityTurnOn(page, userInfoRequest.getRoles(), userId, aiName);
 
@@ -279,8 +279,12 @@ public class ZHZDUtil {
 
             inputBox.click();
             Thread.sleep(300);
-            inputBox.type(userInfoRequest.getUserPrompt());
-            
+
+            // 使用keyboard API直接输入
+            page.keyboard().type(userInfoRequest.getUserPrompt());
+            Thread.sleep(200);
+
+            // 检查输入是否成功
             int times = 3;
             String inputText = inputBox.textContent();
             while (!inputText.contains("输入你的问题")) {
@@ -288,21 +292,22 @@ public class ZHZDUtil {
                 if (page.isClosed()) {
                     throw new RuntimeException("页面在发送指令时已关闭");
                 }
-                
-                inputBox.press("Enter");
+
+                // 尝试模拟键盘输入Enter
+                page.keyboard().press("Enter");
                 Thread.sleep(1000);
                 inputText = inputBox.textContent();
                 if(times-- < 0) {
                     throw new RuntimeException("指令输入失败");
                 }
             }
-            
+
             logInfo.sendTaskLog("指令已自动发送成功", userId, aiName);
             logInfo.sendTaskLog("开启自动监听任务，持续监听" + aiName + "回答中", userId, aiName);
 
             // 获取原始回答HTML
             return waitZHZDHtmlDom(page, userId, aiName, copyButtonCount);
-            
+
         } catch (com.microsoft.playwright.impl.TargetClosedError e) {
             throw new RuntimeException("页面目标在处理知乎直答请求时已关闭", e);
         } catch (TimeoutError e) {
@@ -320,7 +325,7 @@ public class ZHZDUtil {
         }
 
         try {
-            long timeout = 900000; // 15分钟超时 (延长50%: 600000 -> 900000)
+            long timeout = 600000; // 10分钟超时
             long startTime = System.currentTimeMillis();
 
             // 等待5秒
@@ -355,7 +360,7 @@ public class ZHZDUtil {
             Locator contentLocator = page.locator(".Render-markdown").last();
             String htmlContent = contentLocator.first().innerHTML();
             return cleanHtml(htmlContent);
-            
+
         } catch (com.microsoft.playwright.impl.TargetClosedError e) {
             throw new RuntimeException("页面目标在等待知乎直答回复时已关闭", e);
         } catch (TimeoutError e) {
