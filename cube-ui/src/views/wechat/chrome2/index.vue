@@ -924,7 +924,12 @@ import {
          promptList: [],
        defaultIdeaPrompt: "根据主题任务撰写思路。", // 末尾加逗号便于拼接
        defaultArticlePrompt: "根据以下撰稿思路完善一篇内容。", // 末尾加逗号便于拼接
-       currentPrompt: "", // 当前选中的提示词
+       currentPrompt: '', // 初始化为空
+    lastSelectedPrompts: {  // 添加用于保存每种模式下最后选择的提示词
+      idea: '',
+      article: ''
+    },
+    
        autoScoreTimer: null, // 自动评分计时器
        completedAICount: 0, // 已完成的AI数量
        autoScoreTriggered: false, // 是否已触发自动评分
@@ -1049,6 +1054,22 @@ allTasksCompleted() {
     async created() {
       console.log(this.userId);
 this.currentPrompt = this.defaultIdeaPrompt; // 默认使用思路模式提示词
+  this.lastSelectedPrompts.idea = this.defaultIdeaPrompt;
+  this.lastSelectedPrompts.article = this.defaultArticlePrompt;
+    // 从 localStorage 读取保存的提示词
+  const savedPrompts = localStorage.getItem('lastSelectedPrompts');
+  if (savedPrompts) {
+    this.lastSelectedPrompts = JSON.parse(savedPrompts);
+  }
+  
+  // 初始化提示词
+  this.currentPrompt = this.lastSelectedPrompts.idea || this.defaultIdeaPrompt;
+  if (!this.lastSelectedPrompts.idea) {
+    this.lastSelectedPrompts.idea = this.defaultIdeaPrompt;
+  }
+  if (!this.lastSelectedPrompts.article) {
+    this.lastSelectedPrompts.article = this.defaultArticlePrompt;
+  }
       // 使用企业ID工具确保获取最新的企业ID
       try {
         this.corpId = await getCorpId();
@@ -1083,7 +1104,9 @@ this.currentPrompt = this.defaultIdeaPrompt; // 默认使用思路模式提示�
       },
   promptMode: {
     handler(newMode) {
-      this.currentPrompt = newMode === 'idea' ? this.defaultIdeaPrompt : this.defaultArticlePrompt;
+      // 切换模式时使用该模式下最后选择的提示词
+      this.currentPrompt = this.lastSelectedPrompts[newMode] || 
+        (newMode === 'idea' ? this.defaultIdeaPrompt : this.defaultArticlePrompt);
       // 如果弹窗打开，重新加载提示词列表
       if (this.promptDialogVisible || this.reviewPromptDialogVisible) {
         this.loadPromptList();
@@ -1091,6 +1114,13 @@ this.currentPrompt = this.defaultIdeaPrompt; // 默认使用思路模式提示�
     },
     immediate: false
   },
+   lastSelectedPrompts: {
+    handler(newVal) {
+      localStorage.setItem('lastSelectedPrompts', JSON.stringify(newVal));
+    },
+    deep: true
+  },
+
       // 监听任务完成状态
     // 监听任务完成状态
 allTasksCompleted: {
@@ -1205,6 +1235,7 @@ showVisibilityDialog() {
     })
   },
       // 加载提示词列表
+// 修改 loadPromptList 方法
 async loadPromptList() {
   try {
     let response;
@@ -1220,6 +1251,11 @@ async loadPromptList() {
       if (this.reviewPromptDialogVisible) {
         this.reviewPromptList = list;
       }
+      // 如果当前没有选中的提示词，使用默认值
+      if (!this.currentPrompt) {
+        this.currentPrompt = this.defaultIdeaPrompt;
+        this.$set(this.lastSelectedPrompts, 'idea', this.defaultIdeaPrompt);
+      }
     } else {
       response = await getAllArtPrompt();
       const list = [
@@ -1232,12 +1268,18 @@ async loadPromptList() {
       if (this.reviewPromptDialogVisible) {
         this.reviewPromptList = list;
       }
+      // 如果当前没有选中的提示词，使用默认值
+      if (!this.currentPrompt) {
+        this.currentPrompt = this.defaultArticlePrompt;
+        this.$set(this.lastSelectedPrompts, 'article', this.defaultArticlePrompt);
+      }
     }
   } catch (error) {
     console.error('获取提示词列表失败:', error);
     this.$message.error('获取提示词列表失败');
   }
-},
+}
+,
 
       // 显示审核提示词弹窗
 async showReviewPromptDialog() {
@@ -1266,6 +1308,8 @@ async showReviewPromptDialog() {
 // 使用审核提示词
 useReviewPrompt(prompt) {
   this.currentPrompt = prompt.prompt;
+  // 保存当前模式下的提示词选择
+  this.$set(this.lastSelectedPrompts, this.promptMode, prompt.prompt);
   this.reviewPromptDialogVisible = false;
   this.$message.success('已选择提示词：' + prompt.name);
 },
@@ -1390,11 +1434,15 @@ async showPromptDialog() {
 },
 
 
+// 修改 usePrompt 方法
 usePrompt(prompt) {
   this.currentPrompt = prompt.prompt;
+  // 保存当前模式下的提示词选择
+  this.$set(this.lastSelectedPrompts, this.promptMode, prompt.prompt);
   this.promptDialogVisible = false;
   this.$message.success('已选择提示词：' + prompt.name);
-},
+}
+,
 
 
 
@@ -1432,8 +1480,8 @@ showReviewDialog(result) {
 handleStartWriting() {
   // 切换到撰写文章模式
   this.promptMode = 'article';
-  // 更新当前提示词为撰写文章模式的默认提示词
-  this.currentPrompt = this.defaultArticlePrompt;
+  // 更新当前提示词为该模式下最后选择的提示词
+  this.currentPrompt = this.lastSelectedPrompts.article || this.defaultArticlePrompt;
   // 直接使用编辑后的内容作为撰稿思路
   this.promptInput = this.editableContent;
   // 保存当前思路作为历史记录
@@ -1544,21 +1592,27 @@ handleReject() {
       },
 
 async sendPrompt() {
-  if(!this.canSend) return;
-    // 如果是撰写思路模式，保存原始提示词
+   if(!this.canSend) return;
+  
+  // 如果是撰写思路模式，保存原始提示词
   if (this.promptMode === 'idea') {
     this.originalPrompt = this.promptInput;
   }
+  
   // 构建完整的提示词
   let fullPrompt;
+  // 确保使用当前选择的提示词
+  const activePrompt = this.currentPrompt || (this.promptMode === 'idea' ? this.defaultIdeaPrompt : this.defaultArticlePrompt);
+  
   if (this.promptMode === 'idea') {
     // 撰写思路模式：提示词 + "主题任务：" + 用户输入
-    fullPrompt = this.currentPrompt + "主题任务：" + this.promptInput;
+    fullPrompt = activePrompt + "主题任务：" + this.promptInput;
   } else {
     // 撰写文章模式：提示词 + "撰稿思路：" + 用户输入
-    fullPrompt = this.currentPrompt + "撰稿思路：" + this.promptInput;
+    fullPrompt = activePrompt + "撰稿思路：" + this.promptInput;
   }
-    // 重置计数和状态
+
+  // 重置计数和状态
   this.completedAICount = 0;
   this.autoScoreTriggered = false;
   this.clearAutoScoreTimer();
