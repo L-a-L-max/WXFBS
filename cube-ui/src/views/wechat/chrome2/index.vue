@@ -420,12 +420,12 @@
 <el-dialog title="常用提示词" v-model="promptDialogVisible" width="60%" :close-on-click-modal="false">
   <div class="prompt-dialog-content">
     <div class="prompt-dialog-header">
-  <el-button type="primary" size="small" @click="handleAddPrompt">新增提示词</el-button>
-</div>
+      <el-button type="primary" size="small" @click="handleAddPrompt">新增提示词</el-button>
+    </div>
 
-    <!-- 模式切换 -->
+    <!-- 使用弹窗内独立的模式切换 -->
     <div class="mode-switch">
-      <el-radio-group v-model="promptMode" size="small">
+      <el-radio-group v-model="dialogPromptMode" size="small">
         <el-radio-button label="idea">撰写思路模式</el-radio-button>
         <el-radio-button label="article">撰写文章模式</el-radio-button>
       </el-radio-group>
@@ -600,12 +600,12 @@
 
 
     <!-- 提示词选择按钮 -->
-    <div class="prompt-button-section">
-      <el-button type="info" @click="showReviewPromptDialog" class="prompt-button">
+      <div class="prompt-button-section">
+      <el-button type="info" @click="showPromptDialog('review')" class="prompt-button">
         常用提示词
       </el-button>
       <div class="current-prompt">
-        <span>当前提示词：{{ currentPrompt }}</span>
+        <span>当前提示词：{{ lastSelectedPrompts.article || defaultArticlePrompt }}</span>
       </div>
     </div>
 
@@ -904,6 +904,7 @@ import {
         currentLayoutResult: null, // 当前要排版的结果
         historyDrawerVisible: false,
         chatHistory: [],
+        dialogPromptMode: 'idea', 
         historyLoading: false, // 历史记录加载状态
         pushOfficeNum: 0, // 投递到公众号的递增编号
         pushingToWechat: false, // 投递到公众号的loading状态
@@ -1102,6 +1103,14 @@ this.currentPrompt = this.defaultIdeaPrompt; // 默认使用思路模式提示�
         },
         immediate: false
       },
+       dialogPromptMode: {
+    handler(newMode) {
+      if (this.promptDialogVisible) {
+        this.loadPromptList();
+      }
+    }
+  },
+      // 监听模式变化，更新当前提示词
   promptMode: {
     handler(newMode) {
       // 切换模式时使用该模式下最后选择的提示词
@@ -1172,113 +1181,91 @@ showVisibilityDialog() {
   this.visibilityKeyword = this.originalTaskPrompt || this.promptInput;
 },
   // 新增提示词
-  handleAddPrompt() {
-    this.promptForm = {
-      id: null,
-      name: '',
-      prompt: ''
-    }
-    this.promptDialogTitle = '新增提示词'
-    this.promptFormDialogVisible = true
-  },
+handleAddPrompt() {
+  this.promptForm = {
+    id: null,
+    name: '',
+    prompt: ''
+  }
+  this.promptDialogTitle = '新增提示词'
+  this.promptFormDialogVisible = true
+  // 保存当前操作的模式
+  this.promptSource = this.dialogPromptMode
+}
+,
 
   // 修改提示词
-  handleEditPrompt(row) {
-    this.promptForm = {
-      id: row.id,
-      name: row.name,
-      prompt: row.prompt
-    }
-    this.promptDialogTitle = '修改提示词'
-    this.promptFormDialogVisible = true
-    // 记录来源，用于提交后刷新对应的列表
-    this.promptSource = this.promptDialogVisible ? 'main' : 'review'
-  },
+ handleEditPrompt(row) {
+  this.promptForm = {
+    id: row.id,
+    name: row.name,
+    prompt: row.prompt
+  }
+  this.promptDialogTitle = '修改提示词'
+  this.promptFormDialogVisible = true
+  // 保存当前操作的模式
+  this.promptSource = this.dialogPromptMode
+}
+,
 
   // 删除提示词
-  handleDeletePrompt(row) {
-    this.$confirm('是否确认删除该提示词？', '提示', {
-      type: 'warning'
-    }).then(() => {
-      const api = this.promptMode === 'idea' ? deleteIdeaPrompt : deleteArtPrompt
-      api([row.id]).then(() => {
-        this.$message.success('删除成功')
-        // 根据来源刷新对应的列表
-        if (this.promptDialogVisible) {
-          this.loadPromptList()
-        } else if (this.reviewPromptDialogVisible) {
-          this.showReviewPromptDialog()
-        }
-      })
+handleDeletePrompt(row) {
+  this.$confirm('是否确认删除该提示词？', '提示', {
+    type: 'warning'
+  }).then(() => {
+    // 使用弹窗内的模式来选择对应的API
+    const api = this.dialogPromptMode === 'idea' ? deleteIdeaPrompt : deleteArtPrompt
+    api([row.id]).then(() => {
+      this.$message.success('删除成功')
+      // 重新加载当前模式的提示词列表
+      this.loadPromptList()
     })
-  },
+  })
+},
 
   // 提交提示词表单
-  submitPromptForm() {
-    this.$refs.promptForm.validate(valid => {
-      if (valid) {
-        const api = this.promptForm.id 
-          ? (this.promptMode === 'idea' ? updateIdeaPrompt : updateArtPrompt)
-          : (this.promptMode === 'idea' ? saveIdeaPrompt : saveArtPrompt)
-          
-        api(this.promptForm).then(() => {
-          this.$message.success(this.promptForm.id ? '修改成功' : '新增成功')
-          this.promptFormDialogVisible = false
-          // 根据来源刷新对应的列表
-          if (this.promptSource === 'main') {
-            this.loadPromptList()
-          } else if (this.promptSource === 'review') {
-            this.showReviewPromptDialog()
-          }
-        })
-      }
-    })
-  },
+submitPromptForm() {
+  this.$refs.promptForm.validate(valid => {
+    if (valid) {
+      // 使用弹窗内保存的模式来选择对应的API
+      const api = this.promptForm.id 
+        ? (this.promptSource === 'idea' ? updateIdeaPrompt : updateArtPrompt)
+        : (this.promptSource === 'idea' ? saveIdeaPrompt : saveArtPrompt)
+        
+      api(this.promptForm).then(() => {
+        this.$message.success(this.promptForm.id ? '修改成功' : '新增成功')
+        this.promptFormDialogVisible = false
+        // 重新加载当前模式的提示词列表
+        this.loadPromptList()
+      })
+    }
+  })
+}
+,
       // 加载提示词列表
 // 修改 loadPromptList 方法
 async loadPromptList() {
   try {
     let response;
-    if (this.promptMode === 'idea') {
+    if (this.dialogPromptMode === 'idea') { // 使用弹窗内模式
       response = await getAllIdeaPrompt();
-      const list = [
+      this.promptList = [
         { name: '默认', prompt: this.defaultIdeaPrompt },
         ...(response.data || [])
       ];
-      if (this.promptDialogVisible) {
-        this.promptList = list;
-      }
-      if (this.reviewPromptDialogVisible) {
-        this.reviewPromptList = list;
-      }
-      // 如果当前没有选中的提示词，使用默认值
-      if (!this.currentPrompt) {
-        this.currentPrompt = this.defaultIdeaPrompt;
-        this.$set(this.lastSelectedPrompts, 'idea', this.defaultIdeaPrompt);
-      }
     } else {
       response = await getAllArtPrompt();
-      const list = [
+      this.promptList = [
         { name: '默认', prompt: this.defaultArticlePrompt },
         ...(response.data || [])
       ];
-      if (this.promptDialogVisible) {
-        this.promptList = list;
-      }
-      if (this.reviewPromptDialogVisible) {
-        this.reviewPromptList = list;
-      }
-      // 如果当前没有选中的提示词，使用默认值
-      if (!this.currentPrompt) {
-        this.currentPrompt = this.defaultArticlePrompt;
-        this.$set(this.lastSelectedPrompts, 'article', this.defaultArticlePrompt);
-      }
     }
   } catch (error) {
     console.error('获取提示词列表失败:', error);
     this.$message.error('获取提示词列表失败');
   }
 }
+
 ,
 
       // 显示审核提示词弹窗
@@ -1408,40 +1395,56 @@ handleVisibilityEvaluation() {
 }
 ,
 
-async showPromptDialog() {
+async showPromptDialog(source = 'main') {
   this.promptDialogVisible = true;
-  try {
-    let response;
-    if (this.promptMode === 'idea') {
-      response = await getAllIdeaPrompt();
-      // 添加默认选项
-      this.promptList = [
-        { name: '默认', prompt: this.defaultIdeaPrompt },
-        ...(response.data || [])
-      ];
-    } else {
-      response = await getAllArtPrompt();
-      // 添加默认选项
-      this.promptList = [
-        { name: '默认', prompt: this.defaultArticlePrompt },
-        ...(response.data || [])
-      ];
-    }
-  } catch (error) {
-    console.error('获取提示词列表失败:', error);
-    this.$message.error('获取提示词列表失败');
+  // 保存弹窗来源
+  this.promptSource = source;
+  
+  // 根据来源设置初始模式
+  if (source === 'review') {
+    // 审核弹窗默认显示文章模式
+    this.dialogPromptMode = 'article';
+  } else {
+    // 主弹窗使用当前主机模式
+    this.dialogPromptMode = this.promptMode;
   }
-},
+  
+  await this.loadPromptList();
+}
+
+,
 
 
 // 修改 usePrompt 方法
 usePrompt(prompt) {
-  this.currentPrompt = prompt.prompt;
-  // 保存当前模式下的提示词选择
-  this.$set(this.lastSelectedPrompts, this.promptMode, prompt.prompt);
+  // 保存到对应模式的提示词历史
+  this.$set(this.lastSelectedPrompts, this.dialogPromptMode, prompt.prompt);
+  
+  if (this.promptSource === 'review') {
+    // 审核模式：只更新文章模式的 currentPrompt
+    if (this.dialogPromptMode === 'article') {
+      this.currentPrompt = prompt.prompt;
+      this.$message.success(`已选择文章提示词：` + prompt.name);
+    } else {
+      this.$message.success(`已更新思路提示词，但当前审核使用文章提示词`);
+    }
+  } else {
+    // 普通模式：只有当弹窗模式与主机模式相同时才更新 currentPrompt
+    if (this.dialogPromptMode === this.promptMode) {
+      this.currentPrompt = prompt.prompt;
+      this.$message.success(`已选择${this.dialogPromptMode === 'idea' ? '思路' : '文章'}提示词：` + prompt.name);
+    } else {
+      this.$message.success(`已更新${this.dialogPromptMode === 'idea' ? '思路' : '文章'}模式提示词，但未应用到当前模式`);
+    }
+  }
+  
+  // 关闭弹窗
   this.promptDialogVisible = false;
-  this.$message.success('已选择提示词：' + prompt.name);
+
+  
 }
+
+
 ,
 
 

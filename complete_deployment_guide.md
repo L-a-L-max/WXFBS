@@ -251,7 +251,7 @@ java -jar target/U3W.jar
   本地地址：127.0.0.1:8081
   公网访问：http://您的域名或IP:端口/mini/getUserByMessage
   ```
-   
+
 ### 8.3 验证穿透效果
 通过浏览器访问穿透后的公网地址：`http://映射IP:映射端口/cubeServer/sse`，确保能正常访问MCP服务。
 
@@ -381,17 +381,16 @@ java -jar target/U3W.jar
 
 ## 第十三阶段：AI托管功能测试
 1. 可正常进入AI托管页面
-![AI托管页面](docs-img/15.png)
+   ![AI托管页面](docs-img/15.png)
 2. 常用提示词功能可以正常使用
-![常用提示词](docs-img/16.png)
+   ![常用提示词](docs-img/16.png)
 3. 可以正常切换撰写思路模式与撰写文章模式并正确发送对应提示词（可在AI对话检查）
-4. 所有AI对话任务完成自动唤起评分功能
+4. 所有Ai对话任务完成自动唤起评分功能
 5. 审核弹窗正常打开并支持编辑与自定义内容
-![审核弹窗](docs-img/17.png)
+   ![审核弹窗](docs-img/17.png)
 6. 驳回、开始撰稿功能正常
 7. 可见度评估功能正常
-![可见度评估](docs-img/18.png)
-
+   ![可见度评估](docs-img/18.png)
 ## 第十三阶段：openAI规范与调用
 ### 测试openAI规范调用
 [点击这里查看 OpenAI 集成步骤](cube-engine/deployment_guide.md#openai集成)
