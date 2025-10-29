@@ -698,9 +698,9 @@ INSERT INTO `sys_menu` VALUES (2035, '评分模板配置新增', 2033, 2, '#', '
 INSERT INTO `sys_menu` VALUES (2036, '评分模板配置修改', 2033, 3, '#', '', NULL, '', 1, 0, 'F', '0', '0', 'wechat:prompt:edit', '#', 'admin', '2025-10-15 17:05:34', '', NULL, '');
 INSERT INTO `sys_menu` VALUES (2037, '评分模板配置删除', 2033, 4, '#', '', NULL, '', 1, 0, 'F', '0', '0', 'wechat:prompt:remove', '#', 'admin', '2025-10-15 17:05:34', '', NULL, '');
 INSERT INTO `sys_menu` VALUES (2038, '评分模板配置导出', 2033, 5, '#', '', NULL, '', 1, 0, 'F', '0', '0', 'wechat:prompt:export', '#', 'admin', '2025-10-15 17:05:34', '', NULL, '');
-INSERT INTO `sys_menu` VALUES (2046, '内容自动化（内测）', 2000, 0, 'chrome2', 'wechat/chrome2/index', NULL, '', 1, 0, 'C', '0', '0', 'wechat:chrome:list', 'redis-list', 'admin', '2025-10-21 13:36:21', 'admin', '2025-10-29 12:00:00', '');
-INSERT INTO `sys_menu` VALUES (2047, '思路模板', 2050, 4, 'idea', 'wechat/idea/index', NULL, '', 1, 0, 'C', '0', '0', '', 'clipboard', 'admin', '2025-10-24 15:59:41', 'admin', '2025-10-27 17:35:02', '');
-INSERT INTO `sys_menu` VALUES (2048, '文章模板', 2050, 3, 'art', 'wechat/art/index', NULL, '', 1, 0, 'C', '0', '0', '', 'documentation', 'admin', '2025-10-24 16:00:31', 'admin', '2025-10-27 17:34:54', '');
+INSERT INTO `sys_menu` VALUES (2046, '内容自动化（内测）', 2000, 0, 'chrome2', 'wechat/chrome2/index', NULL, '', 1, 0, 'C', '1', '0', 'wechat:chrome:list', 'redis-list', 'admin', '2025-10-21 13:36:21', 'admin', '2025-10-29 12:00:00', '');
+INSERT INTO `sys_menu` VALUES (2047, '思路模板', 2050, 4, 'idea', 'wechat/idea/index', NULL, '', 1, 0, 'C', '1', '0', '', 'clipboard', 'admin', '2025-10-24 15:59:41', 'admin', '2025-10-27 17:35:02', '');
+INSERT INTO `sys_menu` VALUES (2048, '文章模板', 2050, 3, 'art', 'wechat/art/index', NULL, '', 1, 0, 'C', '1', '0', '', 'documentation', 'admin', '2025-10-24 16:00:31', 'admin', '2025-10-27 17:34:54', '');
 INSERT INTO `sys_menu` VALUES (2050, '提示词模板', 0, 1, 'prompt-template', NULL, NULL, '', 1, 0, 'M', '0', '0', '', 'skill', 'admin', '2025-10-28 00:00:00', '', NULL, '提示词模板管理目录');
 INSERT INTO `sys_menu` VALUES (2051, '粉丝管理', 0, 2, 'fans-manage', NULL, NULL, '', 1, 0, 'M', '0', '0', '', 'peoples', 'admin', '2025-10-28 00:00:00', '', NULL, '粉丝管理目录');
 

@@ -398,9 +398,9 @@ INSERT INTO `sys_menu`(`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`,
 INSERT INTO `sys_menu`(`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (2037, '评分模板配置删除', 2033, 4, '#', '', NULL, '', 1, 0, 'F', '0', '0', 'wechat:prompt:remove', '#', 'admin', sysdate(), '', NULL, '');
 INSERT INTO `sys_menu`(`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (2038, '评分模板配置导出', 2033, 5, '#', '', NULL, '', 1, 0, 'F', '0', '0', 'wechat:prompt:export', '#', 'admin', sysdate(), '', NULL, '');
 COMMIT;
-INSERT INTO `sys_menu` VALUES (2046, '内容自动化（内测）', 2000, 0, 'chrome2', 'wechat/chrome2/index', NULL, '', 1, 0, 'C', '0', '0', 'wechat:chrome:list', 'redis-list', 'admin', '2025-10-21 13:36:21', 'admin', '2025-10-29 12:00:00', '');
-INSERT INTO `sys_menu` VALUES (2047, '思路模板', 2000, 3, 'idea', 'wechat/idea/index', NULL, '', 1, 0, 'C', '0', '0', '', 'clipboard', 'admin', '2025-10-24 15:59:41', 'admin', '2025-10-27 17:35:02', '');
-INSERT INTO `sys_menu` VALUES (2048, '文章模板', 2000, 3, 'art', 'wechat/art/index', NULL, '', 1, 0, 'C', '0', '0', '', 'documentation', 'admin', '2025-10-24 16:00:31', 'admin', '2025-10-27 17:34:54', '');
+INSERT INTO `sys_menu` VALUES (2046, '内容自动化（内测）', 2000, 0, 'chrome2', 'wechat/chrome2/index', NULL, '', 1, 0, 'C', '1', '0', 'wechat:chrome:list', 'redis-list', 'admin', '2025-10-21 13:36:21', 'admin', '2025-10-29 12:00:00', '');
+INSERT INTO `sys_menu` VALUES (2047, '思路模板', 2000, 3, 'idea', 'wechat/idea/index', NULL, '', 1, 0, 'C', '1', '0', '', 'clipboard', 'admin', '2025-10-24 15:59:41', 'admin', '2025-10-27 17:35:02', '');
+INSERT INTO `sys_menu` VALUES (2048, '文章模板', 2000, 3, 'art', 'wechat/art/index', NULL, '', 1, 0, 'C', '1', '0', '', 'documentation', 'admin', '2025-10-24 16:00:31', 'admin', '2025-10-27 17:34:54', '');
 
 -- ----------------------------
 -- Table structure for sys_dict_data
