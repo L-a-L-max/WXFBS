@@ -23,8 +23,8 @@
             />
           </el-form-item>
           <el-form-item>
-            <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery">搜索</el-button>
-            <el-button icon="el-icon-refresh" size="mini" @click="resetQuery">重置</el-button>
+            <el-button type="primary" :icon="Search" size="small" @click="handleQuery">搜索</el-button>
+            <el-button :icon="Refresh" size="small" @click="resetQuery">重置</el-button>
           </el-form-item>
         </el-form>
 
@@ -51,13 +51,13 @@
             <template #default="scope">
               <div v-if="scope.row && scope.row.userId !== 1">
                 <el-button
-                  size="mini"
+                  size="small"
                   type="text"
                   @click="handleUpdate(scope.row)"
                   v-hasPermi="['wechat:points:edit']"
                 >设置积分</el-button>
                 <el-button
-                  size="mini"
+                  size="small"
                   type="text"
                   @click="handleView(scope.row)"
                 >积分明细</el-button>
@@ -159,6 +159,8 @@
   </div>
 </template>
 <script>
+import { Refresh, Search } from '@element-plus/icons-vue';
+
 import { listUser, getUser, updateUserPoints, getUserPointsRecord } from "@/api/wechat/company";
 import Treeselect from "vue3-treeselect";
 import "vue3-treeselect/dist/vue3-treeselect.css";

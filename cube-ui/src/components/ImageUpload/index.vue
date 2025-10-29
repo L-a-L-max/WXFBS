@@ -17,7 +17,7 @@
       :on-preview="handlePictureCardPreview"
       :class="{hide: this.fileList.length >= this.limit}"
     >
-      <i class="el-icon-plus"></i>
+      <el-icon><Plus /></el-icon>
     </el-upload>
 
     <!-- 上传提示 -->
@@ -43,6 +43,8 @@
 </template>
 
 <script>
+import { Plus } from '@element-plus/icons-vue';
+
 import { getToken } from "@/utils/auth";
 
 export default {

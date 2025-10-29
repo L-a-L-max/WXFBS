@@ -29,8 +29,8 @@
         ></el-date-picker>
       </el-form-item>
       <el-form-item>
-        <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery">搜索</el-button>
-        <el-button icon="el-icon-refresh" size="mini" @click="resetQuery">重置</el-button>
+        <el-button type="primary" :icon="Search" size="small" @click="handleQuery">搜索</el-button>
+        <el-button :icon="Refresh" size="small" @click="resetQuery">重置</el-button>
       </el-form-item>
     </el-form>
 
@@ -39,8 +39,8 @@
         <el-button
           type="primary"
           plain
-          icon="el-icon-download"
-          size="mini"
+          :icon="Download"
+          size="small"
           :disabled="multiple"
           @click="handleGenTable"
           v-hasPermi="['tool:gen:code']"
@@ -50,8 +50,8 @@
         <el-button
           type="primary"
           plain
-          icon="el-icon-plus"
-          size="mini"
+          :icon="Plus"
+          size="small"
           @click="openCreateTable"
           v-hasRole="['admin']"
         >创建</el-button>
@@ -60,8 +60,8 @@
         <el-button
           type="info"
           plain
-          icon="el-icon-upload"
-          size="mini"
+          :icon="Upload"
+          size="small"
           @click="openImportTable"
           v-hasPermi="['tool:gen:import']"
         >导入</el-button>
@@ -70,8 +70,8 @@
         <el-button
           type="success"
           plain
-          icon="el-icon-edit"
-          size="mini"
+          :icon="Edit"
+          size="small"
           :disabled="single"
           @click="handleEditTable"
           v-hasPermi="['tool:gen:edit']"
@@ -81,8 +81,8 @@
         <el-button
           type="danger"
           plain
-          icon="el-icon-delete"
-          size="mini"
+          :icon="Delete"
+          size="small"
           :disabled="multiple"
           @click="handleDelete"
           v-hasPermi="['tool:gen:remove']"
@@ -126,35 +126,35 @@
           <el-button
             type="text"
             size="small"
-            icon="el-icon-view"
+            :icon="View"
             @click="handlePreview(scope.row)"
             v-hasPermi="['tool:gen:preview']"
           >预览</el-button>
           <el-button
             type="text"
             size="small"
-            icon="el-icon-edit"
+            :icon="Edit"
             @click="handleEditTable(scope.row)"
             v-hasPermi="['tool:gen:edit']"
           >编辑</el-button>
           <el-button
             type="text"
             size="small"
-            icon="el-icon-delete"
+            :icon="Delete"
             @click="handleDelete(scope.row)"
             v-hasPermi="['tool:gen:remove']"
           >删除</el-button>
           <el-button
             type="text"
             size="small"
-            icon="el-icon-refresh"
+            :icon="Refresh"
             @click="handleSynchDb(scope.row)"
             v-hasPermi="['tool:gen:edit']"
           >同步</el-button>
           <el-button
             type="text"
             size="small"
-            icon="el-icon-download"
+            :icon="Download"
             @click="handleGenTable(scope.row)"
             v-hasPermi="['tool:gen:code']"
           >生成代码</el-button>
@@ -178,7 +178,7 @@
           :name="key.substring(key.lastIndexOf('/')+1,key.indexOf('.vm'))"
           :key="key"
         >
-          <el-link :underline="false" icon="el-icon-document-copy" v-clipboard:copy="value" v-clipboard:success="clipboardSuccess" style="float:right">复制</el-link>
+          <el-link :underline="false" :icon="DocumentCopy" v-clipboard:copy="value" v-clipboard:success="clipboardSuccess" style="float:right">复制</el-link>
           <pre><code class="hljs" v-html="highlightedCode(value, key)"></code></pre>
         </el-tab-pane>
       </el-tabs>
@@ -189,6 +189,10 @@
 </template>
 
 <script>
+import { DocumentCopy } from '@element-plus/icons-vue';
+
+import { Delete, Download, Edit, Plus, Refresh, Search, Upload, View } from '@element-plus/icons-vue';
+
 import { listTable, previewTable, delTable, genCode, synchDb } from "@/api/tool/gen";
 import importTable from "./importTable";
 import createTable from "./createTable";

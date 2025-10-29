@@ -8,7 +8,7 @@
       </div>
       <div class="nav-buttons">
         <el-button type="primary" size="small" @click="createNewChat">
-          <i class="el-icon-plus"></i>
+          <el-icon><Plus /></el-icon>
           创建新对话
         </el-button>
         <div class="history-button">
@@ -25,7 +25,7 @@
       <div class="history-content">
         <!-- 加载状态 -->
         <div v-if="historyLoading" class="history-loading">
-          <i class="el-icon-loading"></i>
+          <el-icon><Loading /></el-icon>
           <span>加载中...</span>
         </div>
         <!-- 历史记录列表 -->
@@ -63,7 +63,7 @@
         </div>
         <!-- 空状态 -->
         <div v-else class="history-empty">
-          <i class="el-icon-document"></i>
+          <el-icon><Document /></el-icon>
           <p>暂无历史记录</p>
         </div>
       </div>
@@ -100,7 +100,7 @@
                 <div class="ai-capabilities" v-if="ai.capabilities && ai.capabilities.length > 0">
                   <!-- 通义只支持单选-->
                   <div v-if="ai.name === '通义千问'" class="button-capability-group">
-                    <el-button v-for="capability in ai.capabilities" :key="capability.value" size="mini"
+                    <el-button v-for="capability in ai.capabilities" :key="capability.value" size="small"
                       :type="ai.selectedCapability === capability.value ? 'primary' : 'info'" :disabled="!ai.enabled"
                       :plain="ai.selectedCapability !== capability.value"
                       @click="selectSingleCapability(ai, capability.value)" class="capability-button">
@@ -109,7 +109,7 @@
                   </div>
                   <!-- 百度AI选择 -->
                   <div v-else-if="ai.name === '百度AI'" class="button-capability-group">
-                    <el-button size="mini" :type="getCapabilityType(ai, 'deep_search')" :disabled="!ai.enabled"
+                    <el-button size="small" :type="getCapabilityType(ai, 'deep_search')" :disabled="!ai.enabled"
                       :plain="getCapabilityPlain(ai, 'deep_search')" @click="toggleCapability(ai, 'deep_search')"
                       class="capability-button">
                       深度搜索
@@ -129,7 +129,7 @@
                     <el-switch v-model="ai.isWeb" active-color="#13ce66" inactive-color="#ff4949"
                       :disabled="!ai.enabled || ai.selectedCapabilities.includes('deep_search')" class="web-switch">
                     </el-switch> -->
-                    <el-dropdown size="mini" :disabled="!ai.enabled || ai.selectedCapabilities.includes('deep_search')"
+                    <el-dropdown size="small" :disabled="!ai.enabled || ai.selectedCapabilities.includes('deep_search')"
                       :type="ai.isModel ? 'primary' : 'plain'" @click="ai.isModel = !ai.isModel" split-button
                       trigger="click" :hide-on-click="false"
                       @command="function (command) { command == ai.selectedModel ? ai.isModel = false : ((ai.selectedModel = command) & (ai.isModel = true)) }">
@@ -141,7 +141,7 @@
                           <el-dropdown-item command="dsv3">DeepSeek-V3</el-dropdown-item>
                           <el-dropdown-item command="wenxin">文心 4.5 Turbo</el-dropdown-item>
                           <span style="font-size: 12px; text-align:center; margin: 0px 0px 0px 10px">联网搜索</span>
-                          <el-switch size="mini" v-model="ai.isWeb" style="zoom: 0.8"></el-switch>
+                          <el-switch size="small" v-model="ai.isWeb" style="zoom: 0.8"></el-switch>
                         </el-dropdown-menu>
                       </template>
                     </el-dropdown>
@@ -151,14 +151,14 @@
                     <!-- 模型选择 -->
                     <div class="model-selection">
                       <span class="selection-label">模型:</span>
-                      <el-select v-model="ai.selectedModel" placeholder="选择模型" size="mini" :disabled="!ai.enabled">
+                      <el-select v-model="ai.selectedModel" placeholder="选择模型" size="small" :disabled="!ai.enabled">
                         <el-option v-for="model in ai.models" :key="model.value" :label="model.label"
                           :value="model.value">
                         </el-option>
                       </el-select>
                     </div>
                     <!-- 功能选择 -->
-                    <el-button v-for="capability in ai.capabilities" :key="capability.value" size="mini"
+                    <el-button v-for="capability in ai.capabilities" :key="capability.value" size="small"
                       :type="getCapabilityType(ai, capability.value)" :disabled="!ai.enabled"
                       :plain="getCapabilityPlain(ai, capability.value)" @click="toggleCapability(ai, capability.value)"
                       class="capability-button">
@@ -167,7 +167,7 @@
                   </div>
                   <!-- 知乎直答单选思考模式 -->
                   <div v-else-if="ai.name === '知乎直答'" class="button-capability-group">
-                    <el-button v-for="capability in ai.capabilities" :key="capability.value" size="mini"
+                    <el-button v-for="capability in ai.capabilities" :key="capability.value" size="small"
                       :type="ai.selectedCapability === capability.value ? 'primary' : 'info'" :disabled="!ai.enabled"
                       :plain="ai.selectedCapability !== capability.value"
                       @click="selectSingleCapability(ai, capability.value)" class="capability-button">
@@ -176,7 +176,7 @@
                   </div>
                   <!-- 其他AI -->
                   <div v-else class="button-capability-group">
-                    <el-button v-for="capability in ai.capabilities" :key="capability.value" size="mini"
+                    <el-button v-for="capability in ai.capabilities" :key="capability.value" size="small"
                       :type="getCapabilityType(ai, capability.value)" :disabled="!ai.enabled"
                       :plain="getCapabilityPlain(ai, capability.value)" @click="toggleCapability(ai, capability.value)"
                       class="capability-button">
@@ -291,21 +291,21 @@
               <div class="result-header" v-if="result.shareUrl">
                 <div class="result-title">{{ result.aiName }}的执行结果</div>
                 <div class="result-buttons">
-                  <el-button size="mini" type="primary" @click="openShareUrl(result.shareUrl)"
+                  <el-button size="small" type="primary" @click="openShareUrl(result.shareUrl)"
                     class="share-link-btn">
-                    <i class="el-icon-link"></i>
+                    <el-icon><Link /></el-icon>
                     <span>查看原链接</span>
                   </el-button>
-                  <el-button v-if="!result.aiName.includes('智能排版')" size="mini" type="success"
+                  <el-button v-if="!result.aiName.includes('智能排版')" size="small" type="success"
                     @click="handlePushToMedia(result)" class="push-media-btn"
                     :loading="pushingToMedia" :disabled="pushingToMedia">
-                    <i class="el-icon-s-promotion" v-if="!pushingToMedia"></i>
+                    <el-icon><Promotion /></el-icon>
                     <span>智能排版</span>
                   </el-button>
-                  <el-button v-else size="mini" type="success"
+                  <el-button v-else size="small" type="success"
                     @click="pushToMediaWithContent(result)" class="push-media-btn" :loading="pushingToMedia && false"
                     :disabled="pushingToMedia && false">
-                    <i class="el-icon-s-promotion"></i>
+                    <el-icon><Promotion /></el-icon>
                     <span>投递到公众号/媒体</span>
                   </el-button>
                 </div>
@@ -322,7 +322,7 @@
                 <!-- 其他文件类型显示链接 -->
                 <div v-else class="share-file">
                   <el-button type="primary" @click="openShareUrl(result.shareImgUrl)">
-                    <i class="el-icon-document"></i>
+                    <el-icon><Document /></el-icon>
                     <span>查看文件</span>
                   </el-button>
                 </div>
@@ -413,11 +413,11 @@
           <h3>选择投递媒体：</h3>
           <el-radio-group v-model="selectedMedia" size="small" class="media-radio-group">
             <el-radio-button label="wechat_layout" value="wechat_layout">
-              <i class="el-icon-chat-dot-square"></i>
+              <el-icon><ChatDotSquare /></el-icon>
               公众号
             </el-radio-button>
             <el-radio-button label="zhihu_layout" value="zhihu_layout">
-              <i class="el-icon-chat-dot-square"></i>
+              <el-icon><ChatDotSquare /></el-icon>
               知乎
             </el-radio-button>
 
@@ -457,6 +457,8 @@
 </template>
 
 <script>
+import { ChatDotSquare, Document, Link, Loading, Plus, Promotion } from '@element-plus/icons-vue';
+
   import { marked } from "marked";
   import {
     message,

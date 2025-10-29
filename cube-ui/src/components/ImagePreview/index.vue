@@ -6,12 +6,14 @@
     :preview-src-list="realSrcList"
   >
     <div slot="error" class="image-slot">
-      <i class="el-icon-picture-outline"></i>
+      <el-icon><Picture /></el-icon>
     </div>
   </el-image>
 </template>
 
 <script>
+import { Picture } from '@element-plus/icons-vue';
+
 import { isExternal } from "@/utils/validate";
 
 export default {

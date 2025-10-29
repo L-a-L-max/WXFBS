@@ -9,7 +9,7 @@
               @keyup.enter.native="handleQuery" />
           </el-form-item>
           <el-form-item>
-            <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery">搜索</el-button>
+            <el-button type="primary" :icon="Search" size="small" @click="handleQuery">搜索</el-button>
           </el-form-item>
         </el-form>
       </el-col>
@@ -92,6 +92,8 @@
 </template>
 
 <script>
+import { Search } from '@element-plus/icons-vue';
+
   import { getPlayWrighDrafts } from "@/api/wechat/aigc";
   import { marked } from 'marked';
 

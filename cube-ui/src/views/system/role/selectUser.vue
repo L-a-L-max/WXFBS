@@ -19,8 +19,8 @@
         />
       </el-form-item>
       <el-form-item>
-        <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery">搜索</el-button>
-        <el-button icon="el-icon-refresh" size="mini" @click="resetQuery">重置</el-button>
+        <el-button type="primary" :icon="Search" size="small" @click="handleQuery">搜索</el-button>
+        <el-button :icon="Refresh" size="small" @click="resetQuery">重置</el-button>
       </el-form-item>
     </el-form>
     <el-row>
@@ -58,6 +58,8 @@
 </template>
 
 <script>
+import { Refresh, Search } from '@element-plus/icons-vue';
+
 import { unallocatedUserList, authUserSelectAll } from "@/api/system/role";
 export default {
   dicts: ['sys_normal_disable'],

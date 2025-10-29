@@ -36,6 +36,7 @@
     "url": "https://gitee.com/y_project/RuoYi-Vue.git"
   },
   "dependencies": {
+    "@element-plus/icons-vue": "^2.3.2",
     "@vueuse/head": "^1.0.0",
     "axios": "^1.6.0",
     "clipboard": "^2.0.8",

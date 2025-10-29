@@ -30,8 +30,8 @@
         </el-select>
       </el-form-item>
       <el-form-item>
-        <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery">搜索</el-button>
-        <el-button icon="el-icon-refresh" size="mini" @click="resetQuery">重置</el-button>
+        <el-button type="primary" :icon="Search" size="small" @click="handleQuery">搜索</el-button>
+        <el-button :icon="Refresh" size="small" @click="resetQuery">重置</el-button>
       </el-form-item>
     </el-form>
 
@@ -40,8 +40,8 @@
         <el-button
           type="primary"
           plain
-          icon="el-icon-plus"
-          size="mini"
+          :icon="Plus"
+          size="small"
           @click="handleAdd"
           v-hasPermi="['monitor:job:add']"
         >新增</el-button>
@@ -50,8 +50,8 @@
         <el-button
           type="success"
           plain
-          icon="el-icon-edit"
-          size="mini"
+          :icon="Edit"
+          size="small"
           :disabled="single"
           @click="handleUpdate"
           v-hasPermi="['monitor:job:edit']"
@@ -61,8 +61,8 @@
         <el-button
           type="danger"
           plain
-          icon="el-icon-delete"
-          size="mini"
+          :icon="Delete"
+          size="small"
           :disabled="multiple"
           @click="handleDelete"
           v-hasPermi="['monitor:job:remove']"
@@ -72,8 +72,8 @@
         <el-button
           type="warning"
           plain
-          icon="el-icon-download"
-          size="mini"
+          :icon="Download"
+          size="small"
           @click="handleExport"
           v-hasPermi="['monitor:job:export']"
         >导出</el-button>
@@ -82,8 +82,8 @@
         <el-button
           type="info"
           plain
-          icon="el-icon-s-operation"
-          size="mini"
+          :icon="Operation"
+          size="small"
           @click="handleJobLog"
           v-hasPermi="['monitor:job:query']"
         >日志</el-button>
@@ -115,27 +115,27 @@
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
         <template #default="scope">
           <el-button
-            size="mini"
+            size="small"
             type="text"
-            icon="el-icon-edit"
+            :icon="Edit"
             @click="handleUpdate(scope.row)"
             v-hasPermi="['monitor:job:edit']"
           >修改</el-button>
           <el-button
-            size="mini"
+            size="small"
             type="text"
-            icon="el-icon-delete"
+            :icon="Delete"
             @click="handleDelete(scope.row)"
             v-hasPermi="['monitor:job:remove']"
           >删除</el-button>
-          <el-dropdown size="mini" @command="(command) => handleCommand(command, scope.row)" v-hasPermi="['monitor:job:changeStatus', 'monitor:job:query']">
-            <el-button size="mini" type="text" icon="el-icon-d-arrow-right">更多</el-button>
+          <el-dropdown size="small" @command="(command) => handleCommand(command, scope.row)" v-hasPermi="['monitor:job:changeStatus', 'monitor:job:query']">
+            <el-button size="small" type="text" :icon="DArrowRight">更多</el-button>
             <el-dropdown-menu slot="dropdown">
-              <el-dropdown-item command="handleRun" icon="el-icon-caret-right"
+              <el-dropdown-item command="handleRun" :icon="CaretRight"
                 v-hasPermi="['monitor:job:changeStatus']">执行一次</el-dropdown-item>
-              <el-dropdown-item command="handleView" icon="el-icon-view"
+              <el-dropdown-item command="handleView" :icon="View"
                 v-hasPermi="['monitor:job:query']">任务详细</el-dropdown-item>
-              <el-dropdown-item command="handleJobLog" icon="el-icon-s-operation"
+              <el-dropdown-item command="handleJobLog" :icon="Operation"
                 v-hasPermi="['monitor:job:query']">调度日志</el-dropdown-item>
             </el-dropdown-menu>
           </el-dropdown>
@@ -183,7 +183,7 @@
                     <br />Class类调用示例：com.cube.quartz.task.RyTask.ryParams('ry')
                     <br />参数说明：支持字符串，布尔类型，长整型，浮点型，整型
                   </div>
-                  <i class="el-icon-question"></i>
+                  <el-icon><Question /></el-icon>
                 </el-tooltip>
               </span>
               <el-input v-model="form.invokeTarget" placeholder="请输入调用目标字符串" />
@@ -243,7 +243,7 @@
 
     <!-- 任务日志详细 -->
     <el-dialog title="任务详细" v-model="openView" width="700px" append-to-body>
-      <el-form ref="form" :model="form" label-width="120px" size="mini">
+      <el-form ref="form" :model="form" label-width="120px" size="small">
         <el-row>
           <el-col :span="12">
             <el-form-item label="任务编号：">{{ form.jobId }}</el-form-item>
@@ -292,6 +292,10 @@
 </template>
 
 <script>
+import { CaretRight, DArrowRight, Operation, Question } from '@element-plus/icons-vue';
+
+import { Delete, Download, Edit, Plus, Refresh, Search, View } from '@element-plus/icons-vue';
+
 import { listJob, getJob, delJob, addJob, updateJob, runJob, changeJobStatus } from "@/api/monitor/job";
 import Crontab from '@/components/Crontab'
 

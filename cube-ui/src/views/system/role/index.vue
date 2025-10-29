@@ -46,8 +46,8 @@
         ></el-date-picker>
       </el-form-item>
       <el-form-item>
-        <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery">搜索</el-button>
-        <el-button icon="el-icon-refresh" size="mini" @click="resetQuery">重置</el-button>
+        <el-button type="primary" :icon="Search" size="small" @click="handleQuery">搜索</el-button>
+        <el-button :icon="Refresh" size="small" @click="resetQuery">重置</el-button>
       </el-form-item>
     </el-form>
 
@@ -56,8 +56,8 @@
         <el-button
           type="primary"
           plain
-          icon="el-icon-plus"
-          size="mini"
+          :icon="Plus"
+          size="small"
           @click="handleAdd"
           v-hasPermi="['system:role:add']"
         >新增</el-button>
@@ -66,8 +66,8 @@
         <el-button
           type="success"
           plain
-          icon="el-icon-edit"
-          size="mini"
+          :icon="Edit"
+          size="small"
           :disabled="single"
           @click="handleUpdate"
           v-hasPermi="['system:role:edit']"
@@ -77,8 +77,8 @@
         <el-button
           type="danger"
           plain
-          icon="el-icon-delete"
-          size="mini"
+          :icon="Delete"
+          size="small"
           :disabled="multiple"
           @click="handleDelete"
           v-hasPermi="['system:role:remove']"
@@ -88,8 +88,8 @@
         <el-button
           type="warning"
           plain
-          icon="el-icon-download"
-          size="mini"
+          :icon="Download"
+          size="small"
           @click="handleExport"
           v-hasPermi="['system:role:export']"
         >导出</el-button>
@@ -123,25 +123,25 @@
   <template #default="scope">
     <div v-if="scope.row && scope.row.roleId !== 1">
       <el-button
-        size="mini"
+        size="small"
         type="text"
-        icon="el-icon-edit"
+        :icon="Edit"
         @click="handleUpdate(scope.row)"
         v-hasPermi="['system:role:edit']"
       >修改</el-button>
       <el-button
-        size="mini"
+        size="small"
         type="text"
-        icon="el-icon-delete"
+        :icon="Delete"
         @click="handleDelete(scope.row)"
         v-hasPermi="['system:role:remove']"
       >删除</el-button>
-      <el-dropdown size="mini" @command="(command) => handleCommand(command, scope.row)" v-hasPermi="['system:role:edit']">
-        <el-button size="mini" type="text" icon="el-icon-d-arrow-right">更多</el-button>
+      <el-dropdown size="small" @command="(command) => handleCommand(command, scope.row)" v-hasPermi="['system:role:edit']">
+        <el-button size="small" type="text" :icon="DArrowRight">更多</el-button>
         <el-dropdown-menu slot="dropdown">
-          <el-dropdown-item command="handleDataScope" icon="el-icon-circle-check"
+          <el-dropdown-item command="handleDataScope" :icon="CircleCheck"
             v-hasPermi="['system:role:edit']">数据权限</el-dropdown-item>
-          <el-dropdown-item command="handleAuthUser" icon="el-icon-user"
+          <el-dropdown-item command="handleAuthUser" :icon="User"
             v-hasPermi="['system:role:edit']">分配用户</el-dropdown-item>
         </el-dropdown-menu>
       </el-dropdown>
@@ -168,7 +168,7 @@
         <el-form-item prop="roleKey">
           <span slot="label">
             <el-tooltip content="控制器中定义的权限字符，如：@PreAuthorize(`@ss.hasRole('admin')`)" placement="top">
-              <i class="el-icon-question"></i>
+              <el-icon><Question /></el-icon>
             </el-tooltip>
             权限字符
           </span>
@@ -256,6 +256,10 @@
 </template>
 
 <script>
+import { DArrowRight, Question } from '@element-plus/icons-vue';
+
+import { CircleCheck, Delete, Download, Edit, Plus, Refresh, Search, User } from '@element-plus/icons-vue';
+
 import { listRole, getRole, delRole, addRole, updateRole, dataScope, changeRoleStatus, deptTreeSelect } from "@/api/system/role";
 import { treeselect as menuTreeselect, roleMenuTreeselect } from "@/api/system/menu";
 

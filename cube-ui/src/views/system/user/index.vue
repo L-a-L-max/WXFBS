@@ -9,7 +9,7 @@
             placeholder="请输入部门名称"
             clearable
             size="small"
-            prefix-icon="el-icon-search"
+            prefix-:icon="Search"
             style="margin-bottom: 20px"
           />
         </div>
@@ -76,8 +76,8 @@
             ></el-date-picker>
           </el-form-item>
           <el-form-item>
-            <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery">搜索</el-button>
-            <el-button icon="el-icon-refresh" size="mini" @click="resetQuery">重置</el-button>
+            <el-button type="primary" :icon="Search" size="small" @click="handleQuery">搜索</el-button>
+            <el-button :icon="Refresh" size="small" @click="resetQuery">重置</el-button>
           </el-form-item>
         </el-form>
 
@@ -86,8 +86,8 @@
             <el-button
               type="primary"
               plain
-              icon="el-icon-plus"
-              size="mini"
+              :icon="Plus"
+              size="small"
               @click="handleAdd"
               v-hasPermi="['system:user:add']"
             >新增</el-button>
@@ -96,8 +96,8 @@
             <el-button
               type="success"
               plain
-              icon="el-icon-edit"
-              size="mini"
+              :icon="Edit"
+              size="small"
               :disabled="single"
               @click="handleUpdate"
               v-hasPermi="['system:user:edit']"
@@ -107,8 +107,8 @@
             <el-button
               type="danger"
               plain
-              icon="el-icon-delete"
-              size="mini"
+              :icon="Delete"
+              size="small"
               :disabled="multiple"
               @click="handleDelete"
               v-hasPermi="['system:user:remove']"
@@ -119,7 +119,7 @@
               type="info"
               plain
               icon="el-icon-upload2"
-              size="mini"
+              size="small"
               @click="handleImport"
               v-hasPermi="['system:user:import']"
             >导入</el-button>
@@ -128,8 +128,8 @@
             <el-button
               type="warning"
               plain
-              icon="el-icon-download"
-              size="mini"
+              :icon="Download"
+              size="small"
               @click="handleExport"
               v-hasPermi="['system:user:export']"
             >导出</el-button>
@@ -164,26 +164,26 @@
             <template #default="{ row }">
               <span v-if="row.userId !== 1">
                 <el-button
-                  size="mini"
+                  size="small"
                   type="text"
-                  icon="el-icon-edit"
+                  :icon="Edit"
                   @click="handleUpdate(row)"
                   v-hasPermi="['system:user:edit']"
                 >修改</el-button>
                 <el-button
-                  size="mini"
+                  size="small"
                   type="text"
-                  icon="el-icon-delete"
+                  :icon="Delete"
                   @click="handleDelete(row)"
                   v-hasPermi="['system:user:remove']"
                 >删除</el-button>
-                <el-dropdown size="mini" @command="(command) => handleCommand(command, row)" v-hasPermi="['system:user:resetPwd', 'system:user:edit']">
-                  <el-button size="mini" type="text" icon="el-icon-d-arrow-right">更多</el-button>
+                <el-dropdown size="small" @command="(command) => handleCommand(command, row)" v-hasPermi="['system:user:resetPwd', 'system:user:edit']">
+                  <el-button size="small" type="text" :icon="DArrowRight">更多</el-button>
                   <template #dropdown>
                     <el-dropdown-menu>
-                      <el-dropdown-item command="handleResetPwd" icon="el-icon-key"
+                      <el-dropdown-item command="handleResetPwd" :icon="Key"
                         v-hasPermi="['system:user:resetPwd']">重置密码</el-dropdown-item>
-                      <el-dropdown-item command="handleAuthRole" icon="el-icon-circle-check"
+                      <el-dropdown-item command="handleAuthRole" :icon="CircleCheck"
                         v-hasPermi="['system:user:edit']">分配角色</el-dropdown-item>
                     </el-dropdown-menu>
                   </template>
@@ -327,7 +327,7 @@
         :auto-upload="false"
         drag
       >
-        <i class="el-icon-upload"></i>
+        <el-icon><Upload /></el-icon>
         <div class="el-upload__text">将文件拖到此处，或<em>点击上传</em></div>
         <template #tip>
           <div class="el-upload__tip text-center">
@@ -350,6 +350,10 @@
 </template>
 
 <script>
+import { DArrowRight, Key, Upload } from '@element-plus/icons-vue';
+
+import { CircleCheck, Delete, Download, Edit, Plus, Refresh, Search } from '@element-plus/icons-vue';
+
 import { listUser, getUser, delUser, addUser, updateUser, resetUserPwd, changeUserStatus, deptTreeSelect } from "@/api/system/user";
 import { getToken } from "@/utils/auth";
 import Treeselect from "vue3-treeselect";

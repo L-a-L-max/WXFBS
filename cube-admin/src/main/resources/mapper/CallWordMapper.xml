@@ -7,11 +7,13 @@
     <resultMap type="com.cube.wechat.selfapp.app.domain.CallWord" id="CallWordResult">
         <result property="platformId" column="platform_id"/>
         <result property="wordContent" column="word_content"/>
+        <result property="isCommon" column="is_common"/>
+        <result property="userId" column="user_id"/>
         <result property="updateTime" column="update_time"/>
     </resultMap>
 
     <sql id="selectCallWordVo">
-        select platform_id, word_content, update_time from wc_call_word
+        select platform_id, word_content, is_common, user_id, update_time from wc_call_word
     </sql>
     <delete id="deleteCallWordByPlatformIds" parameterType="String">
         delete from wc_call_word where platform_id in
@@ -37,11 +39,15 @@
         <trim prefix="(" suffix=")" suffixOverrides=",">
             <if test="platformId != null and platformId != ''">platform_id,</if>
             <if test="wordContent != null and wordContent != ''">word_content,</if>
+            <if test="isCommon != null">is_common,</if>
+            <if test="userId != null">user_id,</if>
             update_time,
         </trim>
         <trim prefix="values (" suffix=")" suffixOverrides=",">
             <if test="platformId != null and platformId != ''">#{platformId},</if>
             <if test="wordContent != null and wordContent != ''">#{wordContent},</if>
+            <if test="isCommon != null">#{isCommon},</if>
+            <if test="userId != null">#{userId},</if>
             NOW(),
         </trim>
     </insert>
@@ -50,6 +56,8 @@
         update wc_call_word
         <trim prefix="SET" suffixOverrides=",">
             <if test="wordContent != null and wordContent != ''">word_content = #{wordContent},</if>
+            <if test="isCommon != null">is_common = #{isCommon},</if>
+            <if test="userId != null">user_id = #{userId},</if>
             update_time = NOW(),
         </trim>
         where platform_id = #{platformId}
@@ -60,5 +68,10 @@
         set is_push_zh = #{isPushed}
         where id = #{draftId}
     </update>
+
+    <select id="selectByPlatformId" parameterType="String" resultMap="CallWordResult">
+        <include refid="selectCallWordVo"/>
+        where platform_id = #{platformId}
+    </select>
 
 </mapper>

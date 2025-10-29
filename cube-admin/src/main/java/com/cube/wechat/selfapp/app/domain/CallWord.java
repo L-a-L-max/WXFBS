@@ -17,6 +17,12 @@ public class CallWord {
     /** 提示词内容 */
     private String wordContent;
     
+    /** 是否为公共模板(0:个人 1:公共) */
+    private Integer isCommon;
+    
+    /** 创建用户ID */
+    private Long userId;
+    
     /** 更新时间 */
     private LocalDateTime updateTime;
 
@@ -44,6 +50,22 @@ public class CallWord {
         this.wordContent = wordContent;
     }
 
+    public Integer getIsCommon() {
+        return isCommon;
+    }
+
+    public void setIsCommon(Integer isCommon) {
+        this.isCommon = isCommon;
+    }
+
+    public Long getUserId() {
+        return userId;
+    }
+
+    public void setUserId(Long userId) {
+        this.userId = userId;
+    }
+
     public LocalDateTime getUpdateTime() {
         return updateTime;
     }
@@ -57,6 +79,8 @@ public class CallWord {
         return "CallWord{" +
                 "platformId='" + platformId + '\'' +
                 ", wordContent='" + wordContent + '\'' +
+                ", isCommon=" + isCommon +
+                ", userId=" + userId +
                 ", updateTime=" + updateTime +
                 '}';
     }

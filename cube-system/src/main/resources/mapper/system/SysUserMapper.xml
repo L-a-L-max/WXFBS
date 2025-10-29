@@ -61,13 +61,10 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     </sql>
 
     <select id="selectUserList" parameterType="SysUser" resultMap="SysUserResult">
-		select u.user_id, u.dept_id, u.nick_name, u.user_name, u.email, u.avatar, u.phonenumber, u.sex, u.status, u.del_flag, u.login_ip, u.login_date, u.create_by, u.create_time, u.remark
-		,points,GROUP_CONCAT(wt.tag) AS tags
-		from sys_user u
-		left join sys_dept d on u.dept_id = d.dept_id
-		LEFT JOIN
-		wc_user_tag wt ON u.qw_id = wt.user_id
-		where u.del_flag = '0'
+	select u.user_id, u.dept_id, u.nick_name, u.user_name, u.email, u.avatar, u.phonenumber, u.sex, u.status, u.del_flag, u.login_ip, u.login_date, u.create_by, u.create_time, u.remark, u.points
+	from sys_user u
+	left join sys_dept d on u.dept_id = d.dept_id
+	where u.del_flag = '0'
 		  <if test="type == 1">
 			  and  u.dept_id is  null
 		  </if>
@@ -92,22 +89,6 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		<if test="deptId != null and deptId != 0">
 			AND (u.dept_id = #{deptId} OR u.dept_id IN ( SELECT t.dept_id FROM sys_dept t WHERE find_in_set(#{deptId}, ancestors) ))
 		</if>
-		GROUP BY
-		u.user_id,
-		u.dept_id,
-		u.nick_name,
-		u.user_name,
-		u.email,
-		u.avatar,
-		u.phonenumber,
-		u.sex,
-		u.status,
-		u.del_flag,
-		u.login_ip,
-		u.login_date,
-		u.create_by,
-		u.create_time,
-		u.remark
 		<!-- 数据范围过滤 -->
 	</select>
 

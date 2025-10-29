@@ -1,20 +1,27 @@
 package com.cube.wechat.selfapp.app.controller;
 
+import com.cube.common.annotation.Log;
 import com.cube.common.annotation.RateLimiter;
 import com.cube.common.core.controller.BaseController;
+import com.cube.common.core.domain.AjaxResult;
 import com.cube.common.core.page.TableDataInfo;
+import com.cube.common.enums.BusinessType;
 import com.cube.common.utils.StringUtils;
 import com.cube.wechat.selfapp.app.config.MyWebSocketHandler;
 import com.cube.wechat.selfapp.app.domain.*;
 import com.cube.wechat.selfapp.app.domain.query.ArtPromptQuery;
 import com.cube.wechat.selfapp.app.domain.query.IdeaPromptQuery;
 import com.cube.wechat.selfapp.app.domain.query.ScorePromptQuery;
+import com.cube.wechat.selfapp.app.mapper.ArtTemplateMapper;
+import com.cube.wechat.selfapp.app.mapper.IdeaTemplateMapper;
+import com.cube.wechat.selfapp.app.mapper.PromptTemplateMapper;
 import com.cube.wechat.selfapp.app.service.AIGCService;
 import com.cube.wechat.selfapp.app.service.UserInfoService;
 import com.cube.wechat.selfapp.app.service.WechatMpService;
 import com.cube.wechat.selfapp.corpchat.util.ResultBody;
 import io.swagger.annotations.ApiParam;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -41,6 +48,12 @@ public class UserInfoController extends BaseController {
     private WechatMpService wechatMpService;
     @Autowired
     private AIGCService aigcService;
+    @Autowired
+    private PromptTemplateMapper promptTemplateMapper;
+    @Autowired
+    private ArtTemplateMapper artTemplateMapper;
+    @Autowired
+    private IdeaTemplateMapper ideaTemplateMapper;
 
     @GetMapping("/getOfficeAccount")
     public ResultBody getOfficeAccount(){
@@ -395,6 +408,95 @@ public class UserInfoController extends BaseController {
         return userInfoService.deleteArtPrompt(ids);
     }
 
+    /**
+     * 设置评分模板为公共/私有（仅管理员）
+     *
+     * @param id 模板ID
+     * @param isCommon 是否公共(0:私有 1:公共)
+     * @return 操作结果
+     */
+    @Log(title = "设置公共评分模板", businessType = BusinessType.UPDATE)
+    @PutMapping("/setScorePromptCommon/{id}/{isCommon}")
+    public AjaxResult setScorePromptCommon(@PathVariable Long id, @PathVariable Integer isCommon) {
+        try {
+            // 手动检查权限：只有admin或common角色可以设置公共模板
+            if (!com.cube.common.utils.SecurityUtils.hasRole("admin") && 
+                !com.cube.common.utils.SecurityUtils.hasRole("common")) {
+                return AjaxResult.error("您没有权限执行此操作");
+            }
+            
+            PromptTemplate promptTemplate = promptTemplateMapper.getScorePromptById(id);
+            if (promptTemplate == null) {
+                return AjaxResult.error("模板不存在");
+            }
+            promptTemplate.setIsCommon(isCommon);
+            int result = promptTemplateMapper.updatePromptTemplate(promptTemplate);
+            return result > 0 ? AjaxResult.success("设置成功") : AjaxResult.error("设置失败");
+        } catch (Exception e) {
+            logger.error("设置公共评分模板失败", e);
+            return AjaxResult.error("设置失败：" + e.getMessage());
+        }
+    }
+
+    /**
+     * 设置文章模板为公共/私有（仅管理员）
+     *
+     * @param id 模板ID
+     * @param isCommon 是否公共(0:私有 1:公共)
+     * @return 操作结果
+     */
+    @Log(title = "设置公共文章模板", businessType = BusinessType.UPDATE)
+    @PutMapping("/setArtPromptCommon/{id}/{isCommon}")
+    public AjaxResult setArtPromptCommon(@PathVariable Long id, @PathVariable Integer isCommon) {
+        try {
+            // 手动检查权限：只有admin或common角色可以设置公共模板
+            if (!com.cube.common.utils.SecurityUtils.hasRole("admin") && 
+                !com.cube.common.utils.SecurityUtils.hasRole("common")) {
+                return AjaxResult.error("您没有权限执行此操作");
+            }
+            
+            ArtTemplate artTemplate = artTemplateMapper.getArtPromptById(id);
+            if (artTemplate == null) {
+                return AjaxResult.error("模板不存在");
+            }
+            artTemplate.setIsCommon(isCommon);
+            int result = artTemplateMapper.updateArtTemplate(artTemplate);
+            return result > 0 ? AjaxResult.success("设置成功") : AjaxResult.error("设置失败");
+        } catch (Exception e) {
+            logger.error("设置公共文章模板失败", e);
+            return AjaxResult.error("设置失败：" + e.getMessage());
+        }
+    }
+
+    /**
+     * 设置思路模板为公共/私有（仅管理员）
+     *
+     * @param id 模板ID
+     * @param isCommon 是否公共(0:私有 1:公共)
+     * @return 操作结果
+     */
+    @Log(title = "设置公共思路模板", businessType = BusinessType.UPDATE)
+    @PutMapping("/setIdeaPromptCommon/{id}/{isCommon}")
+    public AjaxResult setIdeaPromptCommon(@PathVariable Long id, @PathVariable Integer isCommon) {
+        try {
+            // 手动检查权限：只有admin或common角色可以设置公共模板
+            if (!com.cube.common.utils.SecurityUtils.hasRole("admin") && 
+                !com.cube.common.utils.SecurityUtils.hasRole("common")) {
+                return AjaxResult.error("您没有权限执行此操作");
+            }
+            
+            IdeaTemplate ideaTemplate = ideaTemplateMapper.getIdeaPromptById(id);
+            if (ideaTemplate == null) {
+                return AjaxResult.error("模板不存在");
+            }
+            ideaTemplate.setIsCommon(isCommon);
+            int result = ideaTemplateMapper.updateIdeaTemplate(ideaTemplate);
+            return result > 0 ? AjaxResult.success("设置成功") : AjaxResult.error("设置失败");
+        } catch (Exception e) {
+            logger.error("设置公共思路模板失败", e);
+            return AjaxResult.error("设置失败：" + e.getMessage());
+        }
+    }
 
 }
 

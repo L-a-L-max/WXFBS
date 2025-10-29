@@ -11,10 +11,11 @@
         <result property="type"    column="type"    />
         <result property="userId"    column="user_id"    />
         <result property="isdel"    column="isdel"    />
+        <result property="isCommon"    column="is_common"    />
     </resultMap>
 
     <sql id="selectArtTemplateVo">
-        select id, name, prompt, type, user_id, isdel from wc_art_template
+        select id, name, prompt, type, user_id, isdel, is_common from wc_art_template
     </sql>
 
     <select id="getArtTemplateList" parameterType="com.cube.wechat.selfapp.app.domain.query.ArtPromptQuery" resultMap="ArtTemplateResult">
@@ -32,7 +33,7 @@
             and type = 3
             <if test="artPromptQuery.name != null and artPromptQuery.name != ''"> and name like concat('%', #{artPromptQuery.name}, '%')</if>
             <if test="artPromptQuery.prompt != null  and artPromptQuery.prompt != ''"> and prompt like concat('%', #{artPromptQuery.prompt}, '%')</if>
-            and user_id = #{userId}
+            and (is_common = 1 OR user_id = #{userId})
             and isdel = 0
         </where>
     </select>
@@ -41,7 +42,7 @@
         <include refid="selectArtTemplateVo"/>
         <where>
             and type = 3
-            and user_id = #{userId}
+            and (is_common = 1 OR user_id = #{userId})
             and isdel = 0
         </where>
     </select>
@@ -69,6 +70,7 @@
             <if test="type != null">type,</if>
             <if test="userId != null">user_id,</if>
             <if test="isdel != null">isdel,</if>
+            <if test="isCommon != null">is_common,</if>
         </trim>
         <trim prefix="values (" suffix=")" suffixOverrides=",">
             <if test="name != null and name != ''">#{name},</if>
@@ -76,6 +78,7 @@
             <if test="type != null">#{type},</if>
             <if test="userId != null">#{userId},</if>
             <if test="isdel != null">#{isdel},</if>
+            <if test="isCommon != null">#{isCommon},</if>
         </trim>
     </insert>
 
@@ -87,6 +90,7 @@
             <if test="type != null">type = #{type},</if>
             <if test="userId != null">user_id = #{userId},</if>
             <if test="isdel != null">isdel = #{isdel},</if>
+            <if test="isCommon != null">is_common = #{isCommon},</if>
         </trim>
         where id = #{id}
     </update>

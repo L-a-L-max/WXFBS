@@ -33,7 +33,7 @@ export default {
       this.loginForm.code= query.code;
      this.weLogin()
     }else{
-      window.location.href="https://open.weixin.qq.com/connect/oauth2/authorize?appid=wwb80449aeb36f41ef&redirect_uri=https://u3w.com&response_type=code&scope=snsapi_base&agentid=1000002&state=wechat_login_page#wechat_redirect"
+      window.location.href="https://open.weixin.qq.com/connect/oauth2/authorize?appid=企业ID&redirect_uri=自己的后台地址&response_type=code&scope=snsapi_base&agentid=自己的企业微信应用ID&state=10000001#wechat_redirect"
     }
 
   },

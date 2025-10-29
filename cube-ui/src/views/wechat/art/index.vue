@@ -10,8 +10,8 @@
         />
       </el-form-item>
       <el-form-item>
-        <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery">搜索</el-button>
-        <el-button icon="el-icon-refresh" size="mini" @click="resetQuery">重置</el-button>
+        <el-button type="primary" :icon="Search" size="mini" @click="handleQuery">搜索</el-button>
+        <el-button :icon="Refresh" size="mini" @click="resetQuery">重置</el-button>
       </el-form-item>
     </el-form>
 
@@ -20,7 +20,7 @@
         <el-button
           type="primary"
           plain
-          icon="el-icon-plus"
+          :icon="Plus"
           size="mini"
           @click="handleAdd"
           v-hasPermi="['wechat:prompt:add']"
@@ -30,7 +30,7 @@
         <el-button
           type="success"
           plain
-          icon="el-icon-edit"
+          :icon="Edit"
           size="mini"
           :disabled="single"
           @click="handleUpdate"
@@ -41,7 +41,7 @@
         <el-button
           type="danger"
           plain
-          icon="el-icon-delete"
+          :icon="Delete"
           size="mini"
           :disabled="multiple"
           @click="handleDelete"
@@ -52,7 +52,7 @@
         <el-button
           type="warning"
           plain
-          icon="el-icon-download"
+          :icon="Download"
           size="mini"
           @click="handleExport"
           v-hasPermi="['wechat:prompt:export']"
@@ -66,22 +66,65 @@
       <!-- <el-table-column label="主建ID" align="center" prop="id" /> -->
       <el-table-column label="模板名称" align="center" prop="name" />
       <el-table-column label="模板" align="center" prop="prompt" />
-      <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
+      <el-table-column label="模板类型" align="center" prop="isCommon" width="100">
+        <template #default="scope">
+          <el-tag :type="scope.row.isCommon === 1 ? 'success' : 'info'">
+            {{ scope.row.isCommon === 1 ? '公共模板' : '个人模板' }}
+          </el-tag>
+        </template>
+      </el-table-column>
+      <el-table-column label="操作" align="center" class-name="small-padding fixed-width" width="280">
         <template #default="scope">
           <el-button
+            v-if="scope.row.isCommon === 0"
             size="mini"
             type="text"
-            icon="el-icon-edit"
+            :icon="Edit"
             @click="handleUpdate(scope.row)"
             v-hasPermi="['wechat:prompt:edit']"
           >修改</el-button>
           <el-button
+            v-if="scope.row.isCommon === 1"
             size="mini"
             type="text"
-            icon="el-icon-delete"
+            :icon="Edit"
+            @click="handleUpdate(scope.row)"
+            v-hasRole="['admin']"
+            v-hasPermi="['wechat:prompt:edit']"
+          >修改</el-button>
+          <el-button
+            v-if="scope.row.isCommon === 0"
+            size="mini"
+            type="text"
+            :icon="Delete"
             @click="handleDelete(scope.row)"
             v-hasPermi="['wechat:prompt:remove']"
           >删除</el-button>
+          <el-button
+            v-if="scope.row.isCommon === 1"
+            size="mini"
+            type="text"
+            :icon="Delete"
+            @click="handleDelete(scope.row)"
+            v-hasRole="['admin']"
+            v-hasPermi="['wechat:prompt:remove']"
+          >删除</el-button>
+          <el-button
+            v-if="scope.row.isCommon === 0"
+            size="mini"
+            type="text"
+            style="color: #E6A23C"
+            @click="handleSetCommon(scope.row, 1)"
+            v-hasRole="['admin', 'common']"
+          >设为公共</el-button>
+          <el-button
+            v-if="scope.row.isCommon === 1"
+            size="mini"
+            type="text"
+            style="color: #909399"
+            @click="handleSetCommon(scope.row, 0)"
+            v-hasRole="['admin', 'common']"
+          >取消公共</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -114,8 +157,10 @@
 </template>
 
 <script>
+import { Delete, Download, Edit, Plus, Refresh, Search } from '@element-plus/icons-vue';
+
 // import { listPrompt, getPrompt, delPrompt, addPrompt, updatePrompt } from "@/api/wechat/prompt";
-import { getArtPromptList,getArtPrompt,deleteArtPrompt,saveArtPrompt,updateArtPrompt } from "@/api/wechat/aigc";
+import { getArtPromptList,getArtPrompt,deleteArtPrompt,saveArtPrompt,updateArtPrompt,setArtPromptCommon } from "@/api/wechat/aigc";
 
 export default {
   name: "Prompt",
@@ -256,6 +301,16 @@ export default {
       this.download('wechat/prompt/export', {
         ...this.queryParams
       }, `prompt_${new Date().getTime()}.xlsx`)
+    },
+    /** 设置公共模板 */
+    handleSetCommon(row, isCommon) {
+      const text = isCommon === 1 ? '设为公共' : '取消公共';
+      this.$modal.confirm(`是否确认${text}该文章模板？`).then(() => {
+        return setArtPromptCommon(row.id, isCommon);
+      }).then(() => {
+        this.getList();
+        this.$modal.msgSuccess(`${text}成功`);
+      }).catch(() => {});
     }
   }
 };

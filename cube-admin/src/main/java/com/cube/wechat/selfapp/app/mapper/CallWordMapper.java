@@ -53,4 +53,12 @@ public interface CallWordMapper {
     int deleteCallWordByPlatformIds(String[] platformIds);
 
     List<CallWord> getCallWordList(CallWordQuery callWordQuery);
+
+    /**
+     * 根据平台ID查询提示词（用于设置公共模板）
+     * 
+     * @param platformId 平台标识
+     * @return 提示词配置
+     */
+    CallWord selectByPlatformId(@Param("platformId") String platformId);
 } 

@@ -271,6 +271,14 @@ public class UserInfoServiceImpl implements UserInfoService {
 
     @Override
     public ResultBody updateScorePrompt(PromptTemplate promptTemplate) {
+        // 检查是否是公共模板，只有管理员可以修改
+        PromptTemplate existing = promptTemplateMapper.getScorePromptById(promptTemplate.getId());
+        if (existing != null && existing.getIsCommon() != null && existing.getIsCommon() == 1) {
+            if (!SecurityUtils.hasRole("admin")) {
+                return ResultBody.error(403, "只有管理员可以修改公共模板");
+            }
+        }
+        
         promptTemplate.setType(3L);
         promptTemplate.setUserId(SecurityUtils.getUserId());
         int count = promptTemplateMapper.updatePromptTemplate(promptTemplate);
@@ -282,6 +290,16 @@ public class UserInfoServiceImpl implements UserInfoService {
 
     @Override
     public ResultBody deleteScorePrompt(Long[] ids) {
+        // 检查是否包含公共模板，只有管理员可以删除
+        for (Long id : ids) {
+            PromptTemplate promptTemplate = promptTemplateMapper.getScorePromptById(id);
+            if (promptTemplate != null && promptTemplate.getIsCommon() != null && promptTemplate.getIsCommon() == 1) {
+                if (!SecurityUtils.hasRole("admin")) {
+                    return ResultBody.error(403, "只有管理员可以删除公共模板");
+                }
+            }
+        }
+        
         int count = promptTemplateMapper.deletePromptTemplateByIds(ids);
         if (count > 0) {
             return ResultBody.success("删除成功");
@@ -327,6 +345,14 @@ public class UserInfoServiceImpl implements UserInfoService {
 
     @Override
     public ResultBody updateArtPrompt(ArtTemplate artTemplate) {
+        // 检查是否是公共模板，只有管理员可以修改
+        ArtTemplate existing = artTemplateMapper.getArtPromptById(artTemplate.getId());
+        if (existing != null && existing.getIsCommon() != null && existing.getIsCommon() == 1) {
+            if (!SecurityUtils.hasRole("admin")) {
+                return ResultBody.error(403, "只有管理员可以修改公共模板");
+            }
+        }
+        
         artTemplate.setType(3L);
         artTemplate.setUserId(SecurityUtils.getUserId());
         int count = artTemplateMapper.updateArtTemplate(artTemplate);
@@ -338,6 +364,16 @@ public class UserInfoServiceImpl implements UserInfoService {
 
     @Override
     public ResultBody deleteArtPrompt(Long[] ids) {
+        // 检查是否包含公共模板，只有管理员可以删除
+        for (Long id : ids) {
+            ArtTemplate artTemplate = artTemplateMapper.getArtPromptById(id);
+            if (artTemplate != null && artTemplate.getIsCommon() != null && artTemplate.getIsCommon() == 1) {
+                if (!SecurityUtils.hasRole("admin")) {
+                    return ResultBody.error(403, "只有管理员可以删除公共模板");
+                }
+            }
+        }
+        
         int count = artTemplateMapper.deleteArtTemplateByIds(ids);
         if (count > 0) {
             return ResultBody.success("删除成功");
@@ -382,6 +418,14 @@ public class UserInfoServiceImpl implements UserInfoService {
 
     @Override
     public ResultBody updateIdeaPrompt(IdeaTemplate ideaTemplate) {
+        // 检查是否是公共模板，只有管理员可以修改
+        IdeaTemplate existing = ideaTemplateMapper.getIdeaPromptById(ideaTemplate.getId());
+        if (existing != null && existing.getIsCommon() != null && existing.getIsCommon() == 1) {
+            if (!SecurityUtils.hasRole("admin")) {
+                return ResultBody.error(403, "只有管理员可以修改公共模板");
+            }
+        }
+        
         ideaTemplate.setType(3L);
         ideaTemplate.setUserId(SecurityUtils.getUserId());
         int count = ideaTemplateMapper.updateIdeaTemplate(ideaTemplate);
@@ -393,6 +437,16 @@ public class UserInfoServiceImpl implements UserInfoService {
 
     @Override
     public ResultBody deleteIdeaPrompt(Long[] ids) {
+        // 检查是否包含公共模板，只有管理员可以删除
+        for (Long id : ids) {
+            IdeaTemplate ideaTemplate = ideaTemplateMapper.getIdeaPromptById(id);
+            if (ideaTemplate != null && ideaTemplate.getIsCommon() != null && ideaTemplate.getIsCommon() == 1) {
+                if (!SecurityUtils.hasRole("admin")) {
+                    return ResultBody.error(403, "只有管理员可以删除公共模板");
+                }
+            }
+        }
+        
         int count = ideaTemplateMapper.deleteIdeaTemplateByIds(ids);
         if (count > 0) {
             return ResultBody.success("删除成功");

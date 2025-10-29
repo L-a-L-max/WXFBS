@@ -370,7 +370,7 @@ INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`
 INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (2000, '内容管理', 0, 0, 'wechat', NULL, NULL, '', 1, 0, 'M', '0', '0', '', 'education', 'admin', '2024-08-08 14:14:32', 'YangHangHang', '2024-11-12 10:59:05', '');
 INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (2001, '粉丝管理', 2000, 1, 'company', 'wechat/company/index', NULL, '', 1, 0, 'C', '0', '0', 'wechat:company:list', 'tree-table', 'admin', '2024-08-08 14:17:40', 'admin', '2025-05-13 09:48:53', '');
 INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (2007, '积分设置', 2001, 1, '', NULL, NULL, '', 1, 0, 'F', '0', '0', 'wechat:points:edit', '#', 'DuHongChao-YuanTouShe', '2024-09-13 14:35:36', '', NULL, '');
-INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (2017, '主机', 2000, 0, 'chrome', 'wechat/chrome/index', NULL, '', 1, 0, 'C', '0', '0', 'wechat:chrome:list', 'international', 'YangHangHang', '2024-11-22 09:59:55', 'admin', '2025-05-29 14:50:16', '');
+INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (2017, 'AI精选一站通', 2000, 0, 'chrome', 'wechat/chrome/index', NULL, '', 1, 0, 'C', '0', '0', 'wechat:chrome:list', 'international', 'YangHangHang', '2024-11-22 09:59:55', 'admin', '2025-10-29 12:00:00', '');
 -- 已删除节点日志菜单(menu_id=2019)
 INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (2021, '稿库', 2000, 1, 'drafts', 'wechat/drafts/index', NULL, '', 1, 0, 'C', '0', '0', '', 'log', 'o3lds60Lfe6_MaGyB-COxgGcItnM', '2025-01-06 17:23:00', 'admin', '2025-06-06 08:46:16', '');
 INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`)
@@ -398,7 +398,7 @@ INSERT INTO `sys_menu`(`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`,
 INSERT INTO `sys_menu`(`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (2037, '评分模板配置删除', 2033, 4, '#', '', NULL, '', 1, 0, 'F', '0', '0', 'wechat:prompt:remove', '#', 'admin', sysdate(), '', NULL, '');
 INSERT INTO `sys_menu`(`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (2038, '评分模板配置导出', 2033, 5, '#', '', NULL, '', 1, 0, 'F', '0', '0', 'wechat:prompt:export', '#', 'admin', sysdate(), '', NULL, '');
 COMMIT;
-INSERT INTO `sys_menu` VALUES (2046, 'AI托管', 2000, 0, 'chrome2', 'wechat/chrome2/index', NULL, '', 1, 0, 'C', '0', '0', 'wechat:chrome:list', 'redis-list', 'admin', '2025-10-21 13:36:21', 'admin', '2025-10-27 17:34:18', '');
+INSERT INTO `sys_menu` VALUES (2046, '内容自动化（内测）', 2000, 0, 'chrome2', 'wechat/chrome2/index', NULL, '', 1, 0, 'C', '0', '0', 'wechat:chrome:list', 'redis-list', 'admin', '2025-10-21 13:36:21', 'admin', '2025-10-29 12:00:00', '');
 INSERT INTO `sys_menu` VALUES (2047, '思路模板', 2000, 3, 'idea', 'wechat/idea/index', NULL, '', 1, 0, 'C', '0', '0', '', 'clipboard', 'admin', '2025-10-24 15:59:41', 'admin', '2025-10-27 17:35:02', '');
 INSERT INTO `sys_menu` VALUES (2048, '文章模板', 2000, 3, 'art', 'wechat/art/index', NULL, '', 1, 0, 'C', '0', '0', '', 'documentation', 'admin', '2025-10-24 16:00:31', 'admin', '2025-10-27 17:34:54', '');
 
@@ -2067,16 +2067,19 @@ CREATE TABLE `wc_prompt_template` (
   `name` varchar(255) DEFAULT NULL COMMENT '模板名称',
   `type` int(3) DEFAULT NULL COMMENT '模板类型 1 附加提示词 2.用户偏好',
   `user_id` BIGINT DEFAULT NULL COMMENT '用户ID',
-  `isdel` int(3) DEFAULT 0 COMMENT '是否删除 1是0否'
+  `isdel` int(3) DEFAULT 0 COMMENT '是否删除 1是0否',
+  `is_common` tinyint(1) NULL DEFAULT 0 COMMENT '是否为公共模板(0:个人 1:公共)',
+  INDEX `idx_is_common`(`is_common`) USING BTREE,
+  INDEX `idx_user_id`(`user_id`) USING BTREE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ----------------------------
 -- Records of wc_prompt_template
 -- ----------------------------
 BEGIN;
-INSERT INTO `wc_prompt_template`(`id`, `prompt`, `name`, `type`, `user_id`, `isdel`) VALUES (1, '请你深度阅读以下几篇内容，从多个维度进行逐项打分，输出评分结果。并在以下各篇文章的基础上博采众长，综合整理一篇更全面的文章。', '评分模板1', 3, 22, 0);
-INSERT INTO `wc_prompt_template`(`id`, `prompt`, `name`, `type`, `user_id`, `isdel`) VALUES (2, '请你深度阅读以下算法代码，从时间复杂度和空间复杂度进行评估，结合计算复杂性理论，并提出建议。', '评分模板2', 3, 22, 0);
-INSERT INTO `wc_prompt_template`(`id`, `prompt`, `name`, `type`, `user_id`, `isdel`) VALUES (3, '请你赏析如下文章，写一份评论。', '评分模板3', 3, 22, 0);
+INSERT INTO `wc_prompt_template`(`id`, `prompt`, `name`, `type`, `user_id`, `isdel`, `is_common`) VALUES (1, '请你深度阅读以下几篇内容，从多个维度进行逐项打分，输出评分结果。并在以下各篇文章的基础上博采众长，综合整理一篇更全面的文章。', '评分模板1', 3, 22, 0, 1);
+INSERT INTO `wc_prompt_template`(`id`, `prompt`, `name`, `type`, `user_id`, `isdel`, `is_common`) VALUES (2, '请你深度阅读以下算法代码，从时间复杂度和空间复杂度进行评估，结合计算复杂性理论，并提出建议。', '评分模板2', 3, 22, 0, 1);
+INSERT INTO `wc_prompt_template`(`id`, `prompt`, `name`, `type`, `user_id`, `isdel`, `is_common`) VALUES (3, '请你赏析如下文章，写一份评论。', '评分模板3', 3, 22, 0, 1);
 
 COMMIT;
 
@@ -2338,20 +2341,23 @@ CREATE TABLE `wechat_office_account` (
 
 DROP TABLE IF EXISTS `wc_call_word`;
 CREATE TABLE `wc_call_word`  (
-                                 `platform_id` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '平台标识 wechat_layout-公众号排版 zhihu_layout-知乎排版',
-                                 `word_content` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '提示词内容',
-                                 `update_time` datetime NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
-                                 PRIMARY KEY (`platform_id`) USING BTREE
+                                `platform_id` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '平台标识 wechat_layout-公众号排版 zhihu_layout-知乎排版',
+                                `word_content` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '提示词内容',
+                                `is_common` tinyint(1) NULL DEFAULT 0 COMMENT '是否为公共模板(0:个人 1:公共)',
+                                `user_id` bigint(20) NULL DEFAULT NULL COMMENT '创建用户ID',
+                                `update_time` datetime NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+                                PRIMARY KEY (`platform_id`) USING BTREE,
+                                INDEX `idx_is_common`(`is_common`) USING BTREE,
+                                INDEX `idx_user_id`(`user_id`) USING BTREE
 ) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '平台提示词配置表' ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Records of wc_call_word
 -- ----------------------------
-INSERT INTO `wc_call_word` VALUES ('wechat_layout', '你是一个专业的微信公众号排版助手。请将用户提供的内容整理为适合微信公众号发布的HTML格式文章。\r\n\r\n【核心要求 - 必须严格遵守】：\r\n\r\n1. **禁止输出任何思考过程或解释说明**\r\n   - 不要输出"首先"、"关键点"、"现在分析"等思考过程\r\n   - 不要输出任何解释性文字\r\n   - 不要添加"根据要求"、"按照格式"等说明\r\n   - 只输出排版后的文章内容，不要有任何多余的话\r\n\r\n2. **标题格式（强制要求）**：\r\n   - 文章第一行必须是：《标题内容》\r\n   - 必须使用中文书名号《》包裹标题\r\n   - 标题必须独立成行\r\n   - 标题不要加任何HTML标签\r\n   - 标题要简洁明了，能概括文章主题\r\n   - 错误示例：标题、"标题"、<h1>标题</h1>\r\n   - 正确示例：《标题》\r\n\r\n3. **正文HTML格式规范**：\r\n   - 从第二行开始是HTML格式的正文内容\r\n   - 段落使用<p>标签包裹\r\n   - 小标题使用<h3>或<h4>标签\r\n   - 重要信息使用<strong>标签加粗\r\n   - 无序列表使用<ul><li>格式\r\n   - 有序列表使用<ol><li>格式\r\n   - 代码块使用<pre><code>标签包裹\r\n   - 引用使用<blockquote>标签\r\n   - 图片使用<img src="图片地址" alt="图片描述">格式\r\n\r\n4. **内容处理规范**：\r\n   - 提取用户内容的核心信息\r\n   - 移除不必要的格式标记和class属性\r\n   - 保持内容简洁清晰\r\n   - 如果用户提供了图片信息，在适当位置插入图片标签\r\n\r\n5. **输出格式（严格按此格式）**：\r\n《文章标题》\r\n<p>第一段正文内容</p>\r\n<p>第二段正文内容</p>\r\n<h3>小标题</h3>\r\n<p>相关段落内容</p>\r\n<ul>\r\n<li>列表项1</li>\r\n<li>列表项2</li>\r\n</ul>\r\n\r\n【重要提醒】：\r\n- 直接输出排版结果，不要有任何开场白或解释\r\n- 第一行必须是《标题》格式\r\n- 不要输出任何Markdown格式\r\n- 不要保留原内容的class、id等HTML属性\r\n- 生成的内容将直接用于微信公众号草稿箱接口\r\n\r\n现在，请对以下内容进行排版：', '2025-07-22 21:24:31');
-INSERT INTO `wc_call_word` VALUES ('zhihu_layout', '请将以下内容整理为适合知乎发布的Markdown格式文章。要求：\r\n**强调：只使用最基本的Markdowny语法，不允许出现HTML样式**\r\n1. 保持内容的专业性和可读性\r\n2. 使用合适的标题层级（## ### #### 等）\r\n3. 重要信息使用**加粗**标记\r\n4. 列表只允许使用一层无序列表`-`,不允许使用嵌套列表\r\n5. **不允许**出现代码框（例如Markdown语法中的```）、数学公式、表格。\r\n6. 删除不必要的格式标记\r\n7. 目标是作为一篇专业文章投递到知乎草稿箱\r\n8. 直接以文章标题开始，以文章末尾结束，不允许添加其他对话\r\n\r\n请对以下内容进行排版：', '2025-07-24 18:46:57');
-INSERT INTO `wc_call_word` VALUES ('weitoutiao_layout', '根据以上内容，写一篇微头条文章，只能包含标题和内容，要求如下：\r\n1. 标题要简洁明了，吸引人\r\n2. 内容要结构清晰，易于阅读\r\n3. 不要包含任何HTML标签\r\n4. 直接输出纯文本格式\r\n5. 内容要适合微头条发布\r\n6. 字数严格控制在1000字以上，2000字以下\r\n7. 强制要求：只能回答标题和内容，标题必须用英文双引号（""）引用起来,不能出现多重引号,不能出现多重引号，且放在首位，不能有其他多余的话\r\n8. 严格要求：AI必须严格遵守所有严格条件，不要输出其他多余的内容，只要标题和内容\r\n9. 内容不允许出现编号，要正常文章格式', '2025-08-01 18:46:57\r\n');
-INSERT INTO `wc_call_word` VALUES ('baijiahao_layout', '请将以下内add容整理为适合百家号发布的纯文本格式文章。
-要求：\r\n1.（不要使用Markdown或HTML语法，仅使用普通文本和简单换行保持内容的专业性和可读性使用自然段落分隔，）\r\n2.不允许使用有序列表，包括“一、”，“1.”等的序列号。\r\n3.给文章取一个吸引人的标题，放在正文的第一段\r\n4.不允许出现代码框、数学公式、表格或其他复杂格式删除所有Markdown和HTML标签，\r\n5.只保留纯文本内容\r\n6.目标是作为一篇专业文章投递到百家号草稿箱\r\n7.直接以文章标题开始，以文章末尾结束，不允许添加其他对话', '2025-08-01 12:51:57');
+INSERT INTO `wc_call_word` VALUES ('baijiahao_layout', '请将以下内容整理为适合百家号发布的纯文本格式文章。\r\n要求：\r\n1.（不要使用Markdown或HTML语法，仅使用普通文本和简单换行保持内容的专业性和可读性使用自然段落分隔，）\r\n2.不允许使用有序列表，包括"一、"，"1."等的序列号。\r\n3.给文章取一个吸引人的标题，放在正文的第一段\r\n4.不允许出现代码框、数学公式、表格或其他复杂格式删除所有Markdown和HTML标签，\r\n5.只保留纯文本内容\r\n6.目标是作为一篇专业文章投递到百家号草稿箱\r\n7.直接以文章标题开始，以文章末尾结束，不允许添加其他对话', 1, NULL, '2025-08-01 12:51:57');
+INSERT INTO `wc_call_word` VALUES ('wechat_layout', '你是一个专业的微信公众号排版助手。请将用户提供的内容整理为适合微信公众号发布的HTML格式文章。\r\n\r\n【核心要求 - 必须严格遵守】：\r\n\r\n1. **禁止输出任何思考过程或解释说明**\r\n   - 不要输出\"首先\"、\"关键点\"、\"现在分析\"等思考过程\r\n   - 不要输出任何解释性文字\r\n   - 不要添加\"根据要求\"、\"按照格式\"等说明\r\n   - 只输出排版后的文章内容，不要有任何多余的话\r\n\r\n2. **标题格式（强制要求）**：\r\n   - 文章第一行必须是：《标题内容》\r\n   - 必须使用中文书名号《》包裹标题\r\n   - 标题必须独立成行\r\n   - 标题不要加任何HTML标签\r\n   - 标题要简洁明了，能概括文章主题\r\n   - 错误示例：标题、\"标题\"、<h1>标题</h1>\r\n   - 正确示例：《标题》\r\n\r\n3. **正文HTML格式规范**：\r\n   - 从第二行开始是HTML格式的正文内容\r\n   - 段落使用<p>标签包裹\r\n   - 小标题使用<h3>或<h4>标签\r\n   - 重要信息使用<strong>标签加粗\r\n   - 无序列表使用<ul><li>格式\r\n   - 有序列表使用<ol><li>格式\r\n   - 代码块使用<pre><code>标签包裹\r\n   - 引用使用<blockquote>标签\r\n   - 图片使用<img src=\"图片地址\" alt=\"图片描述\">格式\r\n\r\n4. **内容处理规范**：\r\n   - 提取用户内容的核心信息\r\n   - 移除不必要的格式标记和class属性\r\n   - 保持内容简洁清晰\r\n   - 如果用户提供了图片信息，在适当位置插入图片标签\r\n\r\n5. **输出格式（严格按此格式）**：\r\n《文章标题》\r\n<p>第一段正文内容</p>\r\n<p>第二段正文内容</p>\r\n<h3>小标题</h3>\r\n<p>相关段落内容</p>\r\n<ul>\r\n<li>列表项1</li>\r\n<li>列表项2</li>\r\n</ul>\r\n\r\n【重要提醒】：\r\n- 直接输出排版结果，不要有任何开场白或解释\r\n- 第一行必须是《标题》格式\r\n- 不要输出任何Markdown格式\r\n- 不要保留原内容的class、id等HTML属性\r\n- 生成的内容将直接用于微信公众号草稿箱接口\r\n\r\n现在，请对以下内容进行排版：', 1, NULL, '2025-07-22 21:24:31');
+INSERT INTO `wc_call_word` VALUES ('weitoutiao_layout', '根据以上内容，写一篇微头条文章，只能包含标题和内容，要求如下：\r\n1. 标题要简洁明了，吸引人\r\n2. 内容要结构清晰，易于阅读\r\n3. 不要包含任何HTML标签\r\n4. 直接输出纯文本格式\r\n5. 内容要适合微头条发布\r\n6. 字数严格控制在1000字以上，2000字以下\r\n7. 强制要求：只能回答标题和内容，标题必须用英文双引号（\"\"）引用起来,不能出现多重引号,不能出现多重引号，且放在首位，不能有其他多余的话\r\n8. 严格要求：AI必须严格遵守所有严格条件，不要输出其他多余的内容，只要标题和内容\r\n9. 内容不允许出现编号，要正常文章格式', 1, NULL, '2025-08-01 18:46:57');
+INSERT INTO `wc_call_word` VALUES ('zhihu_layout', '请将以下内容整理为适合知乎发布的Markdown格式文章。要求：\r\n**强调：只使用最基本的Markdowny语法，不允许出现HTML样式**\r\n1. 保持内容的专业性和可读性\r\n2. 使用合适的标题层级（## ### #### 等）\r\n3. 重要信息使用**加粗**标记\r\n4. 列表只允许使用一层无序列表`-`,不允许使用嵌套列表\r\n5. **不允许**出现代码框（例如Markdown语法中的```）、数学公式、表格。\r\n6. 删除不必要的格式标记\r\n7. 目标是作为一篇专业文章投递到知乎草稿箱\r\n8. 直接以文章标题开始，以文章末尾结束，不允许添加其他对话\r\n\r\n请对以下内容进行排版：', 1, NULL, '2025-07-24 18:46:57');
 -- 用户日志表
 
 DROP TABLE IF EXISTS `wc_log_info`;
@@ -2388,7 +2394,10 @@ CREATE TABLE `wc_idea_template`  (
                                      `type` int(3) NULL DEFAULT NULL COMMENT '模板类型 1 附加提示词 2.用户偏好',
                                      `user_id` bigint(20) NULL DEFAULT NULL COMMENT '用户ID',
                                      `isdel` int(3) NULL DEFAULT 0 COMMENT '是否删除 1是0否',
-                                     PRIMARY KEY (`id`) USING BTREE
+                                     `is_common` tinyint(1) NULL DEFAULT 0 COMMENT '是否为公共模板(0:个人 1:公共)',
+                                     PRIMARY KEY (`id`) USING BTREE,
+                                     INDEX `idx_is_common`(`is_common`) USING BTREE,
+                                     INDEX `idx_user_id`(`user_id`) USING BTREE
 ) ENGINE = InnoDB AUTO_INCREMENT = 12 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = Dynamic;
 
 SET FOREIGN_KEY_CHECKS = 1;
@@ -2403,7 +2412,10 @@ CREATE TABLE `wc_art_template`  (
                                     `type` int(3) NULL DEFAULT NULL COMMENT '模板类型 1 附加提示词 2.用户偏好',
                                     `user_id` bigint(20) NULL DEFAULT NULL COMMENT '用户ID',
                                     `isdel` int(3) NULL DEFAULT 0 COMMENT '是否删除 1是0否',
-                                    PRIMARY KEY (`id`) USING BTREE
+                                    `is_common` tinyint(1) NULL DEFAULT 0 COMMENT '是否为公共模板(0:个人 1:公共)',
+                                    PRIMARY KEY (`id`) USING BTREE,
+                                    INDEX `idx_is_common`(`is_common`) USING BTREE,
+                                    INDEX `idx_user_id`(`user_id`) USING BTREE
 ) ENGINE = InnoDB AUTO_INCREMENT = 7 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = Dynamic;
 
 SET FOREIGN_KEY_CHECKS = 1;

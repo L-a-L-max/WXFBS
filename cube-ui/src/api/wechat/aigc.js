@@ -71,6 +71,14 @@ export function deleteMediaCallWord(platformIds) {
   })
 }
 
+// 设置平台提示词为公共/私有
+export function setCallWordCommon(platformId, isCommon) {
+  return request({
+    url: `/media/setCallWordCommon/${platformId}/${isCommon}`,
+    method: 'put',
+  })
+}
+
 // 根据ID获取评分提示词
 export function getScorePrompt(id) {
   return request({
@@ -121,6 +129,14 @@ export function deleteScorePrompt(ids) {
     url: `/mini/deleteScorePrompt`,
     method: 'delete',
     data: ids,
+  })
+}
+
+// 设置评分模板为公共/私有
+export function setScorePromptCommon(id, isCommon) {
+  return request({
+    url: `/mini/setScorePromptCommon/${id}/${isCommon}`,
+    method: 'put',
   })
 }
 
@@ -177,6 +193,14 @@ export function deleteIdeaPrompt(ids) {
   })
 }
 
+// 设置思路模板为公共/私有
+export function setIdeaPromptCommon(id, isCommon) {
+  return request({
+    url: `/mini/setIdeaPromptCommon/${id}/${isCommon}`,
+    method: 'put',
+  })
+}
+
 // 根据ID获取文章提示词
 export function getArtPrompt(id) {
   return request({
@@ -227,6 +251,14 @@ export function deleteArtPrompt(ids) {
     url: `/mini/deleteArtPrompt`,
     method: 'delete',
     data: ids,
+  })
+}
+
+// 设置文章模板为公共/私有
+export function setArtPromptCommon(id, isCommon) {
+  return request({
+    url: `/mini/setArtPromptCommon/${id}/${isCommon}`,
+    method: 'put',
   })
 }
 

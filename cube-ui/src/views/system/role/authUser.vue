@@ -20,8 +20,8 @@
         />
       </el-form-item>
       <el-form-item>
-        <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery">搜索</el-button>
-        <el-button icon="el-icon-refresh" size="mini" @click="resetQuery">重置</el-button>
+        <el-button type="primary" :icon="Search" size="small" @click="handleQuery">搜索</el-button>
+        <el-button :icon="Refresh" size="small" @click="resetQuery">重置</el-button>
       </el-form-item>
     </el-form>
 
@@ -30,8 +30,8 @@
         <el-button
           type="primary"
           plain
-          icon="el-icon-plus"
-          size="mini"
+          :icon="Plus"
+          size="small"
           @click="openSelectUser"
           v-hasPermi="['system:role:add']"
         >添加用户</el-button>
@@ -40,8 +40,8 @@
         <el-button
           type="danger"
           plain
-          icon="el-icon-circle-close"
-          size="mini"
+          :icon="CircleClose"
+          size="small"
           :disabled="multiple"
           @click="cancelAuthUserAll"
           v-hasPermi="['system:role:remove']"
@@ -51,8 +51,8 @@
         <el-button
           type="warning"
           plain
-          icon="el-icon-close"
-          size="mini"
+          :icon="Close"
+          size="small"
           @click="handleClose"
         >关闭</el-button>
       </el-col>
@@ -78,9 +78,9 @@
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
         <template #default="scope">
           <el-button
-            size="mini"
+            size="small"
             type="text"
-            icon="el-icon-circle-close"
+            :icon="CircleClose"
             @click="cancelAuthUser(scope.row)"
             v-hasPermi="['system:role:remove']"
           >取消授权</el-button>
@@ -101,6 +101,8 @@
 </template>
 
 <script>
+import { CircleClose, Close, Plus, Refresh, Search } from '@element-plus/icons-vue';
+
 import { allocatedUserList, authUserCancel, authUserCancelAll } from "@/api/system/role";
 import selectUser from "./selectUser";
 

@@ -67,11 +67,11 @@
         <el-divider/>
 
         <el-button size="small" type="primary" plain @click="saveSetting">
-          <i class="el-icon-document-add"></i>
+          <el-icon><DocumentAdd /></el-icon>
           <span>保存配置</span>
         </el-button>
         <el-button size="small" plain @click="resetSetting">
-          <i class="el-icon-refresh"></i>
+          <el-icon><Refresh /></el-icon>
           <span>重置配置</span>
         </el-button>
       </div>
@@ -80,6 +80,8 @@
 </template>
 
 <script>
+import { DocumentAdd, Refresh } from '@element-plus/icons-vue';
+
 import ThemePicker from '@/components/ThemePicker'
 
 export default {

@@ -27,10 +27,10 @@
 <!--      </template>-->
       <el-dropdown class="avatar-container right-menu-item hover-effect" trigger="click">
         <div class="avatar-wrapper">
-          <i class="el-icon-user-solid" style="margin-right: 5px; font-size: 16px;"></i>
+          <el-icon><UserFilled /></el-icon>
           <span id="userName" style="top:0;display: none"> {{ name }}</span>
           <span style="top:0"> {{ nickname }}</span>
-          <i class="el-icon-caret-bottom" />
+          <el-icon><CaretBottom /></el-icon>
         </div>
         <template #dropdown>
           <el-dropdown-menu>
@@ -51,6 +51,8 @@
 </template>
 
 <script>
+import { CaretBottom, UserFilled } from '@element-plus/icons-vue';
+
 import { mapGetters } from 'vuex'
 import Breadcrumb from '@/components/Breadcrumb'
 import TopNav from '@/components/TopNav'

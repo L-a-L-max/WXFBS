@@ -20,8 +20,8 @@
         </el-select>
       </el-form-item>
       <el-form-item>
-        <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery">搜索</el-button>
-        <el-button icon="el-icon-refresh" size="mini" @click="resetQuery">重置</el-button>
+        <el-button type="primary" :icon="Search" size="small" @click="handleQuery">搜索</el-button>
+        <el-button :icon="Refresh" size="small" @click="resetQuery">重置</el-button>
       </el-form-item>
     </el-form>
 
@@ -30,8 +30,8 @@
         <el-button
           type="primary"
           plain
-          icon="el-icon-plus"
-          size="mini"
+          :icon="Plus"
+          size="small"
           @click="handleAdd"
           v-hasPermi="['system:menu:add']"
         >新增</el-button>
@@ -40,8 +40,8 @@
         <el-button
           type="info"
           plain
-          icon="el-icon-sort"
-          size="mini"
+          :icon="Sort"
+          size="small"
           @click="toggleExpandAll"
         >展开/折叠</el-button>
       </el-col>
@@ -78,23 +78,23 @@
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
         <template #default="scope">
           <el-button
-            size="mini"
+            size="small"
             type="text"
-            icon="el-icon-edit"
+            :icon="Edit"
             @click="handleUpdate(scope.row)"
             v-hasPermi="['system:menu:edit']"
           >修改</el-button>
           <el-button
-            size="mini"
+            size="small"
             type="text"
-            icon="el-icon-plus"
+            :icon="Plus"
             @click="handleAdd(scope.row)"
             v-hasPermi="['system:menu:add']"
           >新增</el-button>
           <el-button
-            size="mini"
+            size="small"
             type="text"
-            icon="el-icon-delete"
+            :icon="Delete"
             @click="handleDelete(scope.row)"
             v-hasPermi="['system:menu:remove']"
           >删除</el-button>
@@ -166,7 +166,7 @@
               <template #label>
                 <span>
                   <el-tooltip content="选择是外链则路由地址需要以`http(s)://`开头" placement="top">
-                  <i class="el-icon-question"></i>
+                  <el-icon><Question /></el-icon>
                   </el-tooltip>
                   是否外链
                 </span>
@@ -182,7 +182,7 @@
               <template #label>
                 <span>
                   <el-tooltip content="访问的路由地址，如：`user`，如外网地址需内链访问则以`http(s)://`开头" placement="top">
-                  <i class="el-icon-question"></i>
+                  <el-icon><Question /></el-icon>
                   </el-tooltip>
                   路由地址
                 </span>
@@ -195,7 +195,7 @@
               <template #label>
                 <span>
                   <el-tooltip content="访问的组件路径，如：`system/user/index`，默认在`views`目录下" placement="top">
-                  <i class="el-icon-question"></i>
+                  <el-icon><Question /></el-icon>
                   </el-tooltip>
                   组件路径
                 </span>
@@ -208,7 +208,7 @@
               <template #label>
                 <span>
                   <el-tooltip content="控制器中定义的权限字符，如：@PreAuthorize(`@ss.hasPermi('system:user:list')`)" placement="top">
-                  <i class="el-icon-question"></i>
+                  <el-icon><Question /></el-icon>
                   </el-tooltip>
                   权限字符
                 </span>
@@ -221,7 +221,7 @@
               <template #label>
                 <span>
                   <el-tooltip content='访问路由的默认传递参数，如：`{"id": 1, "name": "ry"}`' placement="top">
-                  <i class="el-icon-question"></i>
+                  <el-icon><Question /></el-icon>
                   </el-tooltip>
                   路由参数
                 </span>
@@ -234,7 +234,7 @@
               <template #label>
                 <span>
                   <el-tooltip content="选择是则会被`keep-alive`缓存，需要匹配组件的`name`和地址保持一致" placement="top">
-                  <i class="el-icon-question"></i>
+                  <el-icon><Question /></el-icon>
                   </el-tooltip>
                   是否缓存
                 </span>
@@ -250,7 +250,7 @@
               <template #label>
                 <span>
                   <el-tooltip content="选择隐藏则路由将不会出现在侧边栏，但仍然可以访问" placement="top">
-                  <i class="el-icon-question"></i>
+                  <el-icon><Question /></el-icon>
                   </el-tooltip>
                   显示状态
                 </span>
@@ -269,7 +269,7 @@
               <template #label>
                 <span>
                   <el-tooltip content="选择停用则路由将不会出现在侧边栏，也不能被访问" placement="top">
-                  <i class="el-icon-question"></i>
+                  <el-icon><Question /></el-icon>
                   </el-tooltip>
                   菜单状态
                 </span>
@@ -296,6 +296,10 @@
 </template>
 
 <script>
+import { Question, Sort } from '@element-plus/icons-vue';
+
+import { Delete, Edit, Plus, Refresh, Search } from '@element-plus/icons-vue';
+
 import { listMenu, getMenu, delMenu, addMenu, updateMenu } from "@/api/system/menu";
 import Treeselect from "vue3-treeselect";
 import "vue3-treeselect/dist/vue3-treeselect.css";

@@ -48,8 +48,15 @@ public class CallWordServiceImpl implements CallWordService {
     @Override
     public AjaxResult saveOrUpdateCallWord(CallWord callWord) {
         try {
-
             CallWord existing = callWordMapper.getCallWordById(callWord.getPlatformId());
+            
+            // 如果是更新操作且是公共模板，检查权限
+            if (existing != null && existing.getIsCommon() != null && existing.getIsCommon() == 1) {
+                if (!com.cube.common.utils.SecurityUtils.hasRole("admin")) {
+                    return AjaxResult.error("只有管理员可以修改公共模板");
+                }
+            }
+            
             if (existing != null) {
                 callWordMapper.updateCallWord(callWord);
             } else {
@@ -94,8 +101,17 @@ public class CallWordServiceImpl implements CallWordService {
     @Override
     public AjaxResult deleteCallWord(String[] platformIds) {
         try {
+            // 检查是否包含公共模板，如果是只有管理员可以删除
+            for (String platformId : platformIds) {
+                CallWord callWord = callWordMapper.getCallWordById(platformId);
+                if (callWord != null && callWord.getIsCommon() != null && callWord.getIsCommon() == 1) {
+                    if (!com.cube.common.utils.SecurityUtils.hasRole("admin")) {
+                        return AjaxResult.error("只有管理员可以删除公共模板");
+                    }
+                }
+            }
+            
             int count = callWordMapper.deleteCallWordByPlatformIds(platformIds);
-
             return count > 0 ? AjaxResult.success("删除成功") : AjaxResult.success("删除内容不存在");
         } catch (Exception e) {
             return AjaxResult.error("删除失败：" + e.getMessage());

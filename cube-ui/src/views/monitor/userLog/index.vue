@@ -49,8 +49,8 @@
         </el-select>
       </el-form-item>
       <el-form-item>
-        <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery">搜索</el-button>
-        <el-button icon="el-icon-refresh" size="mini" @click="resetQuery">重置</el-button>
+        <el-button type="primary" :icon="Search" size="small" @click="handleQuery">搜索</el-button>
+        <el-button :icon="Refresh" size="small" @click="resetQuery">重置</el-button>
       </el-form-item>
     </el-form>
 
@@ -59,8 +59,8 @@
         <el-button
           type="danger"
           plain
-          icon="el-icon-delete"
-          size="mini"
+          :icon="Delete"
+          size="small"
           :disabled="multiple"
           @click="handleDelete"
           v-hasPermi="['monitor:userLog:remove']"
@@ -70,8 +70,8 @@
         <el-button
           type="danger"
           plain
-          icon="el-icon-delete"
-          size="mini"
+          :icon="Delete"
+          size="small"
           @click="handleClean"
           v-hasPermi="['monitor:userLog:remove']"
         >清空</el-button>
@@ -80,8 +80,8 @@
         <el-button
           type="warning"
           plain
-          icon="el-icon-download"
-          size="mini"
+          :icon="Download"
+          size="small"
           @click="handleExport"
           v-hasPermi="['monitor:userLog:export']"
         >导出</el-button>
@@ -126,9 +126,9 @@
         <template #default="scope">
 
           <el-button
-            size="mini"
+            size="small"
             type="text"
-            icon="el-icon-delete"
+            :icon="Delete"
             @click="handleDelete(scope.row)"
             v-hasPermi="['monitor:userLog:remove']"
           >删除</el-button>
@@ -159,6 +159,8 @@
 </template>
 
 <script>
+import { Delete, Download, Refresh, Search } from '@element-plus/icons-vue';
+
 import { listUserLog, delUserLog, cleanUserLog } from "@/api/monitor/userLog";
 
 export default {

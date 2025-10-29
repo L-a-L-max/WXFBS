@@ -1,14 +1,18 @@
 package com.cube.wechat.selfapp.app.controller;
 
+import com.cube.common.annotation.Log;
 import com.cube.common.core.controller.BaseController;
 import com.cube.common.core.domain.AjaxResult;
 import com.cube.common.core.page.TableDataInfo;
+import com.cube.common.enums.BusinessType;
 import com.cube.wechat.selfapp.app.domain.CallWord;
 import com.cube.wechat.selfapp.app.domain.PromptTemplate;
 import com.cube.wechat.selfapp.app.domain.query.CallWordQuery;
 import com.cube.wechat.selfapp.app.mapper.PromptTemplateMapper;
+import com.cube.wechat.selfapp.app.mapper.CallWordMapper;
 import com.cube.wechat.selfapp.app.service.CallWordService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -29,6 +33,8 @@ public class MediaController extends BaseController {
     private CallWordService callWordService;
     @Autowired
     private PromptTemplateMapper promptTemplateMapper;
+    @Autowired
+    private CallWordMapper callWordMapper;
 
     /**
      * 获取指定媒体平台的提示词
@@ -110,6 +116,36 @@ public class MediaController extends BaseController {
         } catch (Exception e) {
             logger.error("删除提示词失败", e);
             return AjaxResult.error("删除提示词失败：" + e.getMessage());
+        }
+    }
+
+    /**
+     * 设置平台提示词为公共/私有（仅管理员和普通角色）
+     *
+     * @param platformId 平台标识
+     * @param isCommon 是否公共(0:私有 1:公共)
+     * @return 操作结果
+     */
+    @Log(title = "设置公共提示词", businessType = BusinessType.UPDATE)
+    @PutMapping("/setCallWordCommon/{platformId}/{isCommon}")
+    public AjaxResult setCallWordCommon(@PathVariable String platformId, @PathVariable Integer isCommon) {
+        try {
+            // 手动检查权限：只有admin或common角色可以设置公共模板
+            if (!com.cube.common.utils.SecurityUtils.hasRole("admin") && 
+                !com.cube.common.utils.SecurityUtils.hasRole("common")) {
+                return AjaxResult.error("您没有权限执行此操作");
+            }
+            
+            CallWord callWord = callWordMapper.selectByPlatformId(platformId);
+            if (callWord == null) {
+                return AjaxResult.error("提示词不存在");
+            }
+            callWord.setIsCommon(isCommon);
+            int result = callWordMapper.updateCallWord(callWord);
+            return result > 0 ? AjaxResult.success("设置成功") : AjaxResult.error("设置失败");
+        } catch (Exception e) {
+            logger.error("设置公共提示词失败", e);
+            return AjaxResult.error("设置失败：" + e.getMessage());
         }
     }
 

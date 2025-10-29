@@ -4,11 +4,11 @@
       <el-col :span="8">
         <el-card style="height: calc(100vh - 125px)">
           <div slot="header">
-            <span><i class="el-icon-collection"></i> 缓存列表</span>
+            <span><el-icon><Collection /></el-icon> 缓存列表</span>
             <el-button
               style="float: right; padding: 3px 0"
               type="text"
-              icon="el-icon-refresh-right"
+              :icon="RefreshRight"
               @click="refreshCacheNames()"
             ></el-button>
           </div>
@@ -48,9 +48,9 @@
             >
               <template #default="scope">
                 <el-button
-                  size="mini"
+                  size="small"
                   type="text"
-                  icon="el-icon-delete"
+                  :icon="Delete"
                   @click="handleClearCacheName(scope.row)"
                 ></el-button>
               </template>
@@ -62,11 +62,11 @@
       <el-col :span="8">
         <el-card style="height: calc(100vh - 125px)">
           <div slot="header">
-            <span><i class="el-icon-key"></i> 键名列表</span>
+            <span><el-icon><Key /></el-icon> 键名列表</span>
             <el-button
               style="float: right; padding: 3px 0"
               type="text"
-              icon="el-icon-refresh-right"
+              :icon="RefreshRight"
               @click="refreshCacheKeys()"
             ></el-button>
           </div>
@@ -98,9 +98,9 @@
             >
               <template #default="scope">
                 <el-button
-                  size="mini"
+                  size="small"
                   type="text"
-                  icon="el-icon-delete"
+                  :icon="Delete"
                   @click="handleClearCacheKey(scope.row)"
                 ></el-button>
               </template>
@@ -112,11 +112,11 @@
       <el-col :span="8">
         <el-card :bordered="false" style="height: calc(100vh - 125px)">
           <div slot="header">
-            <span><i class="el-icon-document"></i> 缓存内容</span>
+            <span><el-icon><Document /></el-icon> 缓存内容</span>
             <el-button
               style="float: right; padding: 3px 0"
               type="text"
-              icon="el-icon-refresh-right"
+              :icon="RefreshRight"
               @click="handleClearCacheAll()"
               >清理全部</el-button
             >
@@ -152,6 +152,8 @@
 </template>
 
 <script>
+import { Collection, Delete, Document, Key, RefreshRight } from '@element-plus/icons-vue';
+
 import { listCacheName, listCacheKey, getCacheValue, clearCacheName, clearCacheKey, clearCacheAll } from "@/api/monitor/cache";
 
 export default {

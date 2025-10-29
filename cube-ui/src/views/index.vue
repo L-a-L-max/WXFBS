@@ -42,10 +42,7 @@
                     placement="top"
                     effect="light"
                   >
-                    <i
-                      class="el-icon-chat-dot-round"
-                      @click="showPointsDetail"
-                    ></i>
+                    <el-icon><ChatDotRound /></el-icon>
                   </el-tooltip>
                 </li>
               </ul>
@@ -64,7 +61,7 @@
                 type="text"
                 @click="handleRefreshAI"
               >
-                <i class="el-icon-refresh"></i> 刷新
+                <el-icon><Refresh /></el-icon> 刷新
               </el-button>
             </div>
             <div class="ai-status-list">
@@ -98,7 +95,7 @@
                     effect="dark"
                     class="status-tag"
                   >
-                    <i class="el-icon-success"></i>
+                    <el-icon><SuccessFilled /></el-icon>
                     <span>{{ accounts[type] }}</span>
                   </el-tag>
                   <el-button
@@ -109,7 +106,7 @@
                     @click="handleAiLogin(type)"
                     :class="'ai-login-btn'"
                   >
-                    <i class="el-icon-connection"></i> 点击登录
+                    <el-icon><Connection /></el-icon> 点击登录
                   </el-button>
                 </div>
               </div>
@@ -128,7 +125,7 @@
                 type="text"
                 @click="handleRefreshMedia"
               >
-                <i class="el-icon-refresh"></i> 刷新
+                <el-icon><Refresh /></el-icon> 刷新
               </el-button>
             </div>
             <div class="ai-status-list">
@@ -164,7 +161,7 @@
                     effect="dark"
                     class="status-tag"
                   >
-                    <i class="el-icon-success"></i>
+                    <el-icon><SuccessFilled /></el-icon>
                     <span>{{ mediaAccounts[type] }}</span>
                   </el-tag>
                   <el-button
@@ -175,7 +172,7 @@
                     @click="handleMediaLogin(type)"
                     :class="'media-login-btn'"
                   >
-                    <i class="el-icon-connection"></i> 点击登录
+                    <el-icon><Connection /></el-icon> 点击登录
                   </el-button>
                 </div>
               </div>
@@ -225,7 +222,7 @@
           <p class="qr-tip">请使用对应AI平台APP扫码登录</p>
         </div>
         <div v-else-if="qrCodeError" class="error-tip">
-          <i class="el-icon-warning"></i>
+          <el-icon><Warning /></el-icon>
           <p>{{qrCodeError}}</p>
           <el-button size="small" @click="retryGetQrCode">重试</el-button>
         </div>
@@ -377,6 +374,8 @@
 </template>
 
 <script>
+import { ChatDotRound, Connection, Refresh, SuccessFilled, Warning } from '@element-plus/icons-vue';
+
 import PanelGroup from "./dashboard/PanelGroup";
 import LineChart from "./dashboard/LineChart";
 import RaddarChart from "./dashboard/RaddarChart";

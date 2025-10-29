@@ -677,9 +677,9 @@ INSERT INTO `sys_menu` VALUES (1058, '导入代码', 116, 4, '#', '', '', '', 1,
 INSERT INTO `sys_menu` VALUES (1059, '预览代码', 116, 5, '#', '', '', '', 1, 0, 'F', '0', '0', 'tool:gen:preview', '#', 'admin', '2024-08-08 14:05:53', '', NULL, '');
 INSERT INTO `sys_menu` VALUES (1060, '生成代码', 116, 6, '#', '', '', '', 1, 0, 'F', '0', '0', 'tool:gen:code', '#', 'admin', '2024-08-08 14:05:53', '', NULL, '');
 INSERT INTO `sys_menu` VALUES (2000, '内容管理', 0, 0, 'wechat', NULL, NULL, '', 1, 0, 'M', '0', '0', '', 'education', 'admin', '2024-08-08 14:14:32', 'YangHangHang', '2024-11-12 10:59:05', '');
-INSERT INTO `sys_menu` VALUES (2001, '粉丝管理', 2000, 1, 'company', 'wechat/company/index', NULL, '', 1, 0, 'C', '0', '0', 'wechat:company:list', 'tree-table', 'admin', '2024-08-08 14:17:40', 'admin', '2025-05-13 09:48:53', '');
-INSERT INTO `sys_menu` VALUES (2007, '积分设置', 2001, 1, '', NULL, NULL, '', 1, 0, 'F', '0', '0', 'wechat:points:edit', '#', 'DuHongChao-YuanTouShe', '2024-09-13 14:35:36', '', NULL, '');
-INSERT INTO `sys_menu` VALUES (2017, '主机', 2000, 0, 'chrome', 'wechat/chrome/index', NULL, '', 1, 0, 'C', '0', '0', 'wechat:chrome:list', 'international', 'YangHangHang', '2024-11-22 09:59:55', 'admin', '2025-05-29 14:50:16', '');
+INSERT INTO `sys_menu` VALUES (2001, '用户列表', 2051, 1, 'user-list', 'wechat/company/index', NULL, '', 1, 0, 'C', '0', '0', 'wechat:company:list', 'tree-table', 'admin', '2024-08-08 14:17:40', 'admin', '2025-05-13 09:48:53', '');
+INSERT INTO `sys_menu` VALUES (2007, '积分设置', 2051, 2, 'points', 'wechat/company/index', NULL, '', 1, 0, 'C', '0', '0', 'wechat:points:list', 'money', 'DuHongChao-YuanTouShe', '2024-09-13 14:35:36', '', NULL, '');
+INSERT INTO `sys_menu` VALUES (2017, 'AI精选一站通', 2000, 0, 'chrome', 'wechat/chrome/index', NULL, '', 1, 0, 'C', '0', '0', 'wechat:chrome:list', 'international', 'YangHangHang', '2024-11-22 09:59:55', 'admin', '2025-10-29 12:00:00', '');
 INSERT INTO `sys_menu` VALUES (2021, '稿库', 2000, 1, 'drafts', 'wechat/drafts/index', NULL, '', 1, 0, 'C', '0', '0', '', 'log', 'o3lds60Lfe6_MaGyB-COxgGcItnM', '2025-01-06 17:23:00', 'admin', '2025-06-06 08:46:16', '');
 INSERT INTO `sys_menu` VALUES (2022, '用户日志', 108, 1, 'userLog', 'monitor/userLog/index', NULL, '', 1, 0, 'C', '0', '0', 'monitor:userLog:list', '#', 'admin', '2025-10-15 17:05:34', '', NULL, '用户日志菜单');
 INSERT INTO `sys_menu` VALUES (2023, '用户日志查询', 2022, 1, '#', '', NULL, '', 1, 0, 'F', '0', '0', 'monitor:userLog:query', '#', 'admin', '2025-10-15 17:05:34', '', NULL, '');
@@ -687,20 +687,22 @@ INSERT INTO `sys_menu` VALUES (2024, '用户日志新增', 2022, 2, '#', '', NUL
 INSERT INTO `sys_menu` VALUES (2025, '用户日志修改', 2022, 3, '#', '', NULL, '', 1, 0, 'F', '0', '0', 'monitor:userLog:edit', '#', 'admin', '2025-10-15 17:05:34', '', NULL, '');
 INSERT INTO `sys_menu` VALUES (2026, '用户日志删除', 2022, 4, '#', '', NULL, '', 1, 0, 'F', '0', '0', 'monitor:userLog:remove', '#', 'admin', '2025-10-15 17:05:34', '', NULL, '');
 INSERT INTO `sys_menu` VALUES (2027, '用户日志导出', 2022, 5, '#', '', NULL, '', 1, 0, 'F', '0', '0', 'monitor:userLog:export', '#', 'admin', '2025-10-15 17:05:34', '', NULL, '');
-INSERT INTO `sys_menu` VALUES (2028, '平台提示词配置', 2000, 1, 'callWord', 'wechat/callWord/index', NULL, '', 1, 0, 'C', '0', '0', 'wechat:callWord:list', 'guide', 'admin', '2025-10-15 17:05:34', '', NULL, '平台提示词配置菜单');
+INSERT INTO `sys_menu` VALUES (2028, '平台提示词配置', 2050, 1, 'callWord', 'wechat/callWord/index', NULL, '', 1, 0, 'C', '0', '0', 'wechat:callWord:list', 'guide', 'admin', '2025-10-15 17:05:34', '', NULL, '平台提示词配置菜单');
 INSERT INTO `sys_menu` VALUES (2029, '平台提示词配置新增', 2028, 2, '#', '', NULL, '', 1, 0, 'F', '0', '0', 'wechat:callWord:add', '#', 'admin', '2025-10-15 17:05:34', '', NULL, '');
 INSERT INTO `sys_menu` VALUES (2030, '平台提示词配置修改', 2028, 3, '#', '', NULL, '', 1, 0, 'F', '0', '0', 'wechat:callWord:edit', '#', 'admin', '2025-10-15 17:05:34', '', NULL, '');
 INSERT INTO `sys_menu` VALUES (2031, '平台提示词配置删除', 2028, 4, '#', '', NULL, '', 1, 0, 'F', '0', '0', 'wechat:callWord:remove', '#', 'admin', '2025-10-15 17:05:34', '', NULL, '');
 INSERT INTO `sys_menu` VALUES (2032, '平台提示词配置导出', 2028, 5, '#', '', NULL, '', 1, 0, 'F', '0', '0', 'wechat:callWord:export', '#', 'admin', '2025-10-15 17:05:34', '', NULL, '');
-INSERT INTO `sys_menu` VALUES (2033, '评分模板配置', 2000, 1, 'prompt', 'wechat/prompt/index', NULL, '', 1, 0, 'C', '0', '0', 'wechat:prompt:list', 'star', 'admin', '2025-10-15 17:05:34', '', NULL, '评分模板配置菜单');
+INSERT INTO `sys_menu` VALUES (2033, '评分模板配置', 2050, 2, 'prompt', 'wechat/prompt/index', NULL, '', 1, 0, 'C', '0', '0', 'wechat:prompt:list', 'star', 'admin', '2025-10-15 17:05:34', '', NULL, '评分模板配置菜单');
 INSERT INTO `sys_menu` VALUES (2034, '评分模板配置查询', 2033, 1, '#', '', NULL, '', 1, 0, 'F', '0', '0', 'wechat:prompt:query', '#', 'admin', '2025-10-15 17:05:34', '', NULL, '');
 INSERT INTO `sys_menu` VALUES (2035, '评分模板配置新增', 2033, 2, '#', '', NULL, '', 1, 0, 'F', '0', '0', 'wechat:prompt:add', '#', 'admin', '2025-10-15 17:05:34', '', NULL, '');
 INSERT INTO `sys_menu` VALUES (2036, '评分模板配置修改', 2033, 3, '#', '', NULL, '', 1, 0, 'F', '0', '0', 'wechat:prompt:edit', '#', 'admin', '2025-10-15 17:05:34', '', NULL, '');
 INSERT INTO `sys_menu` VALUES (2037, '评分模板配置删除', 2033, 4, '#', '', NULL, '', 1, 0, 'F', '0', '0', 'wechat:prompt:remove', '#', 'admin', '2025-10-15 17:05:34', '', NULL, '');
 INSERT INTO `sys_menu` VALUES (2038, '评分模板配置导出', 2033, 5, '#', '', NULL, '', 1, 0, 'F', '0', '0', 'wechat:prompt:export', '#', 'admin', '2025-10-15 17:05:34', '', NULL, '');
-INSERT INTO `sys_menu` VALUES (2046, 'AI托管', 2000, 0, 'chrome2', 'wechat/chrome2/index', NULL, '', 1, 0, 'C', '0', '0', 'wechat:chrome:list', 'redis-list', 'admin', '2025-10-21 13:36:21', 'admin', '2025-10-27 17:34:18', '');
-INSERT INTO `sys_menu` VALUES (2047, '思路模板', 2000, 3, 'idea', 'wechat/idea/index', NULL, '', 1, 0, 'C', '0', '0', '', 'clipboard', 'admin', '2025-10-24 15:59:41', 'admin', '2025-10-27 17:35:02', '');
-INSERT INTO `sys_menu` VALUES (2048, '文章模板', 2000, 3, 'art', 'wechat/art/index', NULL, '', 1, 0, 'C', '0', '0', '', 'documentation', 'admin', '2025-10-24 16:00:31', 'admin', '2025-10-27 17:34:54', '');
+INSERT INTO `sys_menu` VALUES (2046, '内容自动化（内测）', 2000, 0, 'chrome2', 'wechat/chrome2/index', NULL, '', 1, 0, 'C', '0', '0', 'wechat:chrome:list', 'redis-list', 'admin', '2025-10-21 13:36:21', 'admin', '2025-10-29 12:00:00', '');
+INSERT INTO `sys_menu` VALUES (2047, '思路模板', 2050, 4, 'idea', 'wechat/idea/index', NULL, '', 1, 0, 'C', '0', '0', '', 'clipboard', 'admin', '2025-10-24 15:59:41', 'admin', '2025-10-27 17:35:02', '');
+INSERT INTO `sys_menu` VALUES (2048, '文章模板', 2050, 3, 'art', 'wechat/art/index', NULL, '', 1, 0, 'C', '0', '0', '', 'documentation', 'admin', '2025-10-24 16:00:31', 'admin', '2025-10-27 17:34:54', '');
+INSERT INTO `sys_menu` VALUES (2050, '提示词模板', 0, 1, 'prompt-template', NULL, NULL, '', 1, 0, 'M', '0', '0', '', 'skill', 'admin', '2025-10-28 00:00:00', '', NULL, '提示词模板管理目录');
+INSERT INTO `sys_menu` VALUES (2051, '粉丝管理', 0, 2, 'fans-manage', NULL, NULL, '', 1, 0, 'M', '0', '0', '', 'peoples', 'admin', '2025-10-28 00:00:00', '', NULL, '粉丝管理目录');
 
 -- ----------------------------
 -- Table structure for sys_notice
@@ -923,6 +925,33 @@ INSERT INTO `sys_role_menu` VALUES (1, 1057);
 INSERT INTO `sys_role_menu` VALUES (1, 1058);
 INSERT INTO `sys_role_menu` VALUES (1, 1059);
 INSERT INTO `sys_role_menu` VALUES (1, 1060);
+INSERT INTO `sys_role_menu` VALUES (1, 2000);
+INSERT INTO `sys_role_menu` VALUES (1, 2001);
+INSERT INTO `sys_role_menu` VALUES (1, 2007);
+INSERT INTO `sys_role_menu` VALUES (1, 2017);
+INSERT INTO `sys_role_menu` VALUES (1, 2021);
+INSERT INTO `sys_role_menu` VALUES (1, 2022);
+INSERT INTO `sys_role_menu` VALUES (1, 2023);
+INSERT INTO `sys_role_menu` VALUES (1, 2024);
+INSERT INTO `sys_role_menu` VALUES (1, 2025);
+INSERT INTO `sys_role_menu` VALUES (1, 2026);
+INSERT INTO `sys_role_menu` VALUES (1, 2027);
+INSERT INTO `sys_role_menu` VALUES (1, 2028);
+INSERT INTO `sys_role_menu` VALUES (1, 2029);
+INSERT INTO `sys_role_menu` VALUES (1, 2030);
+INSERT INTO `sys_role_menu` VALUES (1, 2031);
+INSERT INTO `sys_role_menu` VALUES (1, 2032);
+INSERT INTO `sys_role_menu` VALUES (1, 2033);
+INSERT INTO `sys_role_menu` VALUES (1, 2034);
+INSERT INTO `sys_role_menu` VALUES (1, 2035);
+INSERT INTO `sys_role_menu` VALUES (1, 2036);
+INSERT INTO `sys_role_menu` VALUES (1, 2037);
+INSERT INTO `sys_role_menu` VALUES (1, 2038);
+INSERT INTO `sys_role_menu` VALUES (1, 2046);
+INSERT INTO `sys_role_menu` VALUES (1, 2047);
+INSERT INTO `sys_role_menu` VALUES (1, 2048);
+INSERT INTO `sys_role_menu` VALUES (1, 2050);
+INSERT INTO `sys_role_menu` VALUES (1, 2051);
 INSERT INTO `sys_role_menu` VALUES (2, 1);
 INSERT INTO `sys_role_menu` VALUES (2, 2);
 INSERT INTO `sys_role_menu` VALUES (2, 3);
@@ -1032,6 +1061,8 @@ INSERT INTO `sys_role_menu` VALUES (2, 2038);
 INSERT INTO `sys_role_menu` VALUES (2, 2046);
 INSERT INTO `sys_role_menu` VALUES (2, 2047);
 INSERT INTO `sys_role_menu` VALUES (2, 2048);
+INSERT INTO `sys_role_menu` VALUES (2, 2050);
+INSERT INTO `sys_role_menu` VALUES (2, 2051);
 INSERT INTO `sys_role_menu` VALUES (101, 2000);
 INSERT INTO `sys_role_menu` VALUES (101, 2017);
 INSERT INTO `sys_role_menu` VALUES (101, 2021);
@@ -1049,6 +1080,7 @@ INSERT INTO `sys_role_menu` VALUES (101, 2038);
 INSERT INTO `sys_role_menu` VALUES (101, 2046);
 INSERT INTO `sys_role_menu` VALUES (101, 2047);
 INSERT INTO `sys_role_menu` VALUES (101, 2048);
+INSERT INTO `sys_role_menu` VALUES (101, 2050);
 
 -- ----------------------------
 -- Table structure for sys_user
@@ -1187,13 +1219,16 @@ CREATE TABLE `wc_art_template`  (
   `type` int(3) NULL DEFAULT NULL COMMENT '模板类型 1 附加提示词 2.用户偏好',
   `user_id` bigint(20) NULL DEFAULT NULL COMMENT '用户ID',
   `isdel` int(3) NULL DEFAULT 0 COMMENT '是否删除 1是0否',
-  PRIMARY KEY (`id`) USING BTREE
+  `is_common` tinyint(1) NULL DEFAULT 0 COMMENT '是否为公共模板(0:个人 1:公共)',
+  PRIMARY KEY (`id`) USING BTREE,
+  INDEX `idx_is_common`(`is_common`) USING BTREE,
+  INDEX `idx_user_id`(`user_id`) USING BTREE
 ) ENGINE = InnoDB AUTO_INCREMENT = 8 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Records of wc_art_template
 -- ----------------------------
-INSERT INTO `wc_art_template` VALUES (7, '根据以下撰稿思路完善一篇内容。', '文章模板1', 3, 22, 0);
+INSERT INTO `wc_art_template` VALUES (7, '根据以下撰稿思路完善一篇内容。', '文章模板1', 3, 22, 0, 1);
 
 -- ----------------------------
 -- Table structure for wc_call_word
@@ -1202,17 +1237,21 @@ DROP TABLE IF EXISTS `wc_call_word`;
 CREATE TABLE `wc_call_word`  (
   `platform_id` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '平台标识 wechat_layout-公众号排版 zhihu_layout-知乎排版',
   `word_content` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '提示词内容',
+  `is_common` tinyint(1) NULL DEFAULT 0 COMMENT '是否为公共模板(0:个人 1:公共)',
+  `user_id` bigint(20) NULL DEFAULT NULL COMMENT '创建用户ID',
   `update_time` datetime(0) NULL DEFAULT CURRENT_TIMESTAMP(0) ON UPDATE CURRENT_TIMESTAMP(0) COMMENT '更新时间',
-  PRIMARY KEY (`platform_id`) USING BTREE
+  PRIMARY KEY (`platform_id`) USING BTREE,
+  INDEX `idx_is_common`(`is_common`) USING BTREE,
+  INDEX `idx_user_id`(`user_id`) USING BTREE
 ) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '平台提示词配置表' ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Records of wc_call_word
 -- ----------------------------
-INSERT INTO `wc_call_word` VALUES ('baijiahao_layout', '请将以下内add容整理为适合百家号发布的纯文本格式文章。\r\n要求：\r\n1.（不要使用Markdown或HTML语法，仅使用普通文本和简单换行保持内容的专业性和可读性使用自然段落分隔，）\r\n2.不允许使用有序列表，包括“一、”，“1.”等的序列号。\r\n3.给文章取一个吸引人的标题，放在正文的第一段\r\n4.不允许出现代码框、数学公式、表格或其他复杂格式删除所有Markdown和HTML标签，\r\n5.只保留纯文本内容\r\n6.目标是作为一篇专业文章投递到百家号草稿箱\r\n7.直接以文章标题开始，以文章末尾结束，不允许添加其他对话', '2025-08-01 12:51:57');
-INSERT INTO `wc_call_word` VALUES ('wechat_layout', '你是一个专业的微信公众号排版助手。请将用户提供的内容整理为适合微信公众号发布的HTML格式文章。\r\n\r\n【核心要求 - 必须严格遵守】：\r\n\r\n1. **禁止输出任何思考过程或解释说明**\r\n   - 不要输出\"首先\"、\"关键点\"、\"现在分析\"等思考过程\r\n   - 不要输出任何解释性文字\r\n   - 不要添加\"根据要求\"、\"按照格式\"等说明\r\n   - 只输出排版后的文章内容，不要有任何多余的话\r\n\r\n2. **标题格式（强制要求）**：\r\n   - 文章第一行必须是：《标题内容》\r\n   - 必须使用中文书名号《》包裹标题\r\n   - 标题必须独立成行\r\n   - 标题不要加任何HTML标签\r\n   - 标题要简洁明了，能概括文章主题\r\n   - 错误示例：标题、\"标题\"、<h1>标题</h1>\r\n   - 正确示例：《标题》\r\n\r\n3. **正文HTML格式规范**：\r\n   - 从第二行开始是HTML格式的正文内容\r\n   - 段落使用<p>标签包裹\r\n   - 小标题使用<h3>或<h4>标签\r\n   - 重要信息使用<strong>标签加粗\r\n   - 无序列表使用<ul><li>格式\r\n   - 有序列表使用<ol><li>格式\r\n   - 代码块使用<pre><code>标签包裹\r\n   - 引用使用<blockquote>标签\r\n   - 图片使用<img src=\"图片地址\" alt=\"图片描述\">格式\r\n\r\n4. **内容处理规范**：\r\n   - 提取用户内容的核心信息\r\n   - 移除不必要的格式标记和class属性\r\n   - 保持内容简洁清晰\r\n   - 如果用户提供了图片信息，在适当位置插入图片标签\r\n\r\n5. **输出格式（严格按此格式）**：\r\n《文章标题》\r\n<p>第一段正文内容</p>\r\n<p>第二段正文内容</p>\r\n<h3>小标题</h3>\r\n<p>相关段落内容</p>\r\n<ul>\r\n<li>列表项1</li>\r\n<li>列表项2</li>\r\n</ul>\r\n\r\n【重要提醒】：\r\n- 直接输出排版结果，不要有任何开场白或解释\r\n- 第一行必须是《标题》格式\r\n- 不要输出任何Markdown格式\r\n- 不要保留原内容的class、id等HTML属性\r\n- 生成的内容将直接用于微信公众号草稿箱接口\r\n\r\n现在，请对以下内容进行排版：', '2025-07-22 21:24:31');
-INSERT INTO `wc_call_word` VALUES ('weitoutiao_layout', '根据以上内容，写一篇微头条文章，只能包含标题和内容，要求如下：\r\n1. 标题要简洁明了，吸引人\r\n2. 内容要结构清晰，易于阅读\r\n3. 不要包含任何HTML标签\r\n4. 直接输出纯文本格式\r\n5. 内容要适合微头条发布\r\n6. 字数严格控制在1000字以上，2000字以下\r\n7. 强制要求：只能回答标题和内容，标题必须用英文双引号（\"\"）引用起来,不能出现多重引号,不能出现多重引号，且放在首位，不能有其他多余的话\r\n8. 严格要求：AI必须严格遵守所有严格条件，不要输出其他多余的内容，只要标题和内容\r\n9. 内容不允许出现编号，要正常文章格式', '2025-08-01 18:46:57');
-INSERT INTO `wc_call_word` VALUES ('zhihu_layout', '请将以下内容整理为适合知乎发布的Markdown格式文章。要求：\r\n**强调：只使用最基本的Markdowny语法，不允许出现HTML样式**\r\n1. 保持内容的专业性和可读性\r\n2. 使用合适的标题层级（## ### #### 等）\r\n3. 重要信息使用**加粗**标记\r\n4. 列表只允许使用一层无序列表`-`,不允许使用嵌套列表\r\n5. **不允许**出现代码框（例如Markdown语法中的```）、数学公式、表格。\r\n6. 删除不必要的格式标记\r\n7. 目标是作为一篇专业文章投递到知乎草稿箱\r\n8. 直接以文章标题开始，以文章末尾结束，不允许添加其他对话\r\n\r\n请对以下内容进行排版：', '2025-07-24 18:46:57');
+INSERT INTO `wc_call_word` VALUES ('baijiahao_layout', '请将以下内add容整理为适合百家号发布的纯文本格式文章。\r\n要求：\r\n1.（不要使用Markdown或HTML语法，仅使用普通文本和简单换行保持内容的专业性和可读性使用自然段落分隔，）\r\n2.不允许使用有序列表，包括"一、"，"1."等的序列号。\r\n3.给文章取一个吸引人的标题，放在正文的第一段\r\n4.不允许出现代码框、数学公式、表格或其他复杂格式删除所有Markdown和HTML标签，\r\n5.只保留纯文本内容\r\n6.目标是作为一篇专业文章投递到百家号草稿箱\r\n7.直接以文章标题开始，以文章末尾结束，不允许添加其他对话', 1, NULL, '2025-08-01 12:51:57');
+INSERT INTO `wc_call_word` VALUES ('wechat_layout', '你是一个专业的微信公众号排版助手。请将用户提供的内容整理为适合微信公众号发布的HTML格式文章。\r\n\r\n【核心要求 - 必须严格遵守】：\r\n\r\n1. **禁止输出任何思考过程或解释说明**\r\n   - 不要输出\"首先\"、\"关键点\"、\"现在分析\"等思考过程\r\n   - 不要输出任何解释性文字\r\n   - 不要添加\"根据要求\"、\"按照格式\"等说明\r\n   - 只输出排版后的文章内容，不要有任何多余的话\r\n\r\n2. **标题格式（强制要求）**：\r\n   - 文章第一行必须是：《标题内容》\r\n   - 必须使用中文书名号《》包裹标题\r\n   - 标题必须独立成行\r\n   - 标题不要加任何HTML标签\r\n   - 标题要简洁明了，能概括文章主题\r\n   - 错误示例：标题、\"标题\"、<h1>标题</h1>\r\n   - 正确示例：《标题》\r\n\r\n3. **正文HTML格式规范**：\r\n   - 从第二行开始是HTML格式的正文内容\r\n   - 段落使用<p>标签包裹\r\n   - 小标题使用<h3>或<h4>标签\r\n   - 重要信息使用<strong>标签加粗\r\n   - 无序列表使用<ul><li>格式\r\n   - 有序列表使用<ol><li>格式\r\n   - 代码块使用<pre><code>标签包裹\r\n   - 引用使用<blockquote>标签\r\n   - 图片使用<img src=\"图片地址\" alt=\"图片描述\">格式\r\n\r\n4. **内容处理规范**：\r\n   - 提取用户内容的核心信息\r\n   - 移除不必要的格式标记和class属性\r\n   - 保持内容简洁清晰\r\n   - 如果用户提供了图片信息，在适当位置插入图片标签\r\n\r\n5. **输出格式（严格按此格式）**：\r\n《文章标题》\r\n<p>第一段正文内容</p>\r\n<p>第二段正文内容</p>\r\n<h3>小标题</h3>\r\n<p>相关段落内容</p>\r\n<ul>\r\n<li>列表项1</li>\r\n<li>列表项2</li>\r\n</ul>\r\n\r\n【重要提醒】：\r\n- 直接输出排版结果，不要有任何开场白或解释\r\n- 第一行必须是《标题》格式\r\n- 不要输出任何Markdown格式\r\n- 不要保留原内容的class、id等HTML属性\r\n- 生成的内容将直接用于微信公众号草稿箱接口\r\n\r\n现在，请对以下内容进行排版：', 1, NULL, '2025-07-22 21:24:31');
+INSERT INTO `wc_call_word` VALUES ('weitoutiao_layout', '根据以上内容，写一篇微头条文章，只能包含标题和内容，要求如下：\r\n1. 标题要简洁明了，吸引人\r\n2. 内容要结构清晰，易于阅读\r\n3. 不要包含任何HTML标签\r\n4. 直接输出纯文本格式\r\n5. 内容要适合微头条发布\r\n6. 字数严格控制在1000字以上，2000字以下\r\n7. 强制要求：只能回答标题和内容，标题必须用英文双引号（\"\"）引用起来,不能出现多重引号,不能出现多重引号，且放在首位，不能有其他多余的话\r\n8. 严格要求：AI必须严格遵守所有严格条件，不要输出其他多余的内容，只要标题和内容\r\n9. 内容不允许出现编号，要正常文章格式', 1, NULL, '2025-08-01 18:46:57');
+INSERT INTO `wc_call_word` VALUES ('zhihu_layout', '请将以下内容整理为适合知乎发布的Markdown格式文章。要求：\r\n**强调：只使用最基本的Markdowny语法，不允许出现HTML样式**\r\n1. 保持内容的专业性和可读性\r\n2. 使用合适的标题层级（## ### #### 等）\r\n3. 重要信息使用**加粗**标记\r\n4. 列表只允许使用一层无序列表`-`,不允许使用嵌套列表\r\n5. **不允许**出现代码框（例如Markdown语法中的```）、数学公式、表格。\r\n6. 删除不必要的格式标记\r\n7. 目标是作为一篇专业文章投递到知乎草稿箱\r\n8. 直接以文章标题开始，以文章末尾结束，不允许添加其他对话\r\n\r\n请对以下内容进行排版：', 1, NULL, '2025-07-24 18:46:57');
 
 -- ----------------------------
 -- Table structure for wc_chat_history
@@ -1461,13 +1500,16 @@ CREATE TABLE `wc_idea_template`  (
   `type` int(3) NULL DEFAULT NULL COMMENT '模板类型 1 附加提示词 2.用户偏好',
   `user_id` bigint(20) NULL DEFAULT NULL COMMENT '用户ID',
   `isdel` int(3) NULL DEFAULT 0 COMMENT '是否删除 1是0否',
-  PRIMARY KEY (`id`) USING BTREE
+  `is_common` tinyint(1) NULL DEFAULT 0 COMMENT '是否为公共模板(0:个人 1:公共)',
+  PRIMARY KEY (`id`) USING BTREE,
+  INDEX `idx_is_common`(`is_common`) USING BTREE,
+  INDEX `idx_user_id`(`user_id`) USING BTREE
 ) ENGINE = InnoDB AUTO_INCREMENT = 13 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Records of wc_idea_template
 -- ----------------------------
-INSERT INTO `wc_idea_template` VALUES (12, '根据主题任务撰写思路。', '思路模版1', 3, 22, 0);
+INSERT INTO `wc_idea_template` VALUES (12, '根据主题任务撰写思路。', '思路模版1', 3, 22, 0, 1);
 
 -- ----------------------------
 -- Table structure for wc_js_template
@@ -1654,26 +1696,29 @@ CREATE TABLE `wc_prompt_template`  (
   `type` int(3) NULL DEFAULT NULL COMMENT '模板类型 1 附加提示词 2.用户偏好',
   `user_id` bigint(20) NULL DEFAULT NULL COMMENT '用户ID',
   `isdel` int(3) NULL DEFAULT 0 COMMENT '是否删除 1是0否',
-  PRIMARY KEY (`id`) USING BTREE
+  `is_common` tinyint(1) NULL DEFAULT 0 COMMENT '是否为公共模板(0:个人 1:公共)',
+  PRIMARY KEY (`id`) USING BTREE,
+  INDEX `idx_is_common`(`is_common`) USING BTREE,
+  INDEX `idx_user_id`(`user_id`) USING BTREE
 ) ENGINE = InnoDB AUTO_INCREMENT = 19 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Records of wc_prompt_template
 -- ----------------------------
-INSERT INTO `wc_prompt_template` VALUES (1, '请你深度阅读以下几篇内容，从多个维度进行逐项打分，输出评分结果。并在以下各篇文章的基础上博采众长，综合整理一篇更全面的文章。', '评分模板1', 3, 22, 0);
-INSERT INTO `wc_prompt_template` VALUES (2, '请你深度阅读以下算法代码，从时间复杂度和空间复杂度进行评估，结合计算复杂性理论，并提出建议。', '评分模板2', 3, 22, 0);
-INSERT INTO `wc_prompt_template` VALUES (3, '请你赏析如下文章，写一份评论。', '评分模板3', 3, 22, 0);
-INSERT INTO `wc_prompt_template` VALUES (8, '请将以下来自不同AI的回复片段进行智能拼接，生成一个连贯且无重复的最终答案。要求：\n\n保留各回复中最专业、最有趣或最实用的部分\n确保逻辑过渡自然\n总长度控制在3000字以内', '大福-3K混搭专家', 3, 22, 0);
-INSERT INTO `wc_prompt_template` VALUES (9, '附上一些关于同一问题的不同AI回复版本，请按以下步骤优化：\n\n分析各版本在准确性、深度和易懂性方面的得分（满分10分）\n选择得分最高的部分作为基础\n补充其他版本中未被采纳但有价值的信息\n输出最终优化版（需标注改进点）', '迭代优化', 3, 22, 1);
-INSERT INTO `wc_prompt_template` VALUES (10, '你是一个AI未来预测专家，现在需要处理来自多个AI模型对同一问题的回复。请先分析每个回答的当前水平和局限性，然后预测这些回答在未来1-3年可能的进化方向。基于这些预测，生成一个\"未来进化版\"答案：\n1. 包含当前回答中的核心价值\n2. 融入预测中可能出现的创新点\n3. 添加一个基于未来技术发展的新视角\n4. 用\"如果现在是2026年，这个答案将如何进化\"的框架来组织内容\n5.确保最终答案展现出前瞻性，同时保持实用性。', '二福-答案进化高手', 3, 22, 0);
-INSERT INTO `wc_prompt_template` VALUES (11, '你是一个\"深度思考\"模式的AI评估专家，现在需要处理来自不同AI对同一问题的回复。请先分析每个回答的核心观点、逻辑结构和表达特点，然后运用深度思考模式，将这些回答融合成一个更全面、更有洞察力的答案。在融合过程中，特别关注以下几点：\n1. 识别并整合各回答中的独特见解\n2. 修正逻辑漏洞，补充关键细节\n3. 添加一个全新的、有深度的视角\n4. 确保语言流畅且专业\n5.最终生成的答案应比任何单一AI的回答都更出色，展现出超越原始回答的深度和广度。', '三福-深思爱好者', 3, 22, 0);
-INSERT INTO `wc_prompt_template` VALUES (12, '你是一个AI辩论专家，现在需要处理来自不同AI模型对同一问题的回复。请模拟一场AI辩论：\n1. 分析不同回答的立场、论点和论据\n2. 指出每个回答的优势和潜在漏洞\n3、生成一个综合答案，包含关键共识和创新点\n4、最后，解释为什么这个综合答案比任何单一回答都更可靠。', '答案整合', 3, 22, 1);
-INSERT INTO `wc_prompt_template` VALUES (13, '你是一位知识图谱构建师和教育专家。以下多个AI对同一问题的回答。\n你的任务是：\n\n整合与去重： 将所有回答中提到的知识点进行整合，去除重复项。\n构建层级关系： 分析这些知识点之间的逻辑关系（如：前置知识、核心概念、进阶分支），构建一个多层级的学习路径图。\n输出结构化数据：输出知识图谱。顶层是最高阶的知识，逐层向下展开到最基础的先修课程。在每个知识点旁边，可以标注它主要来源于哪个AI的回答。\n请开始构建这个知识图谱。', '四福-知识图谱构建师', 3, 22, 0);
-INSERT INTO `wc_prompt_template` VALUES (14, '你是一位富有想象力的创意总监。以下分别是不同AI对同一问题的回答。\n\n你的任务是：\n\n拆解元素： 从每个提案中，识别出最关键的词汇、意象、情感或概念（例如，X的“静谧”，Y的“连接”，Z的“冒险”）。\n创意融合： 将这些来自不同提案的精华元素进行重组、融合，创造出3个全新的、独一无二的回答。每个新方案都必须包含至少两个不同AI提案的灵感。\n阐述创意： 为每一个新方案写一段简短的创意阐述，说明它融合了哪些元素，以及为什么这样融合更有吸引力。\n请开始你的创作。', '五福-AI创意总监', 3, 22, 0);
-INSERT INTO `wc_prompt_template` VALUES (15, '请你作为“A纠错专家”，指出以下多个AI回答中的潜在事实错误、逻辑漏洞或虚假引用，并给出正确的替代表述。', '六福-AI纠错专家', 3, 22, 0);
-INSERT INTO `wc_prompt_template` VALUES (16, '请你从以下多个AI回答中，提炼出“核心洞见Top 5”，并用一句金句总结每一点。要求：不重复、可引用、有启发性。', '七福-洞见蒸馏高手', 3, 22, 0);
-INSERT INTO `wc_prompt_template` VALUES (17, '请你将以下AI回答当作“原材料”，像炼丹术士一样重新熔炼：提取其中的思想元素（逻辑、比喻、案例、结论），重组为一个更高层次、更具洞见的新版本。要求新文本具备“合成智慧”的特征，而非简单融合。', '八福-AI炼丹师', 3, 22, 0);
-INSERT INTO `wc_prompt_template` VALUES (18, '你的任务是作为一名‘一致性分析师’，评估以下多个AI回答在核心观点上的一致性。请仔细阅读所有回答，并完成以下任务：\n1、观点聚类：将所有回答中提到的核心观点进行归类。将语义相同或高度相似的观点归为一类。\n2、频率统计：统计每个观点类别被提及的次数。\n3、一致性评估：基于观点的频率分布，评估所有回答的整体一致性。如果大部分观点都集中在少数几个类别中，则认为一致性高；如果观点分散，则认为一致性低。\n4、最终输出你的分析结果。', '九福-一致性分析师', 3, 22, 0);
+INSERT INTO `wc_prompt_template` VALUES (1, '请你深度阅读以下几篇内容，从多个维度进行逐项打分，输出评分结果。并在以下各篇文章的基础上博采众长，综合整理一篇更全面的文章。', '评分模板1', 3, 22, 0, 1);
+INSERT INTO `wc_prompt_template` VALUES (2, '请你深度阅读以下算法代码，从时间复杂度和空间复杂度进行评估，结合计算复杂性理论，并提出建议。', '评分模板2', 3, 22, 0, 1);
+INSERT INTO `wc_prompt_template` VALUES (3, '请你赏析如下文章，写一份评论。', '评分模板3', 3, 22, 0, 1);
+INSERT INTO `wc_prompt_template` VALUES (8, '请将以下来自不同AI的回复片段进行智能拼接，生成一个连贯且无重复的最终答案。要求：\n\n保留各回复中最专业、最有趣或最实用的部分\n确保逻辑过渡自然\n总长度控制在3000字以内', '大福-3K混搭专家', 3, 22, 0, 1);
+INSERT INTO `wc_prompt_template` VALUES (9, '附上一些关于同一问题的不同AI回复版本，请按以下步骤优化：\n\n分析各版本在准确性、深度和易懂性方面的得分（满分10分）\n选择得分最高的部分作为基础\n补充其他版本中未被采纳但有价值的信息\n输出最终优化版（需标注改进点）', '迭代优化', 3, 22, 1, 0);
+INSERT INTO `wc_prompt_template` VALUES (10, '你是一个AI未来预测专家，现在需要处理来自多个AI模型对同一问题的回复。请先分析每个回答的当前水平和局限性，然后预测这些回答在未来1-3年可能的进化方向。基于这些预测，生成一个\"未来进化版\"答案：\n1. 包含当前回答中的核心价值\n2. 融入预测中可能出现的创新点\n3. 添加一个基于未来技术发展的新视角\n4. 用\"如果现在是2026年，这个答案将如何进化\"的框架来组织内容\n5.确保最终答案展现出前瞻性，同时保持实用性。', '二福-答案进化高手', 3, 22, 0, 1);
+INSERT INTO `wc_prompt_template` VALUES (11, '你是一个\"深度思考\"模式的AI评估专家，现在需要处理来自不同AI对同一问题的回复。请先分析每个回答的核心观点、逻辑结构和表达特点，然后运用深度思考模式，将这些回答融合成一个更全面、更有洞察力的答案。在融合过程中，特别关注以下几点：\n1. 识别并整合各回答中的独特见解\n2. 修正逻辑漏洞，补充关键细节\n3. 添加一个全新的、有深度的视角\n4. 确保语言流畅且专业\n5.最终生成的答案应比任何单一AI的回答都更出色，展现出超越原始回答的深度和广度。', '三福-深思爱好者', 3, 22, 0, 1);
+INSERT INTO `wc_prompt_template` VALUES (12, '你是一个AI辩论专家，现在需要处理来自不同AI模型对同一问题的回复。请模拟一场AI辩论：\n1. 分析不同回答的立场、论点和论据\n2. 指出每个回答的优势和潜在漏洞\n3、生成一个综合答案，包含关键共识和创新点\n4、最后，解释为什么这个综合答案比任何单一回答都更可靠。', '答案整合', 3, 22, 1, 0);
+INSERT INTO `wc_prompt_template` VALUES (13, '你是一位知识图谱构建师和教育专家。以下多个AI对同一问题的回答。\n你的任务是：\n\n整合与去重： 将所有回答中提到的知识点进行整合，去除重复项。\n构建层级关系： 分析这些知识点之间的逻辑关系（如：前置知识、核心概念、进阶分支），构建一个多层级的学习路径图。\n输出结构化数据：输出知识图谱。顶层是最高阶的知识，逐层向下展开到最基础的先修课程。在每个知识点旁边，可以标注它主要来源于哪个AI的回答。\n请开始构建这个知识图谱。', '四福-知识图谱构建师', 3, 22, 0, 1);
+INSERT INTO `wc_prompt_template` VALUES (14, '你是一位富有想象力的创意总监。以下分别是不同AI对同一问题的回答。\n\n你的任务是：\n\n拆解元素： 从每个提案中，识别出最关键的词汇、意象、情感或概念（例如，X的"静谧"，Y的"连接"，Z的"冒险"）。\n创意融合： 将这些来自不同提案的精华元素进行重组、融合，创造出3个全新的、独一无二的回答。每个新方案都必须包含至少两个不同AI提案的灵感。\n阐述创意： 为每一个新方案写一段简短的创意阐述，说明它融合了哪些元素，以及为什么这样融合更有吸引力。\n请开始你的创作。', '五福-AI创意总监', 3, 22, 0, 1);
+INSERT INTO `wc_prompt_template` VALUES (15, '请你作为"A纠错专家"，指出以下多个AI回答中的潜在事实错误、逻辑漏洞或虚假引用，并给出正确的替代表述。', '六福-AI纠错专家', 3, 22, 0, 1);
+INSERT INTO `wc_prompt_template` VALUES (16, '请你从以下多个AI回答中，提炼出"核心洞见Top 5"，并用一句金句总结每一点。要求：不重复、可引用、有启发性。', '七福-洞见蒸馏高手', 3, 22, 0, 1);
+INSERT INTO `wc_prompt_template` VALUES (17, '请你将以下AI回答当作"原材料"，像炼丹术士一样重新熔炼：提取其中的思想元素（逻辑、比喻、案例、结论），重组为一个更高层次、更具洞见的新版本。要求新文本具备"合成智慧"的特征，而非简单融合。', '八福-AI炼丹师', 3, 22, 0, 1);
+INSERT INTO `wc_prompt_template` VALUES (18, '你的任务是作为一名「一致性分析师」，评估以下多个AI回答在核心观点上的一致性。请仔细阅读所有回答，并完成以下任务：\n1、观点聚类：将所有回答中提到的核心观点进行归类。将语义相同或高度相似的观点归为一类。\n2、频率统计：统计每个观点类别被提及的次数。\n3、一致性评估：基于观点的频率分布，评估所有回答的整体一致性。如果大部分观点都集中在少数几个类别中，则认为一致性高；如果观点分散，则认为一致性低。\n4、最终输出你的分析结果。', '九福-一致性分析师', 3, 22, 0, 1);
 
 -- ----------------------------
 -- Table structure for wc_research_report

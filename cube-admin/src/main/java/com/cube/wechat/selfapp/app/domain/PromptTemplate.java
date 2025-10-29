@@ -27,6 +27,9 @@ public class PromptTemplate {
 
     private Long isdel;
 
+    /** 是否为公共模板(0:个人 1:公共) */
+    private Integer isCommon;
+
     public void setId(Long id)
     {
         this.id = id;
@@ -82,6 +85,14 @@ public class PromptTemplate {
         return isdel;
     }
 
+    public Integer getIsCommon() {
+        return isCommon;
+    }
+
+    public void setIsCommon(Integer isCommon) {
+        this.isCommon = isCommon;
+    }
+
     @Override
     public String toString() {
         return new ToStringBuilder(this, ToStringStyle.MULTI_LINE_STYLE)
@@ -91,6 +102,7 @@ public class PromptTemplate {
                 .append("type", getType())
                 .append("userId", getUserId())
                 .append("isdel", getIsdel())
+                .append("isCommon", getIsCommon())
                 .toString();
     }
 }
