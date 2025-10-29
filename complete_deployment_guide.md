@@ -87,6 +87,21 @@ mvn clean install
 
 ### 3.2 配置cube-admin
 
+#### 自定义MCP服务配置（application.yml）
+
+```yaml
+  ai:
+    mcp:
+      server:
+        enabled: true
+        name: cube-facade-mcp
+        version: 1.0.0
+        sse-endpoint: /facade/sse
+        sse-message-endpoint: /facade/mcp
+        capabilities:
+          tool: true
+```
+
 #### 修改数据库配置（application-druid.yml）
 编辑 `cube-admin/src/main/resources/application-druid.yml`：
 ```yaml
@@ -238,22 +253,24 @@ java -jar target/U3W.jar
 - **其他选择**：ngrok、frp、natapp等
 
 ### 8.2 配置穿透规则
-- **本地端口**：8083
-- **目标路径**：`/cubeServer/sse`
+- **本地端口**：8081
+- **目标路径**：`/facade/sse`
 - **协议**：TCP / HTTP
 - - **本地端口**：8081
 - **目标路径**：`/mini/getUserByMessage`
 - **协议**：TCP / HTTP
 - **示例配置**：
+  
   ```
-  本地地址：127.0.0.1:8083
-  公网访问：http://您的域名或IP:端口/cubeServer/sse
+  本地地址：127.0.0.1:8081
+  公网访问：http://您的域名或IP:端口/facade/sse
   本地地址：127.0.0.1:8081
   公网访问：http://您的域名或IP:端口/mini/getUserByMessage
   ```
 
 ### 8.3 验证穿透效果
-通过浏览器访问穿透后的公网地址：`http://映射IP:映射端口/cubeServer/sse`，确保能正常访问MCP服务。
+通过浏览器访问穿透后的公网地址：`http://映射IP:映射端口/facade/sse`，确保能正常访问MCP服务。
+![MCP服务访问成功](docs-img/mcp_service_visit_success_example.png)	
 
 ## 第九阶段：元器平台集成（对话式智能体）
 
@@ -274,6 +291,7 @@ java -jar target/U3W.jar
 1. 工作流配置文件：[20250906-015A-001.zip](20250906-015A-001.zip)
 2. 在元器平台中进入**对话式智能体**的工作流管理页面
 3. *新建* 选择批量导入，上传配置文件
+![工作流创建操作示例](docs-img/workflow_create_operation_example-2.png)
 4. 导入成功后，编辑工作流
 
 ### 9.4 修改工作流配置

@@ -91,6 +91,8 @@ public class McpLogAspect {
                     userSimpleInfo.setCropId(corpId);
                     userSimpleInfo.setUserId(userId);
                     ThreadUserInfo.setUserInfo(userSimpleInfo);
+                    // 用户日志信息类 userLogInfo设置userId
+                    userLogInfo.setUserId(userId);
                 } else {
                     log.warn("MCP方法{}的第一个参数不是UserInfoRequest类型，实际类型：{}", methodName, arg.getClass().getName());
                     userLogInfo.setUserId("参数类型异常");
