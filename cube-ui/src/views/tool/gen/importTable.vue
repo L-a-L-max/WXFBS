@@ -7,7 +7,7 @@
           v-model="queryParams.tableName"
           placeholder="请输入表名称"
           clearable
-          @keyup.enter.native="handleQuery"
+          @keyup.enter="handleQuery"
         />
       </el-form-item>
       <el-form-item label="表描述" prop="tableComment">
@@ -15,7 +15,7 @@
           v-model="queryParams.tableComment"
           placeholder="请输入表描述"
           clearable
-          @keyup.enter.native="handleQuery"
+          @keyup.enter="handleQuery"
         />
       </el-form-item>
       <el-form-item>

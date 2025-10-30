@@ -62,4 +62,19 @@ public interface LogInfoMapper
 
     public int cleanLogInfo();
 
+    /**
+     * 根据条件批量删除日志
+     * 
+     * @param logInfo 日志筛选条件
+     * @return 结果
+     */
+    public int deleteLogInfoByCondition(LogInfo logInfo);
+
+    /**
+     * 统计日志总数（不受筛选影响）
+     * 
+     * @return 日志总数
+     */
+    public long countTotalLogs();
+
 }

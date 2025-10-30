@@ -6,7 +6,7 @@
           v-model="queryParams.userId"
           placeholder="请输入用户 ID"
           clearable
-          @keyup.enter.native="handleQuery"
+          @keyup.enter="handleQuery"
         />
       </el-form-item>
       <el-form-item label="方法名称" prop="methodName">
@@ -14,7 +14,7 @@
           v-model="queryParams.methodName"
           placeholder="请输入方法名称"
           clearable
-          @keyup.enter.native="handleQuery"
+          @keyup.enter="handleQuery"
         />
       </el-form-item>
       <el-form-item label="执行时间">
@@ -39,7 +39,7 @@
           v-model="queryParams.executionTimeMillis"
           placeholder="请输入执行时长"
           clearable
-          @keyup.enter.native="handleQuery"
+          @keyup.enter="handleQuery"
         />
       </el-form-item>
       <el-form-item label="是否成功" prop="isSuccess">
@@ -86,7 +86,7 @@
           v-hasPermi="['monitor:userLog:export']"
         >导出</el-button>
       </el-col>
-      <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
+      <right-toolbar v-model:showSearch="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
 
     <el-table v-loading="loading" :data="userLogList" @selection-change="handleSelectionChange">

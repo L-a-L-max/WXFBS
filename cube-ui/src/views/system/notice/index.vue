@@ -6,7 +6,7 @@
           v-model="queryParams.noticeTitle"
           placeholder="请输入公告标题"
           clearable
-          @keyup.enter.native="handleQuery"
+          @keyup.enter="handleQuery"
         />
       </el-form-item>
       <el-form-item label="操作人员" prop="createBy">
@@ -14,7 +14,7 @@
           v-model="queryParams.createBy"
           placeholder="请输入操作人员"
           clearable
-          @keyup.enter.native="handleQuery"
+          @keyup.enter="handleQuery"
         />
       </el-form-item>
       <el-form-item label="类型" prop="noticeType">
@@ -66,7 +66,7 @@
           v-hasPermi="['system:notice:remove']"
         >删除</el-button>
       </el-col>
-      <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
+      <right-toolbar v-model:showSearch="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
 
     <el-table v-loading="loading" :data="noticeList" @selection-change="handleSelectionChange">

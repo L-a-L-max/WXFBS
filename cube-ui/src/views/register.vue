@@ -13,7 +13,7 @@
           type="password"
           auto-complete="off"
           placeholder="密码"
-          @keyup.enter.native="handleRegister"
+          @keyup.enter="handleRegister"
         >
           <svg-icon slot="prefix" icon-class="password" class="el-input__icon input-icon" />
         </el-input>
@@ -24,7 +24,7 @@
           type="password"
           auto-complete="off"
           placeholder="确认密码"
-          @keyup.enter.native="handleRegister"
+          @keyup.enter="handleRegister"
         >
           <svg-icon slot="prefix" icon-class="password" class="el-input__icon input-icon" />
         </el-input>
@@ -35,7 +35,7 @@
           auto-complete="off"
           placeholder="验证码"
           style="width: 63%"
-          @keyup.enter.native="handleRegister"
+          @keyup.enter="handleRegister"
         >
           <svg-icon slot="prefix" icon-class="validCode" class="el-input__icon input-icon" />
         </el-input>

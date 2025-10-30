@@ -32,3 +32,11 @@ export function cleanLogininfor() {
     method: 'delete'
   })
 }
+
+// 统计登录日志总数
+export function countTotalLogininfor() {
+  return request({
+    url: '/monitor/logininfor/countTotal',
+    method: 'get'
+  })
+}

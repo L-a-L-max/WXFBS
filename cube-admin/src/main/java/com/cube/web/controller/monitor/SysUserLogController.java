@@ -95,4 +95,23 @@ public class SysUserLogController extends BaseController
     public AjaxResult clean() {
         return toAjax(logInfoService.cleanLogInfo());
     }
+
+    /**
+     * 根据条件批量删除日志
+     */
+    @Log(title = "日志信息（记录方法执行日志）", businessType = BusinessType.DELETE)
+    @DeleteMapping("/deleteByCondition")
+    public AjaxResult deleteByCondition(@RequestBody LogInfo logInfo)
+    {
+        return toAjax(logInfoService.deleteLogInfoByCondition(logInfo));
+    }
+
+    /**
+     * 统计日志总数
+     */
+    @GetMapping("/countTotal")
+    public AjaxResult countTotal()
+    {
+        return success(logInfoService.countTotalLogs());
+    }
 }

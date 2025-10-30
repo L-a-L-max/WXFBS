@@ -14,7 +14,7 @@
           :disable-transitions="true"
           :key="item.value"
           :index="index"
-          :type="item.raw.listClass == 'primary' ? '' : item.raw.listClass"
+          :type="getTagType(item.raw.listClass)"
           :class="item.raw.cssClass"
         >
           {{ item.label + ' ' }}
@@ -22,7 +22,7 @@
       </template>
     </template>
     <template v-if="unmatch && showValue">
-      {{ unmatchArray | handleArray }}
+      {{ handleArray(unmatchArray) }}
     </template>
   </div>
 </template>
@@ -72,13 +72,23 @@ export default {
     },
 
   },
-  filters: {
+  methods: {
+    getTagType(listClass) {
+      // Element Plus ElTag 的 type 只接受: 'success' | 'info' | 'warning' | 'danger' | ''
+      // 如果 listClass 为 'primary'、'default' 或空字符串，返回空字符串（默认样式）
+      // 否则返回原值（success/info/warning/danger）
+      const validTypes = ['success', 'info', 'warning', 'danger'];
+      if (!listClass || listClass === 'primary' || listClass === 'default') {
+        return '';
+      }
+      return validTypes.includes(listClass) ? listClass : '';
+    },
     handleArray(array) {
-      if (array.length === 0) return '';
+      if (!array || array.length === 0) return '';
       return array.reduce((pre, cur) => {
         return pre + ' ' + cur;
       })
-    },
+    }
   }
 };
 </script>

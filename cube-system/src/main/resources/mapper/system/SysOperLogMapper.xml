@@ -84,4 +84,9 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         truncate table sys_oper_log
     </update>
 
+    <!-- 统计操作日志总数 -->
+    <select id="countTotalLogs" resultType="long">
+        select count(*) from sys_oper_log
+    </select>
+
 </mapper>

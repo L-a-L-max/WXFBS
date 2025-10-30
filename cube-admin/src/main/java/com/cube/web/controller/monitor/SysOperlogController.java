@@ -62,4 +62,13 @@ public class SysOperlogController extends BaseController
         operLogService.cleanOperLog();
         return success();
     }
+
+    /**
+     * 统计操作日志总数
+     */
+    @GetMapping("/countTotal")
+    public AjaxResult countTotal()
+    {
+        return success(operLogService.countTotalLogs());
+    }
 }

@@ -6,7 +6,7 @@
         <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" label-width="68px">
           <el-form-item prop="keyWord">
             <el-input v-model="queryParams.keyWord" placeholder="请输入问题关键字" clearable style="width: 240px;"
-              @keyup.enter.native="handleQuery" />
+              @keyup.enter="handleQuery" />
           </el-form-item>
           <el-form-item>
             <el-button type="primary" :icon="Search" size="small" @click="handleQuery">搜索</el-button>

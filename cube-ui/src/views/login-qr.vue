@@ -94,7 +94,7 @@ export default {
 
           this.$store.dispatch("OfficeLogin", this.loginForm).then((res)  => {
             if(getToken()){
-              this.beforeDestroy()
+              this.beforeUnmount()
             }
             this.$router.push({ path: this.redirect || "/" }).catch(()=>{});
 
@@ -113,7 +113,7 @@ export default {
         this.task = null;
       }
     },
-    beforeDestroy() {
+    beforeUnmount() {
       // 在组件销毁时清理定时器，避免内存泄漏
       this.stopCheckLogin();
     },

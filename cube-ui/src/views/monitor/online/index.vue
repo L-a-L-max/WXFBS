@@ -6,7 +6,7 @@
           v-model="queryParams.ipaddr"
           placeholder="请输入登录地址"
           clearable
-          @keyup.enter.native="handleQuery"
+          @keyup.enter="handleQuery"
         />
       </el-form-item>
       <el-form-item label="用户名称" prop="userName">
@@ -14,7 +14,7 @@
           v-model="queryParams.userName"
           placeholder="请输入用户名称"
           clearable
-          @keyup.enter.native="handleQuery"
+          @keyup.enter="handleQuery"
         />
       </el-form-item>
       <el-form-item>

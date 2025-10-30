@@ -7,7 +7,7 @@
           placeholder="请输入参数名称"
           clearable
           style="width: 240px"
-          @keyup.enter.native="handleQuery"
+          @keyup.enter="handleQuery"
         />
       </el-form-item>
       <el-form-item label="参数键名" prop="configKey">
@@ -16,7 +16,7 @@
           placeholder="请输入参数键名"
           clearable
           style="width: 240px"
-          @keyup.enter.native="handleQuery"
+          @keyup.enter="handleQuery"
         />
       </el-form-item>
       <el-form-item label="系统内置" prop="configType">
@@ -99,7 +99,7 @@
           v-hasPermi="['system:config:remove']"
         >刷新缓存</el-button>
       </el-col>
-      <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
+      <right-toolbar v-model:showSearch="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
 
     <el-table v-loading="loading" :data="configList" @selection-change="handleSelectionChange">

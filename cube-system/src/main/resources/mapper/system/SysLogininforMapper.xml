@@ -54,4 +54,9 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         truncate table sys_logininfor
     </update>
 
+    <!-- 统计登录日志总数 -->
+    <select id="countTotalLogs" resultType="long">
+        select count(*) from sys_logininfor
+    </select>
+
 </mapper>

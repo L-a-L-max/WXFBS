@@ -90,7 +90,7 @@ export default {
     // 监听企业ID自动更新事件
     window.addEventListener('corpIdUpdated', this.handleCorpIdUpdated);
   },
-  beforeDestroy() {
+  beforeUnmount() {
     // 移除事件监听
     window.removeEventListener('corpIdUpdated', this.handleCorpIdUpdated);
   },

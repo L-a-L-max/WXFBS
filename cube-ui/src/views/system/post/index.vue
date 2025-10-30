@@ -6,7 +6,7 @@
           v-model="queryParams.postCode"
           placeholder="请输入岗位编码"
           clearable
-          @keyup.enter.native="handleQuery"
+          @keyup.enter="handleQuery"
         />
       </el-form-item>
       <el-form-item label="岗位名称" prop="postName">
@@ -14,7 +14,7 @@
           v-model="queryParams.postName"
           placeholder="请输入岗位名称"
           clearable
-          @keyup.enter.native="handleQuery"
+          @keyup.enter="handleQuery"
         />
       </el-form-item>
       <el-form-item label="状态" prop="status">
@@ -76,7 +76,7 @@
           v-hasPermi="['system:post:export']"
         >导出</el-button>
       </el-col>
-      <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
+      <right-toolbar v-model:showSearch="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
 
     <el-table v-loading="loading" :data="postList" @selection-change="handleSelectionChange">

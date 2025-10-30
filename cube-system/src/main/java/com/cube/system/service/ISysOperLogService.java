@@ -45,4 +45,11 @@ public interface ISysOperLogService
      * 清空操作日志
      */
     public void cleanOperLog();
+
+    /**
+     * 统计操作日志总数
+     * 
+     * @return 日志总数
+     */
+    public long countTotalLogs();
 }

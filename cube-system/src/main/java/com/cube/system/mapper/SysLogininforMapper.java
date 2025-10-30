@@ -39,4 +39,11 @@ public interface SysLogininforMapper
      * @return 结果
      */
     public int cleanLogininfor();
+
+    /**
+     * 统计登录日志总数
+     * 
+     * @return 日志总数
+     */
+    public long countTotalLogs();
 }

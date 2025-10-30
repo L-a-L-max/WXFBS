@@ -101,16 +101,38 @@ service.interceptors.response.use(res => {
     }else if (code === 218) {
       return Promise.reject(new Error(msg))
     } else if (code === 500) {
-      ElMessage.error(msg)
+      // 服务器错误，使用友好提示
+      const friendlyMsg = msg.includes('服务暂时繁忙') || msg.includes('服务暂时不可用') 
+        ? msg 
+        : '服务器处理请求时出错，请稍后重试';
+      ElNotification({
+        title: '服务器错误',
+        message: friendlyMsg,
+        type: 'error',
+        duration: 5000,
+        position: 'top-right'
+      })
       return Promise.reject(new Error(msg))
     } else if (code === 601) {
-      ElMessage({ message: msg, type: 'warning' })
+      ElNotification({
+        title: '警告',
+        message: msg,
+        type: 'warning',
+        duration: 5000,
+        position: 'top-right'
+      })
       return Promise.reject('error')
     } else if (code === 1001) {
       // 企业微信登录需要显示客服二维码的特殊错误，不显示消息，直接传递到前端处理
       return Promise.reject({ response: { data: res.data } })
     } else if (code !== 200) {
-      ElNotification.error({ message: msg })
+      ElNotification({
+        title: '请求失败',
+        message: msg,
+        type: 'error',
+        duration: 5000,
+        position: 'top-right'
+      })
       return Promise.reject('error')
     } else {
       return res.data
@@ -119,14 +141,35 @@ service.interceptors.response.use(res => {
   error => {
     console.log('err' + error)
     let { message } = error;
+    
+    // 友好的错误提示处理
     if (message == "Network Error") {
-      message = "后端接口连接异常";
+      message = "网络连接异常，请检查网络";
     } else if (message.includes("timeout")) {
-      message = "系统接口请求超时";
+      message = "请求超时，请稍后重试";
     } else if (message.includes("Request failed with status code")) {
-      message = "系统接口" + message.substr(message.length - 3) + "异常";
+      const statusCode = message.substr(message.length - 3);
+      if (statusCode === "401") {
+        // 401 错误已经在响应拦截器中处理，这里不再提示
+        return Promise.reject(error);
+      } else if (statusCode === "500") {
+        message = "服务器内部错误";
+      } else if (statusCode === "503") {
+        message = "服务暂时不可用";
+      } else {
+        message = "系统接口" + statusCode + "异常";
+      }
     }
-    ElMessage({ message: message, type: 'error', duration: 5 * 1000 })
+    
+    // 使用 ElNotification 而不是 ElMessage，体验更好
+    ElNotification({
+      title: '请求失败',
+      message: message,
+      type: 'error',
+      duration: 5000,
+      position: 'top-right'
+    })
+    
     return Promise.reject(error)
   }
 )

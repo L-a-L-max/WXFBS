@@ -1416,7 +1416,7 @@ export default {
       }
     },
   },
-  beforeDestroy() {
+  beforeUnmount() {
     // 移除事件监听
     window.removeEventListener('corpIdUpdated', this.handleCorpIdUpdated);
     this.closeWebSocket(); // 销毁时关闭连接

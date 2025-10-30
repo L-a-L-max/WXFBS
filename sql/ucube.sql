@@ -107,6 +107,11 @@ INSERT INTO `sys_role_menu` VALUES (1, 1057);
 INSERT INTO `sys_role_menu` VALUES (1, 1058);
 INSERT INTO `sys_role_menu` VALUES (1, 1059);
 INSERT INTO `sys_role_menu` VALUES (1, 1060);
+INSERT INTO `sys_role_menu` VALUES (1, 2070);
+INSERT INTO `sys_role_menu` VALUES (1, 2071);
+INSERT INTO `sys_role_menu` VALUES (1, 2072);
+INSERT INTO `sys_role_menu` VALUES (1, 2073);
+INSERT INTO `sys_role_menu` VALUES (1, 2074);
 INSERT INTO `sys_role_menu` VALUES (2, 1);
 INSERT INTO `sys_role_menu` VALUES (2, 2);
 INSERT INTO `sys_role_menu` VALUES (2, 3);
@@ -216,6 +221,11 @@ INSERT INTO `sys_role_menu` VALUES (2, 2038);
 INSERT INTO `sys_role_menu` VALUES (2, 2046);
 INSERT INTO `sys_role_menu` VALUES (2, 2047);
 INSERT INTO `sys_role_menu` VALUES (2, 2048);
+INSERT INTO `sys_role_menu` VALUES (2, 2070);
+INSERT INTO `sys_role_menu` VALUES (2, 2071);
+INSERT INTO `sys_role_menu` VALUES (2, 2072);
+INSERT INTO `sys_role_menu` VALUES (2, 2073);
+INSERT INTO `sys_role_menu` VALUES (2, 2074);
 INSERT INTO `sys_role_menu` VALUES (101, 2000);
 INSERT INTO `sys_role_menu` VALUES (101, 2017);
 INSERT INTO `sys_role_menu` VALUES (101, 2021);
@@ -294,7 +304,7 @@ INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`
 INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (105, '字典管理', 1, 6, 'dict', 'system/dict/index', '', '', 1, 0, 'C', '0', '0', 'system:dict:list', 'dict', 'admin', '2024-08-08 14:05:51', '', NULL, '字典管理菜单');
 INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (106, '参数设置', 1, 7, 'config', 'system/config/index', '', '', 1, 0, 'C', '0', '0', 'system:config:list', 'edit', 'admin', '2024-08-08 14:05:51', '', NULL, '参数设置菜单');
 INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (107, '通知公告', 1, 8, 'notice', 'system/notice/index', '', '', 1, 0, 'C', '0', '0', 'system:notice:list', 'message', 'admin', '2024-08-08 14:05:51', '', NULL, '通知公告菜单');
-INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (108, '日志管理', 1, 9, 'log', '', '', '', 1, 0, 'M', '0', '0', '', 'log', 'admin', '2024-08-08 14:05:51', '', NULL, '日志管理菜单');
+INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (108, 'old日志管理', 1, 9, 'log', '', '', '', 1, 0, 'M', '1', '0', '', 'log', 'admin', '2024-08-08 14:05:51', '', NULL, '日志管理菜单');
 INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (109, '在线用户', 2, 1, 'online', 'monitor/online/index', '', '', 1, 0, 'C', '0', '0', 'monitor:online:list', 'online', 'admin', '2024-08-08 14:05:51', '', NULL, '在线用户菜单');
 INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (110, '定时任务', 2, 2, 'job', 'monitor/job/index', '', '', 1, 0, 'C', '0', '0', 'monitor:job:list', 'job', 'admin', '2024-08-08 14:05:51', '', NULL, '定时任务菜单');
 INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (111, '数据监控', 2, 3, 'druid', 'monitor/druid/index', '', '', 1, 0, 'C', '0', '1', 'monitor:druid:list', 'druid', 'admin', '2024-08-08 14:05:51', '', NULL, '数据监控菜单');
@@ -397,6 +407,11 @@ INSERT INTO `sys_menu`(`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`,
 INSERT INTO `sys_menu`(`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (2036, '评分模板配置修改', 2033, 3, '#', '', NULL, '', 1, 0, 'F', '0', '0', 'wechat:prompt:edit', '#', 'admin', sysdate(), '', NULL, '');
 INSERT INTO `sys_menu`(`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (2037, '评分模板配置删除', 2033, 4, '#', '', NULL, '', 1, 0, 'F', '0', '0', 'wechat:prompt:remove', '#', 'admin', sysdate(), '', NULL, '');
 INSERT INTO `sys_menu`(`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (2038, '评分模板配置导出', 2033, 5, '#', '', NULL, '', 1, 0, 'F', '0', '0', 'wechat:prompt:export', '#', 'admin', sysdate(), '', NULL, '');
+INSERT INTO `sys_menu`(`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (2070, '日志管理', 1, 10, 'unifiedLog', 'monitor/unifiedLog/index', NULL, '', 1, 0, 'C', '0', '0', 'monitor:unifiedLog:list', 'documentation', 'admin', sysdate(), '', NULL, '日志管理菜单');
+INSERT INTO `sys_menu`(`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (2071, '日志查询', 2070, 1, '#', '', NULL, '', 1, 0, 'F', '0', '0', 'monitor:unifiedLog:query', '#', 'admin', sysdate(), '', NULL, '');
+INSERT INTO `sys_menu`(`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (2072, '日志删除', 2070, 2, '#', '', NULL, '', 1, 0, 'F', '0', '0', 'monitor:unifiedLog:remove', '#', 'admin', sysdate(), '', NULL, '');
+INSERT INTO `sys_menu`(`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (2073, '日志导出', 2070, 3, '#', '', NULL, '', 1, 0, 'F', '0', '0', 'monitor:unifiedLog:export', '#', 'admin', sysdate(), '', NULL, '');
+INSERT INTO `sys_menu`(`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (2074, '日志详细', 2070, 4, '#', '', NULL, '', 1, 0, 'F', '0', '0', 'monitor:unifiedLog:detail', '#', 'admin', sysdate(), '', NULL, '');
 COMMIT;
 INSERT INTO `sys_menu` VALUES (2046, '内容自动化（内测）', 2000, 0, 'chrome2', 'wechat/chrome2/index', NULL, '', 1, 0, 'C', '1', '0', 'wechat:chrome:list', 'redis-list', 'admin', '2025-10-21 13:36:21', 'admin', '2025-10-29 12:00:00', '');
 INSERT INTO `sys_menu` VALUES (2047, '思路模板', 2000, 3, 'idea', 'wechat/idea/index', NULL, '', 1, 0, 'C', '1', '0', '', 'clipboard', 'admin', '2025-10-24 15:59:41', 'admin', '2025-10-27 17:35:02', '');
@@ -835,7 +850,14 @@ CREATE TABLE `sys_oper_log` (
   PRIMARY KEY (`oper_id`),
   KEY `idx_sys_oper_log_bt` (`business_type`),
   KEY `idx_sys_oper_log_s` (`status`),
-  KEY `idx_sys_oper_log_ot` (`oper_time`)
+  KEY `idx_sys_oper_log_ot` (`oper_time`),
+  KEY `idx_oper_time` (`oper_time` DESC),
+  KEY `idx_business_type` (`business_type`),
+  KEY `idx_status` (`status`),
+  KEY `idx_oper_name` (`oper_name`),
+  KEY `idx_oper_ip` (`oper_ip`),
+  KEY `idx_status_time` (`status`, `oper_time` DESC),
+  KEY `idx_business_status` (`business_type`, `status`, `oper_time` DESC)
 ) ENGINE=InnoDB AUTO_INCREMENT=10012 DEFAULT CHARSET=utf8mb4 COMMENT='操作日志记录';
 
 -- ----------------------------
@@ -1539,7 +1561,14 @@ CREATE TABLE `sys_logininfor` (
   `login_time` datetime DEFAULT NULL COMMENT '访问时间',
   PRIMARY KEY (`info_id`),
   KEY `idx_sys_logininfor_s` (`status`),
-  KEY `idx_sys_logininfor_lt` (`login_time`)
+  KEY `idx_sys_logininfor_lt` (`login_time`),
+  KEY `idx_login_time` (`login_time` DESC),
+  KEY `idx_status` (`status`),
+  KEY `idx_user_name` (`user_name`),
+  KEY `idx_ipaddr` (`ipaddr`),
+  KEY `idx_login_location` (`login_location`),
+  KEY `idx_status_time` (`status`, `login_time` DESC),
+  KEY `idx_user_status` (`user_name`, `status`, `login_time` DESC)
 ) ENGINE=InnoDB AUTO_INCREMENT=991 DEFAULT CHARSET=utf8mb4 COMMENT='系统访问记录';
 
 -- ----------------------------
@@ -2375,7 +2404,13 @@ CREATE TABLE `wc_log_info` (
                                PRIMARY KEY (`id`),
                                KEY `idx_user_id` (`user_id`),
                                KEY `idx_execution_time` (`execution_time`),
-                               KEY `idx_method_name` (`method_name`)
+                               KEY `idx_method_name` (`method_name`),
+                               KEY `idx_execution_time_desc` (`execution_time` DESC),
+                               KEY `idx_is_success` (`is_success`),
+                               KEY `idx_execution_millis` (`execution_time_millis`),
+                               KEY `idx_success_time` (`is_success`, `execution_time` DESC),
+                               KEY `idx_user_success` (`user_id`, `is_success`, `execution_time` DESC),
+                               KEY `idx_method_success` (`method_name`, `is_success`, `execution_time` DESC)
 ) ENGINE=InnoDB AUTO_INCREMENT=263 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='日志信息表（记录方法执行日志）';
 
 BEGIN;

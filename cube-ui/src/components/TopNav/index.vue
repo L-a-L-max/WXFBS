@@ -110,7 +110,7 @@ export default {
   beforeMount() {
     window.addEventListener('resize', this.setVisibleNumber)
   },
-  beforeDestroy() {
+  beforeUnmount() {
     window.removeEventListener('resize', this.setVisibleNumber)
   },
   mounted() {

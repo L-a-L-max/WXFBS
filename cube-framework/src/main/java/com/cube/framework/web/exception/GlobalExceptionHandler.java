@@ -116,6 +116,20 @@ public class GlobalExceptionHandler
     public AjaxResult handleRuntimeException(RuntimeException e, HttpServletRequest request)
     {
         String requestURI = request.getRequestURI();
+        
+        // 判断是否为 Redis 超时异常
+        if (e.getMessage() != null && e.getMessage().contains("Redis command timed out")) {
+            log.warn("请求地址'{}',Redis连接超时", requestURI);
+            return AjaxResult.error(HttpStatus.ERROR, "服务暂时繁忙，请稍后重试");
+        }
+        
+        // 判断是否为 Redis 连接异常
+        if (e.getMessage() != null && (e.getMessage().contains("Unable to connect to Redis") 
+            || e.getMessage().contains("Connection refused"))) {
+            log.warn("请求地址'{}',Redis连接失败", requestURI);
+            return AjaxResult.error(HttpStatus.ERROR, "服务暂时不可用，请稍后重试");
+        }
+        
         log.error("请求地址'{}',发生未知异常.", requestURI, e);
         return AjaxResult.error(e.getMessage());
     }

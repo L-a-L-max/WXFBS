@@ -7,7 +7,7 @@
           placeholder="请输入用户名称"
           clearable
           style="width: 240px"
-          @keyup.enter.native="handleQuery"
+          @keyup.enter="handleQuery"
         />
       </el-form-item>
       <el-form-item label="手机号码" prop="phonenumber">
@@ -16,7 +16,7 @@
           placeholder="请输入手机号码"
           clearable
           style="width: 240px"
-          @keyup.enter.native="handleQuery"
+          @keyup.enter="handleQuery"
         />
       </el-form-item>
       <el-form-item>
@@ -56,7 +56,7 @@
           @click="handleClose"
         >关闭</el-button>
       </el-col>
-      <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
+      <right-toolbar v-model:showSearch="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
 
     <el-table v-loading="loading" :data="userList" @selection-change="handleSelectionChange">

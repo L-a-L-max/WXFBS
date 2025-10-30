@@ -7,7 +7,7 @@
           placeholder="请输入任务名称"
           clearable
           style="width: 240px"
-          @keyup.enter.native="handleQuery"
+          @keyup.enter="handleQuery"
         />
       </el-form-item>
       <el-form-item label="任务组名" prop="jobGroup">
@@ -98,7 +98,7 @@
           @click="handleClose"
         >关闭</el-button>
       </el-col>
-      <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
+      <right-toolbar v-model:showSearch="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
 
     <el-table v-loading="loading" :data="jobLogList" @selection-change="handleSelectionChange">

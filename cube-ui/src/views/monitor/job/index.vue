@@ -6,7 +6,7 @@
           v-model="queryParams.jobName"
           placeholder="请输入任务名称"
           clearable
-          @keyup.enter.native="handleQuery"
+          @keyup.enter="handleQuery"
         />
       </el-form-item>
       <el-form-item label="任务组名" prop="jobGroup">
@@ -88,7 +88,7 @@
           v-hasPermi="['monitor:job:query']"
         >日志</el-button>
       </el-col>
-      <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
+      <right-toolbar v-model:showSearch="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
 
     <el-table v-loading="loading" :data="jobList" @selection-change="handleSelectionChange">

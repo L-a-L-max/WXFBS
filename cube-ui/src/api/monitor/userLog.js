@@ -50,3 +50,20 @@ export function cleanUserLog() {
     method: 'delete'
   })
 }
+
+// 根据条件批量删除日志
+export function deleteUserLogByCondition(data) {
+  return request({
+    url: '/monitor/userLog/deleteByCondition',
+    method: 'delete',
+    data: data
+  })
+}
+
+// 统计日志总数
+export function countTotalUserLog() {
+  return request({
+    url: '/monitor/userLog/countTotal',
+    method: 'get'
+  })
+}

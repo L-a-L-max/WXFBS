@@ -62,4 +62,15 @@ public class SysLogininforServiceImpl implements ISysLogininforService
     {
         logininforMapper.cleanLogininfor();
     }
+
+    /**
+     * 统计登录日志总数
+     *
+     * @return 日志总数
+     */
+    @Override
+    public long countTotalLogs()
+    {
+        return logininforMapper.countTotalLogs();
+    }
 }

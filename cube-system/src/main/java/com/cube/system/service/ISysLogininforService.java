@@ -37,4 +37,11 @@ public interface ISysLogininforService
      * 清空系统登录日志
      */
     public void cleanLogininfor();
+
+    /**
+     * 统计登录日志总数
+     * 
+     * @return 日志总数
+     */
+    public long countTotalLogs();
 }

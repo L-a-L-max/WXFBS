@@ -18,7 +18,7 @@
           type="password"
           auto-complete="off"
           placeholder="密码"
-          @keyup.enter.native="handleLogin"
+          @keyup.enter="handleLogin"
         >
           <svg-icon slot="prefix" icon-class="password" class="el-input__icon input-icon" />
         </el-input>
@@ -29,7 +29,7 @@
           auto-complete="off"
           placeholder="验证码"
           style="width: 63%"
-          @keyup.enter.native="handleLogin"
+          @keyup.enter="handleLogin"
         >
           <svg-icon slot="prefix" icon-class="validCode" class="el-input__icon input-icon" />
         </el-input>

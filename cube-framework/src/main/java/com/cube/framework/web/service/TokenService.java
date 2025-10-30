@@ -80,7 +80,12 @@ public class TokenService
             }
             catch (Exception e)
             {
-                log.error("获取用户信息异常'{}'", e.getMessage());
+                // 判断是否为 Redis 超时异常
+                if (e.getMessage() != null && e.getMessage().contains("timed out")) {
+                    log.warn("Redis连接超时，用户会话可能暂时不可用: {}", e.getMessage());
+                } else {
+                    log.error("获取用户信息异常'{}'", e.getMessage());
+                }
             }
         }
         return null;

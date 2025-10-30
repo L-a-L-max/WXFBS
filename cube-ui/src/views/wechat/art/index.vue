@@ -6,7 +6,7 @@
           v-model="queryParams.name"
           placeholder="请输入模板名称"
           clearable
-          @keyup.enter.native="handleQuery"
+          @keyup.enter="handleQuery"
         />
       </el-form-item>
       <el-form-item>
@@ -58,7 +58,7 @@
           v-hasPermi="['wechat:prompt:export']"
         >导出</el-button>
       </el-col>
-      <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
+      <right-toolbar v-model:showSearch="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
 
     <el-table v-loading="loading" :data="promptList" @selection-change="handleSelectionChange">

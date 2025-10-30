@@ -755,7 +755,7 @@ import { ChatDotSquare, Document, Link, Loading, Plus, Promotion } from '@elemen
       // 监听企业ID更新事件
       window.addEventListener('corpIdUpdated', this.handleCorpIdUpdated);
     },
-    beforeDestroy() {
+    beforeUnmount() {
       // 移除事件监听
       window.removeEventListener('corpIdUpdated', this.handleCorpIdUpdated);
     },

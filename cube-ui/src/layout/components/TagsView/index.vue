@@ -14,7 +14,9 @@
         @contextmenu.prevent.native="openMenu(tag,$event)"
       >
         {{ tag.title }}
-        <span v-if="!isAffix(tag)" class="el-icon-close" @click.prevent.stop="closeSelectedTag(tag)" />
+        <el-icon v-if="!isAffix(tag)" class="close-icon" @click.prevent.stop="closeSelectedTag(tag)">
+          <Close />
+        </el-icon>
       </router-link>
     </scroll-pane>
     <ul v-show="visible" :style="{left:left+'px',top:top+'px'}" class="contextmenu">
@@ -35,7 +37,23 @@ import ScrollPane from './ScrollPane'
 import path from 'path'
 
 export default {
-  components: { ScrollPane },
+  components: { 
+    ScrollPane,
+    Back,
+    CircleClose,
+    Close,
+    RefreshRight,
+    Right
+  },
+  setup() {
+    return {
+      Back,
+      CircleClose,
+      Close,
+      RefreshRight,
+      Right
+    };
+  },
   data() {
     return {
       visible: false,
@@ -308,8 +326,14 @@ export default {
       margin: 0;
       padding: 7px 16px;
       cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
       &:hover {
         background: #eee;
+      }
+      .el-icon {
+        font-size: 14px;
       }
     }
   }
@@ -317,22 +341,19 @@ export default {
 </style>
 
 <style lang="scss">
-//reset element css of el-icon-close
+//reset element css of close-icon
 .tags-view-wrapper {
   .tags-view-item {
-    .el-icon-close {
+    .close-icon {
       width: 16px;
       height: 16px;
-      vertical-align: 2px;
+      vertical-align: -2px;
+      margin-left: 4px;
       border-radius: 50%;
       text-align: center;
       transition: all .3s cubic-bezier(.645, .045, .355, 1);
-      transform-origin: 100% 50%;
-      &:before {
-        transform: scale(.6);
-        display: inline-block;
-        vertical-align: -3px;
-      }
+      cursor: pointer;
+      font-size: 12px;
       &:hover {
         background-color: #b4bccc;
         color: #fff;

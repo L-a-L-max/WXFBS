@@ -85,7 +85,17 @@ import { DocumentAdd, Refresh } from '@element-plus/icons-vue';
 import ThemePicker from '@/components/ThemePicker'
 
 export default {
-  components: { ThemePicker },
+  components: { 
+    ThemePicker,
+    DocumentAdd,
+    Refresh
+  },
+  setup() {
+    return {
+      DocumentAdd,
+      Refresh
+    };
+  },
   data() {
     return {
       theme: this.$store.state.settings.theme,

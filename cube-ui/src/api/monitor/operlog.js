@@ -24,3 +24,11 @@ export function cleanOperlog() {
     method: 'delete'
   })
 }
+
+// 统计操作日志总数
+export function countTotalOperlog() {
+  return request({
+    url: '/monitor/operlog/countTotal',
+    method: 'get'
+  })
+}

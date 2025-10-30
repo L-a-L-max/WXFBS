@@ -25,9 +25,20 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <where>  
             <if test="userId != null  and userId != ''"> and user_id = #{userId}</if>
             <if test="methodName != null  and methodName != ''"> and method_name like concat('%', #{methodName}, '%')</if>
+            <if test="description != null  and description != ''"> and description like concat('%', #{description}, '%')</if>
+            <if test="executionResult != null  and executionResult != ''"> and execution_result like concat('%', #{executionResult}, '%')</if>
+            <if test="methodParams != null  and methodParams != ''"> and method_params like concat('%', #{methodParams}, '%')</if>
             <if test="params.beginExecutionTime != null and params.beginExecutionTime != '' and params.endExecutionTime != null and params.endExecutionTime != ''"> and execution_time between #{params.beginExecutionTime} and #{params.endExecutionTime}</if>
-            <if test="params.beginExecutionTimeMillis != null and params.beginExecutionTimeMillis != '' and params.endExecutionTimeMillis != null and params.endExecutionTimeMillis != ''"> and execution_time_millis between #{params.beginExecutionTimeMillis} and #{params.endExecutionTimeMillis}</if>
+            <if test="params.executionTimeMillisMin != null"> and execution_time_millis &gt;= #{params.executionTimeMillisMin}</if>
+            <if test="params.executionTimeMillisMax != null"> and execution_time_millis &lt;= #{params.executionTimeMillisMax}</if>
             <if test="isSuccess != null "> and is_success = #{isSuccess}</if>
+            <!-- 警告信息筛选：通过description或executionResult包含"警告"、"WARN"等关键词 -->
+            <if test="params != null and params.isWarning != null">
+                <if test="params.isWarning == 'true' or params.isWarning == true"> 
+                    and (description like '%警告%' or description like '%WARN%' or description like '%warn%'
+                         or execution_result like '%警告%' or execution_result like '%WARN%' or execution_result like '%warn%')
+                </if>
+            </if>
         </where>
         order by execution_time desc
     </select>
@@ -89,4 +100,31 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     <delete id="cleanLogInfo">
         delete from wc_log_info
     </delete>
+    
+    <!-- 批量删除：根据条件删除 -->
+    <delete id="deleteLogInfoByCondition" parameterType="LogInfo">
+        delete from wc_log_info
+        <where>
+            <if test="userId != null  and userId != ''"> and user_id = #{userId}</if>
+            <if test="methodName != null  and methodName != ''"> and method_name like concat('%', #{methodName}, '%')</if>
+            <if test="description != null  and description != ''"> and description like concat('%', #{description}, '%')</if>
+            <if test="executionResult != null  and executionResult != ''"> and execution_result like concat('%', #{executionResult}, '%')</if>
+            <if test="methodParams != null  and methodParams != ''"> and method_params like concat('%', #{methodParams}, '%')</if>
+            <if test="params.beginExecutionTime != null and params.beginExecutionTime != '' and params.endExecutionTime != null and params.endExecutionTime != ''"> and execution_time between #{params.beginExecutionTime} and #{params.endExecutionTime}</if>
+            <if test="params.executionTimeMillisMin != null"> and execution_time_millis &gt;= #{params.executionTimeMillisMin}</if>
+            <if test="params.executionTimeMillisMax != null"> and execution_time_millis &lt;= #{params.executionTimeMillisMax}</if>
+            <if test="isSuccess != null "> and is_success = #{isSuccess}</if>
+            <if test="params != null and params.isWarning != null">
+                <if test="params.isWarning == 'true' or params.isWarning == true"> 
+                    and (description like '%警告%' or description like '%WARN%' or description like '%warn%'
+                         or execution_result like '%警告%' or execution_result like '%WARN%' or execution_result like '%warn%')
+                </if>
+            </if>
+        </where>
+    </delete>
+    
+    <!-- 统计日志总数（不受筛选影响） -->
+    <select id="countTotalLogs" resultType="long">
+        select count(*) from wc_log_info
+    </select>
 </mapper>

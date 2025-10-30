@@ -554,7 +554,14 @@ CREATE TABLE `sys_logininfor`  (
   `login_time` datetime(0) NULL DEFAULT NULL COMMENT '访问时间',
   PRIMARY KEY (`info_id`) USING BTREE,
   INDEX `idx_sys_logininfor_s`(`status`) USING BTREE,
-  INDEX `idx_sys_logininfor_lt`(`login_time`) USING BTREE
+  INDEX `idx_sys_logininfor_lt`(`login_time`) USING BTREE,
+  INDEX `idx_login_time`(`login_time` DESC) USING BTREE,
+  INDEX `idx_status`(`status`) USING BTREE,
+  INDEX `idx_user_name`(`user_name`) USING BTREE,
+  INDEX `idx_ipaddr`(`ipaddr`) USING BTREE,
+  INDEX `idx_login_location`(`login_location`) USING BTREE,
+  INDEX `idx_status_time`(`status`, `login_time` DESC) USING BTREE,
+  INDEX `idx_user_status`(`user_name`, `status`, `login_time` DESC) USING BTREE
 ) ENGINE = InnoDB AUTO_INCREMENT = 993 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci COMMENT = '系统访问记录' ROW_FORMAT = Dynamic;
 
 -- ----------------------------
@@ -603,7 +610,7 @@ INSERT INTO `sys_menu` VALUES (104, '岗位管理', 1, 5, 'post', 'system/post/i
 INSERT INTO `sys_menu` VALUES (105, '字典管理', 1, 6, 'dict', 'system/dict/index', '', '', 1, 0, 'C', '0', '0', 'system:dict:list', 'dict', 'admin', '2024-08-08 14:05:51', '', NULL, '字典管理菜单');
 INSERT INTO `sys_menu` VALUES (106, '参数设置', 1, 7, 'config', 'system/config/index', '', '', 1, 0, 'C', '0', '0', 'system:config:list', 'edit', 'admin', '2024-08-08 14:05:51', '', NULL, '参数设置菜单');
 INSERT INTO `sys_menu` VALUES (107, '通知公告', 1, 8, 'notice', 'system/notice/index', '', '', 1, 0, 'C', '0', '0', 'system:notice:list', 'message', 'admin', '2024-08-08 14:05:51', '', NULL, '通知公告菜单');
-INSERT INTO `sys_menu` VALUES (108, '日志管理', 1, 9, 'log', '', '', '', 1, 0, 'M', '0', '0', '', 'log', 'admin', '2024-08-08 14:05:51', '', NULL, '日志管理菜单');
+INSERT INTO `sys_menu` VALUES (108, 'old日志管理', 1, 9, 'log', '', '', '', 1, 0, 'M', '1', '0', '', 'log', 'admin', '2024-08-08 14:05:51', '', NULL, '日志管理菜单');
 INSERT INTO `sys_menu` VALUES (109, '在线用户', 2, 1, 'online', 'monitor/online/index', '', '', 1, 0, 'C', '0', '0', 'monitor:online:list', 'online', 'admin', '2024-08-08 14:05:51', '', NULL, '在线用户菜单');
 INSERT INTO `sys_menu` VALUES (110, '定时任务', 2, 2, 'job', 'monitor/job/index', '', '', 1, 0, 'C', '0', '0', 'monitor:job:list', 'job', 'admin', '2024-08-08 14:05:51', '', NULL, '定时任务菜单');
 INSERT INTO `sys_menu` VALUES (111, '数据监控', 2, 3, 'druid', 'monitor/druid/index', '', '', 1, 0, 'C', '0', '1', 'monitor:druid:list', 'druid', 'admin', '2024-08-08 14:05:51', '', NULL, '数据监控菜单');
@@ -703,6 +710,11 @@ INSERT INTO `sys_menu` VALUES (2047, '思路模板', 2050, 4, 'idea', 'wechat/id
 INSERT INTO `sys_menu` VALUES (2048, '文章模板', 2050, 3, 'art', 'wechat/art/index', NULL, '', 1, 0, 'C', '1', '0', '', 'documentation', 'admin', '2025-10-24 16:00:31', 'admin', '2025-10-27 17:34:54', '');
 INSERT INTO `sys_menu` VALUES (2050, '提示词模板', 0, 1, 'prompt-template', NULL, NULL, '', 1, 0, 'M', '0', '0', '', 'skill', 'admin', '2025-10-28 00:00:00', '', NULL, '提示词模板管理目录');
 INSERT INTO `sys_menu` VALUES (2051, '粉丝管理', 0, 2, 'fans-manage', NULL, NULL, '', 1, 0, 'M', '0', '0', '', 'peoples', 'admin', '2025-10-28 00:00:00', '', NULL, '粉丝管理目录');
+INSERT INTO `sys_menu` VALUES (2070, '日志管理', 1, 10, 'unifiedLog', 'monitor/unifiedLog/index', NULL, '', 1, 0, 'C', '0', '0', 'monitor:unifiedLog:list', 'documentation', 'admin', NOW(), '', NULL, '日志管理菜单');
+INSERT INTO `sys_menu` VALUES (2071, '日志查询', 2070, 1, '#', '', NULL, '', 1, 0, 'F', '0', '0', 'monitor:unifiedLog:query', '#', 'admin', NOW(), '', NULL, '');
+INSERT INTO `sys_menu` VALUES (2072, '日志删除', 2070, 2, '#', '', NULL, '', 1, 0, 'F', '0', '0', 'monitor:unifiedLog:remove', '#', 'admin', NOW(), '', NULL, '');
+INSERT INTO `sys_menu` VALUES (2073, '日志导出', 2070, 3, '#', '', NULL, '', 1, 0, 'F', '0', '0', 'monitor:unifiedLog:export', '#', 'admin', NOW(), '', NULL, '');
+INSERT INTO `sys_menu` VALUES (2074, '日志清空', 2070, 4, '#', '', NULL, '', 1, 0, 'F', '0', '0', 'monitor:unifiedLog:clean', '#', 'admin', NOW(), '', NULL, '');
 
 -- ----------------------------
 -- Table structure for sys_notice
@@ -751,7 +763,14 @@ CREATE TABLE `sys_oper_log`  (
   PRIMARY KEY (`oper_id`) USING BTREE,
   INDEX `idx_sys_oper_log_bt`(`business_type`) USING BTREE,
   INDEX `idx_sys_oper_log_s`(`status`) USING BTREE,
-  INDEX `idx_sys_oper_log_ot`(`oper_time`) USING BTREE
+  INDEX `idx_sys_oper_log_ot`(`oper_time`) USING BTREE,
+  INDEX `idx_oper_time`(`oper_time` DESC) USING BTREE,
+  INDEX `idx_business_type`(`business_type`) USING BTREE,
+  INDEX `idx_status`(`status`) USING BTREE,
+  INDEX `idx_oper_name`(`oper_name`) USING BTREE,
+  INDEX `idx_oper_ip`(`oper_ip`) USING BTREE,
+  INDEX `idx_status_time`(`status`, `oper_time` DESC) USING BTREE,
+  INDEX `idx_business_status`(`business_type`, `status`, `oper_time` DESC) USING BTREE
 ) ENGINE = InnoDB AUTO_INCREMENT = 10025 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci COMMENT = '操作日志记录' ROW_FORMAT = Dynamic;
 
 -- ----------------------------
@@ -952,6 +971,11 @@ INSERT INTO `sys_role_menu` VALUES (1, 2047);
 INSERT INTO `sys_role_menu` VALUES (1, 2048);
 INSERT INTO `sys_role_menu` VALUES (1, 2050);
 INSERT INTO `sys_role_menu` VALUES (1, 2051);
+INSERT INTO `sys_role_menu` VALUES (1, 2070);
+INSERT INTO `sys_role_menu` VALUES (1, 2071);
+INSERT INTO `sys_role_menu` VALUES (1, 2072);
+INSERT INTO `sys_role_menu` VALUES (1, 2073);
+INSERT INTO `sys_role_menu` VALUES (1, 2074);
 INSERT INTO `sys_role_menu` VALUES (2, 1);
 INSERT INTO `sys_role_menu` VALUES (2, 2);
 INSERT INTO `sys_role_menu` VALUES (2, 3);
@@ -1063,6 +1087,11 @@ INSERT INTO `sys_role_menu` VALUES (2, 2047);
 INSERT INTO `sys_role_menu` VALUES (2, 2048);
 INSERT INTO `sys_role_menu` VALUES (2, 2050);
 INSERT INTO `sys_role_menu` VALUES (2, 2051);
+INSERT INTO `sys_role_menu` VALUES (2, 2070);
+INSERT INTO `sys_role_menu` VALUES (2, 2071);
+INSERT INTO `sys_role_menu` VALUES (2, 2072);
+INSERT INTO `sys_role_menu` VALUES (2, 2073);
+INSERT INTO `sys_role_menu` VALUES (2, 2074);
 INSERT INTO `sys_role_menu` VALUES (101, 2000);
 INSERT INTO `sys_role_menu` VALUES (101, 2017);
 INSERT INTO `sys_role_menu` VALUES (101, 2021);
@@ -1549,7 +1578,13 @@ CREATE TABLE `wc_log_info`  (
   PRIMARY KEY (`id`) USING BTREE,
   INDEX `idx_user_id`(`user_id`) USING BTREE,
   INDEX `idx_execution_time`(`execution_time`) USING BTREE,
-  INDEX `idx_method_name`(`method_name`) USING BTREE
+  INDEX `idx_method_name`(`method_name`) USING BTREE,
+  INDEX `idx_execution_time_desc`(`execution_time` DESC) USING BTREE,
+  INDEX `idx_is_success`(`is_success`) USING BTREE,
+  INDEX `idx_execution_millis`(`execution_time_millis`) USING BTREE,
+  INDEX `idx_success_time`(`is_success`, `execution_time` DESC) USING BTREE,
+  INDEX `idx_user_success`(`user_id`, `is_success`, `execution_time` DESC) USING BTREE,
+  INDEX `idx_method_success`(`method_name`, `is_success`, `execution_time` DESC) USING BTREE
 ) ENGINE = InnoDB AUTO_INCREMENT = 439 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '日志信息表（记录方法执行日志）' ROW_FORMAT = Dynamic;
 
 -- ----------------------------

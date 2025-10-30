@@ -7,7 +7,7 @@
           placeholder="请输入登录地址"
           clearable
           style="width: 240px;"
-          @keyup.enter.native="handleQuery"
+          @keyup.enter="handleQuery"
         />
       </el-form-item>
       <el-form-item label="用户名称" prop="userName">
@@ -16,7 +16,7 @@
           placeholder="请输入用户名称"
           clearable
           style="width: 240px;"
-          @keyup.enter.native="handleQuery"
+          @keyup.enter="handleQuery"
         />
       </el-form-item>
       <el-form-item label="状态" prop="status">
@@ -95,7 +95,7 @@
           v-hasPermi="['monitor:logininfor:export']"
         >导出</el-button>
       </el-col>
-      <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
+      <right-toolbar v-model:showSearch="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
 
     <el-table ref="tables" v-loading="loading" :data="list" @selection-change="handleSelectionChange" :default-sort="defaultSort" @sort-change="handleSortChange">

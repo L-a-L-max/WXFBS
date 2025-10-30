@@ -90,7 +90,7 @@ export default {
   },
 
   // 组件销毁时自动关闭WebSocket连接
-  beforeDestroy() {
+  beforeUnmount() {
     this.closeWebSocketConnection();
   }
 } 

@@ -7,7 +7,7 @@
           placeholder="请输入操作地址"
           clearable
           style="width: 240px;"
-          @keyup.enter.native="handleQuery"
+          @keyup.enter="handleQuery"
         />
       </el-form-item>
       <el-form-item label="系统模块" prop="title">
@@ -16,7 +16,7 @@
           placeholder="请输入系统模块"
           clearable
           style="width: 240px;"
-          @keyup.enter.native="handleQuery"
+          @keyup.enter="handleQuery"
         />
       </el-form-item>
       <el-form-item label="操作人员" prop="operName">
@@ -25,7 +25,7 @@
           placeholder="请输入操作人员"
           clearable
           style="width: 240px;"
-          @keyup.enter.native="handleQuery"
+          @keyup.enter="handleQuery"
         />
       </el-form-item>
       <el-form-item label="类型" prop="businessType">
@@ -108,7 +108,7 @@
           v-hasPermi="['monitor:operlog:export']"
         >导出</el-button>
       </el-col>
-      <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
+      <right-toolbar v-model:showSearch="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
 
     <el-table ref="tables" v-loading="loading" :data="list" @selection-change="handleSelectionChange" :default-sort="defaultSort" @sort-change="handleSortChange">

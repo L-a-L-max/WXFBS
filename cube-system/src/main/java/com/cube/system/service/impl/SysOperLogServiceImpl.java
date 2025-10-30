@@ -73,4 +73,15 @@ public class SysOperLogServiceImpl implements ISysOperLogService
     {
         operLogMapper.cleanOperLog();
     }
+
+    /**
+     * 统计操作日志总数
+     *
+     * @return 日志总数
+     */
+    @Override
+    public long countTotalLogs()
+    {
+        return operLogMapper.countTotalLogs();
+    }
 }

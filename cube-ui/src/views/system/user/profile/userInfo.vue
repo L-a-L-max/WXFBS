@@ -103,7 +103,7 @@ export default {
       }
     });
   },
-  beforeDestroy() {
+  beforeUnmount() {
     // 移除事件监听
     window.removeEventListener('corpIdUpdated', this.handleCorpIdUpdated);
   },

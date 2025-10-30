@@ -72,7 +72,15 @@ export default {
     SizeSelect,
     Search,
     RuoYiGit,
-    RuoYiDoc
+    RuoYiDoc,
+    UserFilled,
+    CaretBottom
+  },
+  setup() {
+    return {
+      UserFilled,
+      CaretBottom
+    };
   },
  // 正确的写法
 computed: {

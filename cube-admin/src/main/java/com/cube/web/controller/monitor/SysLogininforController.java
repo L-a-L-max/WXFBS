@@ -74,4 +74,13 @@ public class SysLogininforController extends BaseController
         passwordService.clearLoginRecordCache(userName);
         return success();
     }
+
+    /**
+     * 统计登录日志总数
+     */
+    @GetMapping("/countTotal")
+    public AjaxResult countTotal()
+    {
+        return success(logininforService.countTotalLogs());
+    }
 }
