@@ -6,7 +6,7 @@
         <img style="width: 21px;height: 16px;" src="https://www.logomaker.com.cn/statics/images/weixin.png" alt="">
         <span style="font-size: 20px;font-weight: bold;padding-left: 3px;">企业微信客服</span>
       </p>
-      <div style="width: 182px;height: 182px;border: 1px solid #dddddd;margin: auto;">
+      <div style="width: 182px;height: 182px;border: 1px solid #e0e0e0;margin: auto;border-radius: 4px;overflow: hidden;">
         <img src="https://u3w.com/chatfile/企业微信.jpg" :width="size" :height="size" alt="企业微信客服" />
       </div>
       <div class="wechat-service-info">
@@ -30,11 +30,11 @@
         <img style="width: 21px;height: 16px;" src="https://www.logomaker.com.cn/statics/images/weixin.png" alt="">
         <span style="font-size: 20px;font-weight: bold;padding-left: 3px;">微信登录/注册</span>
       </p>
-      <div style="width: 182px;height: 182px;border: 1px solid #dddddd;margin: auto;">
+      <div style="width: 182px;height: 182px;border: 1px solid #e0e0e0;margin: auto;border-radius: 4px;overflow: hidden;">
         <img :src="qrCodeDataUrl" :width="size" :height="size" alt="QR Code" />
       </div>
-      <div style="margin-top: 10px;margin-left: 20px">
-        <span style="padding-top: 10px;text-align: center;font-size: 12px;color: rgba(153, 153, 153, 1)">关注"优立方服务号"进行登录/注册</span>
+      <div style="margin-top: 15px;text-align: center;">
+        <span style="font-size: 12px;color: rgba(153, 153, 153, 1)">关注"优立方服务号"进行登录/注册</span>
       </div>
     </el-form>
     <div class="footer-beian">
@@ -415,9 +415,11 @@ export default {
 }
 
 .login-form {
-  border-radius: 6px;
+  border-radius: 8px;
   background: #ffffff;
-  padding: 25px 25px 5px 25px;
+  padding: 30px 35px 20px 35px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  min-width: 320px;
   .el-input {
     height: 38px;
     input {
@@ -470,28 +472,30 @@ export default {
 }
 .wx_log_title{
   text-align: center;
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #f0f0f0;
 }
 
 /* 企业微信客服样式 */
 .login-form .wechat-service-info {
   text-align: center;
-  padding: 15px 10px;
+  padding: 15px 5px 10px 5px;
 }
 
 .login-form .service-instruction {
   font-size: 12px;
   color: rgba(153, 153, 153, 1);
-  margin: 8px 0 15px 0;
+  margin: 15px 0 15px 0;
   font-weight: 500;
 }
 
 .login-form .service-message-container {
   background-color: #f8f9fa;
   padding: 15px;
-  border-radius: 8px;
+  border-radius: 6px;
   border: 1px solid #e9ecef;
   margin: 10px 0;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
 .login-form .service-message {
@@ -563,28 +567,12 @@ export default {
   color: #67C23A !important;
   margin: 10px 0 0 0 !important;
   line-height: 1.4 !important;
-  animation: fadeInOut 2s ease-in-out;
   background-color: rgba(103, 194, 58, 0.1);
   padding: 6px 10px;
   border-radius: 4px;
   border: 1px solid rgba(103, 194, 58, 0.2);
   text-align: center;
   font-weight: 500;
-}
-
-@keyframes fadeInOut {
-  0% {
-    opacity: 0;
-    transform: translateY(-10px) scale(0.95);
-  }
-  15%, 85% {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-  100% {
-    opacity: 0;
-    transform: translateY(-5px) scale(0.98);
-  }
 }
 
 </style>

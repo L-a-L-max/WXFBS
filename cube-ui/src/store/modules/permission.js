@@ -128,7 +128,7 @@ export function filterDynamicRoutes(routes) {
 }
 
 // 在文件顶部添加 context 定义
-// 在文件顶部添加 context 定义
+// webpackMode: "lazy" 告诉 webpack 这是预期的动态导入行为
 const viewsContext = require.context('@/views', true, /\.vue$/)
 
 export const loadView = (view) => {

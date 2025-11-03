@@ -15,7 +15,6 @@
 
 <script>
 import logoImg from '@/assets/logo/logo.jpg'
-import variables from '@/assets/styles/variables.scss'
 
 export default {
   name: 'SidebarLogo',
@@ -27,8 +26,8 @@ export default {
   },
   computed: {
     variables() {
-      // 添加默认值防止variables为undefined
-      return variables || {
+      // 直接定义变量，避免SCSS导入问题
+      return {
         menuBackground: '#f2f7fe',
         menuLightBackground: '#ffffff',
         menuColor: '#022348',

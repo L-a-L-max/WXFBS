@@ -235,17 +235,17 @@ export default {
 }
 
 /* 标签页样式优化 */
-::v-deep .el-tabs--border-card {
+:deep(.el-tabs--border-card) {
   box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
   border: none;
 }
 
-::v-deep .el-tabs__header {
+:deep(.el-tabs__header) {
   background-color: #f5f7fa;
   border-bottom: 2px solid #e4e7ed;
 }
 
-::v-deep .el-tabs__item {
+:deep(.el-tabs__item) {
   font-size: 16px;
   padding: 0 30px;
   height: 50px;
@@ -253,24 +253,24 @@ export default {
   transition: all 0.3s ease;
 }
 
-::v-deep .el-tabs__item:hover {
+:deep(.el-tabs__item:hover) {
   color: #409EFF;
 }
 
-::v-deep .el-tabs__item.is-active {
+:deep(.el-tabs__item.is-active) {
   font-weight: bold;
   color: #409EFF;
   background-color: #ffffff;
 }
 
 /* 折叠面板样式优化 */
-::v-deep .el-collapse-item__header {
+:deep(.el-collapse-item__header) {
   font-size: 16px;
   font-weight: 500;
   color: #409EFF;
 }
 
-::v-deep .el-collapse-item__header:hover {
+:deep(.el-collapse-item__header:hover) {
   background-color: #f5f7fa;
 }
 
@@ -299,7 +299,7 @@ export default {
     padding: 15px;
   }
   
-  ::v-deep .el-tabs__item {
+  :deep(.el-tabs__item) {
     font-size: 14px;
     padding: 0 15px;
     height: 40px;

@@ -75,10 +75,13 @@ module.exports = {
         'math-intrinsincs': 'math-intrinsics', // 修复拼写错误
         'element-ui': 'element-plus', // 兼容旧引用
         '@riophae/vue-treeselect': 'vue3-treeselect'
-
       }
     },
-
+    performance: {
+      hints: false, // 关闭性能提示警告
+      maxEntrypointSize: 10000000, // 10MB
+      maxAssetSize: 5000000 // 5MB
+    },
     plugins: [
       // http://doc.ruoyi.vip/ruoyi-vue/other/faq.html#使用gzip解压缩静态文件
       new CompressionPlugin({
@@ -87,9 +90,13 @@ module.exports = {
         algorithm: 'gzip',                             // 使用gzip压缩
         minRatio: 0.8,                                 // 压缩比例，小于 80% 的文件不会被压缩
         deleteOriginalAssets: false                    // 压缩后删除原文件
-        // 移除了 cache 属性，因为新版本不支持
       })
     ],
+    ignoreWarnings: [
+      // 忽略特定的webpack警告
+      /Compilation\.assets/,
+      /require\.context/
+    ]
   },
   chainWebpack(config) {
     config.plugins.delete('preload') // TODO: need test
@@ -143,10 +150,16 @@ module.exports = {
             priority: 10,
             chunks: 'initial' // only package third parties that are initially dependent
           },
-          elementUI: {
-            name: 'chunk-elementUI', // split elementUI into a single package
-            test: /[\\/]node_modules[\\/]_?element-ui(.*)/, // in order to adapt to cnpm
+          elementPlus: {
+            name: 'chunk-elementPlus', // split element-plus into a single package
+            test: /[\\/]node_modules[\\/]_?element-plus(.*)/, // 更新为element-plus
             priority: 20 // the weight needs to be larger than libs and app or it will be packaged into libs or app
+          },
+          echarts: {
+            name: 'chunk-echarts', // split echarts into a single package
+            test: /[\\/]node_modules[\\/]echarts/,
+            priority: 25,
+            reuseExistingChunk: true
           },
           commons: {
             name: 'chunk-commons',

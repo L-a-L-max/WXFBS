@@ -27,7 +27,6 @@
 import { mapGetters, mapState } from "vuex";
 import Logo from "./Logo";
 import SidebarItem from "./SidebarItem";
-import variables from "@/assets/styles/variables.scss";
 
 export default {
     components: { SidebarItem, Logo },
@@ -47,8 +46,8 @@ export default {
             return this.$store.state.settings.sidebarLogo;
         },
         variables() {
-            // 添加默认值防止variables为undefined
-            return variables || {
+            // 直接定义样式变量，避免SCSS导入问题
+            return {
                 menuBackground: '#f2f7fe',
                 menuLightBackground: '#ffffff',
                 menuColor: '#022348',

@@ -238,7 +238,7 @@ export default {
   border-radius: 4px;
 }
 
-::v-deep .el-radio-button__inner {
+:deep(.el-radio-button__inner) {
   padding: 8px 15px;
 }
 </style>
