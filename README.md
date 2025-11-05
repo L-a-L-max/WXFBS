@@ -1,4 +1,4 @@
-<p align="center"><img alt="Static Badge" src="https://img.shields.io/badge/MySQL-5.7-blue"> <img alt="Static Badge" src="https://img.shields.io/badge/JDK-17-blue"> <img alt="Static Badge" src="https://img.shields.io/badge/Spring%20Boot-3.2.5-blue"> <img alt="Static Badge" src="https://img.shields.io/badge/Redis-6.0%2B-blue"> <img alt="Static Badge" src="https://img.shields.io/badge/License-AGPL3.0-blue"></p>
+<p align="center"><img alt="Static Badge" src="https://img.shields.io/badge/MySQL-8.0-blue"> <img alt="Static Badge" src="https://img.shields.io/badge/JDK-17-blue"> <img alt="Static Badge" src="https://img.shields.io/badge/Spring%20Boot-3.2.5-blue"> <img alt="Static Badge" src="https://img.shields.io/badge/Redis-6.0%2B-blue"> <img alt="Static Badge" src="https://img.shields.io/badge/License-AGPL3.0-blue"></p>
 
 # U3W 优立方 AI 主机：人机协同数智驱动的团队未来
 
@@ -35,7 +35,7 @@ U3W-AI/
 - JDK 17
 - Maven cube-admin:3.2.5, cube-engine:3.2.5
 - Node.js 16.x/18.x 和 npm 8.x+
-- MySQL 5.7+ 和 Redis 6.0+
+- MySQL 8.0 和 Redis 6.0+
 - Windows 10系统及以上（建议内存16GB）
 
 ### 环境准备
