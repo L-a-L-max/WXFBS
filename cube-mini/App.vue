@@ -5,6 +5,7 @@
 		getToken
 	} from '@/utils/auth'
 
+
 	export default {
 		onLaunch: function() {
 			this.initApp();
