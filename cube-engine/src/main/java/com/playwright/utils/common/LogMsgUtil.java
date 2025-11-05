@@ -79,8 +79,24 @@ public class  LogMsgUtil {
      * @param userId 用户ID
      * @param aiName AI服务名称
      * @param type 消息类型标识
+     * @param shareUrl 分享链接
+     * @param shareImgUrl 分享图片URL
      */
     public void sendResData(String copiedText,String userId,String aiName,String type,String shareUrl,String shareImgUrl){
+        sendResData(copiedText, userId, aiName, type, shareUrl, shareImgUrl, null);
+    }
+
+    /**
+     * 发送结果数据消息（带taskId）
+     * @param copiedText 文本内容（如剪贴板内容）
+     * @param userId 用户ID
+     * @param aiName AI服务名称
+     * @param type 消息类型标识
+     * @param shareUrl 分享链接
+     * @param shareImgUrl 分享图片URL
+     * @param taskId 任务ID
+     */
+    public void sendResData(String copiedText,String userId,String aiName,String type,String shareUrl,String shareImgUrl,String taskId){
 
         JSONObject resData = new JSONObject();
         resData.put("draftContent",copiedText);
@@ -89,6 +105,11 @@ public class  LogMsgUtil {
         resData.put("aiName",aiName);
         resData.put("type", type);
         resData.put("userId",userId);
+        
+        // 🔥 修复前端状态不更新问题：添加 taskId 字段
+        if (taskId != null && !taskId.trim().isEmpty()) {
+            resData.put("taskId", taskId);
+        }
         
         // 🔥 修复前端错误：添加 aiResponses 字段以兼容前端期望的数据格式
         JSONObject aiResponse = new JSONObject();
@@ -101,7 +122,7 @@ public class  LogMsgUtil {
         aiResponses.add(aiResponse);
         resData.put("aiResponses", aiResponses);
         
-        System.out.println("🔥 发送WebSocket消息到前端: " + type + " - " + aiName + " - 用户ID: " + userId);
+        System.out.println("🔥 发送WebSocket消息到前端: " + type + " - " + aiName + " - 用户ID: " + userId + " - TaskID: " + taskId);
         webSocketClientService.sendMessage(resData.toJSONString());
     }
 

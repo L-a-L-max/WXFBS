@@ -74,8 +74,8 @@
 								</picker>
 							</view>
               <view class="ai-capabilities" v-if="ai.capabilities.length > 0">
-                <!-- 通义千问和知乎直答使用单选按钮逻辑 -->
-                <view v-if="ai.name === '通义千问' || ai.name === '知乎直答'" class="capability-tags-container">
+                <!-- 知乎直答使用单选按钮逻辑 -->
+                <view v-if="ai.name === '知乎直答'" class="capability-tags-container">
                   <view v-for="(capability, capIndex) in ai.capabilities"
                         :key="capIndex"
                         class="capability-tag"
@@ -386,29 +386,12 @@
             </view>
           </view>
 
-          <!-- 媒体选择 -->
+          <!-- 媒体说明 -->
           <view class="media-selection-section">
-            <text class="score-subtitle">选择投递媒体：</text>
-            <view class="media-radio-group">
-              <view class="media-radio-item"
-                    :class="{'active': selectedMedia === 'wechat_layout'}"
-                    @tap="selectMedia('wechat_layout')">
-                <text class="media-icon">📱</text>
-                <text class="media-text">公众号</text>
-              </view>
-              <view class="media-radio-item"
-                    :class="{'active': selectedMedia === 'zhihu_layout'}"
-                    @tap="selectMedia('zhihu_layout')">
-                <text class="media-icon">📝</text>
-                <text class="media-text">知乎</text>
-              </view>
-            </view>
+            <text class="score-subtitle">投递媒体：公众号</text>
             <view class="media-description">
-              <text v-if="selectedMedia === 'wechat_layout'" class="description-text">
+              <text class="description-text">
                 📝 将内容排版为适合微信公众号的HTML格式，完成后可手动投递到草稿箱
-              </text>
-              <text v-else-if="selectedMedia === 'zhihu_layout'" class="description-text">
-                📝 将内容排版为适合知乎的文本格式，完成后可手动投递到草稿箱
               </text>
             </view>
           </view>
@@ -527,8 +510,6 @@
 					toneChatId: '',
 					ybDsChatId: '',
 					dbChatId: '',
-          tyChatId: '',
-
           baiduChatId: '',
           zhzdChatId: '',
 					isNewChat: true
@@ -605,25 +586,6 @@
 						isExpanded: true,
 						isSingleSelect: false
 					},
-          {
-            name: '通义千问',
-            avatar: 'https://u3w.com/chatfile/TongYi.png',
-            capabilities: [
-              {
-                label: '深度思考',
-                value: 'deep_thinking'
-              },
-              {
-                label: '联网搜索',
-                value: 'web_search'
-              }
-            ],
-            selectedCapability: '',
-            enabled: true,
-            status: 'idle',
-            progressLogs: [],
-            isExpanded: true
-          },
 
 
           {
@@ -729,18 +691,6 @@
 				{
 					name: "wechat_layout",
 					label: "公众号",
-				},
-				{
-					name: "zhihu_layout",
-					label: "知乎",
-				},
-				{
-					name: "weitoutiao_layout",
-					label: "微头条",
-				},
-				{
-					name: "baijiahao_layout",
-					label: "百家号",
 				}
 			],
 
@@ -765,7 +715,6 @@
 					yuanbao: false,
 					doubao: false,
           deepseek: false,
-          tongyi: false,
           metaso: false,
           zhzd: false,
           baidu: false
@@ -774,7 +723,6 @@
 					yuanbao: '',
 					doubao: '',
           deepseek: '',
-          tongyi: '',
           metaso: '',
           zhzd: '',
           baidu: ''
@@ -783,7 +731,6 @@
 					yuanbao: true,
 					doubao: true,
           deepseek: true,
-          tongyi: true,
 		      metaso: true,
           zhzd: true,
           baidu: true
@@ -800,7 +747,7 @@
 				const hasAvailableAI = this.aiList.some(ai => ai.enabled && this.isAiLoginEnabled(ai));
 
 				// 检查是否正在加载AI状态（如果正在加载，禁用发送按钮）
-				const isCheckingStatus = this.isLoading.yuanbao || this.isLoading.doubao || this.isLoading.deepseek || this.isLoading.tongyi || this.isLoading.metaso || this.isLoading.zhzd || this.isLoading.baidu;
+				const isCheckingStatus = this.isLoading.yuanbao || this.isLoading.doubao || this.isLoading.deepseek || this.isLoading.metaso || this.isLoading.zhzd || this.isLoading.baidu;
 
 				return hasInput && hasAvailableAI && !isCheckingStatus;
 			},
@@ -1200,14 +1147,6 @@
             }
           }
 
-          if(ai.name === '通义千问' && ai.enabled){
-            this.userInfoReq.roles = this.userInfoReq.roles + 'ty-qw,';
-            if (ai.selectedCapability === "deep_thinking") {
-              this.userInfoReq.roles = this.userInfoReq.roles + 'ty-qw-sdsk,'
-            } else if (ai.selectedCapability === "web_search") {
-              this.userInfoReq.roles = this.userInfoReq.roles + 'ty-qw-lwss,';
-            }
-          }
           if(ai.name === '百度AI' && ai.enabled){
             if(this.isAiLoginEnabled(ai)){
               this.userInfoReq.roles = this.userInfoReq.roles + 'baidu-agent,';
@@ -1822,21 +1761,6 @@
           // 强制更新UI
           this.$forceUpdate();
         }
-        else if (datastr.includes("RETURN_TY_STATUS") && dataObj.status != "") {
-          this.isLoading.tongyi = false;
-          if (!datastr.includes("false")) {
-            this.aiLoginStatus.tongyi = true;
-            this.accounts.tongyi = dataObj.status;
-          } else {
-            this.aiLoginStatus.tongyi = false;
-            // 禁用相关AI
-            this.disableAIsByLoginStatus("tongyi");
-          }
-          // 更新AI启用状态
-          this.updateAiEnabledStatus();
-        }
-
-
         // 处理知乎直答登录状态
         else if (datastr.includes("RETURN_ZHZD_STATUS") && dataObj.status != "") {
           console.log('收到知乎直答登录状态响应:', datastr, dataObj);
@@ -1942,10 +1866,6 @@
 							};
 							this.enabledAIs.unshift(targetAI);
             }
-            break;
-          case 'RETURN_TY_RES':
-					console.log('✅ 匹配到通义千问消息');
-            targetAI = this.enabledAIs.find(ai => ai.name === '通义千问');
             break;
 				case 'RETURN_METASO_RES':
 					console.log('✅ 匹配到秘塔消息');
@@ -2312,13 +2232,10 @@
 					this.userInfoReq.toneChatId = item.toneChatId || '';
 					this.userInfoReq.ybDsChatId = item.ybDsChatId || '';
 					this.userInfoReq.dbChatId = item.dbChatId || '';
-					this.userInfoReq.tyChatId = item.tyChatId || '';
 					this.userInfoReq.metasoChatId = item.metasoChatId || '';
 					this.userInfoReq.baiduChatId = item.baiduChatId || '';
 					this.userInfoReq.deepseekChatId = item.deepseekChatId || '';
 					this.userInfoReq.zhzdChatId = item.zhzdChatId || '';
-					this.userInfoReq.kimiChatId = item.kimiChatId || '';
-					this.userInfoReq.maxChatId = item.maxChatId || '';
 					this.userInfoReq.isNewChat = false;
 					
 					console.log('🔗 [历史记录] 恢复chatId:', this.chatId);
@@ -2373,10 +2290,7 @@
 					toneChatId: this.userInfoReq.toneChatId,
 					ybDsChatId: this.userInfoReq.ybDsChatId,
 					dbChatId: this.userInfoReq.dbChatId,
-            // tyChatId: this.userInfoReq.tyChatId,
-
             metasoChatId: this.userInfoReq.metasoChatId,
-
             baiduChatId:this.userInfoReq.baiduChatId,
 					zhzdChatId: this.userInfoReq.zhzdChatId,
 				};
@@ -2390,10 +2304,7 @@
 						toneChatId: this.userInfoReq.toneChatId,
 						ybDsChatId: this.userInfoReq.ybDsChatId,
 						dbChatId: this.userInfoReq.dbChatId,
-            // tyChatId: this.userInfoReq.tyChatId,
-
             metasoChatId: this.userInfoReq.metasoChatId,
-
             baiduChatId:this.userInfoReq.baiduChatId,
 						zhzdChatId: this.userInfoReq.zhzdChatId,
 					});
@@ -2612,11 +2523,6 @@
         console.log('选择排版AI:', ai);
       },
       
-      // 选择媒体
-      selectMedia(media) {
-        this.selectedMedia = media;
-        console.log('选择媒体:', media);
-			},
 
 			closeLayoutModal() {
 				this.layoutModalVisible = false;
@@ -2624,82 +2530,9 @@
 
       handleLayout() {
         if (!this.currentLayoutResult) return;
-
         this.closeLayoutModal();
-
-        // 根据选择的媒体创建排版任务
-        if (this.selectedMedia === 'wechat_layout') {
+        // 直接创建公众号排版任务
         this.createWechatLayoutTask();
-        } else if (this.selectedMedia === 'zhihu_layout') {
-          this.createZhihuLayoutTask();
-        }
-      },
-
-      // 创建知乎排版任务
-      createZhihuLayoutTask() {
-        // 构建知乎排版请求
-        const layoutRequest = {
-          jsonrpc: '2.0',
-          id: this.generateUUID(),
-          method: 'AI排版',
-          params: {
-            taskId: this.generateUUID(),
-            userId: this.userId,
-            corpId: this.corpId,
-            userPrompt: this.currentLayoutResult.content,
-            roles: '',
-            selectedMedia: 'zhihu_layout'
-          }
-        };
-
-        // 根据选择的AI设置roles参数
-        const selectedAI = this.aiList.find(ai => ai.name === this.layoutAI);
-        if (selectedAI) {
-          if (selectedAI.name === '豆包') {
-            layoutRequest.params.roles = 'zj-db,';
-            if (selectedAI.selectedCapabilities.includes('deep_thinking')) {
-              layoutRequest.params.roles += 'zj-db-sdsk,';
-            }
-          } else if (selectedAI.name === 'DeepSeek') {
-            layoutRequest.params.roles = 'deepseek,';
-            if (selectedAI.selectedCapabilities.includes('deep_thinking')) {
-              layoutRequest.params.roles += 'ds-sdsk,';
-            }
-            if (selectedAI.selectedCapabilities.includes('web_search')) {
-              layoutRequest.params.roles += 'ds-lwss,';
-            }
-          }
-        }
-
-        // 发送排版请求
-        console.log("知乎排版参数", layoutRequest);
-        this.message(layoutRequest);
-
-        // 创建智能排版AI节点
-        const znpbAI = {
-          name: '智能排版',
-          avatar: selectedAI ? selectedAI.avatar : 'https://u3w.com/chatfile/%E8%B1%86%E5%8C%85.png',
-          capabilities: [],
-          selectedCapabilities: [],
-          enabled: true,
-          status: 'running',
-          progressLogs: [
-            {
-              content: '知乎排版任务已提交，正在排版...',
-              timestamp: new Date(),
-              isCompleted: false,
-              type: '智能排版'
-            }
-          ],
-          isExpanded: true
-        };
-
-        this.addOrUpdateTaskAI(znpbAI, '智能排版');
-
-        uni.showToast({
-          title: '知乎排版任务已提交',
-          icon: 'success'
-        });
       },
 
 	  // 创建百家号投递任务
@@ -2906,11 +2739,9 @@
 
 					console.log("提取的媒体类型:", mediaLabel, mediaName);
 
-					// 根据媒体类型进行不同的处理
-					if (mediaName.includes('wechat')) {
-						// 公众号投递：直接调用API
+					// 直接进行公众号投递
 					uni.showLoading({
-							title: '正在投递到公众号...'
+						title: '正在投递到公众号...'
 					});
 
 					this.collectNum++;
@@ -2923,79 +2754,23 @@
 						num: this.collectNum
 					};
 
-						console.log("公众号投递参数", params);
+					console.log("公众号投递参数", params);
 
-				const res = await pushAutoOffice(params);
-
-				uni.hideLoading();
-
-				if (res.code === 200) {
-					uni.showToast({
-								title: '投递到公众号成功',
-						icon: 'success'
-					});
-				} else {
-					uni.showToast({
-						title: res.message || '投递失败',
-								icon: 'none'
-							});
-						}
-					} else if (mediaName.includes('zhihu')) {
-						// 知乎投递：通过WebSocket发送投递请求
-						uni.showLoading({
-							title: '正在投递到知乎...'
-						});
-
-						const mediaRequest = {
-							jsonrpc: "2.0",
-							id: this.generateUUID(),
-							method: "媒体投递",
-							params: {
-								taskId: this.generateUUID(),
-								userId: this.userId,
-								corpId: this.corpId,
-								aiName: result.aiName,
-								userPrompt: result.content,
-								selectedMedia: "zhihu_layout"
-							}
-						};
-
-						console.log("知乎投递参数", mediaRequest);
-
-						this.message(mediaRequest);
-
-						// 创建媒体投递任务节点
-						const mediaDeliveryAI = {
-							name: '媒体投递',
-							avatar: 'https://u3w.com/chatfile/%E8%B1%86%E5%8C%85.png',
-							capabilities: [],
-							selectedCapabilities: [],
-							enabled: true,
-							status: 'running',
-							progressLogs: [{
-								content: '知乎投递任务已提交，正在投递...',
-								timestamp: new Date(),
-								isCompleted: false,
-								type: '媒体投递'
-							}],
-							isExpanded: true
-						};
-
-					// 添加或更新媒体投递任务
-					this.addOrUpdateTaskAI(mediaDeliveryAI, '媒体投递');
+					const res = await pushAutoOffice(params);
 
 					uni.hideLoading();
 
-					uni.showToast({
-						title: '媒体投递请求已发送，请等待结果',
-						icon: 'success'
-					});
+					if (res.code === 200) {
+						uni.showToast({
+							title: '投递到公众号成功',
+							icon: 'success'
+						});
 					} else {
 						uni.showToast({
-							title: '不支持的媒体类型',
-						icon: 'none'
-					});
-				}
+							title: res.message || '投递失败',
+							icon: 'none'
+						});
+					}
 			} catch (error) {
 				uni.hideLoading();
 					console.error('投递失败:', error);
@@ -3190,10 +2965,7 @@
 					toneChatId: '',
 					ybDsChatId: '',
 					dbChatId: '',
-          tyChatId: '',
-
           metasoChatId: '',
-
           baiduChatId:'',
           zhzdChatId: '',
 					isNewChat: true
@@ -3231,27 +3003,7 @@
 						progressLogs: [],
 						isExpanded: true,
             isSingleSelect: false,  // 添加单选标记
-					},
-          {
-            name: '通义千问',
-            avatar: 'https://u3w.com/chatfile/TongYi.png',
-            capabilities: [
-              {
-                label: '深度思考',
-                value: 'deep_thinking'
-              },
-              {
-                label: '联网搜索',
-                value: 'web_search'
-              }
-            ],
-            selectedCapability: '',
-            enabled: true,
-            status: 'idle',
-            progressLogs: [],
-            isExpanded: true
           },
-
           {
             name: '秘塔',
             avatar: 'https://www.aitool6.com/wp-content/uploads/2023/06/9557d1-2.jpg',
@@ -3375,15 +3127,6 @@
           corpId: this.corpId
         });
 
-        // 检查通义千问登录状态
-        this.sendWebSocketMessage({
-          type: 'PLAY_CHECK_QW_LOGIN',
-          userId: this.userId,
-          corpId: this.corpId
-        });
-
-
-
         // 检查秘塔登录状态
         this.sendWebSocketMessage({
           type: "PLAY_CHECK_METASO_LOGIN",
@@ -3428,8 +3171,7 @@
 				const names = {
 					yuanbao: '腾讯元宝',
 					doubao: '豆包',
-					agent: '智能体',
-          // tongyi: '通义千问',
+					agent: '智能体'
 				};
 				return names[type] || '';
 			},
@@ -3471,9 +3213,7 @@
 					yuanbao: true,
 					doubao: true,
           deepseek: true,
-          tongyi: true,
           metaso: true,
-
           baidu: true,
           zhzd: true,
 				};
@@ -3483,7 +3223,6 @@
 					yuanbao: false,
 					doubao: false,
           deepseek: false,
-          tongyi: false,
           metaso: false,
           baidu: false,
           zhzd: false,
@@ -3494,7 +3233,6 @@
 					yuanbao: '',
 					doubao: '',
           deepseek: '',
-          tongyi: '',
 		      metaso: '',
           baidu: '',
           zhzd: '',
@@ -3540,8 +3278,6 @@
 						return this.aiLoginStatus.doubao; // 豆包登录状态
           case 'DeepSeek':
             return this.aiLoginStatus.deepseek; // 使用实际的DeepSeek登录状态
-          case '通义千问':
-            return this.aiLoginStatus.tongyi;   // 通义登录状态
           case "秘塔":
             return this.aiLoginStatus.metaso; // 秘塔登录状态
           case "知乎直答":
@@ -3563,8 +3299,6 @@
 						return this.isLoading.doubao;
           case 'DeepSeek':
             return this.isLoading.deepseek; // 使用实际的DeepSeek加载状态
-          case '通义千问':
-            return this.isLoading.tongyi;
           case "秘塔":
             return this.isLoading.metaso;
           case "知乎直答":

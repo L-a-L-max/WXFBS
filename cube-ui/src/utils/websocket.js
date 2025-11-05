@@ -5,10 +5,17 @@ class WebSocketClient {
     this.reconnectAttempts = 0;
     this.maxReconnectAttempts = 5;
     this.reconnectInterval = 3000; // 3秒重连间隔
+    this.isManualClose = false; // 标记是否手动关闭
   }
 
   // 初始化WebSocket连接
   connect(url, messageCallback) {
+    // 如果已存在连接，先关闭旧连接，避免重复连接
+    if (this.ws && this.ws.readyState !== WebSocket.CLOSED) {
+      this.ws.onclose = null; // 移除旧的关闭回调，避免触发重连
+      this.ws.close();
+    }
+    
     this.messageCallback = messageCallback;
     
     try {
@@ -17,6 +24,7 @@ class WebSocketClient {
       this.ws.onopen = () => {
         console.log('WebSocket连接成功');
         this.reconnectAttempts = 0; // 重置重连次数
+        this.isManualClose = false; // 重置手动关闭标志
         if (this.messageCallback) {
           this.messageCallback({ type: 'open' });
         }
@@ -33,7 +41,10 @@ class WebSocketClient {
         if (this.messageCallback) {
           this.messageCallback({ type: 'close' });
         }
-        this.reconnect(url);
+        // 只有非手动关闭时才自动重连
+        if (!this.isManualClose) {
+          this.reconnect(url);
+        }
       };
 
       this.ws.onerror = (error) => {
@@ -77,8 +88,13 @@ class WebSocketClient {
   // 关闭连接
   close() {
     if (this.ws) {
+      this.isManualClose = true; // 标记为手动关闭
       this.ws.close();
       this.ws = null;
+      // 重置标志，为下次连接做准备
+      setTimeout(() => {
+        this.isManualClose = false;
+      }, 100);
     }
   }
 

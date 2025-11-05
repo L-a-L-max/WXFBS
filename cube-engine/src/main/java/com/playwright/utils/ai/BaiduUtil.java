@@ -1802,7 +1802,7 @@ public class BaiduUtil {
 
             // 使用原链接作为分享链接，如果获取不到原链接则使用传统分享链接
             String finalShareUrl = (shareUrl != null && !shareUrl.trim().isEmpty()) ? shareUrl : originalUrl;
-            logInfo.sendResData(formattedContent, userId, "百度AI", "RETURN_BAIDU_RES", finalShareUrl, shareImgUrl);
+            logInfo.sendResData(formattedContent, userId, "百度AI", "RETURN_BAIDU_RES", finalShareUrl, shareImgUrl, userInfoRequest.getTaskId());
 
             if (oriLid != null && !oriLid.trim().isEmpty()) {
                 logInfo.sendTaskLog("百度AI会话ID已保存: " + oriLid, userId, "百度AI");

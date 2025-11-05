@@ -50,10 +50,37 @@ public class WechatMpServiceImpl implements WechatMpService {
             if (wo == null) {
                 throw new RuntimeException(WxExceptionConstants.WX_AUTH_EXCEPTION);
             }
+            
+            // 提取标题（如果标题为空或"标题待定"，尝试从内容中提取）
+            if (title == null || title.trim().isEmpty() || title.equals("标题待定")) {
+                int first = contentText.indexOf("《");
+                int second = contentText.indexOf("》", first + 1);
+                if (first >= 0 && second > first) {
+                    title = contentText.substring(first + 1, second);
+                    // 移除标题行
+                    contentText = contentText.substring(second + 1).trim();
+                    while (contentText.startsWith("\r\n") || contentText.startsWith("\n")) {
+                        contentText = contentText.replaceFirst("^[\r\n]+", "");
+                    }
+                }
+            }
+            
+            // 清理多余的换行
+            contentText = contentText.replaceAll("\r\n\r\n", "");
+            
+            // 添加原文链接
+            if (shareUrl != null && !shareUrl.trim().isEmpty()) {
+                String shareUrlHtml = "<p>原文链接：" + shareUrl + "</p>";
+                contentText = shareUrlHtml + contentText;
+            }
+            
+            log.info("📝 标题: {}", title);
+            log.info("📝 内容长度: {}", contentText.length());
+            
             WxMpService wxMpService = wechatMpConfig.getWxMpService(unionId);
             WxMpDraftArticles draft = new WxMpDraftArticles();
             draft.setTitle(title);
-            draft.setContent(contentText); // 包含图片标签的最终内容
+            draft.setContent(contentText); // 使用清理后的内容
             if(thumbMediaId == null) {
                 draft.setThumbMediaId(wo.getMediaId());
             } else {

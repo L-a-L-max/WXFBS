@@ -99,16 +99,17 @@
                 </div>
                 <div class="ai-capabilities" v-if="ai.capabilities && ai.capabilities.length > 0">
                   <!-- 通义只支持单选-->
-                  <div v-if="ai.name === '通义千问'" class="button-capability-group">
+                  <!-- 通义千问已注释 -->
+                  <!-- <div v-if="ai.name === '通义千问'" class="button-capability-group">
                     <el-button v-for="capability in ai.capabilities" :key="capability.value" size="small"
                       :type="ai.selectedCapability === capability.value ? 'primary' : 'info'" :disabled="!ai.enabled"
                       :plain="ai.selectedCapability !== capability.value"
                       @click="selectSingleCapability(ai, capability.value)" class="capability-button">
                       {{ capability.label }}
                     </el-button>
-                  </div>
+                  </div> -->
                   <!-- 百度AI选择 -->
-                  <div v-else-if="ai.name === '百度AI'" class="button-capability-group">
+                  <div v-if="ai.name === '百度AI'" class="button-capability-group">
                     <el-button size="small" :type="getCapabilityType(ai, 'deep_search')" :disabled="!ai.enabled"
                       :plain="getCapabilityPlain(ai, 'deep_search')" @click="toggleCapability(ai, 'deep_search')"
                       class="capability-button">
@@ -416,10 +417,10 @@
               <el-icon><ChatDotSquare /></el-icon>
               公众号
             </el-radio-button>
-            <el-radio-button label="zhihu_layout" value="zhihu_layout">
-              <el-icon><ChatDotSquare /></el-icon>
-              知乎
-            </el-radio-button>
+<!--            <el-radio-button label="zhihu_layout" value="zhihu_layout">-->
+<!--              <el-icon><ChatDotSquare /></el-icon>-->
+<!--              知乎-->
+<!--            </el-radio-button>-->
 
           </el-radio-group>
           <div class="media-description">
@@ -567,18 +568,19 @@ import { ChatDotSquare, Document, Link, Loading, Plus, Promotion } from '@elemen
             isExpanded: true,
             isSingleSelect: false,  // 添加单选标记
           },
-          {
-            name: '通义千问',
-            avatar: require('../../../assets/ai/qw.png'),
-            capabilities: [
-              { label: '深度思考', value: 'deep_thinking' },
-            ],
-            selectedCapability: '',
-            enabled: true,
-            status: 'idle',
-            progressLogs: [],
-            isExpanded: true
-          },
+          // 通义千问已注释
+          // {
+          //   name: '通义千问',
+          //   avatar: require('../../../assets/ai/qw.png'),
+          //   capabilities: [
+          //     { label: '深度思考', value: 'deep_thinking' },
+          //   ],
+          //   selectedCapability: '',
+          //   enabled: true,
+          //   status: 'idle',
+          //   progressLogs: [],
+          //   isExpanded: true
+          // },
           {
             name: "秘塔",
             avatar: require("../../../assets/ai/Metaso.png"),
@@ -863,12 +865,13 @@ import { ChatDotSquare, Document, Link, Loading, Plus, Promotion } from '@elemen
           }
 
 
-          if(ai.name === '通义千问' && ai.enabled) {
-            this.userInfoReq.roles = this.userInfoReq.roles + 'ty-qw,';
-            if(ai.selectedCapability.includes("deep_thinking")) {
-              this.userInfoReq.roles = this.userInfoReq.roles + 'ty-qw-sdsk,'
-            }
-          }
+          // 通义千问已注释
+          // if(ai.name === '通义千问' && ai.enabled) {
+          //   this.userInfoReq.roles = this.userInfoReq.roles + 'ty-qw,';
+          //   if(ai.selectedCapability.includes("deep_thinking")) {
+          //     this.userInfoReq.roles = this.userInfoReq.roles + 'ty-qw-sdsk,'
+          //   }
+          // }
 
           if(ai.name === '腾讯元宝') {
             // 根据选择的模型设置角色
@@ -994,21 +997,23 @@ import { ChatDotSquare, Document, Link, Loading, Plus, Promotion } from '@elemen
           return !(ai.selectedCapabilities && ai.selectedCapabilities.includes(value));
         }
       },
-      // 处理单选逻辑（通义千问、知乎直答）
+      // 处理单选逻辑（知乎直答）
       selectSingleCapability(ai, capabilityValue) {
         if(!ai.enabled) return;
 
         // 知乎直答不允许取消选择，至少保持一个选项
         if(ai.name === '知乎直答') {
           ai.selectedCapability = capabilityValue;
-        } else {
-          // 通义千问允许取消选择
-          if(ai.selectedCapability === capabilityValue) {
-           ai.selectedCapability = '';
-          } else {
-           ai.selectedCapability = capabilityValue;
-          }
         }
+        // 通义千问已注释
+        // else {
+        //   // 通义千问允许取消选择
+        //   if(ai.selectedCapability === capabilityValue) {
+        //    ai.selectedCapability = '';
+        //   } else {
+        //    ai.selectedCapability = capabilityValue;
+        //   }
+        // }
         this.$forceUpdate();
       },
       toggleCapability(ai, capabilityValue) {
@@ -1164,7 +1169,7 @@ import { ChatDotSquare, Document, Link, Loading, Plus, Promotion } from '@elemen
               this.handleWebSocketMessage(event.data);
               break;
             case "close":
-              this.$message.warning("WebSocket连接已关闭");
+              // WebSocket连接已关闭，不再显示警告
               break;
             case "error":
               this.$message.error("WebSocket连接错误");
@@ -1360,10 +1365,11 @@ import { ChatDotSquare, Document, Link, Loading, Plus, Promotion } from '@elemen
             console.log("收到DeepSeek消息:", dataObj);
             targetAI = this.enabledAIs.find((ai) => ai.name === "DeepSeek");
             break;
-          case 'RETURN_TY_RES':
-            console.log('收到通义千问消息:', data);
-            targetAI = this.enabledAIs.find(ai => ai.name === '通义千问');
-            break;
+          // 通义千问已注释
+          // case 'RETURN_TY_RES':
+          //   console.log('收到通义千问消息:', data);
+          //   targetAI = this.enabledAIs.find(ai => ai.name === '通义千问');
+          //   break;
           case "RETURN_METASO_RES":
             console.log("收到秘塔消息:", dataObj);
             targetAI = this.enabledAIs.find((ai) => ai.name === "秘塔");
@@ -1379,7 +1385,7 @@ import { ChatDotSquare, Document, Link, Loading, Plus, Promotion } from '@elemen
           console.log(`🎯 [结果处理] 找到目标AI: ${targetAI.name}`);
           console.log(`📋 [结果处理] 当前taskId: ${this.userInfoReq.taskId}, 消息taskId: ${dataObj.taskId}`);
           console.log(`📊 [结果处理] AI当前状态: ${targetAI.status}`);
-          
+
           // 只处理当前任务的结果
           if(dataObj.taskId && dataObj.taskId !== this.userInfoReq.taskId) {
             console.warn(`⚠️ [结果处理] 忽略其他任务的消息`);
@@ -1407,7 +1413,7 @@ import { ChatDotSquare, Document, Link, Loading, Plus, Promotion } from '@elemen
             (r) => r.aiName === targetAI.name && r.taskId === this.userInfoReq.taskId
           );
           console.log(`🔍 [结果处理] 检查是否已存在结果, 索引: ${resultIndex}`);
-          
+
           if(resultIndex === -1) {
             console.log(`➕ [结果处理] 添加新结果到results`);
             this.results.unshift({
@@ -1520,12 +1526,13 @@ import { ChatDotSquare, Document, Link, Loading, Plus, Promotion } from '@elemen
           }
 
 
-          if(ai.name === '通义千问') {
-            scoreRequest.params.roles = scoreRequest.params.roles + 'ty-qw,';
-            if(ai.selectedCapability.includes("deep_thinking")) {
-              scoreRequest.params.roles = scoreRequest.params.roles + 'ty-qw-sdsk,'
-            }
-          }
+          // 通义千问已注释
+          // if(ai.name === '通义千问') {
+          //   scoreRequest.params.roles = scoreRequest.params.roles + 'ty-qw,';
+          //   if(ai.selectedCapability.includes("deep_thinking")) {
+          //     scoreRequest.params.roles = scoreRequest.params.roles + 'ty-qw-sdsk,'
+          //   }
+          // }
 
           if(ai.name === '腾讯元宝') {
             // 根据选择的模型设置角色
@@ -1952,18 +1959,19 @@ import { ChatDotSquare, Document, Link, Loading, Plus, Promotion } from '@elemen
             isExpanded: true,
             isSingleSelect: false,  // 添加单选标记
           },
-          {
-            name: '通义千问',
-            avatar: require('../../../assets/ai/qw.png'),
-            capabilities: [
-              { label: '深度思考', value: 'deep_thinking' },
-            ],
-            selectedCapability: '',
-            enabled: true,
-            status: 'idle',
-            progressLogs: [],
-            isExpanded: true
-          },
+          // 通义千问已注释
+          // {
+          //   name: '通义千问',
+          //   avatar: require('../../../assets/ai/qw.png'),
+          //   capabilities: [
+          //     { label: '深度思考', value: 'deep_thinking' },
+          //   ],
+          //   selectedCapability: '',
+          //   enabled: true,
+          //   status: 'idle',
+          //   progressLogs: [],
+          //   isExpanded: true
+          // },
           {
             name: "秘塔",
             avatar: require("../../../assets/ai/Metaso.png"),
@@ -2048,7 +2056,7 @@ import { ChatDotSquare, Document, Link, Loading, Plus, Promotion } from '@elemen
           豆包: "560px",
           "腾讯元宝T1": "700px",
           "腾讯元宝DS": "700px",
-          通义千问: "700px",
+          // 通义千问: "700px", // 通义千问已注释
           秘塔: "700px",
         };
 
@@ -2162,12 +2170,13 @@ import { ChatDotSquare, Document, Link, Loading, Plus, Promotion } from '@elemen
           }
 
 
-          if(ai.name === '通义千问') {
-            layoutRequest.params.roles = layoutRequest.params.roles + 'ty-qw,';
-            if(ai.selectedCapability.includes("deep_thinking")) {
-              layoutRequest.params.roles = layoutRequest.params.roles + 'ty-qw-sdsk,'
-            }
-          }
+          // 通义千问已注释
+          // if(ai.name === '通义千问') {
+          //   layoutRequest.params.roles = layoutRequest.params.roles + 'ty-qw,';
+          //   if(ai.selectedCapability.includes("deep_thinking")) {
+          //     layoutRequest.params.roles = layoutRequest.params.roles + 'ty-qw-sdsk,'
+          //   }
+          // }
 
           if(ai.name === '腾讯元宝') {
             // 根据选择的模型设置角色
@@ -2496,26 +2505,26 @@ import { ChatDotSquare, Document, Link, Loading, Plus, Promotion } from '@elemen
     white-space: nowrap !important;
     font-weight: 500 !important;
   }
-  
+
   /* 开启状态按钮（绿色） */
   .global-control-btn.el-button--success {
     background-color: #67c23a !important;
     border-color: #67c23a !important;
     color: #fff !important;
   }
-  
+
   .global-control-btn.el-button--success:hover {
     background-color: #85ce61 !important;
     border-color: #85ce61 !important;
   }
-  
+
   /* 关闭状态按钮（红色） */
   .global-control-btn.el-button--danger {
     background-color: #f56c6c !important;
     border-color: #f56c6c !important;
     color: #fff !important;
   }
-  
+
   .global-control-btn.el-button--danger:hover {
     background-color: #f78989 !important;
     border-color: #f78989 !important;

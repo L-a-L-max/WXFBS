@@ -474,21 +474,30 @@ public class UserInfoServiceImpl implements UserInfoService {
         if (assessToken == null) {
             return ResultBody.FAIL;
         }
-//        return ResultBody.success("上传成功");
         String url = "https://api.weixin.qq.com/cgi-bin/draft/add?access_token=" + assessToken;
         String detailUrl = "https://api.weixin.qq.com/cgi-bin/draft/get?access_token=" + assessToken;
         String contentText = map.get("contentText").toString();
 
-//        int first = contentText.indexOf("《");
-//        int second = contentText.indexOf("》", first + 1);
-//        String title = contentText.substring(first + 1, second);
+        // 提取标题和内容
         String title = "标题待定";
-//            contentText = contentText.substring(second + 6);
-//        contentText = contentText.substring(second + 1, contentText.lastIndexOf(">") + 1);
-        contentText = contentText.substring(0, contentText.lastIndexOf(">") + 1);
+        int first = contentText.indexOf("《");
+        int second = contentText.indexOf("》", first + 1);
+        if (first >= 0 && second > first) {
+            title = contentText.substring(first + 1, second);
+            // 移除标题行，保留从《》后面开始的内容
+            contentText = contentText.substring(second + 1).trim();
+            // 移除开头的换行
+            while (contentText.startsWith("\r\n") || contentText.startsWith("\n")) {
+                contentText = contentText.replaceFirst("^[\r\n]+", "");
+            }
+        }
+        
+        // 清理多余的换行
         contentText = contentText.replaceAll("\r\n\r\n", "");
+        
+        // 添加原文链接
         if (map.get("shareUrl") != null && !map.get("shareUrl").equals("")) {
-            String shareUrl = "原文链接：" + map.get("shareUrl") + "<br><br>";
+            String shareUrl = "<p>原文链接：" + map.get("shareUrl") + "</p>";
             contentText = shareUrl + contentText;
         }
         List<JSONObject> paramlist = new ArrayList<>();

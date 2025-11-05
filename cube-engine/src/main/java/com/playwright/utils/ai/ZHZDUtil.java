@@ -418,5 +418,137 @@ public class ZHZDUtil {
         return html;
     }
 
+    /**
+     * 🔥 获取知乎直答的分享链接（使用新版DOM结构）
+     * 
+     * @param page Playwright页面实例
+     * @param userId 用户ID
+     * @param aiName AI名称
+     * @return 分享链接，如果获取失败返回当前页面URL
+     */
+    public String getZhihuShareLink(Page page, String userId, String aiName) {
+        try {
+            logInfo.sendTaskLog("正在获取分享链接...", userId, aiName);
+            
+            // 步骤1: 点击最新消息的分享按钮
+            Locator shareButton = page.locator("[data-testid='Button:Share:zhida_message_share_btn']").last();
+            if (shareButton.count() == 0) {
+                logInfo.sendTaskLog("⚠️ 未找到分享按钮", userId, aiName);
+                return page.url();
+            }
+            
+            shareButton.click();
+            Thread.sleep(1500); // 等待分享面板弹出
+            logInfo.sendTaskLog("已点击分享按钮，分享面板应已展开", userId, aiName);
+            
+            // 步骤2: 点击"复制链接"选项
+            // 使用多种选择器策略，提高兼容性
+            Locator copyLinkButton = null;
+            
+            // 策略1: 通过包含"复制链接"文本的可点击div
+            Locator option1 = page.locator("div[tabindex='0']:has(div:has-text('复制链接'))");
+            if (option1.count() > 0) {
+                copyLinkButton = option1.first();
+                logInfo.sendTaskLog("使用策略1定位'复制链接'按钮", userId, aiName);
+            }
+            
+            // 策略2: 通过类名和文本组合
+            if (copyLinkButton == null || copyLinkButton.count() == 0) {
+                Locator option2 = page.locator("div.css-175oi2r:has-text('复制链接')");
+                if (option2.count() > 0) {
+                    copyLinkButton = option2.first();
+                    logInfo.sendTaskLog("使用策略2定位'复制链接'按钮", userId, aiName);
+                }
+            }
+            
+            if (copyLinkButton == null || copyLinkButton.count() == 0) {
+                logInfo.sendTaskLog("⚠️ 未找到'复制链接'选项", userId, aiName);
+                // 尝试关闭分享面板
+                try {
+                    page.locator("svg[fill='#191B1F']").first().click();
+                } catch (Exception e) {
+                    // 关闭失败不影响流程
+                }
+                return page.url();
+            }
+            
+            copyLinkButton.click();
+            Thread.sleep(2000); // 等待链接复制到剪贴板
+            logInfo.sendTaskLog("已点击'复制链接'，正在从剪贴板读取...", userId, aiName);
+            
+            // 步骤3: 从剪贴板读取链接
+            String shareUrl = (String) page.evaluate("navigator.clipboard.readText()");
+            
+            if (shareUrl != null && !shareUrl.trim().isEmpty()) {
+                logInfo.sendTaskLog("✅ 成功获取分享链接: " + shareUrl, userId, aiName);
+                return shareUrl;
+            } else {
+                logInfo.sendTaskLog("⚠️ 剪贴板为空，使用当前页面URL", userId, aiName);
+                return page.url();
+            }
+            
+        } catch (Exception e) {
+            logInfo.sendTaskLog("获取分享链接失败: " + e.getMessage(), userId, aiName);
+            return page.url();
+        }
+    }
+
+    /**
+     * 🔥 获取知乎直答的分享图片（使用新版DOM结构）
+     * 
+     * @param page Playwright页面实例
+     * @param userId 用户ID
+     * @param aiName AI名称
+     * @param uploadUrl 图片上传URL
+     * @param downloadAction 下载图片的回调
+     * @return 分享图片URL，如果获取失败返回空字符串
+     */
+    public String getZhihuShareImage(Page page, String userId, String aiName, String uploadUrl, Runnable downloadAction) {
+        try {
+            logInfo.sendTaskLog("正在获取分享图片...", userId, aiName);
+            
+            // 步骤1: 点击最新消息的分享按钮（如果分享面板已关闭）
+            try {
+                // 检查分享面板是否已打开
+                Locator sharePanel = page.locator("div.css-175oi2r:has-text('分享对话')");
+                if (sharePanel.count() == 0) {
+                    // 分享面板未打开，需要重新点击分享按钮
+                    logInfo.sendTaskLog("分享面板已关闭，重新打开...", userId, aiName);
+                    Locator shareButton = page.locator("[data-testid='Button:Share:zhida_message_share_btn']").last();
+                    shareButton.click();
+                    Thread.sleep(1500);
+                }
+            } catch (Exception e) {
+                logInfo.sendTaskLog("检查分享面板状态失败，尝试继续...", userId, aiName);
+            }
+            
+            // 步骤2: 点击"生成图片"选项
+            Locator generateImageButton = page.locator("div.css-175oi2r:has-text('生成图片')");
+            if (generateImageButton.count() == 0) {
+                logInfo.sendTaskLog("⚠️ 未找到'生成图片'选项", userId, aiName);
+                return "";
+            }
+            
+            generateImageButton.click();
+            Thread.sleep(3000); // 等待图片生成
+            logInfo.sendTaskLog("已点击'生成图片'，等待图片生成...", userId, aiName);
+            
+            // 步骤3: 等待并下载图片
+            // 生成图片后会出现下载按钮，需要等待一段时间
+            page.waitForTimeout(2000);
+            
+            // 执行下载操作（调用者提供的下载回调）
+            if (downloadAction != null) {
+                downloadAction.run();
+                logInfo.sendTaskLog("✅ 图片下载完成", userId, aiName);
+            }
+            
+            return ""; // 图片处理由 ScreenshotUtil 完成，这里返回空字符串
+            
+        } catch (Exception e) {
+            logInfo.sendTaskLog("获取分享图片失败: " + e.getMessage(), userId, aiName);
+            return "";
+        }
+    }
 
 }

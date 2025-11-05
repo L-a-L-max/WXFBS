@@ -100,16 +100,17 @@
                 </div>
                 <div class="ai-capabilities" v-if="ai.capabilities && ai.capabilities.length > 0">
                   <!-- 通义只支持单选-->
-                  <div v-if="ai.name === '通义千问'" class="button-capability-group">
+                  <!-- 通义千问已注释 -->
+                  <!-- <div v-if="ai.name === '通义千问'" class="button-capability-group">
                     <el-button v-for="capability in ai.capabilities" :key="capability.value" size="small"
                       :type="ai.selectedCapability === capability.value ? 'primary' : 'info'" :disabled="!ai.enabled"
                       :plain="ai.selectedCapability !== capability.value"
                       @click="selectSingleCapability(ai, capability.value)" class="capability-button">
                       {{ capability.label }}
                     </el-button>
-                  </div>
+                  </div> -->
                   <!-- 百度AI选择 -->
-                  <div v-else-if="ai.name === '百度AI'" class="button-capability-group">
+                  <div v-if="ai.name === '百度AI'" class="button-capability-group">
                     <el-button size="small" :type="getCapabilityType(ai, 'deep_search')" :disabled="!ai.enabled"
                       :plain="getCapabilityPlain(ai, 'deep_search')" @click="toggleCapability(ai, 'deep_search')"
                       class="capability-button">
@@ -543,19 +544,21 @@
               <el-icon><ChatDotSquare /></el-icon>
               公众号
             </el-radio-button>
-            <el-radio-button label="zhihu_layout" value="zhihu_layout">
+            <!-- 已注释：知乎选项 -->
+            <!-- <el-radio-button label="zhihu_layout" value="zhihu_layout">
               <el-icon><ChatDotSquare /></el-icon>
               知乎
-            </el-radio-button>
+            </el-radio-button> -->
 
           </el-radio-group>
           <div class="media-description">
             <template v-if="selectedMedia === 'wechat_layout'">
               <small>📝 将内容排版为适合微信公众号的HTML格式，并自动投递到草稿箱</small>
             </template>
-            <template  v-else-if="selectedMedia === 'zhihu_layout'">
+            <!-- 已注释：知乎描述 -->
+            <!-- <template  v-else-if="selectedMedia === 'zhihu_layout'">
               <small>📝 将内容排版为适合知乎的文本格式，并自动投递到草稿箱</small>
-            </template>
+            </template> -->
 
           </div>
         </div>
@@ -816,18 +819,19 @@ import {
             isExpanded: true,
             isSingleSelect: false,  // 添加单选标记
           },
-          {
-            name: '通义千问',
-            avatar: require('../../../assets/ai/qw.png'),
-            capabilities: [
-              { label: '深度思考', value: 'deep_thinking' },
-            ],
-            selectedCapability: '',
-            enabled: true,
-            status: 'idle',
-            progressLogs: [],
-            isExpanded: true
-          },
+          // 通义千问已注释
+          // {
+          //   name: '通义千问',
+          //   avatar: require('../../../assets/ai/qw.png'),
+          //   capabilities: [
+          //     { label: '深度思考', value: 'deep_thinking' },
+          //   ],
+          //   selectedCapability: '',
+          //   enabled: true,
+          //   status: 'idle',
+          //   progressLogs: [],
+          //   isExpanded: true
+          // },
           {
             name: "秘塔",
             avatar: require("../../../assets/ai/Metaso.png"),
@@ -866,18 +870,19 @@ import {
             name: "wechat_layout",
             label: "公众号",
           },
-          {
-            name: "zhihu_layout",
-            label: "知乎",
-          },
-          {
-            name: "weitoutiao_layout",
-            label: "微头条",
-          },
-          {
-            name: "baijiahao_layout",
-            label: "百家号",
-          }
+          // 已注释：知乎、微头条、百家号
+          // {
+          //   name: "zhihu_layout",
+          //   label: "知乎",
+          // },
+          // {
+          //   name: "weitoutiao_layout",
+          //   label: "微头条",
+          // },
+          // {
+          //   name: "baijiahao_layout",
+          //   label: "百家号",
+          // }
         ],
         promptInput: "",
         taskStarted: false,
@@ -1663,12 +1668,13 @@ async sendPrompt() {
           }
 
 
-          if(ai.name === '通义千问' && ai.enabled) {
-            this.userInfoReq.roles = this.userInfoReq.roles + 'ty-qw,';
-            if(ai.selectedCapability.includes("deep_thinking")) {
-              this.userInfoReq.roles = this.userInfoReq.roles + 'ty-qw-sdsk,'
-            }
-          }
+          // 通义千问已注释
+          // if(ai.name === '通义千问' && ai.enabled) {
+          //   this.userInfoReq.roles = this.userInfoReq.roles + 'ty-qw,';
+          //   if(ai.selectedCapability.includes("deep_thinking")) {
+          //     this.userInfoReq.roles = this.userInfoReq.roles + 'ty-qw-sdsk,'
+          //   }
+          // }
 
           if(ai.name === '腾讯元宝') {
             // 根据选择的模型设置角色
@@ -1800,21 +1806,23 @@ async sendPrompt() {
           return !(ai.selectedCapabilities && ai.selectedCapabilities.includes(value));
         }
       },
-      // 处理单选逻辑（通义千问、知乎直答）
+      // 处理单选逻辑（知乎直答）
       selectSingleCapability(ai, capabilityValue) {
         if(!ai.enabled) return;
 
         // 知乎直答不允许取消选择，至少保持一个选项
         if(ai.name === '知乎直答') {
           ai.selectedCapability = capabilityValue;
-        } else {
-          // 通义千问允许取消选择
-          if(ai.selectedCapability === capabilityValue) {
-           ai.selectedCapability = '';
-          } else {
-           ai.selectedCapability = capabilityValue;
-          }
-        }
+        } 
+        // 通义千问已注释
+        // else {
+        //   // 通义千问允许取消选择
+        //   if(ai.selectedCapability === capabilityValue) {
+        //    ai.selectedCapability = '';
+        //   } else {
+        //    ai.selectedCapability = capabilityValue;
+        //   }
+        // }
         this.$forceUpdate();
       },
       toggleCapability(ai, capabilityValue) {
@@ -1901,14 +1909,15 @@ htmlToText(html) {
   const tempDiv = document.createElement('div');
   tempDiv.innerHTML = html;
   
+  // 通义千问已注释
   // 处理通义千问的特殊样式
-  const tongyiElements = tempDiv.querySelectorAll('[class*="tongyi-response"]');
-  tongyiElements.forEach(el => {
-    // 移除class属性
-    el.removeAttribute('class');
-    // 移除style属性
-    el.removeAttribute('style');
-  });
+  // const tongyiElements = tempDiv.querySelectorAll('[class*="tongyi-response"]');
+  // tongyiElements.forEach(el => {
+  //   // 移除class属性
+  //   el.removeAttribute('class');
+  //   // 移除style属性
+  //   el.removeAttribute('style');
+  // });
   
   // 移除所有style标签和内联样式
   const styleTags = tempDiv.querySelectorAll('style');
@@ -1999,7 +2008,7 @@ htmlToText(html) {
               this.handleWebSocketMessage(event.data);
               break;
             case "close":
-              this.$message.warning("WebSocket连接已关闭");
+              // WebSocket连接已关闭，不再显示警告
               break;
             case "error":
               this.$message.error("WebSocket连接错误");
@@ -2253,10 +2262,11 @@ htmlToText(html) {
             console.log("收到DeepSeek消息:", dataObj);
             targetAI = this.enabledAIs.find((ai) => ai.name === "DeepSeek");
             break;
-          case 'RETURN_TY_RES':
-            console.log('收到通义千问消息:', data);
-            targetAI = this.enabledAIs.find(ai => ai.name === '通义千问');
-            break;
+          // 通义千问已注释
+          // case 'RETURN_TY_RES':
+          //   console.log('收到通义千问消息:', data);
+          //   targetAI = this.enabledAIs.find(ai => ai.name === '通义千问');
+          //   break;
           case "RETURN_METASO_RES":
             console.log("收到秘塔消息:", dataObj);
             targetAI = this.enabledAIs.find((ai) => ai.name === "秘塔");
@@ -2432,12 +2442,13 @@ showScoreDialog() {
           }
 
 
-          if(ai.name === '通义千问') {
-            scoreRequest.params.roles = scoreRequest.params.roles + 'ty-qw,';
-            if(ai.selectedCapability.includes("deep_thinking")) {
-              scoreRequest.params.roles = scoreRequest.params.roles + 'ty-qw-sdsk,'
-            }
-          }
+          // 通义千问已注释
+          // if(ai.name === '通义千问') {
+          //   scoreRequest.params.roles = scoreRequest.params.roles + 'ty-qw,';
+          //   if(ai.selectedCapability.includes("deep_thinking")) {
+          //     scoreRequest.params.roles = scoreRequest.params.roles + 'ty-qw-sdsk,'
+          //   }
+          // }
 
           if(ai.name === '腾讯元宝') {
             // 根据选择的模型设置角色
@@ -2875,18 +2886,19 @@ showScoreDialog() {
             isExpanded: true,
             isSingleSelect: false,  // 添加单选标记
           },
-          {
-            name: '通义千问',
-            avatar: require('../../../assets/ai/qw.png'),
-            capabilities: [
-              { label: '深度思考', value: 'deep_thinking' },
-            ],
-            selectedCapability: '',
-            enabled: true,
-            status: 'idle',
-            progressLogs: [],
-            isExpanded: true
-          },
+          // 通义千问已注释
+          // {
+          //   name: '通义千问',
+          //   avatar: require('../../../assets/ai/qw.png'),
+          //   capabilities: [
+          //     { label: '深度思考', value: 'deep_thinking' },
+          //   ],
+          //   selectedCapability: '',
+          //   enabled: true,
+          //   status: 'idle',
+          //   progressLogs: [],
+          //   isExpanded: true
+          // },
           {
             name: "秘塔",
             avatar: require("../../../assets/ai/Metaso.png"),
@@ -2974,7 +2986,7 @@ showScoreDialog() {
           豆包: "560px",
           "腾讯元宝T1": "700px",
           "腾讯元宝DS": "700px",
-          通义千问: "700px",
+          // 通义千问: "700px", // 通义千问已注释
           秘塔: "700px",
         };
 
@@ -2987,7 +2999,8 @@ showScoreDialog() {
       },
 
  handlePushToMedia(result) {
-  // 创建一个新的结果对象，如果是通义千问就先清理内容
+  // 创建一个新的结果对象
+  // 通义千问已注释：如果是通义千问就先清理内容
   let processedResult = { ...result };
   
   // 不管是什么AI，都使用htmlToText方法清理内容
@@ -3096,12 +3109,13 @@ showScoreDialog() {
           }
 
 
-          if(ai.name === '通义千问') {
-            layoutRequest.params.roles = layoutRequest.params.roles + 'ty-qw,';
-            if(ai.selectedCapability.includes("deep_thinking")) {
-              layoutRequest.params.roles = layoutRequest.params.roles + 'ty-qw-sdsk,'
-            }
-          }
+          // 通义千问已注释
+          // if(ai.name === '通义千问') {
+          //   layoutRequest.params.roles = layoutRequest.params.roles + 'ty-qw,';
+          //   if(ai.selectedCapability.includes("deep_thinking")) {
+          //     layoutRequest.params.roles = layoutRequest.params.roles + 'ty-qw-sdsk,'
+          //   }
+          // }
 
           if(ai.name === '腾讯元宝') {
             // 根据选择的模型设置角色
@@ -3174,9 +3188,10 @@ showScoreDialog() {
             if(ai.selectedCapabilities.includes("all_web_search")) {
               layoutRequest.params.roles = layoutRequest.params.roles + "zhzd-qw,";
             }
-            if(ai.selectedCapabilities.includes("zhihu_search")) {
-              layoutRequest.params.roles = layoutRequest.params.roles + "zhzd-zh,";
-            }
+            // 已注释：知乎搜索能力
+            // if(ai.selectedCapabilities.includes("zhihu_search")) {
+            //   layoutRequest.params.roles = layoutRequest.params.roles + "zhzd-zh,";
+            // }
             if(ai.selectedCapabilities.includes("academic_search")) {
               layoutRequest.params.roles = layoutRequest.params.roles + "zhzd-xs,";
             }
@@ -3284,68 +3299,71 @@ showScoreDialog() {
             .finally(() => {
               this.pushingToWechat = false;
             });
-} else if(mediaName.includes('zhihu')) {
-    // 先打印原始HTML内容
-  console.log('=== 原始HTML内容 ===');
-  console.log(result.content);
-  console.log('=== 原始内容长度 ===', result.content.length);
-  // 将HTML内容转换为Markdown格式
-  const markdownContent = this.htmlToMarkdown(result.content);
-   // 打印转换后的Markdown内容到控制台
-  console.log('=== 转换后的Markdown内容 ===');
-  console.log(markdownContent);
-  console.log('=== 内容结束 ===');
-  // 构建知乎投递请求
-  const mediaRequest = {
-    jsonrpc: "2.0",
-    id: uuidv4(),
-    method: "媒体投递",
-    params: {
-      taskId: uuidv4(),
-      userId: this.userId,
-      corpId: this.corpId,
-      aiName: result.aiName,
-      userPrompt: markdownContent, // 使用转换后的Markdown内容
-      selectedMedia: "zhihu_layout",
-    },
-  };
-
-
-          this.message(mediaRequest);
-
-          // 创建媒体投递任务节点（类似智能排版）
-          const mediaDeliveryAI = {
-            name: "媒体投递",
-            avatar: require("../../../assets/ai/yuanbao.png"),
-            capabilities: [],
-            selectedCapabilities: [],
-            enabled: true,
-            status: "running",
-            progressLogs: [
-              {
-                content: "知乎投递任务已提交，正在投递...",
-                timestamp: new Date(),
-                isCompleted: false,
-                type: "媒体投递",
-              },
-            ],
-            isExpanded: true,
-          };
-
-          // 将媒体投递任务添加到任务列表
-          const existIndex = this.enabledAIs.findIndex(ai => ai.name === "媒体投递");
-          if(existIndex === -1) {
-            this.enabledAIs.unshift(mediaDeliveryAI);
-          } else {
-            this.enabledAIs[existIndex] = mediaDeliveryAI;
-            const media = this.enabledAIs.splice(existIndex, 1)[0];
-            this.enabledAIs.unshift(media);
-          }
-
-          this.$forceUpdate();
-          this.$message.success("知乎投递请求已发送，请等待结果");
-          this.pushingToWechat = false;
         }
+// 已注释：知乎投递逻辑
+// else if(mediaName.includes('zhihu')) {
+//     // 先打印原始HTML内容
+//   console.log('=== 原始HTML内容 ===');
+//   console.log(result.content);
+//   console.log('=== 原始内容长度 ===', result.content.length);
+//   // 将HTML内容转换为Markdown格式
+//   const markdownContent = this.htmlToMarkdown(result.content);
+//    // 打印转换后的Markdown内容到控制台
+//   console.log('=== 转换后的Markdown内容 ===');
+//   console.log(markdownContent);
+//   console.log('=== 内容结束 ===');
+//   // 构建知乎投递请求
+//   const mediaRequest = {
+//     jsonrpc: "2.0",
+//     id: uuidv4(),
+//     method: "媒体投递",
+//     params: {
+//       taskId: uuidv4(),
+//       userId: this.userId,
+//       corpId: this.corpId,
+//       aiName: result.aiName,
+//       userPrompt: markdownContent, // 使用转换后的Markdown内容
+//       selectedMedia: "zhihu_layout",
+//     },
+//   };
+
+
+//           this.message(mediaRequest);
+
+//           // 创建媒体投递任务节点（类似智能排版）
+//           const mediaDeliveryAI = {
+//             name: "媒体投递",
+//             avatar: require("../../../assets/ai/yuanbao.png"),
+//             capabilities: [],
+//             selectedCapabilities: [],
+//             enabled: true,
+//             status: "running",
+//             progressLogs: [
+//               {
+//                 content: "知乎投递任务已提交，正在投递...",
+//                 timestamp: new Date(),
+//                 isCompleted: false,
+//                 type: "媒体投递",
+//               },
+//             ],
+//             isExpanded: true,
+//           };
+
+//           // 将媒体投递任务添加到任务列表
+//           const existIndex = this.enabledAIs.findIndex(ai => ai.name === "媒体投递");
+//           if(existIndex === -1) {
+//             this.enabledAIs.unshift(mediaDeliveryAI);
+//           } else {
+//           this.enabledAIs[existIndex] = mediaDeliveryAI;
+//             const media = this.enabledAIs.splice(existIndex, 1)[0];
+//             this.enabledAIs.unshift(media);
+//           }
+
+//           this.$forceUpdate();
+//           this.$message.success("知乎投递请求已发送，请等待结果");
+//           this.pushingToWechat = false;
+//         }
+// 已注释结束：知乎投递逻辑
       },
 
     },

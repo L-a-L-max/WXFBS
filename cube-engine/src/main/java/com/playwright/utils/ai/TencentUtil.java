@@ -260,7 +260,7 @@ public class TencentUtil {
 
             // 日志记录与数据保存
             logInfo.sendTaskLog("执行完成", userId, agentName);
-            logInfo.sendResData(copiedText, userId, agentName, resName, shareUrl, sharImgUrl);
+            logInfo.sendResData(copiedText, userId, agentName, resName, shareUrl, sharImgUrl, userInfoRequest.getTaskId());
 
             Thread.sleep(3000);
             userInfoRequest.setDraftContent(copiedText);
@@ -552,7 +552,7 @@ public class TencentUtil {
                 if (aiName.contains("znpb")) {
                     try {
                         logInfo.sendTaskLog("执行完成", userId, "智能排版");
-                        logInfo.sendResData(copiedText, userId, "智能排版", "RETURN_ZNPB_RES", "", "");
+                        logInfo.sendResData(copiedText, userId, "智能排版", "RETURN_ZNPB_RES", "", "", userInfoRequest.getTaskId());
                         // 等待所有线程执行完毕
                         userInfoRequest.setDraftContent(copiedText);
                         userInfoRequest.setAiName("智能排版");
@@ -570,7 +570,7 @@ public class TencentUtil {
 
                     // 确保有内容才发送
                     if (copiedText != null && !copiedText.trim().isEmpty()) {
-                        logInfo.sendResData(copiedText, userId, "腾讯元宝T1", "RETURN_YBT1_RES", shareUrl, sharImgUrl);
+                        logInfo.sendResData(copiedText, userId, "腾讯元宝T1", "RETURN_YBT1_RES", shareUrl, sharImgUrl, userInfoRequest.getTaskId());
                         logInfo.sendTaskLog("腾讯元宝T1结果已发送到前端", userId, "腾讯元宝T1");
                     } else {
                         logInfo.sendTaskLog("腾讯元宝T1内容为空，跳过发送", userId, "腾讯元宝T1");
@@ -582,7 +582,7 @@ public class TencentUtil {
 
                     // 确保有内容才发送，并修正AI名称
                     if (copiedText != null && !copiedText.trim().isEmpty()) {
-                        logInfo.sendResData(copiedText, userId, "腾讯元宝DS", "RETURN_YBDS_RES", shareUrl, sharImgUrl);
+                        logInfo.sendResData(copiedText, userId, "腾讯元宝DS", "RETURN_YBDS_RES", shareUrl, sharImgUrl, userInfoRequest.getTaskId());
                         logInfo.sendTaskLog("腾讯元宝DS结果已发送到前端", userId, "腾讯元宝DS");
                     } else {
                         logInfo.sendTaskLog("腾讯元宝DS内容为空，跳过发送", userId, "腾讯元宝DS");

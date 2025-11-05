@@ -273,7 +273,9 @@ public class DeepSeekUtil {
                 Map<String, Object> responseData = getLatestDeepSeekResponseWithCompletion(page);
                 currentContent = (String) responseData.getOrDefault("content", "");
                 String textContent = (String) responseData.getOrDefault("textContent", "");
-                boolean hasActionButtons = (Boolean) responseData.getOrDefault("hasActionButtons", false);
+                // 🔥 安全地获取 hasActionButtons，避免 NullPointerException
+                Object hasActionButtonsObj = responseData.get("hasActionButtons");
+                boolean hasActionButtons = hasActionButtonsObj != null ? (Boolean) hasActionButtonsObj : false;
                 int contentLength = 0;
                 if (responseData.containsKey("length")) {
                     contentLength = ((Number) responseData.get("length")).intValue();
@@ -1291,7 +1293,7 @@ public class DeepSeekUtil {
             }
             
             // 5. 发送内容到前端
-            logInfo.sendResData(displayContent, userId, "DeepSeek", "RETURN_DEEPSEEK_RES", shareUrl, shareImgUrl);
+            logInfo.sendResData(displayContent, userId, "DeepSeek", "RETURN_DEEPSEEK_RES", shareUrl, shareImgUrl, userInfoRequest.getTaskId());
             
             // 6. 保存内容到稿库
             userInfoRequest.setDraftContent(displayContent);

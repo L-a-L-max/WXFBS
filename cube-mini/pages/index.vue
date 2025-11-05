@@ -110,14 +110,14 @@ export default {
 				description: '基于知乎优质内容的智能问答系统',
 				type: 'zhzd'
 			},
-			{
-				name: '通义千问',
-				avatar: 'https://u3w.com/chatfile/TongYi.png',
-				icon: 'https://u3w.com/chatfile/TongYi.png',
-				title: '通义千问',
-				description: '阿里巴巴达摩院开发的大语言模型',
-				type: 'tongyi'
-			},
+			// {
+			// 	name: '通义千问',
+			// 	avatar: 'https://u3w.com/chatfile/TongYi.png',
+			// 	icon: 'https://u3w.com/chatfile/TongYi.png',
+			// 	title: '通义千问',
+			// 	description: '阿里巴巴达摩院开发的大语言模型',
+			// 	type: 'tongyi'
+			// },
 			{
 				name: '百度AI',
 				avatar: 'https://u3w.com/chatfile/baiduAI.png',
