@@ -4,8 +4,8 @@
 请先完成 [公共环境部署](../common_deployment_guide.md) 中的所有步骤，包括 Node.js、npm 的安装和项目仓库克隆。
 
 ### 环境要求
-- Node.js (v16.x)
-- npm
+- Node.js (25)
+- npm 10+
 - HBuilderX
 - 微信开发者工具
 - Windows 10系统及以上 (64位)
