@@ -123,7 +123,6 @@ spring:
   | 豆包       | dou_bao       | **是**           |
   | 腾讯元宝T1 | yuan_bao_T1   | **是**           |
   | 腾讯元宝DS | yuan_bao_DS   | **是**           |
-  | 通义千问   | tong_yi       | **是**           |
   | 知乎直答   | zhi_hu_zhi_da | 否               |
   | 秘塔       | metaso        | **是**           |
 
