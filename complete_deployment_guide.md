@@ -13,7 +13,7 @@ U3W优立方AI主机完整部署说明
 - **Maven**：用于项目构建和依赖管理
 - **MySQL 8.0+**：关系型数据库
 - **Redis 6.0+**：缓存服务
-- **Node.js 16.x/18.x**：前端环境
+- **Node.js 25 **：前端环境
 - **操作系统**：Windows 10系统及以上
 - **内存要求**：建议16GB（8GB会有卡顿现象）
 
@@ -49,7 +49,7 @@ redis-server --service-start
 4. 配置相关环境变量
 
 #### 安装Node.js
-1. 下载Node.js 16.x或18.x：[Node.js官网](https://nodejs.org/)
+1. 下载Node.js 25：[Node.js官网](https://nodejs.org/)
 2. 运行安装程序，勾选"Add to PATH"选项
 3. 验证安装：`node -v`
 
