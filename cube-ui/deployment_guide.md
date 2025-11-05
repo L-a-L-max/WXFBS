@@ -4,8 +4,8 @@
 请先完成 [公共环境部署](../common_deployment_guide.md) 中的所有步骤，包括 JDK、Maven 的安装和项目仓库克隆。
 
 ### 环境要求
-- Node.js 16.x 或 18.x
-- npm 8.x 或以上
+- Node.js 25
+- npm 10 或以上
 - Windows 10系统及以上
 
 ### 部署步骤
