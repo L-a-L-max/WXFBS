@@ -29,7 +29,7 @@ mysql -u root -p
 ```
 
 #### 安装Redis 6.0+
-1. 下载Redis 6.0或更高版本：[Redis官方下载](https://github.com/tporadowski/redis/releases)
+1. 下载Redis 6.0或更高版本
 2. 解压到指定目录（例如：`C:\Program Files\Redis`）
 3. 配置Redis(示例)：
    - 编辑`redis.windows.conf`文件
@@ -233,7 +233,7 @@ java -jar target/U3W.jar
    - 使用微信扫描返回的二维码
    - 确认登录成功
 
-![AI登录示例](docs-img/%E7%8E%B0%E5%9C%BA.png)
+![AI登录示例](docs-img/login-img.png)
 
 
 ## 第七阶段：小程序部署
@@ -376,8 +376,7 @@ java -jar target/U3W.jar
 2. 获取文章链接
 3. 截图保存测试结果
    ![投递文章到公众号](docs-img/12.png)
-4. 向技术支持反馈测试结果
-   ![公众号草稿箱反馈](docs-img/14.png)
+<!--   -->
 ## 第十二阶段：主要功能测试
 
 ### 12.1 提示词功能
@@ -404,7 +403,6 @@ java -jar target/U3W.jar
 当以下条件全部满足时，表示部署成功：
 - ✅ 前端页面正常显示（账号密码登录）
 - ✅ 元宝,豆包,百度AI,DeepSeek,知乎直答,秘塔登录成功
-- ✅ 微头条、百家号、知乎登录成功
 - ✅ 内网穿透服务正常
 - ✅ 元器账号配置完成
 - ✅ MCP服务正常响应
