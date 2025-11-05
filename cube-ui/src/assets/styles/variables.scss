@@ -8,18 +8,20 @@ $tiffany: #4AB7BD;
 $yellow:#FEC171;
 $panGreen: #30B08F;
 
-// 默认菜单主题风格
-$base-menu-color:#022348;
-$base-menu-color-active:#1616d0;
-$base-menu-background:#f2f7fe;
-$base-logo-title-color: #e31717;
+// 默认菜单主题风格 - 优化的配色方案
+$base-menu-color:#2c3e50;  // 更柔和的深灰蓝色
+$base-menu-color-active:#409EFF;  // Element Plus 主题色
+$base-menu-background:#ffffff;  // 纯白背景更现代
+$base-logo-title-color: #409EFF;  // 统一主题色
 
-$base-menu-light-color:rgba(219, 30, 30, 0.7);
+// 亮色主题
+$base-menu-light-color:#606266;  // Element Plus 常规文本色
 $base-menu-light-background:#ffffff;
-$base-logo-light-title-color: #001529;
+$base-logo-light-title-color: #303133;
 
-$base-sub-menu-background:#1f2d3d;
-$base-sub-menu-hover:#001528;
+// 子菜单样式
+$base-sub-menu-background:#f5f7fa;  // 更浅的灰色背景
+$base-sub-menu-hover:#ecf5ff;  // 浅蓝色hover效果
 
 // 自定义暗色菜单风格
 /**

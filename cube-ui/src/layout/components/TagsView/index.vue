@@ -126,7 +126,7 @@ export default {
   let tags = []
   routes.forEach(route => {
     if (route.meta && route.meta.affix) {
-      // 拼接路径，避免 path 包
+      // 拼接路径，避免相对路径问题
       const tagPath = basePath
         ? `${basePath.replace(/\/$/, '')}/${route.path.replace(/^\//, '')}`
         : route.path
@@ -138,7 +138,11 @@ export default {
       })
     }
     if (route.children) {
-      const tempTags = this.filterAffixTags(route.children, route.path)
+      // 修复：传递完整路径而不是相对路径
+      const fullPath = route.path.startsWith('/')
+        ? route.path
+        : `${basePath.replace(/\/$/, '')}/${route.path.replace(/^\//, '')}`
+      const tempTags = this.filterAffixTags(route.children, fullPath)
       if (tempTags.length >= 1) {
         tags = [...tags, ...tempTags]
       }

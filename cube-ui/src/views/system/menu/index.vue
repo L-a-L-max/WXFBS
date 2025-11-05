@@ -166,7 +166,7 @@
               <template #label>
                 <span>
                   <el-tooltip content="选择是外链则路由地址需要以`http(s)://`开头" placement="top">
-                  <el-icon><Question /></el-icon>
+                  <el-icon><QuestionFilled /></el-icon>
                   </el-tooltip>
                   是否外链
                 </span>
@@ -182,7 +182,7 @@
               <template #label>
                 <span>
                   <el-tooltip content="访问的路由地址，如：`user`，如外网地址需内链访问则以`http(s)://`开头" placement="top">
-                  <el-icon><Question /></el-icon>
+                  <el-icon><QuestionFilled /></el-icon>
                   </el-tooltip>
                   路由地址
                 </span>
@@ -195,7 +195,7 @@
               <template #label>
                 <span>
                   <el-tooltip content="访问的组件路径，如：`system/user/index`，默认在`views`目录下" placement="top">
-                  <el-icon><Question /></el-icon>
+                  <el-icon><QuestionFilled /></el-icon>
                   </el-tooltip>
                   组件路径
                 </span>
@@ -208,7 +208,7 @@
               <template #label>
                 <span>
                   <el-tooltip content="控制器中定义的权限字符，如：@PreAuthorize(`@ss.hasPermi('system:user:list')`)" placement="top">
-                  <el-icon><Question /></el-icon>
+                  <el-icon><QuestionFilled /></el-icon>
                   </el-tooltip>
                   权限字符
                 </span>
@@ -221,7 +221,7 @@
               <template #label>
                 <span>
                   <el-tooltip content='访问路由的默认传递参数，如：`{"id": 1, "name": "ry"}`' placement="top">
-                  <el-icon><Question /></el-icon>
+                  <el-icon><QuestionFilled /></el-icon>
                   </el-tooltip>
                   路由参数
                 </span>
@@ -234,7 +234,7 @@
               <template #label>
                 <span>
                   <el-tooltip content="选择是则会被`keep-alive`缓存，需要匹配组件的`name`和地址保持一致" placement="top">
-                  <el-icon><Question /></el-icon>
+                  <el-icon><QuestionFilled /></el-icon>
                   </el-tooltip>
                   是否缓存
                 </span>
@@ -250,7 +250,7 @@
               <template #label>
                 <span>
                   <el-tooltip content="选择隐藏则路由将不会出现在侧边栏，但仍然可以访问" placement="top">
-                  <el-icon><Question /></el-icon>
+                  <el-icon><QuestionFilled /></el-icon>
                   </el-tooltip>
                   显示状态
                 </span>
@@ -269,7 +269,7 @@
               <template #label>
                 <span>
                   <el-tooltip content="选择停用则路由将不会出现在侧边栏，也不能被访问" placement="top">
-                  <el-icon><Question /></el-icon>
+                  <el-icon><QuestionFilled /></el-icon>
                   </el-tooltip>
                   菜单状态
                 </span>
@@ -296,7 +296,7 @@
 </template>
 
 <script>
-import { Question, Sort } from '@element-plus/icons-vue';
+import { QuestionFilled, Sort } from '@element-plus/icons-vue';
 
 import { Delete, Edit, Plus, Refresh, Search } from '@element-plus/icons-vue';
 
@@ -309,6 +309,11 @@ export default {
   name: "Menu",
   dicts: ['sys_show_hide', 'sys_normal_disable'],
   components: { Treeselect, IconSelect },
+  setup() {
+    return {
+      QuestionFilled, Sort, Delete, Edit, Plus, Refresh, Search
+    }
+  },
   data() {
     return {
       // 遮罩层

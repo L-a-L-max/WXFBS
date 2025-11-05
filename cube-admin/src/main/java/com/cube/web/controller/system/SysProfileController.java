@@ -2,6 +2,7 @@ package com.cube.web.controller.system;
 
 import com.cube.point.controller.PointsSystem;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -41,6 +42,12 @@ public class SysProfileController extends BaseController
 
     @Autowired
     private PointsSystem pointsSystem;
+    
+    /**
+     * 从配置文件中读取上传文件访问URL
+     */
+    @Value("${upload.url}")
+    private String uploadUrl;
 
     /**
      * 个人信息
@@ -120,6 +127,7 @@ public class SysProfileController extends BaseController
 
     /**
      * 头像上传
+     * 返回完整的URL，包含协议和域名
      */
     @Log(title = "用户头像", businessType = BusinessType.UPDATE)
     @PostMapping("/avatar")
@@ -128,14 +136,22 @@ public class SysProfileController extends BaseController
         if (!file.isEmpty())
         {
             LoginUser loginUser = getLoginUser();
-            String avatar = FileUploadUtils.upload(RuoYiConfig.getAvatarPath(), file, MimeTypeUtils.IMAGE_EXTENSION);
-            if (userService.updateUserAvatar(loginUser.getUsername(), "chatfile/"+avatar))
+            // 上传文件，返回相对路径（如：2025/11/05/avatar_xxx.png）
+            String relativePath = FileUploadUtils.upload(RuoYiConfig.getAvatarPath(), file, MimeTypeUtils.IMAGE_EXTENSION);
+            
+            // 拼接完整的URL（包含协议、域名、端口）
+            String fullAvatarUrl = uploadUrl + relativePath;
+            
+            // 数据库存储完整URL
+            if (userService.updateUserAvatar(loginUser.getUsername(), fullAvatarUrl))
             {
                 AjaxResult ajax = AjaxResult.success();
-                ajax.put("imgUrl", "chatfile/"+avatar);
-                // 更新缓存用户头像
-                loginUser.getUser().setAvatar(avatar);
+                ajax.put("imgUrl", fullAvatarUrl);  // 返回完整URL给前端
+                
+                // 更新缓存用户头像（也是完整URL）
+                loginUser.getUser().setAvatar(fullAvatarUrl);
                 tokenService.setLoginUser(loginUser);
+                
                 return ajax;
             }
         }

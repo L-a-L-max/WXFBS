@@ -253,15 +253,29 @@
 						destHeight: canvasH,
 						quality: 0.5,
 						canvasId: 'myCanvas',
-						success: function (res) {
-							uni.hideLoading()
-							let data = {name: 'avatarfile', filePath: res.tempFilePath}
-							uploadAvatar(data).then(response => {
-								store.commit('SET_AVATAR', baseUrl + response.imgUrl)
-								uni.showToast({ title: "修改成功", icon: 'success' })
-								uni.navigateBack()
-							})
-						}
+					success: function (res) {
+						uni.hideLoading()
+						let data = {name: 'avatarfile', filePath: res.tempFilePath}
+						uploadAvatar(data).then(response => {
+							// 后端返回的是完整URL，直接使用，不再拼接
+							const avatarUrl = response.imgUrl
+							
+							// 验证是否为完整URL
+							if (!avatarUrl || (!avatarUrl.startsWith('http://') && !avatarUrl.startsWith('https://'))) {
+								console.error('[小程序头像上传] 后端返回的不是完整URL:', avatarUrl)
+								uni.showToast({ title: "上传失败：URL格式错误", icon: 'none' })
+								return
+							}
+							
+							console.log('[小程序头像上传] 上传成功，完整URL:', avatarUrl)
+							store.commit('SET_AVATAR', avatarUrl)
+							uni.showToast({ title: "修改成功", icon: 'success' })
+							uni.navigateBack()
+						}).catch(error => {
+							console.error('[小程序头像上传] 上传失败:', error)
+							uni.showToast({ title: "上传失败，请重试", icon: 'none' })
+						})
+					}
 					})
 				})
 			},

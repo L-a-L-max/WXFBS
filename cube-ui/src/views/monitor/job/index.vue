@@ -183,7 +183,7 @@
                     <br />Class类调用示例：com.cube.quartz.task.RyTask.ryParams('ry')
                     <br />参数说明：支持字符串，布尔类型，长整型，浮点型，整型
                   </div>
-                  <el-icon><Question /></el-icon>
+                  <el-icon><QuestionFilled /></el-icon>
                 </el-tooltip>
               </span>
               <el-input v-model="form.invokeTarget" placeholder="请输入调用目标字符串" />
@@ -292,7 +292,7 @@
 </template>
 
 <script>
-import { CaretRight, DArrowRight, Operation, Question } from '@element-plus/icons-vue';
+import { CaretRight, DArrowRight, Operation, QuestionFilled } from '@element-plus/icons-vue';
 
 import { Delete, Download, Edit, Plus, Refresh, Search, View } from '@element-plus/icons-vue';
 
@@ -303,6 +303,11 @@ export default {
   components: { Crontab },
   name: "Job",
   dicts: ['sys_job_group', 'sys_job_status'],
+  setup() {
+    return {
+      CaretRight, DArrowRight, Operation, QuestionFilled, Delete, Download, Edit, Plus, Refresh, Search, View
+    }
+  },
   data() {
     return {
       // 遮罩层

@@ -131,7 +131,7 @@
                       :disabled="!ai.enabled || ai.selectedCapabilities.includes('deep_search')" class="web-switch">
                     </el-switch> -->
                     <el-dropdown size="small" :disabled="!ai.enabled || ai.selectedCapabilities.includes('deep_search')"
-                      :type="ai.isModel ? 'primary' : 'plain'" @click="ai.isModel = !ai.isModel" split-button
+                      :type="ai.isModel ? 'primary' : 'default'" @click="ai.isModel = !ai.isModel" split-button
                       trigger="click" :hide-on-click="false"
                       @command="function (command) { command == ai.selectedModel ? ai.isModel = false : ((ai.selectedModel = command) & (ai.isModel = true)) }">
                       {{ ai.selectedModel == "dsr1" ? "DeepSeek-R1" : ai.selectedModel == "dsv3" ? "DeepSeek-V3"
@@ -478,6 +478,14 @@ import { ChatDotSquare, Document, Link, Loading, Plus, Promotion } from '@elemen
 
   export default {
     name: "AIManagementPlatform",
+    components: {
+      ChatDotSquare,
+      Document,
+      Link,
+      Loading,
+      Plus,
+      Promotion
+    },
     data() {
       return {
         userId: store.state.user.id,

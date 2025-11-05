@@ -170,6 +170,11 @@ export default {
   name: "Dept",
   dicts: ['sys_normal_disable'],
   components: { Treeselect },
+  setup() {
+    return {
+      Sort, Delete, Edit, Plus, Refresh, Search
+    }
+  },
   data() {
     return {
       // 遮罩层

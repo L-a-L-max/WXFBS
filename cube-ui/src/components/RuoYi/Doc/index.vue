@@ -1,6 +1,6 @@
 <template>
   <div>
-    <svg-icon icon-class="question" @click="goto" />
+    <svg-icon icon-class="documentation" @click="goto" />
   </div>
 </template>
 
@@ -9,12 +9,17 @@ export default {
   name: 'RuoYiDoc',
   data() {
     return {
-      url: 'http://doc.ruoyi.vip/ruoyi-vue'
+      url: '/doc'  // 可以根据实际情况修改为项目文档地址
     }
   },
   methods: {
     goto() {
-      window.open(this.url)
+      // 如果是相对路径，使用路由跳转，否则使用 window.open
+      if (this.url.startsWith('http')) {
+        window.open(this.url)
+      } else {
+        this.$router.push(this.url)
+      }
     }
   }
 }

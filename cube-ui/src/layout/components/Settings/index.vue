@@ -211,29 +211,40 @@ export default {
 <style lang="scss" scoped>
   .setting-drawer-content {
     .setting-drawer-title {
-      margin-bottom: 12px;
-      color: rgba(0, 0, 0, .85);
-      font-size: 14px;
-      line-height: 22px;
-      font-weight: bold;
+      margin-bottom: 16px;
+      color: #303133;
+      font-size: 16px;
+      line-height: 24px;
+      font-weight: 600;
     }
 
     .setting-drawer-block-checbox {
       display: flex;
       justify-content: flex-start;
       align-items: center;
-      margin-top: 10px;
-      margin-bottom: 20px;
+      margin-top: 12px;
+      margin-bottom: 24px;
+      gap: 16px;
 
       .setting-drawer-block-checbox-item {
         position: relative;
-        margin-right: 16px;
-        border-radius: 2px;
+        border-radius: 4px;
         cursor: pointer;
+        border: 2px solid transparent;
+        transition: all 0.3s ease;
+        overflow: hidden;
+
+        &:hover {
+          border-color: #409EFF;
+          transform: translateY(-2px);
+          box-shadow: 0 4px 12px rgba(64, 158, 255, 0.2);
+        }
 
         img {
-          width: 48px;
-          height: 48px;
+          width: 56px;
+          height: 56px;
+          display: block;
+          border-radius: 2px;
         }
 
         .setting-drawer-block-checbox-selectIcon {
@@ -242,37 +253,75 @@ export default {
           right: 0;
           width: 100%;
           height: 100%;
-          padding-top: 15px;
-          padding-left: 24px;
-          color: #1890ff;
+          padding-top: 18px;
+          padding-left: 28px;
+          color: #409EFF;
           font-weight: 700;
-          font-size: 14px;
+          font-size: 16px;
+          background: rgba(64, 158, 255, 0.1);
         }
       }
     }
   }
 
   .drawer-container {
-    padding: 20px;
+    padding: 24px;
     font-size: 14px;
-    line-height: 1.5;
+    line-height: 1.6;
     word-wrap: break-word;
 
     .drawer-title {
-      margin-bottom: 12px;
-      color: rgba(0, 0, 0, .85);
-      font-size: 14px;
-      line-height: 22px;
+      margin-bottom: 16px;
+      color: #303133;
+      font-size: 16px;
+      line-height: 24px;
+      font-weight: 600;
     }
 
     .drawer-item {
-      color: rgba(0, 0, 0, .65);
+      color: #606266;
       font-size: 14px;
-      padding: 12px 0;
+      padding: 14px 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #f0f0f0;
+      transition: all 0.3s;
+
+      &:hover {
+        background-color: #f5f7fa;
+        padding-left: 8px;
+        padding-right: 8px;
+        margin-left: -8px;
+        margin-right: -8px;
+        border-radius: 4px;
+      }
+
+      span {
+        font-weight: 500;
+      }
     }
 
     .drawer-switch {
-      float: right
+      margin-left: auto;
+    }
+
+    .el-button {
+      margin-top: 16px;
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      font-weight: 500;
+
+      &:first-of-type {
+        margin-top: 20px;
+      }
+    }
+
+    .el-divider {
+      margin: 20px 0;
     }
   }
 </style>

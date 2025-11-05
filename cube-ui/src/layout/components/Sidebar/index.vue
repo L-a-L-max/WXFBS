@@ -46,14 +46,14 @@ export default {
             return this.$store.state.settings.sidebarLogo;
         },
         variables() {
-            // 直接定义样式变量，避免SCSS导入问题
+            // 优化的配色方案
             return {
-                menuBackground: '#f2f7fe',
+                menuBackground: '#ffffff',
                 menuLightBackground: '#ffffff',
-                menuColor: '#022348',
-                menuLightColor: 'rgba(219, 30, 30, 0.7)',
-                logoTitleColor: '#e31717',
-                logoLightTitleColor: '#001529'
+                menuColor: '#2c3e50',
+                menuLightColor: '#606266',
+                logoTitleColor: '#409EFF',
+                logoLightTitleColor: '#303133'
             };
         },
         isCollapse() {

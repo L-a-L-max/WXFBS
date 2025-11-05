@@ -1,7 +1,7 @@
 export const formConf = {
   formRef: 'elForm',
   formModel: 'formData',
-  size: 'medium',
+  size: 'default',
   labelPosition: 'right',
   labelWidth: 100,
   formRules: 'rules',
@@ -178,7 +178,7 @@ export const selectComponents = [
     style: {},
     optionType: 'default',
     border: false,
-    size: 'medium',
+    size: 'default',
     disabled: false,
     required: true,
     options: [{
@@ -202,7 +202,7 @@ export const selectComponents = [
     style: {},
     optionType: 'default',
     border: false,
-    size: 'medium',
+    size: 'default',
     disabled: false,
     required: true,
     options: [{
@@ -366,7 +366,7 @@ export const selectComponents = [
     'color-format': '',
     disabled: false,
     required: true,
-    size: 'medium',
+    size: 'default',
     regList: [],
     changeTag: true,
     document: 'https://element.eleme.cn/#/zh-CN/component/color-picker'
@@ -418,7 +418,7 @@ export const layoutComponents = [
     default: '主要按钮',
     type: 'primary',
     icon: 'el-icon-search',
-    size: 'medium',
+    size: 'default',
     disabled: false,
     document: 'https://element.eleme.cn/#/zh-CN/component/button'
   }

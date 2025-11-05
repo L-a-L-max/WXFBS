@@ -113,7 +113,17 @@ const user = {
       return new Promise((resolve, reject) => {
         getInfo().then(res => {
           const user = res.user
-          const avatar = (user == null || user.avatar == "" || user.avatar == null) ? require("@/static/images/profile.jpg") : user.avatar
+          // 只接受完整URL的头像，拒绝相对路径
+          let avatar = require("@/static/images/profile.jpg")  // 默认头像
+          if (user && user.avatar) {
+            // 验证是否为完整URL
+            if (user.avatar.startsWith('http://') || user.avatar.startsWith('https://')) {
+              avatar = user.avatar
+            } else {
+              console.warn('[小程序] 头像为相对路径（已拒绝），使用默认头像:', user.avatar)
+            }
+          }
+          
           const username = (user == null || user.userName == "" || user.userName == null) ? "" : user.userName
 		  const nickname = (user == null || user.nickName == "" || user.nickName == null) ? "" : user.nickName
 		  const userId = (user == null || user.userId == "" || user.userId == null) ? "" : user.userId
@@ -161,7 +171,17 @@ const user = {
       return new Promise((resolve, reject) => {
         refreshCorpId().then(res => {
           const user = res.user
-          const avatar = (user == null || user.avatar == "" || user.avatar == null) ? require("@/static/images/profile.jpg") : user.avatar
+          // 只接受完整URL的头像，拒绝相对路径
+          let avatar = require("@/static/images/profile.jpg")  // 默认头像
+          if (user && user.avatar) {
+            // 验证是否为完整URL
+            if (user.avatar.startsWith('http://') || user.avatar.startsWith('https://')) {
+              avatar = user.avatar
+            } else {
+              console.warn('[小程序] 头像为相对路径（已拒绝），使用默认头像:', user.avatar)
+            }
+          }
+          
           const username = (user == null || user.userName == "" || user.userName == null) ? "" : user.userName
           const nickname = (user == null || user.nickName == "" || user.nickName == null) ? "" : user.nickName
           const userId = (user == null || user.userId == "" || user.userId == null) ? "" : user.userId

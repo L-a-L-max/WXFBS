@@ -5,18 +5,19 @@
       <img :src="options.img" title="点击上传头像" class="img-circle img-lg" />
     </div>
 
-    <!-- 裁剪弹窗 -->
+    <!-- 裁剪弹窗 - 简化版 -->
     <el-dialog 
       v-model="open" 
       title="修改头像" 
-      width="800px" 
+      width="650px" 
       append-to-body 
       @opened="modalOpened"
       @close="closeDialog"
+      class="avatar-dialog-simple"
     >
-      <el-row>
+      <div class="avatar-container-simple">
         <!-- 裁剪区域 -->
-        <el-col :xs="24" :md="12" :style="{ height: '350px' }">
+        <div class="cropper-section">
           <vue-cropper
             ref="cropperRef"
             :img="options.img"
@@ -27,87 +28,80 @@
             :fixedBox="options.fixedBox"
             :outputType="options.outputType"
             :fixed="options.fixed"
+            :fixedNumber="options.fixedNumber"
             :canMove="options.canMove"
             :centerBox="options.centerBox"
+            :full="options.full"
             @realTime="realTime"
             v-if="visible"
           />
-        </el-col>
+        </div>
 
-        <!-- 预览区域 -->
-        <el-col :xs="24" :md="12" :style="{ height: '350px' }">
-          <div class="avatar-upload-preview">
-            <img :src="previews.url" :style="previews.img" />
+        <!-- 预览和操作区域 -->
+        <div class="operation-section">
+          <!-- 预览 -->
+          <div class="preview-area">
+            <div class="preview-title">预览</div>
+            <div class="avatar-preview">
+              <img :src="previews.url" :style="previews.img" />
+            </div>
           </div>
-        </el-col>
-      </el-row>
 
-      <br />
+          <!-- 操作按钮 -->
+          <div class="action-buttons">
+            <el-upload 
+              action="#" 
+              :http-request="requestUpload" 
+              :show-file-list="false" 
+              :before-upload="beforeUpload"
+            >
+              <el-button type="primary" plain style="width: 100%; margin-bottom: 12px;">
+                <el-icon class="el-icon--left"><Upload /></el-icon>
+                选择图片
+              </el-button>
+            </el-upload>
 
-      <!-- 操作按钮区域 -->
-      <el-row>
-        <!-- 选择图片 -->
-        <el-col :lg="2" :sm="3" :xs="3">
-          <el-upload 
-            action="#" 
-            :http-request="requestUpload" 
-            :show-file-list="false" 
-            :before-upload="beforeUpload"
-          >
-            <el-button size="small">
-              选择
-              <el-icon class="el-icon--right"><Upload /></el-icon>
-            </el-button>
-          </el-upload>
-        </el-col>
+            <div class="button-row">
+              <el-button @click="changeScale(1)" class="action-btn">
+                <el-icon><Plus /></el-icon>
+              </el-button>
+              <el-button @click="changeScale(-1)" class="action-btn">
+                <el-icon><Minus /></el-icon>
+              </el-button>
+              <el-button @click="rotateLeft" class="action-btn">
+                <el-icon><RefreshLeft /></el-icon>
+              </el-button>
+              <el-button @click="rotateRight" class="action-btn">
+                <el-icon><RefreshRight /></el-icon>
+              </el-button>
+            </div>
+          </div>
+        </div>
+      </div>
 
-        <!-- 缩放控制 -->
-        <el-col :lg="{ span: 1, offset: 2 }" :sm="2" :xs="2">
-          <el-button size="small" @click="changeScale(1)">
-            <el-icon><Plus /></el-icon>
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button @click="closeDialog">取消</el-button>
+          <el-button type="primary" @click="uploadImg" :loading="uploadLoading">
+            确认上传
           </el-button>
-        </el-col>
-
-        <el-col :lg="{ span: 1, offset: 1 }" :sm="2" :xs="2">
-          <el-button size="small" @click="changeScale(-1)">
-            <el-icon><Minus /></el-icon>
-          </el-button>
-        </el-col>
-
-        <!-- 旋转控制 -->
-        <el-col :lg="{ span: 1, offset: 1 }" :sm="2" :xs="2">
-          <el-button size="small" @click="rotateLeft">
-            <el-icon><RefreshLeft /></el-icon>
-          </el-button>
-        </el-col>
-
-        <el-col :lg="{ span: 1, offset: 1 }" :sm="2" :xs="2">
-          <el-button size="small" @click="rotateRight">
-            <el-icon><RefreshRight /></el-icon>
-          </el-button>
-        </el-col>
-
-        <!-- 提交按钮 -->
-        <el-col :lg="{ span: 2, offset: 6 }" :sm="2" :xs="2">
-          <el-button type="primary" size="small" @click="uploadImg" :loading="uploadLoading">
-            提 交
-          </el-button>
-        </el-col>
-      </el-row>
+        </div>
+      </template>
     </el-dialog>
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, onBeforeUnmount, getCurrentInstance } from 'vue'
+import { ref, reactive, onMounted, onBeforeUnmount, getCurrentInstance, computed } from 'vue'
 import { ElMessage, ElLoading } from 'element-plus'
 import { Upload, Plus, Minus, RefreshLeft, RefreshRight } from '@element-plus/icons-vue'
 import 'vue-cropper/dist/index.css'
 import { VueCropper } from 'vue-cropper'
+import { uploadAvatar } from '@/api/system/user'
+import store from '@/store'
 
-// 假设的store导入，请根据您的实际项目调整
-// import { useUserStore } from '@/stores/user'
-// const userStore = useUserStore()
+// 获取当前组件实例
+const { proxy } = getCurrentInstance()
 
 // 响应式数据
 const open = ref(false)
@@ -116,26 +110,55 @@ const uploadLoading = ref(false)
 const cropperRef = ref(null)
 const resizeHandler = ref(null)
 
-// 裁剪配置选项[1,3](@ref)
+// 从 store 获取用户头像（只接受完整URL，拒绝相对路径）
+const userAvatar = computed(() => {
+  const avatar = store.getters.avatar
+  if (!avatar) {
+    console.warn('[userAvatar] 无头像数据，使用默认头像')
+    return require("@/assets/images/profile.jpg")
+  }
+  
+  // 只接受完整的 HTTP/HTTPS URL
+  if (avatar.startsWith('http://') || avatar.startsWith('https://')) {
+    return avatar
+  }
+  
+  // 拒绝相对路径，使用默认头像
+  console.warn('[userAvatar] 头像为相对路径（已拒绝），使用默认头像:', avatar)
+  return require("@/assets/images/profile.jpg")
+})
+
+// 裁剪配置选项
 const options = reactive({
-  img: '', // 初始图片路径，可以从store获取
+  img: '', // 初始图片路径，从store获取
   autoCrop: true,
   autoCropWidth: 200,
   autoCropHeight: 200,
   fixedBox: true,
   outputType: 'png',
   fixed: true,
-  fixedNumber: [1, 1],
-  canMove: false,
-  centerBox: true
+  fixedNumber: [1, 1], // 1:1 比例，确保是正方形
+  canMove: true, // 允许移动图片
+  canMoveBox: true, // 允许移动裁剪框
+  centerBox: true,
+  full: false,
+  enlarge: 1,
+  mode: 'contain',
+  maxImgSize: 3000,
+  limitMinSize: [50, 50],
+  infoTrue: false, // 隐藏裁剪框信息
+  original: false, // 上传图片按照原始比例渲染
+  high: true, // 是否按照设备的dpr 输出等比例图片
+  cropBoxResizable: true, // 裁剪框可以调整大小
+  cropBoxMovable: true // 裁剪框可以移动
 })
 
 const previews = ref({})
 
 // 初始化用户头像
 onMounted(() => {
-  // 从store获取用户头像，这里用默认头像替代
-  options.img = 'https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png'
+  // 从store获取用户头像
+  options.img = userAvatar.value || require("@/assets/images/profile.jpg")
 })
 
 // 编辑头像 - 打开弹窗
@@ -223,32 +246,53 @@ const uploadImg = async () => {
   uploadLoading.value = true
   
   try {
-    // 获取裁剪后的Blob数据[1](@ref)
+    // 获取裁剪后的Blob数据
     cropperRef.value.getCropBlob(async (blobData) => {
       try {
         const formData = new FormData()
         formData.append('avatarfile', blobData, 'avatar.png')
 
-        // 调用上传API[3](@ref)
-        // const response = await uploadAvatar(formData)
+        // 调用上传API
+        const response = await uploadAvatar(formData)
         
-        // 模拟上传成功
-        setTimeout(() => {
-          // 更新用户头像
-          const newAvatarUrl = URL.createObjectURL(blobData)
+        if (response.code === 200) {
+          // 获取后端返回的完整URL
+          const newAvatarUrl = response.imgUrl
+          
+          // 验证返回的是完整URL，拒绝相对路径
+          if (!newAvatarUrl || (!newAvatarUrl.startsWith('http://') && !newAvatarUrl.startsWith('https://'))) {
+            console.error('[userAvatar] 后端返回的不是完整URL:', newAvatarUrl)
+            throw new Error('上传失败：后端未返回完整URL')
+          }
+          
+          // 更新本地显示的头像
           options.img = newAvatarUrl
           
-          // 更新store中的用户头像[1](@ref)
-          // userStore.updateAvatar(newAvatarUrl)
+          // 更新store中的用户头像，实现全局同步
+          store.commit('SET_AVATAR', newAvatarUrl)
+          
+          // 同时更新 localStorage 以保证刷新后也能正确显示
+          const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}')
+          userInfo.avatar = newAvatarUrl
+          localStorage.setItem('userInfo', JSON.stringify(userInfo))
           
           open.value = false
           uploadLoading.value = false
           ElMessage.success('头像修改成功')
-        }, 1000)
+          
+          console.log('[userAvatar] 头像上传成功，完整URL:', newAvatarUrl)
+          
+          // 触发全局事件，通知其他组件更新
+          window.dispatchEvent(new CustomEvent('avatarUpdated', { 
+            detail: { avatar: newAvatarUrl } 
+          }))
+        } else {
+          throw new Error(response.msg || '上传失败')
+        }
         
       } catch (error) {
         console.error('上传失败:', error)
-        ElMessage.error('头像上传失败，请重试')
+        ElMessage.error(error.message || '头像上传失败，请重试')
         uploadLoading.value = false
       }
     })
@@ -266,8 +310,8 @@ const realTime = (data) => {
 
 // 关闭弹窗
 const closeDialog = () => {
-  // 恢复原始头像[1](@ref)
-  // options.img = userStore.avatar
+  // 恢复原始头像（从 store 获取）
+  options.img = userAvatar.value || require("@/assets/images/profile.jpg")
   visible.value = false
   
   // 移除resize事件监听
@@ -297,53 +341,254 @@ const debounce = (func, wait) => {
   display: inline-block;
   height: 120px;
   cursor: pointer;
+  transition: transform 0.3s ease;
+
+  &:hover {
+    transform: scale(1.05);
+  }
 
   &:hover::after {
-    content: '+';
+    content: '点击修改';
     position: absolute;
     left: 0;
     right: 0;
     top: 0;
     bottom: 0;
-    color: #eee;
-    background: rgba(0, 0, 0, 0.5);
-    font-size: 24px;
+    color: #fff;
+    background: rgba(0, 0, 0, 0.6);
+    font-size: 14px;
     font-style: normal;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     cursor: pointer;
-    line-height: 110px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
+    letter-spacing: 2px;
   }
 }
 
 .img-circle {
-  border-radius: 50%;
+  border-radius: 50% !important;
+  border: 3px solid #fff;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
 }
 
 .img-lg {
-  width: 100px;
-  height: 100px;
+  width: 120px !important;
+  height: 120px !important;
   object-fit: cover;
+  display: block;
 }
 
-.avatar-upload-preview {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
+// 美化对话框样式
+.avatar-dialog {
+  :deep(.el-dialog__header) {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 20px;
+    margin: 0;
+    
+    .el-dialog__title {
+      color: #fff;
+      font-size: 18px;
+      font-weight: 600;
+    }
+    
+    .el-dialog__headerbtn {
+      top: 20px;
+      
+      .el-dialog__close {
+        color: #fff;
+        font-size: 20px;
+        
+        &:hover {
+          color: #f0f0f0;
+        }
+      }
+    }
+  }
   
-  img {
-    max-width: 100%;
-    max-height: 100%;
-    border-radius: 50%;
+  :deep(.el-dialog__body) {
+    padding: 30px;
+    background: #f5f7fa;
+  }
+  
+  :deep(.el-dialog__footer) {
+    padding: 20px 30px;
+    background: #fff;
+    border-top: 1px solid #e4e7ed;
   }
 }
 
+// 简化版头像对话框样式
+.avatar-dialog-simple {
+  :deep(.el-dialog__body) {
+    padding: 20px;
+  }
+}
+
+.avatar-container-simple {
+  display: flex;
+  gap: 20px;
+  
+  .cropper-section {
+    flex: 1;
+    height: 400px;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #f5f7fa;
+  }
+  
+  .operation-section {
+    width: 180px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    
+    .preview-area {
+      .preview-title {
+        font-size: 14px;
+        color: #606266;
+        margin-bottom: 12px;
+        font-weight: 500;
+        text-align: center;
+      }
+      
+      .avatar-preview {
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        overflow: hidden;
+        margin: 0 auto;
+        border: 3px solid #409eff;
+        box-shadow: 0 2px 12px rgba(64, 158, 255, 0.2);
+        
+        img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+        }
+      }
+    }
+    
+    .action-buttons {
+      .button-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+        
+        .action-btn {
+          padding: 8px;
+          
+          .el-icon {
+            font-size: 16px;
+          }
+        }
+      }
+    }
+  }
+}
+
+.dialog-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  
+  .el-button {
+    min-width: 100px;
+  }
+}
+
+// 优化裁剪器样式 - 圆形裁剪框
 :deep(.vue-cropper) {
   background-image: none;
+  background-color: #f5f7fa;
+  
+  // 裁剪框容器
+  .cropper-crop-box {
+    border-radius: 50% !important;
+    overflow: visible !important;
+  }
+  
+  // 裁剪框的视图区域（这是实际显示的裁剪内容）
+  .cropper-view-box {
+    outline: 3px solid #409eff !important;
+    outline-offset: -1px;
+    border-radius: 50% !important;
+    box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.6) !important; // 外部半透明黑色遮罩
+    overflow: hidden !important;
+  }
+  
+  // 裁剪框的面板（可拖动区域）
+  .cropper-face {
+    border-radius: 50% !important;
+    background-color: transparent !important;
+    opacity: 0.1 !important;
+  }
+  
+  // 控制点样式
+  .cropper-point {
+    background-color: #409eff;
+    width: 10px;
+    height: 10px;
+    opacity: 1;
+    border-radius: 50%;
+    border: 2px solid #fff;
+    box-shadow: 0 0 4px rgba(0, 0, 0, 0.4);
+  }
+  
+  // 边线（隐藏）
+  .cropper-line {
+    background-color: transparent !important;
+    opacity: 0 !important;
+  }
+  
+  // 虚线网格（隐藏）
+  .cropper-dashed {
+    border: none !important;
+    opacity: 0 !important;
+  }
+  
+  // 中心指示器（隐藏）
+  .cropper-center {
+    opacity: 0 !important;
+  }
+}
+
+// 响应式适配
+@media screen and (max-width: 768px) {
+  .avatar-dialog-simple {
+    :deep(.el-dialog) {
+      width: 95% !important;
+      margin: 20px auto;
+    }
+  }
+  
+  .avatar-container-simple {
+    flex-direction: column;
+    
+    .cropper-section {
+      height: 300px;
+    }
+    
+    .operation-section {
+      width: 100%;
+      flex-direction: row;
+      justify-content: space-between;
+      
+      .preview-area {
+        .avatar-preview {
+          width: 100px;
+          height: 100px;
+        }
+      }
+      
+      .action-buttons {
+        flex: 1;
+        margin-left: 20px;
+      }
+    }
+  }
 }
 </style>

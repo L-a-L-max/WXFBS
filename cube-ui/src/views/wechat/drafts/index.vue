@@ -23,10 +23,10 @@
           <!-- 用户提问区域 -->
           <div class="user-question">
             <div class="user-avatar">
-              <img :src="item.userAvatar" :alt="item.userName" class="avatar-img" />
+              <img :src="avatar" :alt="nickname" class="avatar-img" />
             </div>
             <div class="user-info">
-              <div class="user-name">{{ item.userName }}</div>
+              <div class="user-name">{{ nickname }}</div>
               <br />
               <div style="font-weight: bold;" class="question-text">{{ item.question }}</div>
               <br />
@@ -93,41 +93,47 @@
 
 <script>
 import { Search } from '@element-plus/icons-vue';
+import { getPlayWrighDrafts } from "@/api/wechat/aigc";
+import { marked } from 'marked';
+import { mapGetters } from 'vuex';
+import { markRaw } from 'vue';
 
-  import { getPlayWrighDrafts } from "@/api/wechat/aigc";
-  import { marked } from 'marked';
+// 配置 marked
+marked.setOptions({
+  breaks: true, // 支持 GitHub 风格的换行
+  gfm: true,    // 启用 GitHub 风格的 Markdown
+  headerIds: false, // 禁用标题 ID
+  mangle: false,    // 禁用标题 ID 混淆
+  sanitize: false   // 允许 HTML 标签
+});
 
-  // 配置 marked
-  marked.setOptions({
-    breaks: true, // 支持 GitHub 风格的换行
-    gfm: true,    // 启用 GitHub 风格的 Markdown
-    headerIds: false, // 禁用标题 ID
-    mangle: false,    // 禁用标题 ID 混淆
-    sanitize: false   // 允许 HTML 标签
-  });
-
-  export default {
-    data() {
-      return {
-        // 遮罩层
-        loading: true,
-        total: 0,
-        queryParams: {
-          page: 1,
-          limit: 3, // 默认每页查询 3 条数据
-          keyWord: '',
-          flowStatus: '',
-          id: ''
-        },
-        showModal: false,
-        selectedModel: null,
-        dialogList: []
-      };
-    },
-    created() {
-      this.getList();
-    },
-    methods: {
+export default {
+  name: 'Drafts',
+  computed: {
+    ...mapGetters(['avatar', 'nickname'])
+  },
+  data() {
+    return {
+      // 遮罩层
+      loading: true,
+      total: 0,
+      queryParams: {
+        page: 1,
+        limit: 3, // 默认每页查询 3 条数据
+        keyWord: '',
+        flowStatus: '',
+        id: ''
+      },
+      showModal: false,
+      selectedModel: null,
+      dialogList: [],
+      Search: markRaw(Search)  // 使用 markRaw 标记为非响应式对象
+    };
+  },
+  created() {
+    this.getList();
+  },
+  methods: {
       // 修改 markdown 渲染方法
       renderMarkdown(content) {
         return marked(content);

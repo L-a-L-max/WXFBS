@@ -168,7 +168,7 @@
         <el-form-item prop="roleKey">
           <span slot="label">
             <el-tooltip content="控制器中定义的权限字符，如：@PreAuthorize(`@ss.hasRole('admin')`)" placement="top">
-              <el-icon><Question /></el-icon>
+              <el-icon><QuestionFilled /></el-icon>
             </el-tooltip>
             权限字符
           </span>
@@ -256,7 +256,7 @@
 </template>
 
 <script>
-import { DArrowRight, Question } from '@element-plus/icons-vue';
+import { DArrowRight, QuestionFilled } from '@element-plus/icons-vue';
 
 import { CircleCheck, Delete, Download, Edit, Plus, Refresh, Search, User } from '@element-plus/icons-vue';
 
@@ -266,6 +266,11 @@ import { treeselect as menuTreeselect, roleMenuTreeselect } from "@/api/system/m
 export default {
   name: "Role",
   dicts: ['sys_normal_disable'],
+  setup() {
+    return {
+      DArrowRight, QuestionFilled, CircleCheck, Delete, Download, Edit, Plus, Refresh, Search, User
+    }
+  },
   data() {
     return {
       // 遮罩层

@@ -160,39 +160,141 @@ export default {
 <style lang="scss" scoped>
 .header-search {
   font-size: 0 !important;
+  display: flex;
+  align-items: center;
+  position: relative; // 为绝对定位的搜索框提供参照
+  width: 40px; // 固定宽度，只显示搜索图标
+  height: 40px;
+  justify-content: center;
 
   .search-icon {
     cursor: pointer;
     font-size: 18px;
-    vertical-align: middle;
+    transition: all 0.3s ease;
+    position: relative;
+    z-index: 2; // 确保图标在搜索框上方
+    
+    &:hover {
+      color: #409EFF;
+      transform: scale(1.1);
+    }
   }
 
   .header-search-select {
-    font-size: 18px;
-    transition: width 0.2s;
+    font-size: 14px;
+    transition: all 0.3s ease;
     width: 0;
     overflow: hidden;
     background: transparent;
-    border-radius: 0;
-    display: inline-block;
-    vertical-align: middle;
+    border-radius: 20px;
+    position: absolute; // 绝对定位，不占用空间
+    right: 45px; // 从图标右侧45px开始（40px图标 + 5px间距）
+    top: 50%;
+    transform: translateY(-50%);
+    opacity: 0;
+    pointer-events: none; // 隐藏时不响应鼠标事件
 
-    :deep(.el-input__inner){
-      border-radius: 0;
+    :deep(.el-input__wrapper) {
+      border-radius: 20px;
+      border: 0;
+      padding: 5px 15px;
+      box-shadow: none !important;
+      background: rgba(64, 158, 255, 0.08);
+      transition: all 0.3s ease;
+      
+      &:hover {
+        background: rgba(64, 158, 255, 0.12);
+      }
+    }
+    
+    :deep(.el-input__inner) {
+      border-radius: 20px;
       border: 0;
       padding-left: 0;
       padding-right: 0;
       box-shadow: none !important;
-      border-bottom: 1px solid #d9d9d9;
-      vertical-align: middle;
+      color: #303133;
+      font-size: 14px;
+      
+      &::placeholder {
+        color: #909399;
+      }
     }
   }
 
   &.show {
     .header-search-select {
-      width: 210px;
-      margin-left: 10px;
+      width: 240px; // 展开宽度
+      opacity: 1; // 显示
+      pointer-events: auto; // 可以响应鼠标事件
     }
+  }
+}
+
+// 美化下拉选项样式
+:deep(.el-select-dropdown) {
+  border-radius: 12px !important;
+  box-shadow: 0 6px 24px rgba(0, 21, 41, 0.15) !important;
+  border: 1px solid #e8e8e8 !important;
+  padding: 8px 0 !important;
+  margin-top: 8px !important;
+  
+  .el-select-dropdown__item {
+    padding: 12px 20px !important;
+    margin: 2px 8px !important;
+    border-radius: 8px !important;
+    transition: all 0.3s ease !important;
+    font-size: 14px !important;
+    color: #606266 !important;
+    position: relative !important;
+    overflow: hidden !important;
+    
+    &::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 3px;
+      height: 0;
+      background: linear-gradient(to bottom, #409EFF, #66b1ff);
+      border-radius: 0 2px 2px 0;
+      transition: height 0.3s ease;
+    }
+    
+    &:hover {
+      background: linear-gradient(to right, rgba(64, 158, 255, 0.1), rgba(64, 158, 255, 0.05)) !important;
+      color: #409EFF !important;
+      transform: translateX(4px) !important;
+      
+      &::before {
+        height: 60%;
+      }
+    }
+    
+    &.is-selected {
+      background: linear-gradient(to right, rgba(64, 158, 255, 0.15), rgba(64, 158, 255, 0.08)) !important;
+      color: #409EFF !important;
+      font-weight: 600 !important;
+      
+      &::before {
+        height: 80%;
+      }
+    }
+  }
+  
+  .el-select-dropdown__empty {
+    padding: 20px 0 !important;
+    color: #909399 !important;
+    font-size: 14px !important;
+  }
+}
+
+// 搜索输入框聚焦效果
+:deep(.el-select) {
+  .el-input.is-focus .el-input__wrapper {
+    box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.2) !important;
+    background: rgba(64, 158, 255, 0.15) !important;
   }
 }
 </style>

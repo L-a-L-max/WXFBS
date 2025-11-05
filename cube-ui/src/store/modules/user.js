@@ -90,7 +90,17 @@ const user = {
       return new Promise((resolve, reject) => {
         getInfo().then(res => {
           const user = res.user
-          const avatar = (user.avatar == "" || user.avatar == null) ? require("@/assets/images/profile.jpg") :  user.avatar;
+          // 只接受完整URL的头像，拒绝相对路径
+          let avatar = require("@/assets/images/profile.jpg")  // 默认头像
+          if (user.avatar) {
+            // 验证是否为完整URL
+            if (user.avatar.startsWith('http://') || user.avatar.startsWith('https://')) {
+              avatar = user.avatar
+            } else {
+              console.warn('[前端] 头像为相对路径（已拒绝），使用默认头像:', user.avatar)
+            }
+          }
+          
           if (res.roles && res.roles.length > 0) { // 验证返回的roles是否是一个非空数组
             commit('SET_ROLES', res.roles)
             commit('SET_PERMISSIONS', res.permissions)
@@ -138,7 +148,16 @@ const user = {
       return new Promise((resolve, reject) => {
         refreshCorpId().then(res => {
           const user = res.user
-          const avatar = (user.avatar == "" || user.avatar == null) ? require("@/assets/images/profile.jpg") :  user.avatar;
+          // 只接受完整URL的头像，拒绝相对路径
+          let avatar = require("@/assets/images/profile.jpg")  // 默认头像
+          if (user.avatar) {
+            // 验证是否为完整URL
+            if (user.avatar.startsWith('http://') || user.avatar.startsWith('https://')) {
+              avatar = user.avatar
+            } else {
+              console.warn('[前端] 头像为相对路径（已拒绝），使用默认头像:', user.avatar)
+            }
+          }
           
           // 更新用户信息
           commit('SET_ID', user.userId)

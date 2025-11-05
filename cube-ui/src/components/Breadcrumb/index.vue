@@ -61,14 +61,50 @@ export default {
 
 <style lang="scss" scoped>
 .app-breadcrumb.el-breadcrumb {
-  display: inline-block;
+  display: flex;
+  align-items: center;
   font-size: 14px;
-  line-height: 50px;
+  height: 100%;
   margin-left: 8px;
 
+  :deep(.el-breadcrumb__item) {
+    .el-breadcrumb__inner {
+      font-weight: 500;
+      color: #606266;
+      transition: color 0.3s;
+
+      &:hover {
+        color: #409EFF;
+      }
+
+      a {
+        color: #606266;
+        font-weight: 500;
+        transition: color 0.3s;
+
+        &:hover {
+          color: #409EFF;
+        }
+      }
+    }
+
+    &:last-child {
+      .el-breadcrumb__inner {
+        color: #303133;
+        font-weight: 600;
+
+        a {
+          color: #303133;
+          cursor: text;
+        }
+      }
+    }
+  }
+
   .no-redirect {
-    color: #97a8be;
+    color: #303133;
     cursor: text;
+    font-weight: 600;
   }
 }
 </style>

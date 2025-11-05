@@ -53,16 +53,46 @@ export default {
     // 顶部显示菜单
     topMenus() {
       let topMenus = [];
+      let addedPaths = new Set(); // 用于去重
+      
       this.routers.map((menu) => {
-        if (menu.hidden !== true) {
-          // 兼容顶部栏一级菜单内部跳转
-          if (menu.path === "/") {
-            topMenus.push(menu.children[0]);
-          } else {
-            topMenus.push(menu);
-          }
+        // 跳过隐藏的菜单
+        if (menu.hidden === true) {
+          return;
+        }
+        
+        // 全面过滤首页相关路径（首页只通过左侧 Logo 访问）
+        const isIndexPath = menu.path === '' || 
+                           menu.path === '/' || 
+                           menu.path === '/index' || 
+                           menu.path === 'index' ||
+                           (menu.meta && menu.meta.title === '首页') ||
+                           (menu.name && menu.name === 'Index') ||
+                           (menu.children && menu.children.length === 1 && menu.children[0].path === 'index') ||
+                           (menu.children && menu.children.length === 1 && menu.children[0].name === 'Index');
+        
+        // 如果是首页路径，直接跳过
+        if (isIndexPath) {
+          console.log('🚫 过滤首页路由:', menu.path, menu.meta?.title, menu.name);
+          return;
+        }
+        
+        // 兼容顶部栏一级菜单内部跳转（但排除首页）
+        if (menu.path === "/") {
+          // 路径为 "/" 的菜单通常是首页容器，已经在上面过滤了
+          console.log('🚫 过滤根路径菜单:', menu);
+          return;
+        }
+        
+        // 添加非首页菜单（去重）
+        if (!addedPaths.has(menu.path)) {
+          console.log('✅ 添加菜单:', menu.path, menu.meta?.title);
+          topMenus.push(menu);
+          addedPaths.add(menu.path);
         }
       });
+      
+      console.log('📋 最终顶部菜单列表:', topMenus.map(m => ({ path: m.path, title: m.meta?.title })));
       return topMenus;
     },
     // 所有的路由信息
@@ -93,6 +123,14 @@ export default {
     activeMenu() {
       const path = this.$route.path;
       let activePath = path;
+      
+      // 如果是首页，隐藏侧边栏，不激活任何顶部菜单，不调用 activeRoutes
+      if (path === '/' || path === '/index' || path === 'index') {
+        this.$store.dispatch('app/toggleSideBarHide', true);
+        return ''; // 返回空字符串，不激活任何菜单
+      }
+      
+      // 处理多级路径，提取一级路径作为激活路径
       if (path !== undefined && path.lastIndexOf("/") > 0 && hideList.indexOf(path) === -1) {
         const tmpPath = path.substring(1, path.length);
         activePath = "/" + tmpPath.substring(0, tmpPath.indexOf("/"));
@@ -103,6 +141,8 @@ export default {
         activePath = path;
         this.$store.dispatch('app/toggleSideBarHide', true);
       }
+      
+      // 只有非首页路径才调用 activeRoutes
       this.activeRoutes(activePath);
       return activePath;
     },
@@ -124,8 +164,14 @@ export default {
     },
     // 菜单选择事件
     handleSelect(key, keyPath) {
+      // 防止选择首页（首页应该只通过 Logo 访问）
+      if (key === '' || key === '/' || key === '/index' || key === 'index') {
+        return;
+      }
+      
       this.currentIndex = key;
       const route = this.routers.find(item => item.path === key);
+      
       if (this.ishttp(key)) {
         // http(s):// 路径新窗口打开
         window.open(key, "_blank");
@@ -147,14 +193,22 @@ export default {
     },
     // 当前激活的路由
     activeRoutes(key) {
+      // 如果是首页相关路径，不处理侧边栏
+      if (key === '' || key === '/' || key === '/index' || key === 'index') {
+        this.$store.dispatch('app/toggleSideBarHide', true);
+        return;
+      }
+      
       var routes = [];
       if (this.childrenMenus && this.childrenMenus.length > 0) {
         this.childrenMenus.map((item) => {
-          if (key == item.parentPath || (key == "index" && "" == item.path)) {
+          // 移除 key == "index" 的判断，首页不应该在这里处理
+          if (key == item.parentPath) {
             routes.push(item);
           }
         });
       }
+      
       if(routes.length > 0) {
         this.$store.commit("SET_SIDEBAR_ROUTERS", routes);
       } else {
@@ -169,27 +223,88 @@ export default {
 </script>
 
 <style lang="scss">
-.topmenu-container.el-menu--horizontal > .el-menu-item {
-  float: left;
-  height: 50px !important;
-  line-height: 50px !important;
-  color: #999093 !important;
-  padding: 0 5px !important;
-  margin: 0 10px !important;
+.topmenu-container.el-menu--horizontal {
+  border-bottom: none !important;
+  
+  > .el-menu-item {
+    float: left;
+    height: 60px !important;
+    line-height: 60px !important;
+    color: #606266 !important;
+    padding: 0 16px !important;
+    margin: 0 4px !important;
+    border-radius: 8px 8px 0 0 !important;
+    border-bottom: 3px solid transparent !important;
+    transition: all .3s ease !important;
+    font-size: 14px !important;
+    font-weight: 500 !important;
+    position: relative !important;
+    
+    &:hover {
+      background: rgba(64, 158, 255, 0.08) !important;
+      color: #409EFF !important;
+    }
+    
+    .svg-icon {
+      margin-right: 6px;
+      font-size: 16px;
+    }
+  }
+
+  > .el-menu-item.is-active {
+    border-bottom: 3px solid #409EFF !important;
+    color: #409EFF !important;
+    background: rgba(64, 158, 255, 0.05) !important;
+    font-weight: 600 !important;
+  }
+
+  /* submenu item */
+  > .el-sub-menu {
+    .el-sub-menu__title {
+      float: left;
+      height: 60px !important;
+      line-height: 60px !important;
+      color: #606266 !important;
+      padding: 0 16px !important;
+      margin: 0 4px !important;
+      border-radius: 8px 8px 0 0 !important;
+      transition: all .3s ease !important;
+      font-size: 14px !important;
+      font-weight: 500 !important;
+      
+      &:hover {
+        background: rgba(64, 158, 255, 0.08) !important;
+        color: #409EFF !important;
+      }
+    }
+  }
+
+  > .el-sub-menu.is-active .el-sub-menu__title {
+    border-bottom: 3px solid #409EFF !important;
+    color: #409EFF !important;
+    background: rgba(64, 158, 255, 0.05) !important;
+    font-weight: 600 !important;
+  }
 }
 
-.topmenu-container.el-menu--horizontal > .el-menu-item.is-active, .el-menu--horizontal > .el-sub-menu.is-active .el-sub-menu__title {
-  border-bottom: 2px solid #{'var(--theme)'} !important;
-  color: #303133;
-}
+// 下拉菜单美化
+.el-menu--horizontal .el-menu--popup {
+  border-radius: 8px !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12) !important;
+  border: 1px solid #e8e8e8 !important;
+  padding: 4px 0 !important;
+  margin-top: 4px !important;
 
-/* submenu item */
-.topmenu-container.el-menu--horizontal > .el-sub-menu .el-sub-menu__title {
-  float: left;
-  height: 50px !important;
-  line-height: 50px !important;
-  color: #999093 !important;
-  padding: 0 5px !important;
-  margin: 0 10px !important;
+  .el-menu-item {
+    padding: 0 20px !important;
+    margin: 2px 8px !important;
+    border-radius: 6px !important;
+    transition: all .3s ease !important;
+
+    &:hover {
+      background: linear-gradient(to right, rgba(64, 158, 255, 0.1), rgba(64, 158, 255, 0.05)) !important;
+      color: #409EFF !important;
+    }
+  }
 }
 </style>

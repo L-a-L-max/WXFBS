@@ -10,39 +10,42 @@
             </div>
             <div>
               <div class="text-center">
-                <userAvatar />
+                <img :src="user.avatar || defaultAvatar" class="user-avatar-display" />
               </div>
 
               <ul class="list-group list-group-striped">
                 <li class="list-group-item">
-                  <svg-icon icon-class="user" />用户名称
+                  <svg-icon icon-class="user" />
+                  <span>用户名称</span>
                   <div class="pull-right" id="userName">
                     {{ user.nickName }}
                   </div>
                 </li>
                 <li class="list-group-item">
-                  <svg-icon icon-class="phone" />手机号码
+                  <svg-icon icon-class="phone" />
+                  <span>手机号码</span>
                   <div class="pull-right">{{ user.phonenumber }}</div>
                 </li>
                 <li class="list-group-item">
-                  <svg-icon icon-class="date" />创建日期
+                  <svg-icon icon-class="date" />
+                  <span>创建日期</span>
                   <div class="pull-right">{{ user.createTime }}</div>
                 </li>
-                <li class="list-group-item">
-                  <svg-icon icon-class="user" />
+                <li class="list-group-item points-item" @click="showPointsDetail">
+                  <svg-icon icon-class="star" />
                   <span>积分余额</span>
                   <div
-                    :style="{ color: user.points >= 0 ? 'green' : 'red' }"
-                    class="pull-right"
+                    :style="{ color: user.points >= 0 ? '#67c23a' : '#f56c6c' }"
+                    class="pull-right points-value"
                   >
-                    {{ user.points }}
+                    {{ user.points >= 0 ? '+' : '' }}{{ user.points }}
                   </div>
                   <el-tooltip
-                    content="点击可查看积分明细"
+                    content="点击查看积分明细"
                     placement="top"
                     effect="light"
                   >
-                    <el-icon><ChatDotRound /></el-icon>
+                    <el-icon class="info-icon"><InfoFilled /></el-icon>
                   </el-tooltip>
                 </li>
               </ul>
@@ -374,14 +377,13 @@
 </template>
 
 <script>
-import { ChatDotRound, Connection, Refresh, SuccessFilled, Warning } from '@element-plus/icons-vue';
+import { ChatDotRound, Connection, Refresh, SuccessFilled, Warning, InfoFilled } from '@element-plus/icons-vue';
 
 import PanelGroup from "./dashboard/PanelGroup";
 import LineChart from "./dashboard/LineChart";
 import RaddarChart from "./dashboard/RaddarChart";
 import PieChart from "./dashboard/PieChart";
 import BarChart from "./dashboard/BarChart";
-import userAvatar from "@/views/system/user/profile/userAvatar";
 import userInfo from "@/views/system/user/profile/userInfo";
 import resetPwd from "@/views/system/user/profile/resetPwd";
 import {
@@ -421,9 +423,14 @@ export default {
     RaddarChart,
     PieChart,
     BarChart,
-    userAvatar,
     userInfo,
     resetPwd,
+    ChatDotRound,
+    Connection,
+    Refresh,
+    SuccessFilled,
+    Warning,
+    InfoFilled,
   },
   data() {
     return {
@@ -432,6 +439,7 @@ export default {
       roleGroup: {},
       postGroup: {},
       activeTab: "userinfo",
+      defaultAvatar: require("@/assets/images/profile.jpg"), // 默认头像
       //------ 绑定公众号相关变量 ------//
       dialogFormVisible: false, // 绑定公众号弹窗
       dialogAgentFormVisible: false, // 绑定智能体弹窗
@@ -1397,9 +1405,10 @@ export default {
 
 <style lang="scss" scoped>
 .dashboard-editor-container {
-  padding: 32px;
-  background: linear-gradient(135deg, #f0f4ff 0%, #f8fafc 100%);
+  padding: 24px;
+  background: #f5f7fa;
   position: relative;
+  min-height: calc(100vh - 60px);
 
   .chart-wrapper {
     background: #fff;
@@ -1407,67 +1416,191 @@ export default {
     margin-bottom: 32px;
   }
 
+  .app-container {
+    max-width: 1600px;
+    margin: 0 auto;
+  }
+
   .box-card {
-    border-radius: 16px;
-    box-shadow: 0 4px 24px 0 rgba(0,0,0,0.08);
+    border-radius: 12px;
+    box-shadow: 0 2px 12px rgba(0, 21, 41, 0.08);
     background: #fff;
-    .clearfix {
-      padding-bottom: 8px;
-      border-bottom: 1px solid #f0f0f0;
-      margin-bottom: 12px;
+    transition: all 0.3s ease;
+    height: 100%;
+    
+    &:hover {
+      box-shadow: 0 4px 20px rgba(0, 21, 41, 0.12);
+      transform: translateY(-2px);
     }
+    
+    :deep(.el-card__header) {
+      padding: 16px 20px;
+      border-bottom: 1px solid #ebeef5;
+      background: linear-gradient(to right, #fafbfc, #fff);
+    }
+    
+    .clearfix {
+      font-size: 16px;
+      font-weight: 600;
+      color: #303133;
+      padding-bottom: 0;
+      border-bottom: none;
+      margin-bottom: 16px;
+    }
+    
     .text-center {
       display: flex;
       justify-content: center;
       align-items: center;
-      margin-bottom: 18px;
-      img {
+      margin-bottom: 20px;
+      padding: 8px 0;
+      
+      .user-avatar-display {
         border-radius: 50%;
-        border: 4px solid #fff;
-        box-shadow: 0 2px 12px 0 rgba(64,158,255,0.12);
-        width: 80px;
-        height: 80px;
+        border: 3px solid #fff;
+        box-shadow: 0 4px 16px rgba(64, 158, 255, 0.15);
+        width: 90px;
+        height: 90px;
         object-fit: cover;
+        cursor: default;
+        transition: all 0.3s ease;
+        
+        &:hover {
+          box-shadow: 0 6px 20px rgba(64, 158, 255, 0.25);
+        }
       }
     }
+    
     .list-group {
       padding: 0;
       margin: 0;
       list-style: none;
+      
       .list-group-item {
         display: flex;
         align-items: center;
-        padding: 12px 0;
-        border-bottom: 1px solid #f5f5f5;
-        font-size: 16px;
-        color: #444;
-        transition: background 0.2s;
+        padding: 14px 12px;
+        border-bottom: 1px solid #f5f7fa;
+        font-size: 14px;
+        color: #606266;
+        transition: all 0.3s ease;
+        border-radius: 6px;
+        margin-bottom: 4px;
+        
         .svg-icon {
-          margin-right: 10px;
-          color: #67c23a;
+          margin-right: 12px;
+          color: #409eff;
+          font-size: 16px;
+          width: 20px;
+          flex-shrink: 0;
         }
+        
         .pull-right {
           margin-left: auto;
           font-weight: 500;
-          color: #222;
+          color: #303133;
         }
+        
         &:hover {
-          background: #f6faff;
+          background: linear-gradient(to right, rgba(64, 158, 255, 0.05), transparent);
+          border-color: transparent;
         }
+        
         &:last-child {
           border-bottom: none;
         }
       }
     }
+    
     #userName {
-      font-weight: bold;
+      font-weight: 600;
       color: #409eff;
-      font-size: 18px;
+      font-size: 16px;
+    }
+    
+    // 积分项特殊样式
+    .points-item {
+      cursor: pointer;
+      position: relative;
+      
+      &:hover {
+        background: linear-gradient(to right, rgba(103, 194, 58, 0.05), transparent) !important;
+        
+        .info-icon {
+          color: #409eff;
+          transform: scale(1.1);
+        }
+      }
+      
+      .points-value {
+        font-weight: 600;
+        font-size: 15px;
+      }
+      
+      .info-icon {
+        margin-left: 6px;
+        color: #909399;
+        font-size: 16px;
+        transition: all 0.3s ease;
+        cursor: help;
+      }
     }
   }
 }
 
-@media (max-width: 1024px) {
+// 响应式布局优化
+@media (max-width: 1400px) {
+  .dashboard-editor-container {
+    padding: 20px;
+  }
+}
+
+@media (max-width: 1200px) {
+  .dashboard-editor-container {
+    padding: 16px;
+    
+    .box-card {
+      .list-group-item {
+        font-size: 13px;
+        padding: 12px 10px;
+      }
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .dashboard-editor-container {
+    padding: 12px;
+    
+    .app-container {
+      :deep(.el-row) {
+        margin: 0 !important;
+        
+        .el-col {
+          padding: 0 !important;
+          margin-bottom: 12px;
+        }
+      }
+    }
+    
+    .box-card {
+      .text-center .user-avatar-display {
+        width: 70px;
+        height: 70px;
+      }
+      
+      .list-group-item {
+        font-size: 12px;
+        padding: 10px 8px;
+        
+        .svg-icon {
+          font-size: 14px;
+          margin-right: 8px;
+        }
+      }
+    }
+  }
+  
   .chart-wrapper {
     padding: 8px;
   }
@@ -1683,9 +1816,11 @@ export default {
   .el-button--text {
     color: #409eff;
     font-size: 14px;
+    transition: all 0.3s ease;
 
     &:hover {
       color: #66b1ff;
+      transform: scale(1.05);
     }
 
     i {
@@ -1698,10 +1833,18 @@ export default {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 12px 0;
-      border-bottom: 1px solid #ebeef5;
-      flex-wrap: nowrap; /* 防止项目换行 */
-      overflow: hidden; /* 防止内容溢出 */
+      padding: 14px 12px;
+      border-bottom: 1px solid #f5f7fa;
+      flex-wrap: nowrap;
+      overflow: hidden;
+      border-radius: 6px;
+      margin-bottom: 4px;
+      transition: all 0.3s ease;
+
+      &:hover {
+        background: linear-gradient(to right, rgba(64, 158, 255, 0.05), transparent);
+        border-color: transparent;
+      }
 
       &:last-child {
         border-bottom: none;
@@ -1711,19 +1854,26 @@ export default {
         display: flex;
         align-items: center;
         flex: 1;
-        min-width: 0; /* 防止flex子元素溢出 */
+        min-width: 0;
 
         .platform-icon {
-          width: 32px;
-          height: 32px;
+          width: 36px;
+          height: 36px;
           border-radius: 50%;
-          background: #f5f7fa;
+          background: linear-gradient(135deg, #f5f7fa, #fff);
           display: flex;
           align-items: center;
           justify-content: center;
           margin-right: 12px;
           overflow: hidden;
-          flex-shrink: 0; /* 防止图标被压缩 */
+          flex-shrink: 0;
+          box-shadow: 0 2px 8px rgba(0, 21, 41, 0.06);
+          transition: all 0.3s ease;
+
+          &:hover {
+            box-shadow: 0 4px 12px rgba(64, 158, 255, 0.15);
+            transform: scale(1.05);
+          }
 
           img {
             width: 100%;
@@ -1738,10 +1888,10 @@ export default {
           font-weight: 500;
           display: flex;
           align-items: center;
-          flex-wrap: wrap; /* 允许内容换行 */
-          word-break: break-word; /* 允许在任意字符间断行 */
-          min-width: 0; /* 防止文本溢出 */
-          overflow: hidden; /* 防止文本溢出 */
+          flex-wrap: wrap;
+          word-break: break-word;
+          min-width: 0;
+          overflow: hidden;
 
           .loading-icon {
             margin-left: 8px;
@@ -1753,13 +1903,14 @@ export default {
       }
 
       .status-action {
-        flex-shrink: 0; /* 防止按钮被压缩 */
-        margin-left: 8px; /* 与平台名称保持距离 */
+        flex-shrink: 0;
+        margin-left: 12px;
 
         .status-tag {
-          padding: 0px 12px;
+          padding: 6px 14px;
           border-radius: 16px;
-          white-space: nowrap; /* 防止标签文本换行 */
+          white-space: nowrap;
+          font-size: 13px;
 
           i {
             margin-right: 4px;
@@ -1767,9 +1918,16 @@ export default {
         }
 
         .login-btn {
-          padding: 6px 12px;
-          border-radius: 16px;
-          white-space: nowrap; /* 防止按钮文本换行 */
+          padding: 8px 16px;
+          border-radius: 18px;
+          white-space: nowrap;
+          font-size: 13px;
+          transition: all 0.3s ease;
+
+          &:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(64, 158, 255, 0.3);
+          }
 
           i {
             margin-right: 4px;

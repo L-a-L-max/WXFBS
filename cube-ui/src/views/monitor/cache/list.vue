@@ -158,6 +158,11 @@ import { listCacheName, listCacheKey, getCacheValue, clearCacheName, clearCacheK
 
 export default {
   name: "CacheList",
+  setup() {
+    return {
+      Collection, Delete, Document, Key, RefreshRight
+    }
+  },
   data() {
     return {
       cacheNames: [],

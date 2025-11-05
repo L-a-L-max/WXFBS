@@ -15,7 +15,7 @@
   .sidebar-container {
     transition: width 0.28s;
     width: variables.$base-sidebar-width !important;
-    background-color: variables.$base-menu-background !important; // 强制背景色
+    background-color: #ffffff !important;
     height: 100%;
     position: fixed;
     top: 0;
@@ -23,7 +23,8 @@
     left: 0;
     z-index: 1001;
     overflow: hidden;
-    box-shadow: 2px 0 6px rgba(0, 21, 41, .35);
+    box-shadow: 2px 0 12px rgba(0, 21, 41, 0.08);
+    border-right: 1px solid rgba(0, 21, 41, 0.06);
 
     // 修复 Element Plus 滚动条样式
     .el-scrollbar__bar.is-vertical {
@@ -51,7 +52,11 @@
     }
 
     .svg-icon {
-      margin-right: 16px;
+      margin-right: 12px;
+      width: 18px;
+      height: 18px;
+      font-size: 18px;
+      vertical-align: middle;
     }
 
     .el-menu {
@@ -66,9 +71,45 @@
       overflow: hidden !important;
       text-overflow: ellipsis !important;
       white-space: nowrap !important;
-      color: variables.$base-menu-color !important; // 强制文字颜色
+      color: #606266 !important;
+      border-radius: 8px;
+      margin: 4px 12px;
+      padding-left: 16px !important;
+      height: 48px;
+      line-height: 48px;
+      transition: all 0.3s ease;
+      font-size: 14px;
+      
       &:hover {
-        color: variables.$base-menu-color-active !important; // 悬停颜色
+        color: #409eff !important;
+        background-color: rgba(64, 158, 255, 0.08) !important;
+        transform: translateX(3px);
+      }
+      
+      // 统一图标和文字间距
+      .svg-icon {
+        vertical-align: middle;
+        margin-right: 12px;
+      }
+    }
+
+    // 激活状态样式
+    :deep(.el-menu-item.is-active) {
+      background: linear-gradient(90deg, rgba(64, 158, 255, 0.12) 0%, rgba(64, 158, 255, 0.06) 100%) !important;
+      color: #409eff !important;
+      font-weight: 600;
+      position: relative;
+      
+      &::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 4px;
+        height: 50%;
+        background: linear-gradient(to bottom, #409eff, #66b1ff);
+        border-radius: 0 4px 4px 0;
       }
     }
 
@@ -76,7 +117,7 @@
     :deep(.submenu-title-noDropdown),
     :deep(.el-sub-menu__title) {
       &:hover {
-        background-color: rgba(255, 6, 6, 0.06) !important;
+        background-color: rgba(64, 158, 255, 0.08) !important;
       }
     }
 
@@ -84,7 +125,7 @@
     :deep(.theme-dark) {
       .is-active {
         > .el-sub-menu__title {
-          color: variables.$base-menu-color-active !important;
+          color: #409eff !important;
         }
       }
     }
@@ -95,9 +136,11 @@
         > .el-sub-menu__title,
         .el-menu-item {
           min-width: variables.$base-sidebar-width !important;
-          background-color: variables.$base-sub-menu-background !important; // 强制子菜单背景色
+          background-color: #fafbfc !important;
+          margin: 2px 12px;
+          
           &:hover {
-            background-color: variables.$base-sub-menu-hover !important;
+            background-color: rgba(64, 158, 255, 0.06) !important;
           }
         }
       }
@@ -107,10 +150,10 @@
     :deep(.theme-dark) {
       .nest-menu .el-sub-menu > .el-sub-menu__title,
       .el-sub-menu .el-menu-item {
-        background-color: variables.$base-sub-menu-background !important;
+        background-color: #fafbfc !important;
 
         &:hover {
-          background-color: variables.$base-sub-menu-hover !important;
+          background-color: rgba(64, 158, 255, 0.06) !important;
         }
       }
     }
@@ -203,6 +246,7 @@
     .sidebar-container {
       transition: transform .28s;
       width: variables.$base-sidebar-width !important;
+      box-shadow: 4px 0 16px rgba(0, 21, 41, 0.15);
     }
 
     &.hideSidebar {
@@ -210,6 +254,39 @@
         pointer-events: none;
         transition-duration: 0.3s;
         transform: translate3d(calc(-1 * #{variables.$base-sidebar-width}), 0, 0);
+      }
+    }
+  }
+  
+  // 平板适配
+  @media screen and (max-width: 1024px) {
+    .sidebar-container {
+      :deep(.el-menu-item),
+      :deep(.el-sub-menu__title) {
+        height: 44px;
+        line-height: 44px;
+        font-size: 13px;
+        margin: 3px 10px;
+      }
+    }
+  }
+  
+  // 移动端适配
+  @media screen and (max-width: 768px) {
+    .sidebar-container {
+      :deep(.el-menu-item),
+      :deep(.el-sub-menu__title) {
+        height: 42px;
+        line-height: 42px;
+        font-size: 13px;
+        margin: 2px 8px;
+        
+        .svg-icon {
+          width: 16px;
+          height: 16px;
+          font-size: 16px;
+          margin-right: 10px;
+        }
       }
     }
   }
@@ -226,7 +303,11 @@
 .el-menu--vertical {
   :deep(.el-menu) {
     .svg-icon {
-      margin-right: 16px;
+      margin-right: 12px;
+      width: 18px;
+      height: 18px;
+      font-size: 18px;
+      vertical-align: middle;
     }
   }
 
@@ -235,7 +316,7 @@
     .el-sub-menu > .el-sub-menu__title,
     .el-menu-item {
       &:hover {
-        background-color: rgba(236, 13, 13, 0.06) !important;
+        background-color: rgba(64, 158, 255, 0.06) !important;
       }
     }
   }

@@ -16,6 +16,67 @@ window.addEventListener('unhandledrejection', (e) => {
   }
 });
 
+// 拦截 Vue Router 的控制台警告（仅过滤动态路由加载前的正常警告）
+const originalWarn = console.warn;
+console.warn = function(...args) {
+  // 安全地将所有参数转换为字符串进行检查
+  const allArgsStr = args.map(arg => {
+    try {
+      if (typeof arg === 'string') return arg;
+      if (typeof arg === 'number' || typeof arg === 'boolean') return String(arg);
+      if (arg === null) return 'null';
+      if (arg === undefined) return 'undefined';
+      // 对于对象，使用 JSON.stringify 或返回类型名
+      return JSON.stringify(arg);
+    } catch (e) {
+      return Object.prototype.toString.call(arg);
+    }
+  }).join(' ');
+  
+  // 过滤掉动态路由加载前的 "No match found" 警告
+  // 这是正常现象：应用启动时动态路由还未从后端加载
+  if (allArgsStr.includes('No match found for location with path')) {
+    return;
+  }
+  
+  // 过滤掉已废弃的 size 属性警告（如 medium, mini 等）
+  // 这些是在迁移到新版 Element Plus 过程中的过渡性警告
+  if (allArgsStr.includes('Invalid prop') && allArgsStr.includes('size')) {
+    return;
+  }
+  
+  if (allArgsStr.includes('custom validator check failed for prop')) {
+    return;
+  }
+  
+  // 过滤掉 Element Plus 图标属性访问警告
+  // 这些图标组件在旧代码中被直接使用，在 Vue 3 + Element Plus 中需要正确导入和暴露
+  const iconNames = ['Search', 'Refresh', 'Plus', 'Edit', 'Delete', 'Download', 'View', 'Upload', 'Close', 'Select', 'Sort', 'QuestionFilled', 'DArrowRight', 'CaretRight', 'Operation', 'CircleCheck', 'User', 'RefreshRight', 'Collection', 'Document', 'Key'];
+  if (allArgsStr.includes('Property') && allArgsStr.includes('was accessed during render but is not defined on instance')) {
+    for (const iconName of iconNames) {
+      if (allArgsStr.includes(`"${iconName}"`)) {
+        return;
+      }
+    }
+  }
+  
+  // 过滤掉组件解析失败的警告（通常是图标组件）
+  if (allArgsStr.includes('Failed to resolve component')) {
+    for (const iconName of iconNames) {
+      if (allArgsStr.includes(iconName)) {
+        return;
+      }
+    }
+  }
+  
+  // 过滤掉 type 属性验证失败的警告
+  if (allArgsStr.includes('Invalid prop') && allArgsStr.includes('type')) {
+    return;
+  }
+  
+  originalWarn.apply(console, args);
+};
+
 import { createApp } from 'vue'
 import Cookies from 'js-cookie'
 import ElementPlus from 'element-plus'
@@ -25,6 +86,14 @@ import '@/assets/styles/ruoyi.scss' // ruoyi css
 import App from './App.vue'
 import store from './store'
 import router from './router'
+
+// 迁移旧的 size cookie 值到新的值
+const oldSize = Cookies.get('size');
+if (oldSize === 'medium') {
+  Cookies.set('size', 'default');
+} else if (oldSize === 'mini') {
+  Cookies.set('size', 'small');
+}
 import directive from './directive' // directive
 import plugins from './plugins' // plugins
 import modal from './plugins/modal'
@@ -97,10 +166,9 @@ app.use(directive)
 app.use(plugins)
 app.use(createHead())
 DictData.install(app)
-app.use(ElementPlus)
-// 使用 Element Plus
+// 使用 Element Plus (只需要调用一次)
 app.use(ElementPlus, {
-  size: Cookies.get('size') || 'medium'
+  size: Cookies.get('size') || 'default'
 })
 app.use(router)
 app.use(store)

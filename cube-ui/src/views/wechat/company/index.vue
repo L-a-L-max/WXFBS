@@ -170,6 +170,11 @@ export default {
   name: "User",
   dicts: ['sys_normal_disable', 'sys_user_sex'],
   components: { Treeselect },
+  setup() {
+    return {
+      Search, Refresh
+    }
+  },
   data() {
     return {
       // 遮罩层

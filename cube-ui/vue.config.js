@@ -132,14 +132,8 @@ module.exports = {
       .end()
 
     config.when(process.env.NODE_ENV !== 'development', config => {
-      config
-        .plugin('ScriptExtHtmlWebpackPlugin')
-        .after('html')
-        .use('script-ext-html-webpack-plugin', [{
-          // `runtime` must same as runtimeChunk name. default is `runtime`
-          inline: /runtime\..*\.js$/
-        }])
-        .end()
+      // Note: script-ext-html-webpack-plugin removed as it's not compatible with webpack 5
+      // Runtime chunk inlining can be handled by html-webpack-plugin in webpack 5
 
       config.optimization.splitChunks({
         chunks: 'all',

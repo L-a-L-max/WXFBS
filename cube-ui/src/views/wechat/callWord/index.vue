@@ -2,8 +2,8 @@
   <div class="app-container">
     <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch" label-width="68px">
       <el-form-item>
-        <!-- <el-button type="primary" :icon="Search" size="mini" @click="handleQuery">搜索</el-button> -->
-        <el-button :icon="Refresh" size="mini" @click="resetQuery">重置</el-button>
+        <!-- <el-button type="primary" :icon="Search" size="small" @click="handleQuery">搜索</el-button> -->
+        <el-button :icon="Refresh" size="small" @click="resetQuery">重置</el-button>
       </el-form-item>
     </el-form>
 
@@ -13,7 +13,7 @@
           type="primary"
           plain
           :icon="Plus"
-          size="mini"
+          size="small"
           @click="handleAdd"
           v-hasPermi="['wechat:callWord:add']"
         >新增</el-button>
@@ -23,7 +23,7 @@
           type="success"
           plain
           :icon="Edit"
-          size="mini"
+          size="small"
           :disabled="single"
           @click="handleUpdate"
           v-hasPermi="['wechat:callWord:edit']"
@@ -34,7 +34,7 @@
           type="danger"
           plain
           :icon="Delete"
-          size="mini"
+          size="small"
           :disabled="multiple"
           @click="handleDelete"
           v-hasPermi="['wechat:callWord:remove']"
@@ -45,7 +45,7 @@
           type="warning"
           plain
           :icon="Download"
-          size="mini"
+          size="small"
           @click="handleExport"
           v-hasPermi="['wechat:callWord:export']"
         >导出</el-button>
@@ -68,7 +68,7 @@
         <template #default="scope">
           <el-button
             v-if="scope.row.isCommon === 0"
-            size="mini"
+            size="small"
             type="text"
             :icon="Edit"
             @click="handleUpdate(scope.row)"
@@ -76,7 +76,7 @@
           >修改</el-button>
           <el-button
             v-if="scope.row.isCommon === 1"
-            size="mini"
+            size="small"
             type="text"
             :icon="Edit"
             @click="handleUpdate(scope.row)"
@@ -85,7 +85,7 @@
           >修改</el-button>
           <el-button
             v-if="scope.row.isCommon === 0"
-            size="mini"
+            size="small"
             type="text"
             :icon="Delete"
             @click="handleDelete(scope.row)"
@@ -93,7 +93,7 @@
           >删除</el-button>
           <el-button
             v-if="scope.row.isCommon === 1"
-            size="mini"
+            size="small"
             type="text"
             :icon="Delete"
             @click="handleDelete(scope.row)"
@@ -102,7 +102,7 @@
           >删除</el-button>
           <el-button
             v-if="scope.row.isCommon === 0"
-            size="mini"
+            size="small"
             type="text"
             style="color: #E6A23C"
             @click="handleSetCommon(scope.row, 1)"
@@ -110,7 +110,7 @@
           >设为公共</el-button>
           <el-button
             v-if="scope.row.isCommon === 1"
-            size="mini"
+            size="small"
             type="text"
             style="color: #909399"
             @click="handleSetCommon(scope.row, 0)"
@@ -155,6 +155,17 @@ import { Delete, Download, Edit, Plus, Refresh, Search } from '@element-plus/ico
 import { getMediaCallWordList,getMediaCallWord,updateMediaCallWord,deleteMediaCallWord,setCallWordCommon } from "@/api/wechat/aigc";
 export default {
   name: "Prompt",
+  components: {},
+  setup() {
+    return {
+      Search,
+      Refresh,
+      Plus,
+      Edit,
+      Delete,
+      Download
+    }
+  },
   data() {
     return {
       // 遮罩层
