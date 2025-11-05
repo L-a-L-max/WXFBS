@@ -34,7 +34,7 @@ U3W-AI/
 ### 前置要求
 - JDK 17
 - Maven cube-admin:3.2.5, cube-engine:3.2.5
-- Node.js 16.x/18.x 和 npm 8.x+
+- Node.js 25 和 npm 10+
 - MySQL 8.0 和 Redis 6.0+
 - Windows 10系统及以上（建议内存16GB）
 
