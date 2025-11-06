@@ -245,6 +245,12 @@ public class DeepSeekUtil {
 
             // 进入循环，直到内容不再变化或者超时
             while (true) {
+                // 🔥 优先检查页面是否关闭
+                if (page.isClosed()) {
+                    logInfo.sendTaskLog("❌ 页面已关闭，停止监听", userId, aiName);
+                    throw new RuntimeException("页面在监控过程中被关闭");
+                }
+                
                 // 检查是否超时
                 long elapsedTime = System.currentTimeMillis() - startTime;
                 if (elapsedTime > maxTimeout) {
@@ -415,6 +421,16 @@ public class DeepSeekUtil {
             if ((finalContent == null || finalContent.trim().isEmpty()) && !hasEverHadContent) {
                 logInfo.sendTaskLog("超时未获取到回复内容，可能是网络问题或账号限制", userId, aiName);
                 return "DeepSeek超时未返回内容，请检查网络或账号状态";
+            }
+            
+            // 🔥 检测是否包含AI思考过程内容
+            if (finalContent != null && detectThinkingContent(finalContent)) {
+                UserLogUtil.sendAIWarningLog(userId, aiName, "内容检测", 
+                    "⚠️ 检测到可能包含AI思考过程的内容，建议检查是否为最终答案。" +
+                    "\n提示：如果内容以\"让我\"、\"首先\"、\"接下来\"等开头，可能是思考过程而非最终答案。" +
+                    "\n💡 解决方案：请重新生成或手动编辑内容。", 
+                    url + "/saveLogInfo");
+                logInfo.sendTaskLog("⚠️ 内容包含疑似思考过程，请检查", userId, aiName);
             }
             
             logInfo.sendTaskLog("DeepSeek内容已自动提取完成", userId, aiName);
@@ -1446,8 +1462,16 @@ public class DeepSeekUtil {
                     const actionButtonsSelector = 'div.ds-flex._0a3d93b[style*="align-items: center; gap: 10px"] div.ds-flex._965abe9._54866f7';
                     const hasActionButtons = latestContainer.querySelector(actionButtonsSelector) !== null;
                     
-                    // 获取markdown内容
-                    const markdownElement = latestContainer.querySelector('.ds-markdown');
+                    // 🔥 优先提取.ds-markdown-html（不含深度思考的纯回答内容）
+                    let markdownElement = latestContainer.querySelector('.ds-markdown-html');
+                    let isHtmlContent = true;
+                    
+                    // 如果没有找到.ds-markdown-html，回退到.ds-markdown
+                    if (!markdownElement) {
+                        markdownElement = latestContainer.querySelector('.ds-markdown');
+                        isHtmlContent = false;
+                    }
+                    
                     if (!markdownElement) {
                         return {
                             content: '',
@@ -1479,7 +1503,7 @@ public class DeepSeekUtil {
                         textContent: textContent,
                         length: contentLength,
                         hasActionButtons: hasActionButtons,
-                        source: 'latest-container-with-buttons',
+                        source: isHtmlContent ? 'ds-markdown-html-only' : 'ds-markdown-full',
                         timestamp: Date.now()
                     };
                 } catch (e) {
@@ -1689,28 +1713,36 @@ public class DeepSeekUtil {
                         // 获取最后一个回复容器（最新的回复）
                         const latestContainer = responseContainers[responseContainers.length - 1];
                         
-                        // 查找复制按钮组 - 使用你提供的DOM结构
+                        // 🔥 改进：使用更精确的复制按钮定位方式
+                        // 方法1：通过操作按钮组容器查找
                         const actionButtonsContainer = latestContainer.querySelector('div.ds-flex._965abe9._54866f7[style*="align-items: center; gap: 10px"]');
-                        if (!actionButtonsContainer) {
-                            return { success: false, error: 'no-action-buttons' };
+                        
+                        if (actionButtonsContainer) {
+                            // 查找所有按钮
+                            const buttons = actionButtonsContainer.querySelectorAll('div.ds-icon-button.db183363[role="button"]');
+                            
+                            // 遍历按钮，找到包含复制图标的按钮
+                            for (let button of buttons) {
+                                const copyIcon = button.querySelector('svg path[d*="M6.14926 4.02039"]');
+                                if (copyIcon) {
+                                    // 找到复制按钮，点击它
+                                    button.click();
+                                    return { success: true, message: 'copy-button-clicked-by-icon' };
+                                }
+                            }
                         }
                         
-                        // 查找复制按钮 - 第一个按钮就是复制按钮
-                        const copyButton = actionButtonsContainer.querySelector('div._17e543b.db183363[role="button"]');
-                        if (!copyButton) {
-                            return { success: false, error: 'no-copy-button' };
+                        // 方法2：回退方案 - 直接查找包含复制图标的按钮
+                        const allCopyButtons = latestContainer.querySelectorAll('div.ds-icon-button[role="button"]');
+                        for (let button of allCopyButtons) {
+                            const copyIcon = button.querySelector('svg path[d*="M6.14926 4.02039"]');
+                            if (copyIcon) {
+                                button.click();
+                                return { success: true, message: 'copy-button-clicked-fallback' };
+                            }
                         }
                         
-                        // 检查是否有复制图标（SVG path中包含复制相关的路径）
-                        const copyIcon = copyButton.querySelector('svg path[d*="M6.14926 4.02039"]');
-                        if (!copyIcon) {
-                            return { success: false, error: 'not-copy-button' };
-                        }
-                        
-                        // 点击复制按钮
-                        copyButton.click();
-                        
-                        return { success: true, message: 'copy-button-clicked' };
+                        return { success: false, error: 'copy-button-not-found' };
                     } catch (e) {
                         return { success: false, error: e.toString() };
                     }
@@ -1722,21 +1754,37 @@ public class DeepSeekUtil {
                 Boolean success = (Boolean) resultMap.get("success");
                 
                 if (success != null && success) {
-                    // 等待剪贴板更新
-                    Thread.sleep(2000);
+                    // 🔒 使用剪贴板锁保护剪贴板操作
+                    AtomicReference<String> contentRef = new AtomicReference<>();
                     
-                    // 获取剪贴板内容
-                    String clipboardContent = (String) page.evaluate("navigator.clipboard.readText()");
+                    clipboardLockManager.runWithClipboardLock(() -> {
+                        try {
+                            // 等待剪贴板更新
+                            Thread.sleep(2000);
+                            
+                            // 获取剪贴板内容
+                            String clipboardContent = (String) page.evaluate("navigator.clipboard.readText()");
+                            
+                            if (clipboardContent != null && !clipboardContent.trim().isEmpty()) {
+                                // 🔥 终端输出前100字
+                                String preview = clipboardContent.length() > 100 ? clipboardContent.substring(0, 100) : clipboardContent;
+                                System.out.println("📋 [DeepSeek-" + userId + "] 获取内容预览: " + preview.replace("\n", "\\n"));
+                                
+                                // 过滤思考内容，只保留回答部分
+                                String filteredContent = filterThinkingContent(clipboardContent, userId);
+                                contentRef.set(filteredContent);
+                                logInfo.sendTaskLog("成功获取并过滤回答内容", userId, "DeepSeek");
+                            } else {
+                                logInfo.sendTaskLog("剪贴板内容为空", userId, "DeepSeek");
+                                contentRef.set("");
+                            }
+                        } catch (Exception e) {
+                            logInfo.sendTaskLog("剪贴板读取失败: " + e.getMessage(), userId, "DeepSeek");
+                            contentRef.set("");
+                        }
+                    });
                     
-                    if (clipboardContent != null && !clipboardContent.trim().isEmpty()) {
-                        // 过滤思考内容，只保留回答部分
-                        String filteredContent = filterThinkingContent(clipboardContent, userId);
-                        logInfo.sendTaskLog("成功获取并过滤回答内容", userId, "DeepSeek");
-                        return filteredContent;
-                    } else {
-                        logInfo.sendTaskLog("剪贴板内容为空", userId, "DeepSeek");
-                        return "";
-                    }
+                    return contentRef.get();
                 } else {
                     // 复制按钮点击失败，返回空字符串
                     return "";
@@ -1952,5 +2000,69 @@ public class DeepSeekUtil {
         } catch (Exception e) {
             // 刷新按钮检测失败，静默处理不抛出异常
         }
+    }
+    
+    /**
+     * 🔥 检测文本内容是否包含AI思考过程
+     * 
+     * 识别特征：
+     * - 以"让我"、"首先"、"接下来"开头
+     * - 包含步骤描述词："然后"、"最后"、"需要"
+     * - 包含元认知词汇："我需要"、"应该"、"要"
+     * 
+     * @param content 文本内容
+     * @return true表示可能包含思考过程，false表示正常内容
+     */
+    private static boolean detectThinkingContent(String content) {
+        if (content == null || content.trim().isEmpty()) {
+            return false;
+        }
+        
+        // 先提取纯文本（去除HTML标签）
+        String text = content.replaceAll("<[^>]+>", "").trim();
+        
+        // 🔥 强特征：开头包含明显的思考过程标识
+        String[] strongStartPatterns = {
+            "用户让我", "让我", "我需要先", "首先，我需要", "首先，需要",
+            "我需要把", "我要把", "需要先", "应该先"
+        };
+        
+        for (String pattern : strongStartPatterns) {
+            if (text.startsWith(pattern)) {
+                return true;
+            }
+        }
+        
+        // 🔥 中等特征：前100字符内包含多个思考过程关键词
+        String prefix = text.length() > 100 ? text.substring(0, 100) : text;
+        int thinkingKeywordCount = 0;
+        String[] thinkingKeywords = {
+            "首先，", "接下来，", "然后", "最后", "需要", "应该", 
+            "我需要", "要先", "接着", "之后", "确定", "处理", "转换"
+        };
+        
+        for (String keyword : thinkingKeywords) {
+            if (prefix.contains(keyword)) {
+                thinkingKeywordCount++;
+            }
+        }
+        
+        // 如果前100字符内出现3个以上思考关键词，判定为思考过程
+        if (thinkingKeywordCount >= 3) {
+            return true;
+        }
+        
+        // 🔥 弱特征：内容过于结构化（像步骤说明）
+        // 检查是否包含大量的步骤描述
+        boolean hasFirstStep = prefix.contains("第一") || prefix.contains("1.") || prefix.contains("一、");
+        boolean hasSecondStep = prefix.contains("第二") || prefix.contains("2.") || prefix.contains("二、");
+        boolean hasThirdStep = prefix.contains("第三") || prefix.contains("3.") || prefix.contains("三、");
+        
+        // 如果前100字符包含明确的步骤序号，可能是思考过程
+        if (hasFirstStep && hasSecondStep && hasThirdStep) {
+            return true;
+        }
+        
+        return false;
     }
 } 

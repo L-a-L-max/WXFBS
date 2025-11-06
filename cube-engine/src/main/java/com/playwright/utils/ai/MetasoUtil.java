@@ -13,6 +13,8 @@ import org.springframework.stereotype.Component;
 import com.microsoft.playwright.TimeoutError;
 import com.microsoft.playwright.options.WaitForSelectorState;
 
+import java.util.concurrent.atomic.AtomicReference;
+
 @Component
 public class MetasoUtil {
 
@@ -97,6 +99,12 @@ public class MetasoUtil {
                 );
                 textContent = contentLocator.textContent();
                 
+                // 🔥 第一次获取到内容时输出到终端
+                if (!textContent.trim().isEmpty() && lastContent.trim().isEmpty()) {
+                    String preview = textContent.length() > 100 ? textContent.substring(0, 100) : textContent;
+                    System.out.println("📋 [秘塔AI-" + userId + "] 获取内容预览: " + preview.replace("\n", "\\n"));
+                }
+                
                 // 内容稳定且已完成回答时退出循环
                 if (userInfoRequest.getAiName() != null && userInfoRequest.getAiName().contains("stream")) {
                     webSocketClientService.sendMessage(userInfoRequest, McpResult.success(textContent, ""), userInfoRequest.getAiName());
@@ -162,7 +170,7 @@ public class MetasoUtil {
                 "//div[contains(@class,'option') or contains(@class,'menu')]//button[contains(@class,'copy') or contains(text(),'复制')]"
             };
 
-            String shareUrl = null;
+            AtomicReference<String> shareUrlRef = new AtomicReference<>();
             boolean clickSuccess = false;
 
             // 策略1：尝试所有选择器进行复制链接操作
@@ -176,20 +184,29 @@ public class MetasoUtil {
                         shareButton.waitFor(new Locator.WaitForOptions()
                             .setTimeout(5000)
                             .setState(WaitForSelectorState.VISIBLE));
-                            
-                        shareButton.click();
-                        Thread.sleep(1000);
                         
-                        // 尝试从剪贴板读取链接
-                        try {
-                            shareUrl = (String) page.evaluate("navigator.clipboard.readText()");
-                            if (shareUrl != null && shareUrl.contains("http")) {
-                                clickSuccess = true;
-                                logInfo.sendTaskLog("通过选择器 " + (i+1) + " 成功获取分享链接: " + shareUrl, userId, aiName);
-                                break;
+                        // 🔒 使用剪贴板锁保护剪贴板操作
+                        final int selectorIndex = i;
+                        clipboardLockManager.runWithClipboardLock(() -> {
+                            try {
+                                shareButton.click();
+                                Thread.sleep(1000);
+                                
+                                // 从剪贴板读取链接
+                                String url = (String) page.evaluate("navigator.clipboard.readText()");
+                                if (url != null && url.contains("http")) {
+                                    shareUrlRef.set(url);
+                                    logInfo.sendTaskLog("通过选择器 " + (selectorIndex+1) + " 成功获取分享链接: " + url, userId, aiName);
+                                }
+                            } catch (Exception clipEx) {
+                                logInfo.sendTaskLog("第 " + (selectorIndex+1) + " 个选择器点击成功但读取剪贴板失败", userId, aiName);
                             }
-                        } catch (Exception clipEx) {
-                            logInfo.sendTaskLog("第 " + (i+1) + " 个选择器点击成功但读取剪贴板失败", userId, aiName);
+                        });
+                        
+                        String shareUrl = shareUrlRef.get();
+                        if (shareUrl != null && shareUrl.contains("http")) {
+                            clickSuccess = true;
+                            break;
                         }
                     }
                 } catch (Exception e) {
@@ -199,6 +216,8 @@ public class MetasoUtil {
                     }
                 }
             }
+            
+            String shareUrl = shareUrlRef.get();
 
             // 策略2：如果复制链接失败，尝试从URL或页面中直接提取
             if (!clickSuccess || shareUrl == null || !shareUrl.contains("http")) {

@@ -902,83 +902,87 @@ public class BaiduUtil {
                 throw new RuntimeException("页面在提取最终内容时已关闭");
             }
 
+            // 定义所有可能的复制按钮选择器，按优先级排序
+            String[] allCopyButtonSelectors = {
+                // Editor模式的选择器
+                "i.cos-icon.cos-icon-copy.button_AxaRd",
+                // Comate模式的选择器
+                "i.cos-icon.cos-icon-copy.button_f81z6_14",
+                // 标准模式的选择器（多个备选）
+                "i.cos-icon.cos-icon-copy.icon_jk2b1_12",
+                "i.cos-icon.cos-icon-copy.icon_1nicr_12",
+                ".menu-item_jk2b1_1 i.cos-icon-copy",
+                "span.menu-item_jk2b1_1 i.cos-icon.cos-icon-copy",
+                // 通用选择器（兜底）
+                "i.cos-icon.cos-icon-copy",
+                ".copy-button",
+                "[data-copy]"
+            };
+            
+            boolean copySuccess = false;
+            String detectedMode = "未知";
+            
+            // 首先检测页面模式
             Locator editor = page.locator("div#editor-container");
             Locator comate = page.locator("div#comate-chat-workspace");
-
+            Locator chatContainer = page.locator("div.chat-qa-container");
+            
             if (editor.count() > 0) {
-                Locator copyButton = page.locator("i.cos-icon.cos-icon-copy.button_AxaRd");
-                if (copyButton.count() > 0 && copyButton.isVisible()) {
-                    try {
-                        copyButton.click();
-                        Thread.sleep(1000);
-                        content = (String) page.evaluate("navigator.clipboard.readText()");
-                        // 🔥 优化：不再记录剪贴板为空的警告（可能是AI正常响应）
-                        // 只有在真正出错时才记录
-                    } catch (Exception e) {
-                        UserLogUtil.sendAIWarningLog(userId, "百度AI", "内容提取", 
-                            "复制按钮操作失败（编辑器模式）：" + e.getClass().getSimpleName() + " - " + e.getMessage(), 
-                            url + "/saveLogInfo");
-                    }
-                } else {
-                    UserLogUtil.sendAIWarningLogWithDedup(userId, "百度AI", "内容提取", 
-                        "编辑器模式下未找到可用的复制按钮", url + "/saveLogInfo", 30000);
-                }
+                detectedMode = "编辑器模式";
             } else if (comate.count() > 0) {
-                Locator copyButton = page.locator("i.cos-icon.cos-icon-copy.button_f81z6_14");
-                if (copyButton.count() > 0 && copyButton.isVisible()) {
-                    try {
-                        copyButton.click();
-                        Thread.sleep(1000);
-                        content = (String) page.evaluate("navigator.clipboard.readText()");
-                        // 🔥 优化：不再记录剪贴板为空的警告
-                    } catch (Exception e) {
-                        UserLogUtil.sendAIWarningLog(userId, "百度AI", "内容提取", 
-                            "复制按钮操作失败（comate模式）：" + e.getClass().getSimpleName() + " - " + e.getMessage(), 
-                            url + "/saveLogInfo");
+                detectedMode = "Comate模式";
+            } else if (chatContainer.count() > 0) {
+                detectedMode = "标准对话模式";
+            }
+            
+            // 尝试从标准对话容器中查找
+            if (chatContainer.count() > 0) {
+                try {
+                    Locator answerBox = chatContainer.last().locator(".answer-box.last-answer-box");
+                    
+                    for (String selector : allCopyButtonSelectors) {
+                        try {
+                            Locator tempButton = answerBox.locator(selector).last();
+                            if (tempButton.count() > 0 && tempButton.isVisible()) {
+                                tempButton.click();
+                                Thread.sleep(1000);
+                                content = (String) page.evaluate("navigator.clipboard.readText()");
+                                copySuccess = true;
+                                logInfo.sendTaskLog("已通过复制按钮获取内容（" + detectedMode + "）", userId, "百度AI");
+                                break;
+                            }
+                        } catch (Exception e) {
+                            // 继续尝试下一个选择器
+                        }
                     }
-                } else {
-                    UserLogUtil.sendAIWarningLogWithDedup(userId, "百度AI", "内容提取", 
-                        "comate模式下未找到可用的复制按钮", url + "/saveLogInfo", 30000);
+                } catch (Exception e) {
+                    // 标准对话容器查找失败，继续尝试全局查找
                 }
-            } else {
-                Locator locator = page.locator("div.chat-qa-container");
-                Locator element = locator.last().locator(".answer-box.last-answer-box");
-                // 更新复制按钮选择器以适配新的DOM结构
-                String[] copyButtonSelectors = {
-                    "i.cos-icon.cos-icon-copy.icon_jk2b1_12",  // 新的class名称
-                    "i.cos-icon.cos-icon-copy.icon_1nicr_12",  // 旧的class名称（备用）
-                    ".menu-item_jk2b1_1 i.cos-icon-copy",     // 通过父元素定位
-                    "span.menu-item_jk2b1_1 i.cos-icon.cos-icon-copy" // 完整路径
-                };
-                
-                Locator copyButton = null;
-                for (String selector : copyButtonSelectors) {
+            }
+            
+            // 如果标准容器中没找到，尝试全局查找
+            if (!copySuccess) {
+                for (String selector : allCopyButtonSelectors) {
                     try {
-                        Locator tempButton = element.locator(selector).last();
+                        Locator tempButton = page.locator(selector).last();
                         if (tempButton.count() > 0 && tempButton.isVisible()) {
-                            copyButton = tempButton;
+                            tempButton.click();
+                            Thread.sleep(1000);
+                            content = (String) page.evaluate("navigator.clipboard.readText()");
+                            copySuccess = true;
+                            logInfo.sendTaskLog("已通过全局复制按钮获取内容（" + detectedMode + "）", userId, "百度AI");
                             break;
                         }
                     } catch (Exception e) {
                         // 继续尝试下一个选择器
                     }
                 }
-                // 百度AI无法分享的组件也有分享按钮只是不可见，不可用
-                if (copyButton != null && copyButton.count() > 0 && copyButton.isVisible()) {
-                    try {
-                        copyButton.click();
-                        Thread.sleep(1000);
-                        content = (String) page.evaluate("navigator.clipboard.readText()");
-                        // 🔥 优化：不再记录剪贴板为空的警告
-                    } catch (Exception e) {
-                        UserLogUtil.sendAIWarningLog(userId, "百度AI", "内容提取", 
-                            "复制按钮操作失败（标准模式）：" + e.getClass().getSimpleName() + " - " + e.getMessage(), 
-                            url + "/saveLogInfo");
-                    }
-                } else {
-                    UserLogUtil.sendAIWarningLogWithDedup(userId, "百度AI", "内容提取", 
-                        "标准模式下未找到可用的复制按钮", url + "/saveLogInfo", 30000);
-                }
+            }
+            
+            // 只有在所有尝试都失败时才发出警告，且使用去重避免刷屏
+            if (!copySuccess) {
+                UserLogUtil.sendAIWarningLogWithDedup(userId, "百度AI", "内容提取", 
+                    detectedMode + "下未找到可用的复制按钮，可能页面结构已变化", url + "/saveLogInfo", 30000);
             }
 
             return content;
@@ -1650,8 +1654,31 @@ public class BaiduUtil {
                 double scrollHeight = ((Number) page.evaluate("(ele) => ele.scrollHeight", element.elementHandle())).doubleValue();
                 double scrollTop = ((Number) page.evaluate("(ele) => ele.scrollTop", element.elementHandle())).doubleValue();
                 double clientHeight = ((Number) page.evaluate("(ele) => ele.clientHeight", element.elementHandle())).doubleValue();
-                // 先悬停在滑动文本框上以便后续滚动
-                answer.hover();
+                
+                // 使用JavaScript直接滚动代替hover操作，避免元素遮挡导致超时
+                try {
+                    // 尝试hover操作，但使用force选项和较短的超时
+                    answer.hover(new Locator.HoverOptions()
+                        .setForce(true)
+                        .setTimeout(5000)); // 减少超时时间到5秒
+                } catch (Exception hoverException) {
+                    // hover失败不影响后续滚动操作，使用JS确保元素可见
+                    logInfo.sendTaskLog("hover操作失败，使用备用方案: " + hoverException.getMessage(), userId, "百度AI");
+                    try {
+                        page.evaluate("""
+                            () => {
+                                const element = document.querySelector('//*[@id="1"]/div/div');
+                                if (element) {
+                                    element.scrollIntoView({behavior: 'instant', block: 'center'});
+                                }
+                            }
+                        """);
+                    } catch (Exception jsException) {
+                        // JS滚动也失败，继续执行后续操作
+                        logInfo.sendTaskLog("JS滚动也失败，继续截图流程", userId, "百度AI");
+                    }
+                }
+                
                 // 先滚动到页面顶部以便定位
                 while (scrollTop > 5) {
                     page.mouse().wheel(0, -clientHeight);

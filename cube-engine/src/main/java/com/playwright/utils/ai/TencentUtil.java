@@ -20,6 +20,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Matcher;
@@ -481,26 +482,33 @@ public class TencentUtil {
                     // 确保分享选项出现
                     page.waitForSelector("div.agent-chat__share-bar__item__logo", new Page.WaitForSelectorOptions().setTimeout(5000));
 
-                    // 点击复制链接（第一个选项）
-                    page.locator("div.agent-chat__share-bar__item__logo").first().click();
-                    logInfo.sendTaskLog("已点击复制链接按钮", finalUserId, finalAgentName);
+                    // 🔒 使用剪贴板锁保护剪贴板操作
+                    clipboardLockManager.runWithClipboardLock(() -> {
+                        try {
+                            // 点击复制链接（第一个选项）
+                            page.locator("div.agent-chat__share-bar__item__logo").first().click();
+                            logInfo.sendTaskLog("已点击复制链接按钮", finalUserId, finalAgentName);
 
-                    // 等待剪贴板更新
-                    Thread.sleep(3000);
-                    String shareUrl = (String) page.evaluate("navigator.clipboard.readText()");
-                    logInfo.sendTaskLog("获取到剪贴板内容: " + shareUrl, finalUserId, finalAgentName);
+                            // 等待剪贴板更新
+                            Thread.sleep(3000);
+                            String shareUrl = (String) page.evaluate("navigator.clipboard.readText()");
+                            logInfo.sendTaskLog("获取到剪贴板内容: " + shareUrl, finalUserId, finalAgentName);
 
-                    Pattern pattern = Pattern.compile("https://yuanbao\\.tencent\\.com/[^\s\"']+");
-                    Matcher matcher = pattern.matcher(shareUrl);
+                            Pattern pattern = Pattern.compile("https://yuanbao\\.tencent\\.com/[^\s\"']+");
+                            Matcher matcher = pattern.matcher(shareUrl);
 
-                    String extractedUrl = null;
-                    if (matcher.find()) {
-                        extractedUrl = matcher.group();
-                        logInfo.sendTaskLog("提取到分享链接: " + extractedUrl, finalUserId, finalAgentName);
-                    } else {
-                        logInfo.sendTaskLog("未能提取到有效的分享链接，原始内容: " + shareUrl, finalUserId, finalAgentName);
-                    }
-                    shareUrlRef.set(extractedUrl);
+                            String extractedUrl = null;
+                            if (matcher.find()) {
+                                extractedUrl = matcher.group();
+                                logInfo.sendTaskLog("提取到分享链接: " + extractedUrl, finalUserId, finalAgentName);
+                            } else {
+                                logInfo.sendTaskLog("未能提取到有效的分享链接，原始内容: " + shareUrl, finalUserId, finalAgentName);
+                            }
+                            shareUrlRef.set(extractedUrl);
+                        } catch (Exception e) {
+                            logInfo.sendTaskLog("剪贴板操作失败: " + e.getMessage(), finalUserId, finalAgentName);
+                        }
+                    });
                 } catch (TimeoutError e) {
                     // 记录分享操作超时
                     logInfo.sendTaskLog("分享按钮点击超时: " + e.getMessage(), finalUserId, finalAgentName);
@@ -766,15 +774,15 @@ public class TencentUtil {
 
     /**
      * html片段获取（核心监控方法）
+     * 🔥 重大优化：统一使用复制按钮获取内容，不再从DOM提取
      *
      * @param page Playwright页面实例
      */
     private String waitHtmlDom(Page page, String agentName, String userId, UserInfoRequest userInfoRequest) {
         try {
-            // 等待聊天框的内容稳定
-            String currentContent = "";
-            String lastContent = "";
-            String textContent = "";
+            // 🔥 日志标识：使用复制按钮获取内容
+            logInfo.sendTaskLog("📋 元宝内容获取方式：复制按钮（唯一方式，不再从DOM提取）", userId, agentName);
+            
             // 设置最大等待时间（单位：毫秒），比如 10 分钟
             long timeout = 900000; // 15 分钟 (延长50%: 600000 -> 900000)
             long startTime = System.currentTimeMillis();  // 获取当前时间戳
@@ -787,30 +795,21 @@ public class TencentUtil {
             int latestConvIdx = getLatestConversationIndex(page);
             logInfo.sendTaskLog(agentName + "检测到最新会话索引: " + latestConvIdx, userId, agentName);
             
-            // 进入循环，直到内容不再变化或者超时
+            // 🔥 进入循环，等待复制按钮出现（不再从DOM提取内容）
             while (true) {
                 // 获取当前时间戳
                 long elapsedTime = System.currentTimeMillis() - startTime;
 
                 // 如果超时，退出循环
                 if (elapsedTime > timeout) {
-                    logInfo.sendTaskLog(agentName + "等待超时，停止监听", userId, agentName);
-                    break;
+                    logInfo.sendTaskLog(agentName + "等待复制按钮超时，停止监听", userId, agentName);
+                    UserLogUtil.sendAITimeoutLog(userId, agentName, "复制按钮等待", new TimeoutException("等待复制按钮超时"), "等待复制按钮出现", url + "/saveLogInfo");
+                    throw new RuntimeException("超时未检测到复制按钮");
                 }
                 
-                // 优先检查是否有分享按钮（最准确的完成标志）
-                if (hasShareButtonInLatestConversation(page, latestConvIdx)) {
-                    logInfo.sendTaskLog(agentName + "检测到分享按钮，正在获取最终内容...", userId, agentName);
-                    
-                    // 重新获取最终完整内容
-                    Locator finalOutputLocator = getLatestConversationContent(page, latestConvIdx);
-                    if (finalOutputLocator != null) {
-                        textContent = finalOutputLocator.textContent();
-                        currentContent = finalOutputLocator.innerHTML();
-                        logInfo.sendTaskLog(agentName + "最终内容获取完成，内容长度: " + (currentContent != null ? currentContent.length() : 0), userId, agentName);
-                    }
-                    
-                    logInfo.sendTaskLog(agentName + "内容生成完成", userId, agentName);
+                // 检查是否有复制按钮（最准确的完成标志）
+                if (hasCopyButtonInLatestConversation(page, latestConvIdx)) {
+                    logInfo.sendTaskLog(agentName + "检测到复制按钮，" + agentName + "回答已完成", userId, agentName);
                     break;
                 }
                 
@@ -820,44 +819,22 @@ public class TencentUtil {
                     Thread.sleep(3000);
                     continue;
                 }
-                
-                // 获取最新会话的内容
-                Locator outputLocator = getLatestConversationContent(page, latestConvIdx);
-                if (outputLocator == null) {
-                    // 调试信息：打印会话区域的HTML结构
+
+                // 🔥 流式输出支持（仅用于实时反馈，不影响最终内容获取）
+                if (userInfoRequest.getAiName() != null && userInfoRequest.getAiName().contains("stream")) {
                     try {
-                        Locator conversation = page.locator(".agent-chat__list__item--ai[data-conv-idx='" + latestConvIdx + "']");
-                        if (conversation.count() > 0) {
-                            String conversationHtml = conversation.first().innerHTML();
-                            logInfo.sendTaskLog(agentName + "会话区域HTML: " + conversationHtml.substring(0, Math.min(500, conversationHtml.length())), userId, agentName);
+                        // 获取当前显示的文本用于流式传输（仅用于实时显示，不是最终结果）
+                        Locator streamLocator = getLatestConversationContent(page, latestConvIdx);
+                        if (streamLocator != null) {
+                            String streamText = streamLocator.textContent();
+                            if (streamText != null && !streamText.trim().isEmpty()) {
+                                webSocketClientService.sendMessage(userInfoRequest, McpResult.success(streamText, ""), userInfoRequest.getAiName());
+                            }
                         }
                     } catch (Exception e) {
-                        // 忽略调试信息异常
+                        // 流式输出失败不影响主流程
                     }
-                    
-                    logInfo.sendTaskLog(agentName + "未找到最新会话内容，继续等待...", userId, agentName);
-                    Thread.sleep(2000);
-                    continue;
                 }
-                
-                textContent = outputLocator.textContent();
-                currentContent = outputLocator.innerHTML();
-                
-                // 调试信息
-                logInfo.sendTaskLog(agentName + "当前内容长度: " + (currentContent != null ? currentContent.length() : 0), userId, agentName);
-
-                // 如果当前内容和上次内容相同，但没有分享按钮，继续等待
-                if (currentContent.equals(lastContent) && !currentContent.isEmpty()) {
-                    logInfo.sendTaskLog(agentName + "内容稳定但未发现分享按钮，继续等待分享按钮出现...", userId, agentName);
-                    Thread.sleep(2000);
-                    continue;
-                }
-
-                if (userInfoRequest.getAiName() != null && userInfoRequest.getAiName().contains("stream")) {
-                    webSocketClientService.sendMessage(userInfoRequest, McpResult.success(textContent, ""), userInfoRequest.getAiName());
-                }
-                // 更新上次内容为当前内容
-                lastContent = currentContent;
 
                 // 等待 2 秒后再次检查
                 Thread.sleep(2000);
@@ -869,26 +846,89 @@ public class TencentUtil {
                 webSocketClientService.sendMessage(userInfoRequest, McpResult.success("END", ""), userInfoRequest.getAiName());
             }
             
-            // 清理引用标签
-            currentContent = currentContent.replaceAll("<div class=\"hyc-common-markdown__ref-list\".*?</div>|<span>.*?</span>", "");
-            currentContent = currentContent.replaceAll(
-                    "<div class=\"hyc-common-markdown__ref-list__trigger\"[^>]*>\\s*<div class=\"hyc-common-markdown__ref-list__item\"></div>\\s*</div>",
-                    ""
-            );
+            // 🔥🔥🔥 通过复制按钮获取内容（唯一方式，不再从DOM提取）
+            logInfo.sendTaskLog("📋 正在通过复制按钮获取内容...", userId, agentName);
             
-            logInfo.sendTaskLog(agentName + "内容已自动提取完成", userId, agentName);
+            AtomicReference<String> finalContentRef = new AtomicReference<>();
             
-            // 添加调试信息
+            clipboardLockManager.runWithClipboardLock(() -> {
+                try {
+                    // 1. 清空剪贴板
+                    page.evaluate("navigator.clipboard.writeText('')");
+                    Thread.sleep(200);
+                    
+                    // 2. 点击最新会话的复制按钮
+                    // 定位最新会话并点击其中的复制按钮
+                    boolean clicked = (boolean) page.evaluate(
+                        "(convIdx) => {" +
+                        "  try {" +
+                        "    const conversation = document.querySelector('.agent-chat__list__item--ai[data-conv-idx=\"' + convIdx + '\"]');" +
+                        "    if (!conversation) return false;" +
+                        "    const copyButton = conversation.querySelector('.agent-chat__toolbar__copy__icon');" +
+                        "    if (!copyButton) return false;" +
+                        "    copyButton.click();" +
+                        "    return true;" +
+                        "  } catch (e) {" +
+                        "    console.error('点击复制按钮失败:', e);" +
+                        "    return false;" +
+                        "  }" +
+                        "}",
+                        latestConvIdx
+                    );
+                    
+                    if (!clicked) {
+                        throw new RuntimeException("未找到或无法点击复制按钮");
+                    }
+                    
+                    logInfo.sendTaskLog("已点击复制按钮，等待剪贴板内容...", userId, agentName);
+                    Thread.sleep(1000); // 等待复制完成
+                    
+                    // 3. 从剪贴板读取
+                    Object clipboardContent = page.evaluate("navigator.clipboard.readText()");
+                    String copiedText = clipboardContent != null ? clipboardContent.toString() : "";
+                    
+                    if (copiedText == null || copiedText.trim().isEmpty()) {
+                        throw new RuntimeException("剪贴板内容为空");
+                    }
+                    
+                    // 🔥 终端输出前100字
+                    String preview = copiedText.length() > 100 ? copiedText.substring(0, 100) : copiedText;
+                    System.out.println("📋 [元宝-" + userId + "] 获取内容预览: " + preview.replace("\n", "\\n"));
+                    
+                    finalContentRef.set(copiedText);
+                    logInfo.sendTaskLog("✅ 成功从复制按钮获取内容，长度：" + copiedText.trim().length(), userId, agentName);
+                    
+                } catch (Exception e) {
+                    logInfo.sendTaskLog("❌ 复制按钮获取失败：" + e.getMessage(), userId, agentName);
+                    throw new RuntimeException("复制按钮获取失败: " + e.getMessage(), e);
+                }
+            });
+            
+            String currentContent = finalContentRef.get();
+            
             if (currentContent == null || currentContent.trim().isEmpty()) {
-                logInfo.sendTaskLog(agentName + "警告：提取的内容为空！", userId, agentName);
-            } else {
-                logInfo.sendTaskLog(agentName + "内容提取成功，长度: " + currentContent.length(), userId, agentName);
+                UserLogUtil.sendAIWarningLog(userId, agentName, "内容获取", 
+                    "❌ 无法通过复制按钮获取内容", url + "/saveLogInfo");
+                throw new RuntimeException("内容获取失败");
+            }
+            
+            logInfo.sendTaskLog(agentName + "内容已自动提取完成，长度: " + currentContent.length(), userId, agentName);
+            
+            // 🔥 检测是否包含AI思考过程内容
+            if (detectYuanBaoThinkingContent(currentContent)) {
+                UserLogUtil.sendAIWarningLog(userId, agentName, "内容检测", 
+                    "⚠️ 检测到可能包含AI思考过程的内容，建议检查是否为最终答案。" +
+                    "\n提示：如果内容以\"让我\"、\"首先\"、\"接下来\"等开头，可能是思考过程而非最终答案。" +
+                    "\n💡 解决方案：请重新生成或手动编辑内容。", 
+                    url + "/saveLogInfo");
+                logInfo.sendTaskLog("⚠️ 内容包含疑似思考过程，请检查", userId, agentName);
             }
             
             if (agentName.contains("智能排版")) {
-                return textContent;
+                return currentContent;
             }
-            return currentContent;
+            // 将纯文本转换为简单HTML格式
+            return convertYuanBaoTextToHtml(currentContent);
 
         } catch (Exception e) {
             UserLogUtil.sendExceptionLog(userId, agentName + "获取内容失败", "waitHtmlDom", e, url + "/saveLogInfo");
@@ -1019,6 +1059,128 @@ public class TencentUtil {
             // 出错时返回false，继续等待
             return false;
         }
+    }
+    
+    /**
+     * 检查最新会话区域是否出现复制按钮
+     * 复制按钮的出现表示AI已完全生成完毕
+     */
+    private boolean hasCopyButtonInLatestConversation(Page page, int convIdx) {
+        try {
+            // 定位到指定的会话项
+            Locator conversation = page.locator(".agent-chat__list__item--ai[data-conv-idx='" + convIdx + "']");
+            if (conversation.count() == 0) {
+                return false;
+            }
+            
+            // 在该会话区域内查找复制按钮
+            Locator copyButton = conversation.locator(".agent-chat__toolbar__copy__icon");
+            boolean hasButton = copyButton.count() > 0;
+            
+            if (hasButton) {
+                // 进一步检查按钮是否可见和可点击
+                try {
+                    return copyButton.first().isVisible();
+                } catch (Exception e) {
+                    // 如果检查可见性失败，认为按钮存在但可能还未完全加载
+                    return true;
+                }
+            }
+            
+            return false;
+        } catch (Exception e) {
+            // 出错时返回false，继续等待
+            return false;
+        }
+    }
+    
+    /**
+     * 将元宝纯文本转换为简单HTML格式
+     * 
+     * @param text 纯文本内容
+     * @return HTML格式内容
+     */
+    private String convertYuanBaoTextToHtml(String text) {
+        if (text == null || text.trim().isEmpty()) {
+            return "<p></p>";
+        }
+        
+        // 将文本按行分割，每行包裹在<p>标签中
+        String[] lines = text.split("\\n");
+        StringBuilder html = new StringBuilder();
+        
+        for (String line : lines) {
+            if (line.trim().isEmpty()) {
+                html.append("<p><br></p>");
+            } else {
+                // 转义HTML特殊字符
+                String escapedLine = line
+                    .replace("&", "&amp;")
+                    .replace("<", "&lt;")
+                    .replace(">", "&gt;")
+                    .replace("\"", "&quot;");
+                html.append("<p>").append(escapedLine).append("</p>");
+            }
+        }
+        
+        return html.toString();
+    }
+    
+    /**
+     * 🔥 检测文本内容是否包含AI思考过程（元宝版）
+     * 
+     * @param content 文本内容
+     * @return true表示可能包含思考过程，false表示正常内容
+     */
+    private static boolean detectYuanBaoThinkingContent(String content) {
+        if (content == null || content.trim().isEmpty()) {
+            return false;
+        }
+        
+        String text = content.trim();
+        
+        // 🔥 强特征：开头包含明显的思考过程标识
+        String[] strongStartPatterns = {
+            "用户让我", "让我", "我需要先", "首先，我需要", "首先，需要",
+            "我需要把", "我要把", "需要先", "应该先"
+        };
+        
+        for (String pattern : strongStartPatterns) {
+            if (text.startsWith(pattern)) {
+                return true;
+            }
+        }
+        
+        // 🔥 中等特征：前100字符内包含多个思考过程关键词
+        String prefix = text.length() > 100 ? text.substring(0, 100) : text;
+        int thinkingKeywordCount = 0;
+        String[] thinkingKeywords = {
+            "首先，", "接下来，", "然后", "最后", "需要", "应该", 
+            "我需要", "要先", "接着", "之后", "确定", "处理", "转换"
+        };
+        
+        for (String keyword : thinkingKeywords) {
+            if (prefix.contains(keyword)) {
+                thinkingKeywordCount++;
+            }
+        }
+        
+        // 如果前100字符内出现3个以上思考关键词，判定为思考过程
+        if (thinkingKeywordCount >= 3) {
+            return true;
+        }
+        
+        // 🔥 弱特征：内容过于结构化（像步骤说明）
+        boolean hasFirstStep = prefix.contains("第一") || prefix.contains("1.") || prefix.contains("一、");
+        boolean hasSecondStep = prefix.contains("第二") || prefix.contains("2.") || prefix.contains("二、");
+        boolean hasThirdStep = prefix.contains("第三") || prefix.contains("3.") || prefix.contains("三、");
+        
+        // 如果前100字符包含明确的步骤序号，可能是思考过程
+        if (hasFirstStep && hasSecondStep && hasThirdStep) {
+            return true;
+        }
+        
+        return false;
     }
 
 

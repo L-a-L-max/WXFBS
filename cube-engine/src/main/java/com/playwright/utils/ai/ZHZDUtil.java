@@ -4,9 +4,12 @@ import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.TimeoutError;
 import com.playwright.entity.UserInfoRequest;
+import com.playwright.utils.common.ClipboardLockManager;
 import com.playwright.utils.common.LogMsgUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * @Author Ran Lewis
@@ -18,6 +21,9 @@ public class ZHZDUtil {
 
     @Autowired
     private LogMsgUtil logInfo;
+    
+    @Autowired
+    private ClipboardLockManager clipboardLockManager;
 
     /**
      * 处理知乎直答思考模式选择 - 支持三种模式
@@ -359,6 +365,12 @@ public class ZHZDUtil {
 
             Locator contentLocator = page.locator(".Render-markdown").last();
             String htmlContent = contentLocator.first().innerHTML();
+            
+            // 🔥 终端输出前100字
+            String textOnly = htmlContent.replaceAll("<[^>]+>", "");
+            String preview = textOnly.length() > 100 ? textOnly.substring(0, 100) : textOnly;
+            System.out.println("📋 [知乎直答-" + userId + "] 获取内容预览: " + preview.replace("\n", "\\n"));
+            
             return cleanHtml(htmlContent);
 
         } catch (com.microsoft.playwright.impl.TargetClosedError e) {
@@ -461,7 +473,9 @@ public class ZHZDUtil {
                 }
             }
             
-            if (copyLinkButton == null || copyLinkButton.count() == 0) {
+            final Locator finalCopyLinkButton = copyLinkButton;
+            
+            if (finalCopyLinkButton == null || finalCopyLinkButton.count() == 0) {
                 logInfo.sendTaskLog("⚠️ 未找到'复制链接'选项", userId, aiName);
                 // 尝试关闭分享面板
                 try {
@@ -472,13 +486,24 @@ public class ZHZDUtil {
                 return page.url();
             }
             
-            copyLinkButton.click();
-            Thread.sleep(2000); // 等待链接复制到剪贴板
-            logInfo.sendTaskLog("已点击'复制链接'，正在从剪贴板读取...", userId, aiName);
+            // 🔒 使用剪贴板锁保护剪贴板操作
+            AtomicReference<String> shareUrlRef = new AtomicReference<>();
             
-            // 步骤3: 从剪贴板读取链接
-            String shareUrl = (String) page.evaluate("navigator.clipboard.readText()");
+            clipboardLockManager.runWithClipboardLock(() -> {
+                try {
+                    finalCopyLinkButton.click();
+                    Thread.sleep(2000); // 等待链接复制到剪贴板
+                    logInfo.sendTaskLog("已点击'复制链接'，正在从剪贴板读取...", userId, aiName);
+                    
+                    // 从剪贴板读取链接
+                    String shareUrl = (String) page.evaluate("navigator.clipboard.readText()");
+                    shareUrlRef.set(shareUrl);
+                } catch (Exception e) {
+                    logInfo.sendTaskLog("剪贴板读取失败: " + e.getMessage(), userId, aiName);
+                }
+            });
             
+            String shareUrl = shareUrlRef.get();
             if (shareUrl != null && !shareUrl.trim().isEmpty()) {
                 logInfo.sendTaskLog("✅ 成功获取分享链接: " + shareUrl, userId, aiName);
                 return shareUrl;

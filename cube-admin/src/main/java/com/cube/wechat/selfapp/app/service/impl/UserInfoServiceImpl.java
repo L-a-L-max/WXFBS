@@ -464,6 +464,60 @@ public class UserInfoServiceImpl implements UserInfoService {
         return ResultBody.FAIL;
     }
 
+    /**
+     * 清洗HTML内容，确保符合微信草稿箱API要求
+     * 1. 移除Markdown代码块标记
+     * 2. 移除不支持的HTML标签
+     * 3. 移除HTML属性（class、id、style等）
+     * 4. 确保段落分明
+     */
+    private String sanitizeHtmlContent(String content) {
+        if (content == null || content.isEmpty()) {
+            return content;
+        }
+        
+        // 1. 移除Markdown代码块标记（```）及其内容，转换为普通段落
+        content = content.replaceAll("```[\\s\\S]*?```", "");
+        content = content.replaceAll("`([^`]+)`", "$1");
+        
+        // 2. 移除<pre>和<code>标签，保留内容
+        content = content.replaceAll("<pre[^>]*>", "");
+        content = content.replaceAll("</pre>", "");
+        content = content.replaceAll("<code[^>]*>", "");
+        content = content.replaceAll("</code>", "");
+        
+        // 3. 移除不支持的标签：div、span等容器标签
+        content = content.replaceAll("<div[^>]*>", "");
+        content = content.replaceAll("</div>", "");
+        content = content.replaceAll("<span[^>]*>", "");
+        content = content.replaceAll("</span>", "");
+        
+        // 4. 移除所有HTML标签的属性（保留标签本身）
+        // 匹配 <标签名 属性="值"> 并替换为 <标签名>
+        content = content.replaceAll("<(p|h[1-6]|ul|ol|li|strong|em|b|i|br|img)\\s+[^>]*>", "<$1>");
+        
+        // 5. 特殊处理img标签，保留src、data-ratio、data-w属性
+        content = content.replaceAll("<img\\s+[^>]*src=\"([^\"]+)\"[^>]*>", 
+            "<img src=\"$1\" data-ratio=\"0.75\" data-w=\"800\">");
+        
+        // 6. 移除Markdown语法残留
+        content = content.replaceAll("^#{1,6}\\s+", ""); // 移除标题标记
+        content = content.replaceAll("\\*\\*([^*]+)\\*\\*", "<strong>$1</strong>"); // 转换加粗
+        content = content.replaceAll("\\*([^*]+)\\*", "<em>$1</em>"); // 转换斜体
+        
+        // 7. 清理多余的空白和换行
+        content = content.replaceAll("\\r\\n\\r\\n\\r\\n+", "\r\n\r\n"); // 移除多余的空行
+        content = content.replaceAll("\\n\\n\\n+", "\n\n");
+        
+        // 8. 确保段落标签正确闭合
+        content = content.replaceAll("<p>\\s*</p>", ""); // 移除空段落
+        
+        // 9. 移除开头和结尾的空白
+        content = content.trim();
+        
+        return content;
+    }
+
     @Override
     public ResultBody pushAutoOneOffice(Map map) {
         WcOfficeAccount woa = userInfoMapper.getOfficeAccountByUserName(map.get("userId") + "");
@@ -491,6 +545,9 @@ public class UserInfoServiceImpl implements UserInfoService {
                 contentText = contentText.replaceFirst("^[\r\n]+", "");
             }
         }
+        
+        // 清洗HTML内容，确保符合微信草稿箱API要求
+        contentText = sanitizeHtmlContent(contentText);
         
         // 清理多余的换行
         contentText = contentText.replaceAll("\r\n\r\n", "");

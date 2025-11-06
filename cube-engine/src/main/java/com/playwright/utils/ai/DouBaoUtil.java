@@ -320,6 +320,13 @@ public class DouBaoUtil {
                 Locator outputLocator = page.locator(".flow-markdown-body").last();
                 currentContent = outputLocator.innerHTML();
 
+                // 🔥 第一次获取到内容时输出到终端
+                if (!currentContent.trim().isEmpty() && lastContent.trim().isEmpty()) {
+                    String textOnly = currentContent.replaceAll("<[^>]+>", "");
+                    String preview = textOnly.length() > 100 ? textOnly.substring(0, 100) : textOnly;
+                    System.out.println("📋 [豆包-" + userId + "] 获取内容预览: " + preview.replace("\n", "\\n"));
+                }
+
                 if (!currentContent.isEmpty() && currentContent.equals(lastContent)) {
                     break;
                 }
@@ -435,31 +442,60 @@ public class DouBaoUtil {
             logInfo.sendTaskLog("豆包回答完成，正在自动提取内容", userId, "豆包");
             
             // 点击复制按钮
-            Locator copyButton = page.locator("[data-testid='message_action_copy']").last();
+            // 🔒 使用剪贴板锁保护剪贴板操作
+            AtomicReference<String> copiedTextRef = new AtomicReference<>();
+            
+            clipboardLockManager.runWithClipboardLock(() -> {
+                try {
+            // 🔥 确保定位到 AI 回答消息的复制按钮，而不是用户提问的复制按钮
+            Locator aiMessage = page.locator("[data-testid='receive_message']").last();
+            if (aiMessage.count() == 0) {
+                UserLogUtil.sendAIWarningLog(userId, "豆包", "内容复制", "未找到AI回答消息", url + "/saveLogInfo");
+                throw new RuntimeException("未找到AI回答消息");
+            }
+            
+            Locator copyButton = aiMessage.locator("[data-testid='message_action_copy']").first();
             if (copyButton.count() == 0) {
                 UserLogUtil.sendAIWarningLog(userId, "豆包", "内容复制", "未找到复制按钮", url + "/saveLogInfo");
                 throw new RuntimeException("未找到复制按钮");
             }
             
             try {
-                copyButton.click();
+                // 🔥 使用 JavaScript 点击以避免元素被遮挡的问题
+                page.evaluate("document.querySelectorAll('[data-testid=\"receive_message\"]')[document.querySelectorAll('[data-testid=\"receive_message\"]').length - 1].querySelector('[data-testid=\"message_action_copy\"]').click()");
             } catch (Exception e) {
-                UserLogUtil.sendAIWarningLog(userId, "豆包", "内容复制", "复制按钮不可点击：" + e.getMessage(), url + "/saveLogInfo");
-                throw e;
+                // 如果 JavaScript 点击失败，尝试强制点击
+                try {
+                    copyButton.click(new Locator.ClickOptions().setForce(true));
+                } catch (Exception e2) {
+                    UserLogUtil.sendAIWarningLog(userId, "豆包", "内容复制", "复制按钮不可点击：" + e2.getMessage(), url + "/saveLogInfo");
+                    throw e2;
+                }
             }
             
             Thread.sleep(2000);
             
             // 读取剪贴板
             try {
-                copiedText = (String) page.evaluate("navigator.clipboard.readText()");
-                if (copiedText == null || copiedText.trim().isEmpty()) {
+                        String text = (String) page.evaluate("navigator.clipboard.readText()");
+                        copiedTextRef.set(text);
+                        if (text == null || text.trim().isEmpty()) {
                     UserLogUtil.sendAIWarningLog(userId, "豆包", "内容复制", "剪贴板读取内容为空", url + "/saveLogInfo");
+                        } else {
+                            // 🔥 终端输出前100字
+                            String preview = text.length() > 100 ? text.substring(0, 100) : text;
+                            System.out.println("📋 [豆包-" + userId + "] 获取内容预览: " + preview.replace("\n", "\\n"));
                 }
             } catch (Exception e) {
                 UserLogUtil.sendAIWarningLog(userId, "豆包", "内容复制", "JavaScript执行失败：剪贴板读取失败 - " + e.getMessage(), url + "/saveLogInfo");
                 throw e;
             }
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+            });
+            
+            copiedText = copiedTextRef.get();
             
             logInfo.sendTaskLog("豆包内容已自动提取完成", userId, "豆包");
 
@@ -588,8 +624,16 @@ public class DouBaoUtil {
                             hasActionButtons = copyBtn && copyBtn.offsetParent !== null;
                         }
                         
-                        // 获取markdown内容
-                        const markdownElement = latestMessage.querySelector('.flow-markdown-body');
+                        // 🔥 优先提取 [data-testid="message_text_content"]（不含思考内容的纯回答）
+                        let markdownElement = latestMessage.querySelector('[data-testid="message_text_content"]');
+                        let isTextContent = true;
+                        
+                        // 如果没有找到，回退到 .flow-markdown-body
+                        if (!markdownElement) {
+                            markdownElement = latestMessage.querySelector('.flow-markdown-body');
+                            isTextContent = false;
+                        }
+                        
                         if (markdownElement) {
                             const contentClone = markdownElement.cloneNode(true);
                             
@@ -608,13 +652,58 @@ public class DouBaoUtil {
                                 textContent: textContent,
                                 length: contentLength,
                                 hasActionButtons: hasActionButtons,
-                                source: 'receive_message',
+                                source: isTextContent ? 'message_text_content_only' : 'receive_message',
                                 timestamp: Date.now()
                             };
                         }
                     }
                     
-                    // 🔥 方案2：回退到 .flow-markdown-body.last()
+                    // 🔥 方案2：回退到直接查找最新的回复内容
+                    // 2.1 优先查找所有 [data-testid="message_text_content"]（只含正文，不含思考）
+                    const textContentElements = document.querySelectorAll('[data-testid="message_text_content"]');
+                    if (textContentElements.length > 0) {
+                        const latestTextContent = textContentElements[textContentElements.length - 1];
+                        
+                        // 检查是否在用户消息中（排除用户输入）
+                        const isInUserMessage = latestTextContent.closest('[data-testid="send_message"]') !== null;
+                        if (!isInUserMessage) {
+                            const contentClone = latestTextContent.cloneNode(true);
+                            const elementsToRemove = contentClone.querySelectorAll(
+                                'svg, button, [role="button"], ' +
+                                '[class*="loading"], [class*="typing"], [class*="cursor"]'
+                            );
+                            elementsToRemove.forEach(el => el.remove());
+                            
+                            const textContent = contentClone.textContent || '';
+                            const contentLength = textContent.trim().length;
+                            
+                            // 检查附近是否有可见的操作按钮组
+                            const parentContainer = latestTextContent.closest('[data-testid="message-block-container"]');
+                            let hasActionButtons = false;
+                            
+                            if (parentContainer) {
+                                const copyBtn = parentContainer.querySelector('[data-testid="message_action_copy"]');
+                                const regenBtn = parentContainer.querySelector('[data-testid="message_action_regenerate"]');
+                                const isCopyVisible = copyBtn && copyBtn.offsetParent !== null;
+                                const isRegenVisible = regenBtn && regenBtn.offsetParent !== null;
+                                hasActionButtons = isCopyVisible && isRegenVisible;
+                                if (!hasActionButtons) {
+                                    hasActionButtons = copyBtn && copyBtn.offsetParent !== null;
+                                }
+                            }
+                            
+                            return {
+                                content: contentClone.innerHTML,
+                                textContent: textContent,
+                                length: contentLength,
+                                hasActionButtons: hasActionButtons,
+                                source: 'message_text_content_fallback',
+                                timestamp: Date.now()
+                            };
+                        }
+                    }
+                    
+                    // 2.2 如果没有 message_text_content，回退到 .flow-markdown-body
                     const markdownElements = document.querySelectorAll('.flow-markdown-body');
                     if (markdownElements.length > 0) {
                         const latestMarkdown = markdownElements[markdownElements.length - 1];
@@ -708,7 +797,7 @@ public class DouBaoUtil {
 
     /**
      * html片段获取（核心监控方法）
-     * 🔥 重大优化：参考DeepSeek实现，添加完善的生成状态检测和错误处理
+     * 🔥 重大优化：统一使用复制按钮获取内容，不再从DOM提取
      *
      * @param page Playwright页面实例
      */
@@ -717,29 +806,17 @@ public class DouBaoUtil {
         try {
             // 检查页面是否关闭
             if (page.isClosed()) {
-                UserLogUtil.sendAIWarningLog(userId, aiName, "HTML内容监控", "页面已关闭，无法监控内容", url + "/saveLogInfo");
+                UserLogUtil.sendAIWarningLog(userId, aiName, "内容获取", "页面已关闭，无法获取内容", url + "/saveLogInfo");
                 throw new RuntimeException("页面已关闭");
             }
+            
+            // 🔥 日志标识：使用复制按钮获取内容
+            logInfo.sendTaskLog("📋 豆包内容获取方式：复制按钮（唯一方式，不再从DOM提取）", userId, aiName);
             
             // 🔥 关键修复：等待AI开始生成新回复，避免获取到历史消息
             logInfo.sendTaskLog("等待AI开始生成新回复...", userId, aiName);
             Thread.sleep(3000);  // 缩短到3秒，提高响应速度
-            logInfo.sendTaskLog("开始监听" + aiName + "回复内容", userId, aiName);
-            
-            // 等待聊天框的内容稳定
-            String currentContent = "";
-            String lastContent = "";
-            String rightCurrentContent = "";
-            String textContent = "";
-            String rightTextContent = "";
-            boolean isRight = false;
-            
-            // 🔥 新增：内容稳定性检测
-            int stableCount = 0;  // 内容稳定次数
-            int requiredStableCount = 1;  // 需要的稳定次数
-            int emptyCount = 0;  // 空内容计数
-            int[] contentLengthHistory = new int[3];  // 记录最近三次内容长度
-            boolean hasEverHadContent = false;  // 是否曾经有过内容
+            logInfo.sendTaskLog("开始监听" + aiName + "回复是否完成", userId, aiName);
             
             // 设置最大等待时间（单位：毫秒），延长到 15 分钟以适应深度思考模式
             long timeout = 900000; // 15 分钟
@@ -748,37 +825,14 @@ public class DouBaoUtil {
             // 用于去重警告日志的时间戳
             long lastWarningTime = 0;
             int checkInterval = 3000;  // 检查间隔，初始3秒
+            boolean hasEverHadContent = false;  // 是否曾经有过内容
 
-            // 进入循环，直到内容不再变化或者超时
+            // 🔥 进入循环，等待复制按钮出现（不再从DOM提取内容）
             while (true) {
                 // 定期检查页面状态
                 if (page.isClosed()) {
-                    UserLogUtil.sendAIWarningLog(userId, aiName, "HTML内容监控", "页面在监控过程中被关闭", url + "/saveLogInfo");
+                    UserLogUtil.sendAIWarningLog(userId, aiName, "内容获取", "页面在监控过程中被关闭", url + "/saveLogInfo");
                     throw new RuntimeException("页面在监控过程中被关闭");
-                }
-                
-                // 检查是否是代码生成
-                Locator chatHis = page.locator("//div[@class='canvas-header-Bc97DC']");
-                if (chatHis.count() > 0) {
-                    isRight = true;
-                } else {
-                    isRight = false;
-                }
-                
-                try {
-                    Locator changeTypeLocator = page.locator("text=改用对话直接回答");
-                    if (changeTypeLocator.isVisible()) {
-                        changeTypeLocator.click();
-                    }
-                } catch (TimeoutError e) {
-                    // 切换按钮不存在或不可见，继续
-                } catch (Exception e) {
-                    // 限制警告日志频率：每30秒最多记录一次
-                    long now = System.currentTimeMillis();
-                    if (now - lastWarningTime > 30000) {
-                        UserLogUtil.sendAIWarningLog(userId, aiName, "HTML内容监控", "切换对话模式按钮操作失败：" + e.getMessage(), url + "/saveLogInfo");
-                        lastWarningTime = now;
-                    }
                 }
                 
                 // 获取当前时间戳
@@ -786,252 +840,80 @@ public class DouBaoUtil {
 
                 // 如果超时，退出循环
                 if (elapsedTime > timeout) {
-                    TimeoutException timeoutEx = new TimeoutException("等待豆包HTML内容超时，已等待：" + (elapsedTime/1000) + "秒");
-                    UserLogUtil.sendAITimeoutLog(userId, aiName, "HTML内容监控", timeoutEx, "等待AI回复内容稳定", url + "/saveLogInfo");
-                    logInfo.sendTaskLog("⚠️ 等待超时，强制提取当前内容", userId, aiName);
-                    break;
+                    TimeoutException timeoutEx = new TimeoutException("等待豆包复制按钮超时，已等待：" + (elapsedTime/1000) + "秒");
+                    UserLogUtil.sendAITimeoutLog(userId, aiName, "复制按钮等待", timeoutEx, "等待复制按钮出现", url + "/saveLogInfo");
+                    logInfo.sendTaskLog("❌ 等待复制按钮超时，无法获取内容", userId, aiName);
+                    throw new RuntimeException("超时未检测到复制按钮");
                 }
 
-                // 🔥🔥🔥 优先检测AI拒绝处理的错误DOM（必须在等待.flow-markdown-body之前检测！）
+                // 🔥 检测AI错误标识（豆包拒绝处理）
                 try {
-                    // 检测是否存在错误图标（豆包拒绝处理标志）
                     Locator errorIcon = page.locator("[data-testid='message_box_failed_icon']").last();
-                    int errorIconCount = errorIcon.count();
+                    if (errorIcon.count() > 0) {
+                        logInfo.sendTaskLog("❌ 检测到AI错误标识，立即终止等待", userId, aiName);
+                        UserLogUtil.sendAIWarningLog(userId, aiName, "AI处理失败", 
+                            "豆包拒绝处理或发生错误", url + "/saveLogInfo");
+                        return AiResult.success("<p>AI拒绝处理或遇到错误</p>", "AI拒绝处理或遇到错误");
+                    }
+                } catch (Exception e) {
+                    // 错误检测异常，继续
+                }
+
+                // 🔥 检测AI回答是否完成（通过停止生成按钮消失来判断）
+                try {
+                    // 方法1：检测停止生成按钮是否消失（AI正在回答时会有停止按钮）
+                    Locator stopButton = page.locator("button:has-text('停止生成')");
+                    boolean isGenerating = stopButton.count() > 0 && stopButton.isVisible();
                     
-                    if (errorIconCount > 0) {
-                        // 检查是否有有效的回复内容（多种选择器）
-                        boolean hasValidContent = false;
-                        
-                        try {
-                            // 方法1：检查 .flow-markdown-body 的文本内容
-                            Locator markdownBody = page.locator(".flow-markdown-body").last();
-                            if (markdownBody.count() > 0) {
-                                String markdownText = markdownBody.textContent();
-                                if (markdownText != null && markdownText.trim().length() > 10) {
-                                    hasValidContent = true;
-                                }
+                    if (!isGenerating) {
+                        // 停止按钮消失了，说明可能回答完成了
+                        // 再检查最新AI消息是否有操作按钮栏（包含复制、分享等）
+                        Locator aiMessage = page.locator("[data-testid='receive_message']").last();
+                        if (aiMessage.count() > 0) {
+                            // 🔥 鼠标悬停在消息上，让操作按钮栏显示出来
+                            try {
+                                aiMessage.hover();
+                                Thread.sleep(500);  // 等待悬停效果
+                            } catch (Exception hoverEx) {
+                                // 悬停失败，继续尝试
                             }
                             
-                            // 方法2：检查 .ds-markdown 的文本内容（豆包深度思考模式）
-                            if (!hasValidContent) {
-                                Locator dsMarkdown = page.locator(".ds-markdown").last();
-                                if (dsMarkdown.count() > 0) {
-                                    String dsText = dsMarkdown.textContent();
-                                    if (dsText != null && dsText.trim().length() > 10) {
-                                        hasValidContent = true;
+                            // 检查操作按钮栏是否存在
+                            Locator actionBar = aiMessage.locator(".message-action-bar-ghR0JC").first();
+                            if (actionBar.count() > 0) {
+                                // 再检查复制按钮是否真的存在且可见
+                                Locator copyButton = aiMessage.locator("[data-testid='message_action_copy']").first();
+                                if (copyButton.count() > 0) {
+                                    try {
+                                        // 验证复制按钮是否可见（使用更宽松的超时时间）
+                                        copyButton.isVisible();
+                                        // 🔥 检测到复制按钮可用，再等待3秒确保内容完全稳定
+                                        logInfo.sendTaskLog("✅ 检测到AI回答已完成（复制按钮已就绪），等待内容稳定...", userId, aiName);
+                                        Thread.sleep(3000);
+                                        break;
+                                    } catch (Exception visEx) {
+                                        // 复制按钮还不可见，继续等待
                                     }
                                 }
                             }
-                            
-                            // 方法3：检查 currentContent 是否有内容
-                            if (!hasValidContent && currentContent.trim().length() > 10) {
-                                hasValidContent = true;
-                            }
-                            
-                            // 方法4：检查整个消息容器的文本内容（最后手段）
-                            if (!hasValidContent) {
-                                Locator messageContent = page.locator("[data-testid='message_content']").last();
-                                if (messageContent.count() > 0) {
-                                    String messageText = messageContent.textContent();
-                                    // 排除只有空白字符的情况，排除SVG等非文本内容
-                                    String cleanText = messageText != null ? messageText.replaceAll("\\s", "") : "";
-                                    if (cleanText.length() > 20) {
-                                        hasValidContent = true;
-                                    }
                                 }
                             }
                         } catch (Exception e) {
-                            // 内容检测失败，默认认为没有有效内容
-                            hasValidContent = false;
-                        }
-                        
-                        // 如果确认只有错误DOM，没有其他有效内容 → 立即终止等待
-                        if (!hasValidContent) {
-                            logInfo.sendTaskLog("❌ 检测到AI错误标识且无有效内容，立即终止等待", userId, aiName);
-                            
-                            UserLogUtil.sendAIWarningLog(userId, aiName, "AI处理失败", 
-                                "豆包返回错误DOM（message_box_failed_icon），检测到AI拒绝处理或发生错误，无有效内容，已自动终止等待", 
-                                url + "/saveLogInfo");
-                            
-                            // 返回固定的错误消息，立即终止
-                            return AiResult.success("<p>AI拒绝处理或遇到错误</p>", "AI拒绝处理或遇到错误");
-                        } else {
-                            // 有部分内容，记录警告但继续等待
-                            long now = System.currentTimeMillis();
-                            if (now - lastWarningTime > 30000) {
-                                UserLogUtil.sendAIWarningLog(userId, aiName, "AI部分失败", 
-                                    "检测到错误标识，但有部分有效内容，继续等待", 
-                                    url + "/saveLogInfo");
-                                lastWarningTime = now;
-                            }
-                        }
-                    }
-                } catch (Exception e) {
-                    // 错误检测模块异常，记录但不影响主流程
-                    long now = System.currentTimeMillis();
-                    if (now - lastWarningTime > 60000) {
-                        UserLogUtil.sendAIWarningLog(userId, aiName, "错误检测", 
-                            "错误DOM检测异常：" + e.getMessage(), 
-                            url + "/saveLogInfo");
-                        lastWarningTime = now;
-                    }
-                }
-
-                // 🔥 新方法：使用统一的内容获取方法
-                java.util.Map<String, Object> responseData = getLatestDouBaoResponseWithCompletion(page);
-                String newContent = (String) responseData.getOrDefault("content", "");
-                String newTextContent = (String) responseData.getOrDefault("textContent", "");
-                // 🔥 安全地获取 hasActionButtons，避免 NullPointerException
-                Object hasActionButtonsObj = responseData.get("hasActionButtons");
-                boolean hasActionButtons = hasActionButtonsObj != null ? (Boolean) hasActionButtonsObj : false;
-                int contentLength = 0;
-                if (responseData.containsKey("length")) {
-                    contentLength = ((Number) responseData.get("length")).intValue();
-                }
-
-                // 🔥 处理代码生成模式（右侧textbox）
-                try {
-                    if (isRight) {
-                        Locator outputLocator = page.locator("//div[@role='textbox']");
-                        if (outputLocator.count() > 0) {
-                            // 增加超时控制，避免无限等待
-                            outputLocator.waitFor(new Locator.WaitForOptions().setTimeout(5000).setState(WaitForSelectorState.ATTACHED));
-                            rightCurrentContent = outputLocator.innerHTML();
-                            rightTextContent = outputLocator.textContent();
-                            
-                            // 使用代码模式的内容
-                            newContent = rightCurrentContent;
-                            newTextContent = rightTextContent;
-                            contentLength = rightTextContent != null ? rightTextContent.trim().length() : 0;
-                        }
-                    }
-                } catch (Exception e) {
-                    // 代码模式获取失败，使用普通模式内容
-                }
-
-                // 赋值给当前内容变量
-                currentContent = newContent;
-                textContent = newTextContent;
-
-                // 🔥 内容有效性检查
-                if (currentContent != null && !currentContent.trim().isEmpty()) {
-                    // 标记曾经有过内容
-                    hasEverHadContent = true;
-                    // 重置空内容计数
-                    emptyCount = 0;
-                    
-                    // 更新内容长度历史
-                    for (int i = contentLengthHistory.length - 1; i > 0; i--) {
-                        contentLengthHistory[i] = contentLengthHistory[i-1];
-                    }
-                    contentLengthHistory[0] = contentLength;
-                    
-                    // 🔥 检查内容是否稳定
-                    if (currentContent.equals(lastContent)) {
-                        stableCount++;
-                        
-                        // 🔥 检查是否仍在生成
-                        boolean isGenerating = checkDouBaoGenerating(page);
-                        
-                        // 🔥 智能判断完成条件（参考DeepSeek）
-                        boolean isComplete = false;
-                        
-                        // 条件1: 检测到按钮组 + 内容已稳定（双重确认，避免过早截断）
-                        if (hasActionButtons && stableCount >= 2) {
-                            // 🔥 关键修复：即使检测到按钮，也要确保内容至少稳定2次
-                            // 防止豆包在生成过程中动态显示/隐藏按钮导致过早结束
-                            logInfo.sendTaskLog("✅ 检测到操作按钮组且内容已稳定(" + stableCount + "次)，" + aiName + "回复已完成", userId, aiName);
-                            isComplete = true;
-                        }
-                        // 条件1.5: 检测到按钮但内容还未稳定（继续等待）
-                        else if (hasActionButtons && stableCount < 2) {
-                            // 按钮已出现但内容可能还在变化，继续等待内容稳定
-                            if (lastWarningTime == 0 || (System.currentTimeMillis() - lastWarningTime > 10000)) {
-                                logInfo.sendTaskLog("⏳ 检测到操作按钮组，等待内容稳定(当前" + stableCount + "次，需要2次)...", userId, aiName);
-                                lastWarningTime = System.currentTimeMillis();
-                            }
-                        }
-                        // 条件2: 内容稳定且不再生成（无按钮情况的回退方案）
-                        else if (stableCount >= requiredStableCount && !isGenerating) {
-                            // 长内容可以更快结束
-                            if (contentLength > 1000) {
-                                logInfo.sendTaskLog("✅ 长内容已稳定，" + aiName + "回复已完成", userId, aiName);
-                                isComplete = true;
-                            }
-                            else if (contentLength > 500 && stableCount >= 2) {
-                                logInfo.sendTaskLog("✅ 内容已稳定，" + aiName + "回复已完成", userId, aiName);
-                                isComplete = true;
-                            }
-                            // 检查内容增长是否已停止
-                            else if (isContentGrowthStopped(contentLengthHistory) && stableCount >= requiredStableCount) {
-                                logInfo.sendTaskLog("✅ 内容增长已停止，" + aiName + "回复已完成", userId, aiName);
-                                isComplete = true;
-                            }
-                            // 短内容需要更多稳定确认
-                            else if (stableCount >= requiredStableCount + 2) {
-                                logInfo.sendTaskLog("✅ 短内容已稳定，" + aiName + "回复已完成", userId, aiName);
-                                isComplete = true;
-                            }
-                        }
-                        
-                        if (isComplete) {
-                            break;
-                        }
-                    } else {
-                        // 内容发生变化，重置稳定计数
-                        stableCount = 0;
-                        lastContent = currentContent;
-                    }
-                } else {
-                    // 内容为空，增加空内容计数
-                    emptyCount++;
-                    
-                    // 🔥 空内容异常检测
-                    if (emptyCount > 10 && !hasEverHadContent) {
-                        // 检查是否有页面错误
-                        try {
-                            Object errorResult = page.evaluate("""
-                                () => {
-                                    const errorElements = document.querySelectorAll('.error-message, [class*="error"]');
-                                    for (const el of errorElements) {
-                                        if (el.innerText && el.innerText.trim() && 
-                                            window.getComputedStyle(el).display !== 'none') {
-                                            return el.innerText.trim();
-                                        }
-                                    }
-                                    return null;
-                                }
-                            """);
-                            
-                            if (errorResult instanceof String && !((String)errorResult).isEmpty()) {
-                                UserLogUtil.sendAIWarningLog(userId, aiName, "页面错误", 
-                                    "检测到页面错误：" + errorResult, 
-                                    url + "/saveLogInfo");
-                            }
-                        } catch (Exception ex) {
-                            // 错误检测失败，静默处理
-                        }
-                        
-                        // 限制日志频率
-                        if (emptyCount % 20 == 0) {
-                            UserLogUtil.sendAIWarningLog(userId, aiName, "内容为空", 
-                                "长时间未检测到回复内容（" + (emptyCount * checkInterval / 1000) + "秒），继续等待...", 
-                                url + "/saveLogInfo");
-                        }
-                    }
-                }
-                // 🔥 流式输出支持
-                if (userInfoRequest.getAiName() != null && userInfoRequest.getAiName().contains("stream")) {
-                    if(isRight && rightTextContent != null && !rightTextContent.isEmpty()) {
-                        webSocketClientService.sendMessage(userInfoRequest, McpResult.success(rightTextContent, ""), "db-stream");
-                    } else if (textContent != null && !textContent.isEmpty()) {
-                        webSocketClientService.sendMessage(userInfoRequest, McpResult.success(textContent, ""), "db-stream");
-                    }
+                    // 按钮检测失败，继续等待
                 }
                 
-                // 🔥 动态调整检查间隔
-                if (elapsedTime > 30000) { // 30秒后逐渐增加间隔
-                    checkInterval = Math.min(5000, checkInterval + 200);
+                // 🔥 流式输出支持（仅用于实时反馈，不影响最终内容获取）
+                if (userInfoRequest.getAiName() != null && userInfoRequest.getAiName().contains("stream")) {
+                    try {
+                        // 获取当前显示的文本用于流式传输
+                        java.util.Map<String, Object> streamData = getLatestDouBaoResponseWithCompletion(page);
+                        String streamText = (String) streamData.getOrDefault("textContent", "");
+                        if (streamText != null && !streamText.trim().isEmpty()) {
+                            webSocketClientService.sendMessage(userInfoRequest, McpResult.success(streamText, ""), "db-stream");
+                    }
+                } catch (Exception e) {
+                        // 流式输出失败不影响主流程
+                    }
                 }
                 
                 page.waitForTimeout(checkInterval);
@@ -1039,32 +921,129 @@ public class DouBaoUtil {
             
             // 🔥 流式输出结束标志
             if (userInfoRequest.getAiName() != null && userInfoRequest.getAiName().contains("stream")) {
-                Thread.sleep(2000);  // 确保最后的内容发送完毕
+                Thread.sleep(2000);
                 webSocketClientService.sendMessage(userInfoRequest, McpResult.success("END", ""), "db-stream");
             }
             
-            logInfo.sendTaskLog(aiName + "内容已自动提取完成", userId, aiName);
-
-            // 🔥 内容清理
-            String finalContent = isRight ? rightCurrentContent : currentContent;
+            // 🔥🔥🔥 通过复制按钮获取内容（唯一方式，不再从DOM提取）
+            logInfo.sendTaskLog("📋 正在通过复制按钮获取内容...", userId, aiName);
+            
+            AtomicReference<String> finalContentRef = new AtomicReference<>();
+            
+            clipboardLockManager.runWithClipboardLock(() -> {
+                try {
+                    // 1. 清空剪贴板
+                    page.evaluate("navigator.clipboard.writeText('')");
+                    Thread.sleep(300);
+                    
+                    // 2. 定位最新AI回答消息
+                    Locator aiMessage = page.locator("[data-testid='receive_message']").last();
+                    if (aiMessage.count() == 0) {
+                        throw new RuntimeException("未找到AI回答消息");
+                    }
+                    
+                    // 3. 鼠标悬停在消息上，确保操作按钮栏显示
+                    logInfo.sendTaskLog("鼠标悬停在AI消息上，显示操作按钮...", userId, aiName);
+                    try {
+                        aiMessage.hover();
+                        Thread.sleep(800);  // 等待按钮栏完全显示
+                    } catch (Exception hoverEx) {
+                        logInfo.sendTaskLog("⚠️ 悬停操作失败，尝试继续...", userId, aiName);
+                    }
+                    
+                    // 4. 定位复制按钮
+                    Locator copyButton = aiMessage.locator("[data-testid='message_action_copy']").first();
+                    if (copyButton.count() == 0) {
+                        throw new RuntimeException("未找到复制按钮");
+                    }
+                    
+                    // 5. 确保复制按钮可见
+                    try {
+                        if (!copyButton.isVisible()) {
+                            throw new RuntimeException("复制按钮不可见");
+                        }
+                    } catch (Exception visEx) {
+                        logInfo.sendTaskLog("⚠️ 复制按钮可见性检测失败: " + visEx.getMessage(), userId, aiName);
+                    }
+                    
+                    // 🔥 使用 JavaScript 点击最新AI消息的复制按钮
+                    logInfo.sendTaskLog("正在点击复制按钮...", userId, aiName);
+                    try {
+                        page.evaluate("document.querySelectorAll('[data-testid=\"receive_message\"]')[document.querySelectorAll('[data-testid=\"receive_message\"]').length - 1].querySelector('[data-testid=\"message_action_copy\"]').click()");
+                    } catch (Exception e) {
+                        // 如果 JavaScript 点击失败，尝试强制点击
+                        logInfo.sendTaskLog("⚠️ JS点击失败，使用Playwright点击...", userId, aiName);
+                        copyButton.click(new Locator.ClickOptions().setForce(true));
+                    }
+                    
+                    // 🔥 等待内容复制到剪贴板
+                    Thread.sleep(2000);
+                    
+                    // 3. 从剪贴板读取内容（带重试机制）
+                    String copiedText = null;
+                    for (int retry = 0; retry < 3; retry++) {
+                        try {
+                            Object clipboardContent = page.evaluate("navigator.clipboard.readText()");
+                            copiedText = clipboardContent != null ? clipboardContent.toString() : "";
+                            
+                            if (copiedText != null && !copiedText.trim().isEmpty()) {
+                                break; // 成功获取到内容，退出重试
+                            }
+                            
+                            if (retry < 2) {
+                                logInfo.sendTaskLog("⚠️ 剪贴板内容为空，等待重试... (" + (retry + 1) + "/3)", userId, aiName);
+                                Thread.sleep(1000);
+                            }
+                        } catch (Exception e) {
+                            if (retry < 2) {
+                                logInfo.sendTaskLog("⚠️ 读取剪贴板失败，重试中... (" + (retry + 1) + "/3)", userId, aiName);
+                                Thread.sleep(1000);
+                            }
+                        }
+                    }
+                    
+                    if (copiedText == null || copiedText.trim().isEmpty()) {
+                        throw new RuntimeException("剪贴板内容为空（已重试3次）");
+                    }
+                    
+                    // 🔥 终端输出前100字
+                    String preview = copiedText.length() > 100 ? copiedText.substring(0, 100) : copiedText;
+                    System.out.println("📋 [豆包-" + userId + "] 获取内容预览: " + preview.replace("\n", "\\n"));
+                    
+                    finalContentRef.set(copiedText);
+                    logInfo.sendTaskLog("✅ 成功从复制按钮获取内容，长度：" + copiedText.trim().length(), userId, aiName);
+                    
+                } catch (Exception e) {
+                    logInfo.sendTaskLog("❌ 复制按钮获取失败：" + e.getMessage(), userId, aiName);
+                    throw new RuntimeException("复制按钮获取失败: " + e.getMessage(), e);
+                }
+            });
+            
+            String finalContent = finalContentRef.get();
+            
             if (finalContent == null || finalContent.trim().isEmpty()) {
-                UserLogUtil.sendAIWarningLog(userId, aiName, "内容提取", 
-                    "最终提取的内容为空，可能发生异常", 
-                    url + "/saveLogInfo");
-                finalContent = "<p>内容提取失败</p>";
+                UserLogUtil.sendAIWarningLog(userId, aiName, "内容获取", 
+                    "❌ 无法通过复制按钮获取内容", url + "/saveLogInfo");
+                throw new RuntimeException("内容获取失败");
             }
             
-            // 清理多余内容
-            String regex = "<span>\\s*<span[^>]*?>\\d+</span>\\s*</span>";
-            finalContent = finalContent.replaceAll(regex, "");
-            finalContent = finalContent.replaceAll("撰写任何内容...", "");
+            // 🔥 检测是否包含AI思考过程内容
+            if (detectThinkingContent(finalContent)) {
+                UserLogUtil.sendAIWarningLog(userId, aiName, "内容检测", 
+                    "⚠️ 检测到可能包含AI思考过程的内容，建议检查是否为最终答案。" +
+                    "\n提示：如果内容以\"让我\"、\"首先\"、\"接下来\"等开头，可能是思考过程而非最终答案。" +
+                    "\n💡 解决方案：请重新生成或手动编辑内容。", 
+                    url + "/saveLogInfo");
+                logInfo.sendTaskLog("⚠️ 内容包含疑似思考过程，请检查", userId, aiName);
+            }
             
-            // 🔥 记录内容长度统计
-            int finalLength = textContent != null ? textContent.trim().length() : 0;
             long totalTime = System.currentTimeMillis() - methodStartTime;
-            logInfo.sendTaskLog("📊 提取完成 - 内容长度: " + finalLength + " 字符，耗时: " + (totalTime/1000) + " 秒", userId, aiName);
+            logInfo.sendTaskLog("📊 提取完成 - 内容长度: " + finalContent.length() + " 字符，耗时: " + (totalTime/1000) + " 秒", userId, aiName);
 
-            return AiResult.success(finalContent, textContent);
+            // 将纯文本转换为HTML格式
+            String htmlContent = convertTextToHtml(finalContent);
+            
+            return AiResult.success(htmlContent, finalContent);
 
         } catch (TimeoutError e) {
             // 记录超时异常
@@ -1147,16 +1126,33 @@ public class DouBaoUtil {
                                 throw new RuntimeException("页面已关闭");
                             }
                             
-                            // 获取所有复制按钮的 SVG 元素（通过 xlink:href 属性定位）
+                            // 获取AI回答消息的复制按钮
                             boolean buttonFound = false;
-                            if (page.locator("[data-testid='code-block-copy']").count() > 0) {
-                                page.locator("[data-testid='code-block-copy']").last()  // 获取最后一个复制按钮
-                                        .click();
+                            
+                            // 🔥 先尝试定位AI回答消息
+                            Locator aiMessage = page.locator("[data-testid='receive_message']").last();
+                            
+                            // 🔥 使用 JavaScript 点击以避免元素被遮挡的问题
+                            if (aiMessage.count() > 0 && aiMessage.locator("[data-testid='code-block-copy']").count() > 0) {
+                                try {
+                                    page.evaluate("document.querySelectorAll('[data-testid=\"receive_message\"]')[document.querySelectorAll('[data-testid=\"receive_message\"]').length - 1].querySelector('[data-testid=\"code-block-copy\"]').click()");
                                 buttonFound = true;
-                            } else if (page.locator("[data-testid='message_action_copy']").count() > 0) {
-                                page.locator("[data-testid='message_action_copy']").last()  // 获取最后一个复制按钮
-                                        .click();
+                                } catch (Exception e) {
+                                    // 如果 JavaScript 点击失败，尝试强制点击
+                                    aiMessage.locator("[data-testid='code-block-copy']").first()
+                                            .click(new Locator.ClickOptions().setForce(true));
                                 buttonFound = true;
+                                }
+                            } else if (aiMessage.count() > 0 && aiMessage.locator("[data-testid='message_action_copy']").count() > 0) {
+                                try {
+                                    page.evaluate("document.querySelectorAll('[data-testid=\"receive_message\"]')[document.querySelectorAll('[data-testid=\"receive_message\"]').length - 1].querySelector('[data-testid=\"message_action_copy\"]').click()");
+                                    buttonFound = true;
+                                } catch (Exception e) {
+                                    // 如果 JavaScript 点击失败，尝试强制点击
+                                    aiMessage.locator("[data-testid='message_action_copy']").first()
+                                            .click(new Locator.ClickOptions().setForce(true));
+                                    buttonFound = true;
+                                }
                             }
                             
                             if (!buttonFound) {
@@ -1167,6 +1163,10 @@ public class DouBaoUtil {
                             String text = (String) page.evaluate("navigator.clipboard.readText()");
                             if (text == null || text.trim().isEmpty()) {
                                 UserLogUtil.sendAIWarningLog(userId, aiName, "剪贴板操作", "剪贴板读取内容为空", url + "/saveLogInfo");
+                            } else {
+                                // 🔥 终端输出前100字
+                                String preview = text.length() > 100 ? text.substring(0, 100) : text;
+                                System.out.println("📋 [" + aiName + "-" + userId + "] 获取内容预览: " + preview.replace("\n", "\\n"));
                             }
                             textRef.set(text);
                         } catch (com.microsoft.playwright.PlaywrightException e) {
@@ -1206,6 +1206,102 @@ public class DouBaoUtil {
             UserLogUtil.sendAIExceptionLog(userId, aiName, "waitPBCopy", e, System.currentTimeMillis(), "排版代码提取失败", url + "/saveLogInfo");
             throw e;
         }
+    }
+
+    /**
+     * 将纯文本转换为HTML格式
+     * 简单地将文本内容包裹在<p>标签中，保留换行符
+     * 
+     * @param text 纯文本内容
+     * @return HTML格式内容
+     */
+    private String convertTextToHtml(String text) {
+        if (text == null || text.trim().isEmpty()) {
+            return "<p></p>";
+        }
+        
+        // 将文本按行分割，每行包裹在<p>标签中
+        String[] lines = text.split("\\n");
+        StringBuilder html = new StringBuilder();
+        
+        for (String line : lines) {
+            if (line.trim().isEmpty()) {
+                html.append("<p><br></p>");
+            } else {
+                // 转义HTML特殊字符
+                String escapedLine = line
+                    .replace("&", "&amp;")
+                    .replace("<", "&lt;")
+                    .replace(">", "&gt;")
+                    .replace("\"", "&quot;");
+                html.append("<p>").append(escapedLine).append("</p>");
+            }
+        }
+        
+        return html.toString();
+    }
+    
+    /**
+     * 🔥 检测文本内容是否包含AI思考过程
+     * 
+     * 识别特征：
+     * - 以"让我"、"首先"、"接下来"开头
+     * - 包含步骤描述词："然后"、"最后"、"需要"
+     * - 包含元认知词汇："我需要"、"应该"、"要"
+     * 
+     * @param content 文本内容
+     * @return true表示可能包含思考过程，false表示正常内容
+     */
+    private static boolean detectThinkingContent(String content) {
+        if (content == null || content.trim().isEmpty()) {
+            return false;
+        }
+        
+        String text = content.trim();
+        
+        // 🔥 强特征：开头包含明显的思考过程标识
+        String[] strongStartPatterns = {
+            "用户让我", "让我", "我需要先", "首先，我需要", "首先，需要",
+            "我需要把", "我要把", "需要先", "应该先"
+        };
+        
+        for (String pattern : strongStartPatterns) {
+            if (text.startsWith(pattern)) {
+                return true;
+            }
+        }
+        
+        // 🔥 中等特征：前100字符内包含多个思考过程关键词
+        String prefix = text.length() > 100 ? text.substring(0, 100) : text;
+        int thinkingKeywordCount = 0;
+        String[] thinkingKeywords = {
+            "首先，", "接下来，", "然后", "最后", "需要", "应该", 
+            "我需要", "要先", "接着", "之后", "确定", "处理", "转换"
+        };
+        
+        for (String keyword : thinkingKeywords) {
+            if (prefix.contains(keyword)) {
+                thinkingKeywordCount++;
+            }
+        }
+        
+        // 如果前100字符内出现3个以上思考关键词，判定为思考过程
+        if (thinkingKeywordCount >= 3) {
+            return true;
+        }
+        
+        // 🔥 弱特征：内容过于结构化（像步骤说明）
+        // 检查是否包含大量的步骤描述
+        boolean hasFirstStep = prefix.contains("第一") || prefix.contains("1.") || prefix.contains("一、");
+        boolean hasSecondStep = prefix.contains("第二") || prefix.contains("2.") || prefix.contains("二、");
+        boolean hasThirdStep = prefix.contains("第三") || prefix.contains("3.") || prefix.contains("三、");
+        
+        // 如果前100字符包含明确的步骤序号，可能是思考过程
+        if (hasFirstStep && hasSecondStep && hasThirdStep) {
+            return true;
+        }
+        
+        return false;
     }
 
 
