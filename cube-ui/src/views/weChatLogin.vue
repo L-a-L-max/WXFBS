@@ -4,11 +4,7 @@
 </template>
 
 <script>
-import logoImg from '@/assets/logo/logo.jpg'
-import {login, weChatlogin} from "@/api/login";
-import Cookies from "js-cookie";
-import { encrypt, decrypt } from '@/utils/jsencrypt'
-import {setToken} from "@/utils/auth";
+
 
 export default {
   name: "WeChatLogin",

@@ -117,7 +117,7 @@ public class PointsSystem extends BaseController {
     @Log(title = "企微管理-查询用户积分")
     public ResultBody getUserPointsRecord(@RequestBody Points points){
         PageHelper.startPage(points.getPage(),points.getLimit());
-        List<Map> list = pointsMapper.getUserPointsRecord(points.getUserId());
+        List<Map> list = pointsMapper.getUserPointsRecord(points);
         PageInfo pageInfo = new PageInfo(list);
         return ResultBody.success(pageInfo);
     }

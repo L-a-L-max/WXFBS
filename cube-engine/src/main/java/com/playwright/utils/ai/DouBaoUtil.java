@@ -320,13 +320,6 @@ public class DouBaoUtil {
                 Locator outputLocator = page.locator(".flow-markdown-body").last();
                 currentContent = outputLocator.innerHTML();
 
-                // 🔥 第一次获取到内容时输出到终端
-                if (!currentContent.trim().isEmpty() && lastContent.trim().isEmpty()) {
-                    String textOnly = currentContent.replaceAll("<[^>]+>", "");
-                    String preview = textOnly.length() > 100 ? textOnly.substring(0, 100) : textOnly;
-                    System.out.println("📋 [豆包-" + userId + "] 获取内容预览: " + preview.replace("\n", "\\n"));
-                }
-
                 if (!currentContent.isEmpty() && currentContent.equals(lastContent)) {
                     break;
                 }
@@ -438,7 +431,7 @@ public class DouBaoUtil {
                 UserLogUtil.sendAIWarningLog(userId, "豆包", "内容复制", "点击辅助按钮失败（非关键错误）：" + e.getMessage(), url + "/saveLogInfo");
             }
 
-            page.waitForSelector("[data-testid='message_action_copy']", new Page.WaitForSelectorOptions().setState(WaitForSelectorState.VISIBLE).setTimeout(600000));  // 600秒超时
+            page.waitForSelector("[data-testid='message_action_copy']", new Page.WaitForSelectorOptions().setState(WaitForSelectorState.VISIBLE).setTimeout(1800000));  // 延长到1800秒（30分钟）
             logInfo.sendTaskLog("豆包回答完成，正在自动提取内容", userId, "豆包");
             
             // 点击复制按钮
@@ -447,6 +440,10 @@ public class DouBaoUtil {
             
             clipboardLockManager.runWithClipboardLock(() -> {
                 try {
+                    // 🔥 确保页面获得焦点（剪贴板操作必需）
+                    page.bringToFront();
+                    Thread.sleep(300);  // 延长到300ms，确保焦点切换完成
+                    
             // 🔥 确保定位到 AI 回答消息的复制按钮，而不是用户提问的复制按钮
             Locator aiMessage = page.locator("[data-testid='receive_message']").last();
             if (aiMessage.count() == 0) {
@@ -473,7 +470,7 @@ public class DouBaoUtil {
                 }
             }
             
-            Thread.sleep(2000);
+            Thread.sleep(3000);  // 延长到3秒，确保复制完成
             
             // 读取剪贴板
             try {
@@ -481,11 +478,7 @@ public class DouBaoUtil {
                         copiedTextRef.set(text);
                         if (text == null || text.trim().isEmpty()) {
                     UserLogUtil.sendAIWarningLog(userId, "豆包", "内容复制", "剪贴板读取内容为空", url + "/saveLogInfo");
-                        } else {
-                            // 🔥 终端输出前100字
-                            String preview = text.length() > 100 ? text.substring(0, 100) : text;
-                            System.out.println("📋 [豆包-" + userId + "] 获取内容预览: " + preview.replace("\n", "\\n"));
-                }
+                        }
             } catch (Exception e) {
                 UserLogUtil.sendAIWarningLog(userId, "豆包", "内容复制", "JavaScript执行失败：剪贴板读取失败 - " + e.getMessage(), url + "/saveLogInfo");
                 throw e;
@@ -523,47 +516,30 @@ public class DouBaoUtil {
      */
     private boolean checkDouBaoGenerating(Page page) {
         try {
-            Object generatingStatus = page.evaluate("""
-            () => {
+            // 🔥 关键修复：检测豆包的"中断生成"按钮
+            // 当AI正在生成时，会出现一个带有 data-testid="chat_input_local_break_button" 的按钮
+            // 这是一个圆形按钮，里面有一个方块图标，用于中断生成
+            Locator breakButton = page.locator("[data-testid='chat_input_local_break_button']");
+            
+            int buttonCount = breakButton.count();
+            
+            // 如果中断按钮存在且可见，说明AI正在生成
+            if (buttonCount > 0) {
                 try {
-                    // 检查是否有生成中的指示器
-                    const generatingIndicators = document.querySelectorAll(
-                        '.generating-indicator, .loading-indicator, .typing-indicator, ' +
-                        '[class*="loading"], [class*="typing"], [class*="generating"], ' +
-                        '[class*="cursor-"]'
-                    );
-                    
-                    for (const indicator of generatingIndicators) {
-                        if (indicator && 
-                            window.getComputedStyle(indicator).display !== 'none' && 
-                            window.getComputedStyle(indicator).visibility !== 'hidden') {
-                            return true;
-                        }
+                    boolean isVisible = breakButton.first().isVisible();
+                    if (isVisible) {
+                        return true;
                     }
-                    
-                    // 检查是否有停止生成按钮
-                    const stopButtons = document.querySelectorAll(
-                        'button:has-text("停止生成"), button:has-text("Stop"), ' +
-                        '[data-testid*="stop"], [class*="stop-button"]'
-                    );
-                    
-                    for (const btn of stopButtons) {
-                        if (btn && 
-                            window.getComputedStyle(btn).display !== 'none' && 
-                            window.getComputedStyle(btn).visibility !== 'hidden') {
-                            return true;
-                        }
-                    }
-                    
-                    return false;
-                } catch (e) {
-                    return false;
+                } catch (Exception e) {
+                    // 按钮存在但检测可见性失败，保守判断为正在生成
+                    return true;
                 }
             }
-            """);
-
-            return generatingStatus instanceof Boolean ? (Boolean) generatingStatus : false;
+            
+            return false;
         } catch (Exception e) {
+            System.out.println("❌ [DouBao] checkDouBaoGenerating异常: " + e.getMessage());
+            // 检测失败，保守判断为未在生成（避免永远卡住）
             return false;
         }
     }
@@ -813,115 +789,163 @@ public class DouBaoUtil {
             // 🔥 日志标识：使用复制按钮获取内容
             logInfo.sendTaskLog("📋 豆包内容获取方式：复制按钮（唯一方式，不再从DOM提取）", userId, aiName);
             
-            // 🔥 关键修复：等待AI开始生成新回复，避免获取到历史消息
-            logInfo.sendTaskLog("等待AI开始生成新回复...", userId, aiName);
-            Thread.sleep(3000);  // 缩短到3秒，提高响应速度
-            logInfo.sendTaskLog("开始监听" + aiName + "回复是否完成", userId, aiName);
-            
-            // 设置最大等待时间（单位：毫秒），延长到 15 分钟以适应深度思考模式
-            long timeout = 900000; // 15 分钟
+            // 设置最大等待时间（单位：毫秒），延长到 30 分钟以适应超能模式深度思考
+            long timeout = 1800000; // 30 分钟
             long startTime = System.currentTimeMillis();  // 获取当前时间戳
             
-            // 用于去重警告日志的时间戳
-            long lastWarningTime = 0;
-            int checkInterval = 3000;  // 检查间隔，初始3秒
-            boolean hasEverHadContent = false;  // 是否曾经有过内容
-
-            // 🔥 进入循环，等待复制按钮出现（不再从DOM提取内容）
+            // ========== 阶段1：等待AI开始回复（检测新消息出现） ==========
+            logInfo.sendTaskLog("等待AI开始生成新回复...", userId, aiName);
+            int initialMessageCount = page.locator("[data-testid='receive_message']").count();
+            logInfo.sendTaskLog("当前历史消息数量：" + initialMessageCount, userId, aiName);
+            
+            boolean aiStartedReply = false;
+            while (!aiStartedReply) {
+                if (page.isClosed()) {
+                    UserLogUtil.sendAIWarningLog(userId, aiName, "等待AI回复", "页面已关闭", url + "/saveLogInfo");
+                    throw new RuntimeException("页面已关闭");
+                }
+                
+                long elapsedTime = System.currentTimeMillis() - startTime;
+                if (elapsedTime > timeout) {
+                    TimeoutException timeoutEx = new TimeoutException("等待AI开始回复超时，已等待：" + (elapsedTime/1000) + "秒");
+                    UserLogUtil.sendAITimeoutLog(userId, aiName, "等待AI开始回复", timeoutEx, "AI未开始回复", url + "/saveLogInfo");
+                    throw new RuntimeException("超时：AI未开始回复");
+                }
+                
+                // 检测是否有新消息出现
+                int currentMessageCount = page.locator("[data-testid='receive_message']").count();
+                if (currentMessageCount > initialMessageCount) {
+                    logInfo.sendTaskLog("✅ 检测到AI开始回复（消息数：" + initialMessageCount + " → " + currentMessageCount + "）", userId, aiName);
+                    aiStartedReply = true;
+                    break;
+                }
+                
+                // 检测AI错误标识
+                try {
+                    Locator errorIcon = page.locator("[data-testid='message_box_failed_icon']").last();
+                    if (errorIcon.count() > 0) {
+                        logInfo.sendTaskLog("❌ 检测到AI错误标识", userId, aiName);
+                        return AiResult.success("<p>AI拒绝处理或遇到错误</p>", "AI拒绝处理或遇到错误");
+                    }
+                } catch (Exception e) {
+                    // 忽略
+                }
+                
+                page.waitForTimeout(2000);  // 每2秒检查一次
+            }
+            
+            // ========== 阶段2：等待AI生成完成（检测生成状态变化） ==========
+            logInfo.sendTaskLog("开始监听" + aiName + "生成状态...", userId, aiName);
+            
+            boolean hasDetectedGenerating = false;  // 是否检测到过生成中状态
+            int stableCount = 0;  // 稳定计数（连续多次检测到完成状态）
+            int lastContentLength = 0;  // 上次内容长度
+            
             while (true) {
-                // 定期检查页面状态
                 if (page.isClosed()) {
                     UserLogUtil.sendAIWarningLog(userId, aiName, "内容获取", "页面在监控过程中被关闭", url + "/saveLogInfo");
                     throw new RuntimeException("页面在监控过程中被关闭");
                 }
                 
-                // 获取当前时间戳
                 long elapsedTime = System.currentTimeMillis() - startTime;
-
-                // 如果超时，退出循环
                 if (elapsedTime > timeout) {
-                    TimeoutException timeoutEx = new TimeoutException("等待豆包复制按钮超时，已等待：" + (elapsedTime/1000) + "秒");
-                    UserLogUtil.sendAITimeoutLog(userId, aiName, "复制按钮等待", timeoutEx, "等待复制按钮出现", url + "/saveLogInfo");
-                    logInfo.sendTaskLog("❌ 等待复制按钮超时，无法获取内容", userId, aiName);
-                    throw new RuntimeException("超时未检测到复制按钮");
+                    TimeoutException timeoutEx = new TimeoutException("等待豆包生成完成超时，已等待：" + (elapsedTime/1000) + "秒");
+                    UserLogUtil.sendAITimeoutLog(userId, aiName, "等待生成完成", timeoutEx, "AI生成未完成", url + "/saveLogInfo");
+                    logInfo.sendTaskLog("❌ 等待生成完成超时", userId, aiName);
+                    throw new RuntimeException("超时未完成生成");
                 }
 
-                // 🔥 检测AI错误标识（豆包拒绝处理）
+                // 检测AI错误标识
                 try {
                     Locator errorIcon = page.locator("[data-testid='message_box_failed_icon']").last();
                     if (errorIcon.count() > 0) {
-                        logInfo.sendTaskLog("❌ 检测到AI错误标识，立即终止等待", userId, aiName);
-                        UserLogUtil.sendAIWarningLog(userId, aiName, "AI处理失败", 
-                            "豆包拒绝处理或发生错误", url + "/saveLogInfo");
+                        logInfo.sendTaskLog("❌ 检测到AI错误标识", userId, aiName);
                         return AiResult.success("<p>AI拒绝处理或遇到错误</p>", "AI拒绝处理或遇到错误");
                     }
                 } catch (Exception e) {
-                    // 错误检测异常，继续
+                    // 忽略
                 }
 
-                // 🔥 检测AI回答是否完成（通过停止生成按钮消失来判断）
-                try {
-                    // 方法1：检测停止生成按钮是否消失（AI正在回答时会有停止按钮）
-                    Locator stopButton = page.locator("button:has-text('停止生成')");
-                    boolean isGenerating = stopButton.count() > 0 && stopButton.isVisible();
-                    
-                    if (!isGenerating) {
-                        // 停止按钮消失了，说明可能回答完成了
-                        // 再检查最新AI消息是否有操作按钮栏（包含复制、分享等）
-                        Locator aiMessage = page.locator("[data-testid='receive_message']").last();
-                        if (aiMessage.count() > 0) {
-                            // 🔥 鼠标悬停在消息上，让操作按钮栏显示出来
-                            try {
-                                aiMessage.hover();
-                                Thread.sleep(500);  // 等待悬停效果
-                            } catch (Exception hoverEx) {
-                                // 悬停失败，继续尝试
-                            }
-                            
-                            // 检查操作按钮栏是否存在
-                            Locator actionBar = aiMessage.locator(".message-action-bar-ghR0JC").first();
-                            if (actionBar.count() > 0) {
-                                // 再检查复制按钮是否真的存在且可见
-                                Locator copyButton = aiMessage.locator("[data-testid='message_action_copy']").first();
-                                if (copyButton.count() > 0) {
-                                    try {
-                                        // 验证复制按钮是否可见（使用更宽松的超时时间）
-                                        copyButton.isVisible();
-                                        // 🔥 检测到复制按钮可用，再等待3秒确保内容完全稳定
-                                        logInfo.sendTaskLog("✅ 检测到AI回答已完成（复制按钮已就绪），等待内容稳定...", userId, aiName);
-                                        Thread.sleep(3000);
-                                        break;
-                                    } catch (Exception visEx) {
-                                        // 复制按钮还不可见，继续等待
-                                    }
-                                }
-                            }
-                                }
-                            }
+                // 检测生成状态
+                boolean isCurrentlyGenerating = checkDouBaoGenerating(page);
+                logInfo.sendTaskLog(String.format("🔍 检测生成状态: %s (已检测到生成: %s, 稳定次数: %d)", 
+                    isCurrentlyGenerating ? "正在生成" : "未生成", hasDetectedGenerating, stableCount), userId, aiName);
+                
+                if (isCurrentlyGenerating) {
+                    // 检测到正在生成
+                    if (!hasDetectedGenerating) {
+                        logInfo.sendTaskLog("🔄 检测到AI正在生成中...", userId, aiName);
+                        hasDetectedGenerating = true;
+                    }
+                    stableCount = 0;  // 重置稳定计数
+                } else {
+                    // 没有检测到生成中状态
+                    if (!hasDetectedGenerating) {
+                        // 如果从未检测到生成状态，可能是思考阶段或者刚开始
+                        // 继续等待
+                        logInfo.sendTaskLog("⏳ 等待AI开始生成...", userId, aiName);
+                    } else {
+                        // 曾经检测到生成，现在停止了
+                        // 需要进一步验证：检测复制按钮 + 内容稳定性
+                        
+                        // 1. 检测复制按钮
+                        boolean hasCopyButton = false;
+                        try {
+                            Locator copyButton = page.locator("[data-testid='message_action_copy']").last();
+                            hasCopyButton = copyButton.count() > 0 && copyButton.isVisible();
                         } catch (Exception e) {
-                    // 按钮检测失败，继续等待
+                            // 忽略
+                        }
+                        
+                        // 2. 检测内容长度稳定性
+                        int currentContentLength = 0;
+                        try {
+                            java.util.Map<String, Object> responseData = getLatestDouBaoResponseWithCompletion(page);
+                            currentContentLength = (int) responseData.getOrDefault("length", 0);
+                        } catch (Exception e) {
+                            // 忽略
+                        }
+                        
+                        boolean contentStable = (currentContentLength > 0 && currentContentLength == lastContentLength);
+                        lastContentLength = currentContentLength;
+                        
+                        logInfo.sendTaskLog(String.format("📊 验证完成状态 - 复制按钮: %s, 内容长度: %d, 内容稳定: %s", 
+                            hasCopyButton ? "存在" : "不存在", currentContentLength, contentStable ? "是" : "否"), userId, aiName);
+                        
+                        // 判断是否真正完成
+                        if (hasCopyButton && contentStable) {
+                            stableCount++;
+                            logInfo.sendTaskLog(String.format("✅ 完成验证通过 (稳定次数: %d/2)", stableCount), userId, aiName);
+                            if (stableCount >= 2) {
+                                // 连续2次检测到完成状态（复制按钮存在 + 内容稳定）
+                                logInfo.sendTaskLog("✅ AI生成已完成（复制按钮出现 + 内容稳定）", userId, aiName);
+                                break;
+                            }
+                        } else {
+                            stableCount = 0;  // 重置稳定计数
+                        }
+                    }
                 }
                 
-                // 🔥 流式输出支持（仅用于实时反馈，不影响最终内容获取）
+                // 流式输出支持
                 if (userInfoRequest.getAiName() != null && userInfoRequest.getAiName().contains("stream")) {
                     try {
-                        // 获取当前显示的文本用于流式传输
                         java.util.Map<String, Object> streamData = getLatestDouBaoResponseWithCompletion(page);
                         String streamText = (String) streamData.getOrDefault("textContent", "");
                         if (streamText != null && !streamText.trim().isEmpty()) {
                             webSocketClientService.sendMessage(userInfoRequest, McpResult.success(streamText, ""), "db-stream");
-                    }
-                } catch (Exception e) {
+                        }
+                    } catch (Exception e) {
                         // 流式输出失败不影响主流程
                     }
                 }
                 
-                page.waitForTimeout(checkInterval);
+                page.waitForTimeout(3000);  // 每3秒检查一次
             }
             
             // 🔥 流式输出结束标志
             if (userInfoRequest.getAiName() != null && userInfoRequest.getAiName().contains("stream")) {
-                Thread.sleep(2000);
+                Thread.sleep(3000);  // 延长到3秒，确保流式输出完整
                 webSocketClientService.sendMessage(userInfoRequest, McpResult.success("END", ""), "db-stream");
             }
             
@@ -932,83 +956,64 @@ public class DouBaoUtil {
             
             clipboardLockManager.runWithClipboardLock(() -> {
                 try {
+                    // 🔥 确保页面获得焦点（剪贴板操作必需）
+                    page.bringToFront();
+                    Thread.sleep(300);  // 延长到300ms，确保焦点切换完成
+                    
                     // 1. 清空剪贴板
                     page.evaluate("navigator.clipboard.writeText('')");
-                    Thread.sleep(300);
+                    Thread.sleep(500);  // 延长到500ms，确保剪贴板清空完成
                     
-                    // 2. 定位最新AI回答消息
-                    Locator aiMessage = page.locator("[data-testid='receive_message']").last();
-                    if (aiMessage.count() == 0) {
-                        throw new RuntimeException("未找到AI回答消息");
-                    }
-                    
-                    // 3. 鼠标悬停在消息上，确保操作按钮栏显示
-                    logInfo.sendTaskLog("鼠标悬停在AI消息上，显示操作按钮...", userId, aiName);
-                    try {
-                        aiMessage.hover();
-                        Thread.sleep(800);  // 等待按钮栏完全显示
-                    } catch (Exception hoverEx) {
-                        logInfo.sendTaskLog("⚠️ 悬停操作失败，尝试继续...", userId, aiName);
-                    }
-                    
-                    // 4. 定位复制按钮
-                    Locator copyButton = aiMessage.locator("[data-testid='message_action_copy']").first();
-                    if (copyButton.count() == 0) {
-                        throw new RuntimeException("未找到复制按钮");
-                    }
-                    
-                    // 5. 确保复制按钮可见
-                    try {
-                        if (!copyButton.isVisible()) {
-                            throw new RuntimeException("复制按钮不可见");
+                    // 2. 检测是否存在文本编辑框（写作助手面板）
+                    Locator writeCanvasPanel = page.locator("div[data-testid='write_canvas_panel']");
+                    if (writeCanvasPanel.count() > 0) {
+                        logInfo.sendTaskLog("检测到文本编辑框，使用编辑框内的复制按钮", userId, aiName);
+                        
+                        // 点击编辑框内的复制按钮
+                        Locator editorCopyButton = page.locator("div[data-testid='container_inner_copy_btn']");
+                        if (editorCopyButton.count() > 0) {
+                            editorCopyButton.click();
+                            logInfo.sendTaskLog("已点击编辑框复制按钮", userId, aiName);
+                            Thread.sleep(1500);
                         }
-                    } catch (Exception visEx) {
-                        logInfo.sendTaskLog("⚠️ 复制按钮可见性检测失败: " + visEx.getMessage(), userId, aiName);
-                    }
-                    
-                    // 🔥 使用 JavaScript 点击最新AI消息的复制按钮
-                    logInfo.sendTaskLog("正在点击复制按钮...", userId, aiName);
-                    try {
-                        page.evaluate("document.querySelectorAll('[data-testid=\"receive_message\"]')[document.querySelectorAll('[data-testid=\"receive_message\"]').length - 1].querySelector('[data-testid=\"message_action_copy\"]').click()");
-                    } catch (Exception e) {
-                        // 如果 JavaScript 点击失败，尝试强制点击
-                        logInfo.sendTaskLog("⚠️ JS点击失败，使用Playwright点击...", userId, aiName);
-                        copyButton.click(new Locator.ClickOptions().setForce(true));
-                    }
-                    
-                    // 🔥 等待内容复制到剪贴板
-                    Thread.sleep(2000);
-                    
-                    // 3. 从剪贴板读取内容（带重试机制）
-                    String copiedText = null;
-                    for (int retry = 0; retry < 3; retry++) {
+                        
+                        // 点击关闭按钮
+                        Locator closeButton = page.locator("div[data-testid='container_inner_close_btn']");
+                        if (closeButton.count() > 0) {
+                            closeButton.click();
+                            logInfo.sendTaskLog("已点击关闭按钮", userId, aiName);
+                            Thread.sleep(800);
+                        }
+                    } else {
+                        // 使用常规方式：点击AI回答消息的复制按钮
+                        Locator aiMessage = page.locator("[data-testid='receive_message']").last();
+                        if (aiMessage.count() == 0) {
+                            throw new RuntimeException("未找到AI回答消息");
+                        }
+                        
+                        Locator copyButton = aiMessage.locator("[data-testid='message_action_copy']").first();
+                        if (copyButton.count() == 0) {
+                            throw new RuntimeException("未找到复制按钮");
+                        }
+                        
+                        // 🔥 使用 JavaScript 点击以避免元素被遮挡的问题
                         try {
-                            Object clipboardContent = page.evaluate("navigator.clipboard.readText()");
-                            copiedText = clipboardContent != null ? clipboardContent.toString() : "";
-                            
-                            if (copiedText != null && !copiedText.trim().isEmpty()) {
-                                break; // 成功获取到内容，退出重试
-                            }
-                            
-                            if (retry < 2) {
-                                logInfo.sendTaskLog("⚠️ 剪贴板内容为空，等待重试... (" + (retry + 1) + "/3)", userId, aiName);
-                                Thread.sleep(1000);
-                            }
+                            page.evaluate("document.querySelectorAll('[data-testid=\"receive_message\"]')[document.querySelectorAll('[data-testid=\"receive_message\"]').length - 1].querySelector('[data-testid=\"message_action_copy\"]').click()");
                         } catch (Exception e) {
-                            if (retry < 2) {
-                                logInfo.sendTaskLog("⚠️ 读取剪贴板失败，重试中... (" + (retry + 1) + "/3)", userId, aiName);
-                                Thread.sleep(1000);
-                            }
+                            // 如果 JavaScript 点击失败，尝试强制点击
+                            copyButton.click(new Locator.ClickOptions().setForce(true));
                         }
+                        logInfo.sendTaskLog("已点击复制按钮，等待剪贴板内容...", userId, aiName);
+                        Thread.sleep(2000); // 延长到2秒，确保复制完成
                     }
+                    
+                    // 3. 从剪贴板读取
+                    Object clipboardContent = page.evaluate("navigator.clipboard.readText()");
+                    String copiedText = clipboardContent != null ? clipboardContent.toString() : "";
                     
                     if (copiedText == null || copiedText.trim().isEmpty()) {
-                        throw new RuntimeException("剪贴板内容为空（已重试3次）");
+                        throw new RuntimeException("剪贴板内容为空");
                     }
-                    
-                    // 🔥 终端输出前100字
-                    String preview = copiedText.length() > 100 ? copiedText.substring(0, 100) : copiedText;
-                    System.out.println("📋 [豆包-" + userId + "] 获取内容预览: " + preview.replace("\n", "\\n"));
                     
                     finalContentRef.set(copiedText);
                     logInfo.sendTaskLog("✅ 成功从复制按钮获取内容，长度：" + copiedText.trim().length(), userId, aiName);
@@ -1098,8 +1103,8 @@ public class DouBaoUtil {
             // 等待聊天框的内容稳定
             String currentContent = "";
             String lastContent = "";
-            // 设置最大等待时间（单位：毫秒），延长到 15 分钟
-            long timeout = 900000; // 15 分钟
+            // 设置最大等待时间（单位：毫秒），延长到 30 分钟以适应超能模式深度思考
+            long timeout = 1800000; // 30 分钟
             long startTime = System.currentTimeMillis();  // 获取当前时间戳
             AtomicReference<String> textRef = new AtomicReference<>();
             // 进入循环，直到内容不再变化或者超时
@@ -1126,6 +1131,10 @@ public class DouBaoUtil {
                                 throw new RuntimeException("页面已关闭");
                             }
                             
+                            // 🔥 确保页面获得焦点（剪贴板操作必需）
+                            page.bringToFront();
+                            Thread.sleep(300);  // 延长到300ms，确保焦点切换完成
+                            
                             // 获取AI回答消息的复制按钮
                             boolean buttonFound = false;
                             
@@ -1136,12 +1145,12 @@ public class DouBaoUtil {
                             if (aiMessage.count() > 0 && aiMessage.locator("[data-testid='code-block-copy']").count() > 0) {
                                 try {
                                     page.evaluate("document.querySelectorAll('[data-testid=\"receive_message\"]')[document.querySelectorAll('[data-testid=\"receive_message\"]').length - 1].querySelector('[data-testid=\"code-block-copy\"]').click()");
-                                buttonFound = true;
+                                    buttonFound = true;
                                 } catch (Exception e) {
                                     // 如果 JavaScript 点击失败，尝试强制点击
                                     aiMessage.locator("[data-testid='code-block-copy']").first()
                                             .click(new Locator.ClickOptions().setForce(true));
-                                buttonFound = true;
+                                    buttonFound = true;
                                 }
                             } else if (aiMessage.count() > 0 && aiMessage.locator("[data-testid='message_action_copy']").count() > 0) {
                                 try {
@@ -1159,14 +1168,13 @@ public class DouBaoUtil {
                                 UserLogUtil.sendAIWarningLog(userId, aiName, "剪贴板操作", "未找到复制按钮，元素可能不存在", url + "/saveLogInfo");
                                 throw new RuntimeException("未找到复制按钮");
                             }
+                            
+                            // 延长等待时间，确保复制完成
+                            Thread.sleep(2000);
 
                             String text = (String) page.evaluate("navigator.clipboard.readText()");
                             if (text == null || text.trim().isEmpty()) {
                                 UserLogUtil.sendAIWarningLog(userId, aiName, "剪贴板操作", "剪贴板读取内容为空", url + "/saveLogInfo");
-                            } else {
-                                // 🔥 终端输出前100字
-                                String preview = text.length() > 100 ? text.substring(0, 100) : text;
-                                System.out.println("📋 [" + aiName + "-" + userId + "] 获取内容预览: " + preview.replace("\n", "\\n"));
                             }
                             textRef.set(text);
                         } catch (com.microsoft.playwright.PlaywrightException e) {

@@ -23,7 +23,7 @@ public interface PointsMapper {
     /**
      * 获取用户积分记录
      * */
-    List<Map> getUserPointsRecord(String userId);
+    List<Map> getUserPointsRecord(Points points);
 
     /**
      * 获取用户积分

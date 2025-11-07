@@ -14,7 +14,7 @@
         select IFNULL(points,0) points from sys_user where user_id = #{userId}
     </select>
 
-    <select id="getUserPointsRecord" parameterType="java.lang.String" resultType="java.util.Map">
+    <select id="getUserPointsRecord" parameterType="com.cube.point.domain.Points" resultType="java.util.Map">
         SELECT
         u.nick_name,
         wpr.change_amount,
@@ -26,11 +26,11 @@
             wc_points_record wpr
         left join sys_user u on u.user_id = wpr.user_id
         where wpr.user_id = #{userId}
-        <if test="type == '1'">
-            and wpr.change_type =1
+        <if test="type != null and type == 1">
+            and wpr.change_amount > 0
         </if>
-        <if test="type == '2'">
-            and wpr.change_type = 4
+        <if test="type != null and type == 2">
+            and wpr.change_amount &lt; 0
         </if>
         order by wpr.create_time desc
     </select>

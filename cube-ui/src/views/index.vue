@@ -289,7 +289,7 @@
           prop="change_amount"
           :show-overflow-tooltip="true"
         >
-          <template slot-scope="scope">
+          <template #default="scope">
             <span
               :style="{ color: scope.row.change_amount >= 0 ? 'green' : 'red' }"
             >
@@ -316,7 +316,7 @@
           align="center"
           prop="create_time"
         >
-          <template slot-scope="scope">
+          <template #default="scope">
             <span>{{ parseTime(scope.row.create_time) }}</span>
           </template>
         </el-table-column>
@@ -334,12 +334,12 @@
         />
       </el-table>
     <pagination
-  v-show="total>0"
-  :total="total"
-  v-model:current-page="queryParams.pageNum"
-  v-model:page-size="queryParams.pageSize"
-  @current-change="getList"
-  @size-change="getList"
+  v-show="pointtotal>0"
+  :total="pointtotal"
+  v-model:current-page="queryPointForm.page"
+  v-model:page-size="queryPointForm.limit"
+  @current-change="getUserPointsRecord"
+  @size-change="getUserPointsRecord"
 />
     </el-dialog>
     <!-- 公众号配置弹窗 -->
@@ -788,14 +788,26 @@ export default {
     // 获取当前登录用户积分明细
     showPointsDetail() {
       this.queryPointForm.userId = this.user.userId;
+      this.queryPointForm.page = 1; // 重置页码
+      this.queryPointForm.type = ''; // 重置分类
       this.getUserPointsRecord();
     },
     // 获取积分明细
     getUserPointsRecord() {
-      getUserPointsRecord(this.queryPointForm).then((response) => {
+      this.loading = true;
+      // 构建请求参数，将 type 转换为正确的格式
+      const requestData = {
+        userId: this.queryPointForm.userId,
+        page: this.queryPointForm.page,
+        limit: this.queryPointForm.limit,
+        type: this.queryPointForm.type === '' || this.queryPointForm.type === '0' ? null : parseInt(this.queryPointForm.type)
+      };
+      getUserPointsRecord(requestData).then((response) => {
         this.openPointsRecord = true;
         this.pointsRecordList = response.data.list;
         this.pointtotal = response.data.total;
+        this.loading = false;
+      }).catch(() => {
         this.loading = false;
       });
     },

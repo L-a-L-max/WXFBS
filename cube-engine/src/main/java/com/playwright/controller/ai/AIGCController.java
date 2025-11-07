@@ -408,6 +408,8 @@ public class AIGCController {
             
             logInfo.sendTaskLog("豆包页面打开完成", userId, dynamicAiName);
 
+            // 检测并处理超能模式介绍弹窗
+            douBaoUtil.checkAndClickSuperModeButton(page, userId);
             
             // 智能切换AI模式（根据用户是否选择深度思考能力）
             boolean needDeepThinking = roles != null && roles.contains("zj-db-sdsk");
@@ -471,6 +473,10 @@ public class AIGCController {
 
             clipboardLockManager.runWithClipboardLock(() -> {
                 try {
+                    // 🔥 确保页面获得焦点（剪贴板操作必需）
+                    page.bringToFront();
+                    Thread.sleep(100);
+                    
                     // 🔥 优化分享按钮点击逻辑：支持深度思考模式（超能模式）
                     // 使用安全方法点击最新消息的分享按钮，避免历史消息干扰
                     logInfo.sendTaskLog("等待分享按钮出现（深度思考模式可能需要较长时间）...", userId, dynamicAiName);
