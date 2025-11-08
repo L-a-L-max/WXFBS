@@ -122,7 +122,21 @@ public class  LogMsgUtil {
         aiResponses.add(aiResponse);
         resData.put("aiResponses", aiResponses);
         
-        System.out.println("🔥 发送WebSocket消息到前端: " + type + " - " + aiName + " - 用户ID: " + userId + " - TaskID: " + taskId);
+        // 统一的日志输出格式：AI智能体信息、用户ID、内容前20字、截图链接、分享链接，一行显示
+        String contentPreview = "";
+        if (copiedText != null && !copiedText.trim().isEmpty()) {
+            // 移除HTML标签和换行符，只保留纯文本
+            String plainText = copiedText.replaceAll("<[^>]+>", "").replaceAll("\\s+", " ").trim();
+            contentPreview = plainText.length() > 20 ? plainText.substring(0, 20) + "..." : plainText;
+        }
+        String screenshotInfo = (shareImgUrl != null && !shareImgUrl.trim().isEmpty()) ? shareImgUrl : "无截图";
+        String shareInfo = (shareUrl != null && !shareUrl.trim().isEmpty()) ? shareUrl : "无分享链接";
+        System.out.println(String.format("✅ [%s] 用户ID:%s | 内容预览:%s | 截图:%s | 分享链接:%s", 
+            aiName, userId, contentPreview, screenshotInfo, shareInfo));
+        
+        // 🔥 添加AI内容生成后的分隔线，方便查找问题
+        System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        
         webSocketClientService.sendMessage(resData.toJSONString());
     }
 

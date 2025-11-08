@@ -908,7 +908,7 @@ public class BaiduUtil {
                 "i.cos-icon.cos-icon-copy.button_AxaRd",
                 // Comate模式的选择器
                 "i.cos-icon.cos-icon-copy.button_f81z6_14",
-                // 标准模式的选择器（多个备选）
+                // 标准模式的选择器（多个备选）- 优先匹配用户提供的DOM结构
                 "i.cos-icon.cos-icon-copy.icon_jk2b1_12",
                 "i.cos-icon.cos-icon-copy.icon_1nicr_12",
                 ".menu-item_jk2b1_1 i.cos-icon-copy",
@@ -919,8 +919,9 @@ public class BaiduUtil {
                 "[data-copy]"
             };
             
-            boolean copySuccess = false;
-            String detectedMode = "未知";
+            // 🔒 使用AtomicReference以便在lambda表达式中修改
+            AtomicReference<Boolean> copySuccessRef = new AtomicReference<>(false);
+            AtomicReference<String> detectedModeRef = new AtomicReference<>("未知");
             
             // 首先检测页面模式
             Locator editor = page.locator("div#editor-container");
@@ -928,61 +929,209 @@ public class BaiduUtil {
             Locator chatContainer = page.locator("div.chat-qa-container");
             
             if (editor.count() > 0) {
-                detectedMode = "编辑器模式";
+                detectedModeRef.set("编辑器模式");
             } else if (comate.count() > 0) {
-                detectedMode = "Comate模式";
+                detectedModeRef.set("Comate模式");
             } else if (chatContainer.count() > 0) {
-                detectedMode = "标准对话模式";
+                detectedModeRef.set("标准对话模式");
             }
             
-            // 尝试从标准对话容器中查找
-            if (chatContainer.count() > 0) {
+            // 🔒 使用剪贴板锁保护剪贴板操作，避免多AI并发时剪贴板冲突
+            AtomicReference<String> contentRef = new AtomicReference<>("本次回复无文本内容");
+            
+            clipboardLockManager.runWithClipboardLock(() -> {
                 try {
-                    Locator answerBox = chatContainer.last().locator(".answer-box.last-answer-box");
+                    // 🔥 确保页面获得焦点（剪贴板操作必需）
+                    page.bringToFront();
+                    Thread.sleep(300);
                     
-                    for (String selector : allCopyButtonSelectors) {
+                    // 🔥 关键修复：在复制前先清空剪贴板，避免读取到其他AI的内容
+                    page.evaluate("navigator.clipboard.writeText('')");
+                    Thread.sleep(500);
+                    
+                    // 优先从标准对话容器中查找第一个复制按钮
+                    if (chatContainer.count() > 0) {
                         try {
-                            Locator tempButton = answerBox.locator(selector).last();
-                            if (tempButton.count() > 0 && tempButton.isVisible()) {
-                                tempButton.click();
-                                Thread.sleep(1000);
-                                content = (String) page.evaluate("navigator.clipboard.readText()");
-                                copySuccess = true;
-                                logInfo.sendTaskLog("已通过复制按钮获取内容（" + detectedMode + "）", userId, "百度AI");
-                                break;
+                            Locator answerBox = chatContainer.last().locator(".answer-box.last-answer-box");
+                            
+                            for (String selector : allCopyButtonSelectors) {
+                                try {
+                                    // 🔥 修改：使用.first()获取第一个复制按钮，而不是最后一个
+                                    Locator tempButton = answerBox.locator(selector).first();
+                                    if (tempButton.count() > 0 && tempButton.isVisible()) {
+                                        tempButton.click();
+                                        Thread.sleep(1000);
+                                        String clipboardContent = (String) page.evaluate("navigator.clipboard.readText()");
+                                        if (clipboardContent != null && !clipboardContent.trim().isEmpty()) {
+                                            // 验证内容不是其他AI的分享链接（如秘塔链接）
+                                            if (!clipboardContent.contains("metaso.cn") && 
+                                                !clipboardContent.contains("doubao.com") &&
+                                                !clipboardContent.startsWith("http://") && 
+                                                !clipboardContent.startsWith("https://")) {
+                                                contentRef.set(clipboardContent);
+                                                copySuccessRef.set(true);
+                                                logInfo.sendTaskLog("已通过第一个复制按钮获取内容（" + detectedModeRef.get() + "）", userId, "百度AI");
+                                                break;
+                                            } else {
+                                                logInfo.sendTaskLog("检测到剪贴板内容可能是其他AI的链接，跳过", userId, "百度AI");
+                                            }
+                                        }
+                                    }
+                                } catch (Exception e) {
+                                    // 继续尝试下一个选择器
+                                }
+                            }
+                        } catch (Exception e) {
+                            // 标准对话容器查找失败，继续尝试全局查找
+                        }
+                    }
+                    
+                    // 如果标准容器中没找到，尝试全局查找第一个复制按钮
+                    if (!copySuccessRef.get()) {
+                        for (String selector : allCopyButtonSelectors) {
+                            try {
+                                // 🔥 修改：使用.first()获取第一个复制按钮
+                                Locator tempButton = page.locator(selector).first();
+                                if (tempButton.count() > 0 && tempButton.isVisible()) {
+                                    tempButton.click();
+                                    Thread.sleep(1000);
+                                    String clipboardContent = (String) page.evaluate("navigator.clipboard.readText()");
+                                    if (clipboardContent != null && !clipboardContent.trim().isEmpty()) {
+                                        // 验证内容不是其他AI的分享链接
+                                        if (!clipboardContent.contains("metaso.cn") && 
+                                            !clipboardContent.contains("doubao.com") &&
+                                            !clipboardContent.startsWith("http://") && 
+                                            !clipboardContent.startsWith("https://")) {
+                                            contentRef.set(clipboardContent);
+                                            copySuccessRef.set(true);
+                                            logInfo.sendTaskLog("已通过全局第一个复制按钮获取内容（" + detectedModeRef.get() + "）", userId, "百度AI");
+                                            break;
+                                        } else {
+                                            logInfo.sendTaskLog("检测到剪贴板内容可能是其他AI的链接，跳过", userId, "百度AI");
+                                        }
+                                    }
+                                }
+                            } catch (Exception e) {
+                                // 继续尝试下一个选择器
+                            }
+                        }
+                    }
+                } catch (Exception e) {
+                    UserLogUtil.sendAIExceptionLog(userId, "百度AI", "extractBaiduContent", e, System.currentTimeMillis(), "剪贴板操作失败", url + "/saveLogInfo");
+                }
+            });
+            
+            content = contentRef.get();
+            boolean copySuccess = copySuccessRef.get();
+            
+            // 🔥 新增：如果没有找到复制按钮或复制失败，从DOM中提取内容
+            if (!copySuccess || content == null || content.trim().isEmpty() || content.equals("本次回复无文本内容")) {
+                logInfo.sendTaskLog("未找到复制按钮，尝试从DOM中提取内容", userId, "百度AI");
+                
+                // 定义内容DOM选择器，按优先级排序
+                String[] contentSelectors = {
+                    // 用户提供的DOM结构选择器
+                    "div.cosd-markdown-content div.marklang",
+                    "div.cosd-markdown-content",
+                    "div.marklang",
+                    // 其他可能的内容选择器
+                    "div.chat-qa-container div.data-show-ext",
+                    "div.answer-box.last-answer-box",
+                    "div.chat-qa-container:last-child div[data-show-ext]"
+                };
+                
+                boolean domExtractSuccess = false;
+                
+                // 优先从对话容器中查找
+                if (chatContainer.count() > 0) {
+                    try {
+                        Locator answerBox = chatContainer.last();
+                        
+                        for (String selector : contentSelectors) {
+                            try {
+                                Locator contentElement = answerBox.locator(selector).last();
+                                if (contentElement.count() > 0 && contentElement.isVisible()) {
+                                    // 尝试获取文本内容
+                                    String textContent = contentElement.textContent();
+                                    if (textContent != null && !textContent.trim().isEmpty() && textContent.length() > 10) {
+                                        content = textContent.trim();
+                                        domExtractSuccess = true;
+                                        logInfo.sendTaskLog("已从DOM中提取文本内容（" + detectedModeRef.get() + "），长度: " + content.length(), userId, "百度AI");
+                                        break;
+                                    }
+                                    
+                                    // 如果文本内容为空，尝试获取HTML内容
+                                    String htmlContent = contentElement.innerHTML();
+                                    if (htmlContent != null && !htmlContent.trim().isEmpty() && htmlContent.length() > 50) {
+                                        // 从HTML中提取纯文本
+                                        content = (String) page.evaluate("""
+                                            (html) => {
+                                                const div = document.createElement('div');
+                                                div.innerHTML = html;
+                                                return div.textContent || div.innerText || '';
+                                            }
+                                        """, htmlContent);
+                                        if (content != null && !content.trim().isEmpty()) {
+                                            domExtractSuccess = true;
+                                            logInfo.sendTaskLog("已从DOM中提取HTML内容并转换为文本（" + detectedModeRef.get() + "），长度: " + content.length(), userId, "百度AI");
+                                            break;
+                                        }
+                                    }
+                                }
+                            } catch (Exception e) {
+                                // 继续尝试下一个选择器
+                            }
+                        }
+                    } catch (Exception e) {
+                        // 容器查找失败，继续尝试全局查找
+                    }
+                }
+                
+                // 如果容器中没找到，尝试全局查找
+                if (!domExtractSuccess) {
+                    for (String selector : contentSelectors) {
+                        try {
+                            Locator contentElement = page.locator(selector).last();
+                            if (contentElement.count() > 0 && contentElement.isVisible()) {
+                                // 尝试获取文本内容
+                                String textContent = contentElement.textContent();
+                                if (textContent != null && !textContent.trim().isEmpty() && textContent.length() > 10) {
+                                    content = textContent.trim();
+                                    domExtractSuccess = true;
+                                    logInfo.sendTaskLog("已从全局DOM中提取文本内容（" + detectedModeRef.get() + "），长度: " + content.length(), userId, "百度AI");
+                                    break;
+                                }
+                                
+                                // 如果文本内容为空，尝试获取HTML内容
+                                String htmlContent = contentElement.innerHTML();
+                                if (htmlContent != null && !htmlContent.trim().isEmpty() && htmlContent.length() > 50) {
+                                    // 从HTML中提取纯文本
+                                    content = (String) page.evaluate("""
+                                        (html) => {
+                                            const div = document.createElement('div');
+                                            div.innerHTML = html;
+                                            return div.textContent || div.innerText || '';
+                                        }
+                                    """, htmlContent);
+                                    if (content != null && !content.trim().isEmpty()) {
+                                        domExtractSuccess = true;
+                                        logInfo.sendTaskLog("已从全局DOM中提取HTML内容并转换为文本（" + detectedModeRef.get() + "），长度: " + content.length(), userId, "百度AI");
+                                        break;
+                                    }
+                                }
                             }
                         } catch (Exception e) {
                             // 继续尝试下一个选择器
                         }
                     }
-                } catch (Exception e) {
-                    // 标准对话容器查找失败，继续尝试全局查找
                 }
-            }
-            
-            // 如果标准容器中没找到，尝试全局查找
-            if (!copySuccess) {
-                for (String selector : allCopyButtonSelectors) {
-                    try {
-                        Locator tempButton = page.locator(selector).last();
-                        if (tempButton.count() > 0 && tempButton.isVisible()) {
-                            tempButton.click();
-                            Thread.sleep(1000);
-                            content = (String) page.evaluate("navigator.clipboard.readText()");
-                            copySuccess = true;
-                            logInfo.sendTaskLog("已通过全局复制按钮获取内容（" + detectedMode + "）", userId, "百度AI");
-                            break;
-                        }
-                    } catch (Exception e) {
-                        // 继续尝试下一个选择器
-                    }
+                
+                // 如果DOM提取也失败，发出警告
+                if (!domExtractSuccess) {
+                    UserLogUtil.sendAIWarningLogWithDedup(userId, "百度AI", "内容提取", 
+                        detectedModeRef.get() + "下未找到可用的复制按钮和DOM内容，可能页面结构已变化", url + "/saveLogInfo", 30000);
+                    logInfo.sendTaskLog("未能从复制按钮或DOM中提取内容", userId, "百度AI");
                 }
-            }
-            
-            // 只有在所有尝试都失败时才发出警告，且使用去重避免刷屏
-            if (!copySuccess) {
-                UserLogUtil.sendAIWarningLogWithDedup(userId, "百度AI", "内容提取", 
-                    detectedMode + "下未找到可用的复制按钮，可能页面结构已变化", url + "/saveLogInfo", 30000);
             }
 
             return content;

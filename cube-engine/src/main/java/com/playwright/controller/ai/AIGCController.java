@@ -185,7 +185,6 @@ public class AIGCController {
             
             try {
                 page.navigate(targetUrl);
-                System.out.println("✅ URL导航成功");
             } catch (Exception e) {
                 System.err.println("❌ URL导航失败: " + e.getMessage());
                 throw e;
@@ -199,7 +198,6 @@ public class AIGCController {
             
             // 智能切换AI模式（根据用户是否选择深度思考能力）
             boolean needDeepThinking = roles != null && roles.contains("zj-db-sdsk");
-            System.out.println("🧠 是否需要深度思考: " + needDeepThinking + " (检测标识: zj-db-sdsk)");
             System.out.println("====================================================");
             
             douBaoUtil.switchAIMode(page, userId, needDeepThinking);
@@ -398,7 +396,6 @@ public class AIGCController {
             
             try {
                 page.navigate(targetUrl);
-                System.out.println("✅ URL导航成功");
             } catch (Exception e) {
                 System.err.println("❌ URL导航失败: " + e.getMessage());
                 throw e;
@@ -413,7 +410,6 @@ public class AIGCController {
             
             // 智能切换AI模式（根据用户是否选择深度思考能力）
             boolean needDeepThinking = roles != null && roles.contains("zj-db-sdsk");
-            System.out.println("🧠 是否需要深度思考: " + needDeepThinking + " (检测标识: zj-db-sdsk)");
             System.out.println("====================================================");
             
             douBaoUtil.switchAIMode(page, userId, needDeepThinking);
@@ -616,7 +612,6 @@ public class AIGCController {
             // 构造豆包分享链接
             String douBaoShareUrl = shareUrl;
             String currentUrl = page.url();
-            System.out.println("📎 当前页面URL: " + currentUrl);
             
             // 从URL中提取会话ID并构造分享链接
             if (currentUrl != null && currentUrl.contains("/chat/")) {
@@ -625,7 +620,6 @@ public class AIGCController {
                 if (matcher.find()) {
                     String chatId = matcher.group(1);
                     douBaoShareUrl = "https://www.doubao.com/chat/" + chatId;
-                    System.out.println("✅ 成功获取豆包分享链接: " + douBaoShareUrl);
                     logInfo.sendTaskLog("成功获取豆包分享链接: " + douBaoShareUrl, userId, dynamicAiName);
                 } else {
                     System.out.println("⚠️  未能从URL中提取会话ID");
@@ -1334,7 +1328,6 @@ public class AIGCController {
 
             try {
                 page.navigate(targetUrl);
-                System.out.println("✅ URL导航成功");
             } catch (Exception e) {
                 System.err.println("❌ URL导航失败: " + e.getMessage());
                 throw e;
@@ -1522,18 +1515,56 @@ public class AIGCController {
             }, 0, 8, TimeUnit.SECONDS);
 
             logInfo.sendTaskLog("开启自动监听任务，持续监听秘塔回答中", userId, "秘塔");
+            
+            // 🔥 检查是否为模型相关问题
+            String modelAnswer = metasoUtil.checkAndAnswerModelQuestion(userPrompt);
+            if (modelAnswer != null) {
+                // 关闭截图线程
+                screenshotFuture.cancel(false);
+                screenshotExecutor.shutdown();
+                
+                logInfo.sendTaskLog("检测到模型相关问题，直接返回标准答案", userId, "秘塔");
+                String shareUrl = page.url();
+                String sharImgUrl = "";
+                logInfo.sendResData(modelAnswer, userId, "秘塔", "RETURN_METASO_RES", shareUrl, sharImgUrl, userInfoRequest.getTaskId());
+                userInfoRequest.setDraftContent(modelAnswer);
+                userInfoRequest.setAiName("秘塔");
+                userInfoRequest.setShareUrl(shareUrl);
+                userInfoRequest.setShareImgUrl(sharImgUrl);
+                RestUtils.post(url + "/saveDraftContent", userInfoRequest);
+                return McpResult.success(modelAnswer, shareUrl);
+            }
+            
             //等待html片段获取完成
             String copiedText = metasoUtil.waitMetasoHtmlDom(page, userId, "秘塔", userInfoRequest);
             //关闭截图
             screenshotFuture.cancel(false);
             screenshotExecutor.shutdown();
 
-            // 🔥 使用增强的安全链接获取方法
-            AtomicReference<String> shareUrlRef = new AtomicReference<>();
+            // 🔥 等待回复完成后，点击复制按钮获取内容
+            String finalContent = copiedText;
+            try {
+                String copiedContent = metasoUtil.clickCopyButtonAndGetContent(page, userId, "秘塔");
+                if (copiedContent != null && !copiedContent.trim().isEmpty()) {
+                    finalContent = copiedContent;
+                    logInfo.sendTaskLog("通过复制按钮成功获取内容", userId, "秘塔");
+                } else {
+                    logInfo.sendTaskLog("复制按钮获取内容失败，使用HTML内容", userId, "秘塔");
+                }
+            } catch (Exception e) {
+                logInfo.sendTaskLog("点击复制按钮异常，使用HTML内容: " + e.getMessage(), userId, "秘塔");
+            }
 
+            // 🔥 获取分享链接 - 优先使用右上角分享按钮
+            AtomicReference<String> shareUrlRef = new AtomicReference<>();
             clipboardLockManager.runWithClipboardLock(() -> {
                 try {
-                    String shareUrl = metasoUtil.getMetasoShareUrlSafely(page, userId, "秘塔");
+                    // 先尝试右上角分享按钮
+                    String shareUrl = metasoUtil.getMetasoShareUrlFromTopRight(page, userId, "秘塔");
+                    if (shareUrl == null || !shareUrl.contains("http")) {
+                        // 如果失败，使用原来的方法
+                        shareUrl = metasoUtil.getMetasoShareUrlSafely(page, userId, "秘塔");
+                    }
                     shareUrlRef.set(shareUrl);
                     
                     if (shareUrl != null && shareUrl.contains("http")) {
@@ -1554,11 +1585,29 @@ public class AIGCController {
                 }
             });
 
-            Thread.sleep(2000); // 减少等待时间，因为新方法更高效
+            Thread.sleep(2000); // 等待剪贴板操作完成
             String shareUrl = shareUrlRef.get();
-            String bodyPath = "(//div[@class='flex flex-col min-h-[calc(100vh-192px)]'])[1]";
-            // 点击分享按钮
-            String sharImgUrl = screenshotUtil.screenShootAllDivAndUpload(page, UUID.randomUUID().toString() + ".png", bodyPath);
+            
+            // 🔥 使用新的拼接截图方法，针对search-content-container区域
+            String sharImgUrl = "";
+            try {
+                sharImgUrl = metasoUtil.captureMetasoContentScreenshot(page, userId, "秘塔");
+                if (sharImgUrl == null || sharImgUrl.isEmpty()) {
+                    logInfo.sendTaskLog("拼接截图失败，使用备用截图方法", userId, "秘塔");
+                    String bodyPath = "(//div[@class='flex flex-col min-h-[calc(100vh-192px)]'])[1]";
+                    sharImgUrl = screenshotUtil.screenShootAllDivAndUpload(page, UUID.randomUUID().toString() + ".png", bodyPath);
+                } else {
+                    logInfo.sendTaskLog("拼接截图成功: " + sharImgUrl, userId, "秘塔");
+                }
+            } catch (Exception e) {
+                logInfo.sendTaskLog("截图异常: " + e.getMessage(), userId, "秘塔");
+                try {
+                    String bodyPath = "(//div[@class='flex flex-col min-h-[calc(100vh-192px)]'])[1]";
+                    sharImgUrl = screenshotUtil.screenShootAllDivAndUpload(page, UUID.randomUUID().toString() + ".png", bodyPath);
+                } catch (Exception ex) {
+                    UserLogUtil.sendExceptionLog(userId, "秘塔截图异常", "startMetaso", ex, url + "/saveLogInfo");
+                }
+            }
             
             // 🔥 提取会话ID并保存（支持 /search/ 和 /search-v2/ 两种格式）
             String capturedMetasoChatId = "";
@@ -1578,16 +1627,16 @@ public class AIGCController {
             logInfo.sendTaskLog("执行完成", userId, "秘塔");
             // 更新WebSocket发送的正则，兼容两种格式
             logInfo.sendChatData(page, "/search(?:-v2)?/([^/?#]+)", userId, "RETURN_METASO_CHATID", 1);
-            logInfo.sendResData(copiedText, userId, "秘塔", "RETURN_METASO_RES", shareUrl, sharImgUrl, userInfoRequest.getTaskId());
+            logInfo.sendResData(finalContent, userId, "秘塔", "RETURN_METASO_RES", shareUrl, sharImgUrl, userInfoRequest.getTaskId());
 
             //保存数据库
             userInfoRequest.setMetasoChatId(capturedMetasoChatId); // 保存会话ID到数据库
-            userInfoRequest.setDraftContent(copiedText);
+            userInfoRequest.setDraftContent(finalContent);
             userInfoRequest.setAiName("秘塔");
             userInfoRequest.setShareUrl(shareUrl);
             userInfoRequest.setShareImgUrl(sharImgUrl);
             RestUtils.post(url + "/saveDraftContent", userInfoRequest);
-            return McpResult.success(copiedText, shareUrl);
+            return McpResult.success(finalContent, shareUrl);
         } catch (Exception e) {
             throw e;
         }

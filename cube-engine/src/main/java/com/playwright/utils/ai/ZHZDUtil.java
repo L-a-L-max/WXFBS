@@ -366,11 +366,6 @@ public class ZHZDUtil {
             Locator contentLocator = page.locator(".Render-markdown").last();
             String htmlContent = contentLocator.first().innerHTML();
             
-            // 🔥 终端输出前100字
-            String textOnly = htmlContent.replaceAll("<[^>]+>", "");
-            String preview = textOnly.length() > 100 ? textOnly.substring(0, 100) : textOnly;
-            System.out.println("📋 [知乎直答-" + userId + "] 获取内容预览: " + preview.replace("\n", "\\n"));
-            
             return cleanHtml(htmlContent);
 
         } catch (com.microsoft.playwright.impl.TargetClosedError e) {

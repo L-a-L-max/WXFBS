@@ -891,10 +891,6 @@ public class TencentUtil {
                         throw new RuntimeException("剪贴板内容为空");
                     }
                     
-                    // 🔥 终端输出前100字
-                    String preview = copiedText.length() > 100 ? copiedText.substring(0, 100) : copiedText;
-                    System.out.println("📋 [元宝-" + userId + "] 获取内容预览: " + preview.replace("\n", "\\n"));
-                    
                     finalContentRef.set(copiedText);
                     logInfo.sendTaskLog("✅ 成功从复制按钮获取内容，长度：" + copiedText.trim().length(), userId, agentName);
                     

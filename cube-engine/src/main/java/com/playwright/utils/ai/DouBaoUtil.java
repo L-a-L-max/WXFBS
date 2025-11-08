@@ -170,17 +170,13 @@ public class DouBaoUtil {
             // 等待页面加载完成，给足够时间让按钮渲染
             page.waitForTimeout(2000);  // 增加等待时间到2秒
             
-            // 🔥 修复：尝试等待至少一个模式按钮出现（最多等待5秒），减少不必要的警告日志
+            // 🔥 修复：尝试等待至少一个模式按钮出现（最多等待5秒），静默处理
             try {
                 page.locator(".switch-button-qHPwBT").first().waitFor(new Locator.WaitForOptions().setTimeout(5000));
             } catch (TimeoutError e) {
-                // 按钮未找到可能是正常情况（比如页面结构变化），降低日志级别
-                System.err.println("⚠️  提示：5秒内未检测到模式切换按钮（可能页面结构已更新，功能仍可正常使用）");
-                // 不再发送警告日志，避免重复警告
+                // 按钮未找到可能是正常情况（比如页面结构变化），静默处理
             } catch (Exception e) {
-                // 其他异常也降低日志级别
-                System.err.println("⚠️  提示：检测模式切换按钮时发生异常，将继续执行");
-                // 不再发送警告日志，避免重复警告
+                // 其他异常也静默处理
             }
             
             // 定位所有模式按钮

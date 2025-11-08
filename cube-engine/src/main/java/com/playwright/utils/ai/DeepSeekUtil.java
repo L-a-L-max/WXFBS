@@ -1766,10 +1766,6 @@ public class DeepSeekUtil {
                             String clipboardContent = (String) page.evaluate("navigator.clipboard.readText()");
                             
                             if (clipboardContent != null && !clipboardContent.trim().isEmpty()) {
-                                // 🔥 终端输出前100字
-                                String preview = clipboardContent.length() > 100 ? clipboardContent.substring(0, 100) : clipboardContent;
-                                System.out.println("📋 [DeepSeek-" + userId + "] 获取内容预览: " + preview.replace("\n", "\\n"));
-                                
                                 // 过滤思考内容，只保留回答部分
                                 String filteredContent = filterThinkingContent(clipboardContent, userId);
                                 contentRef.set(filteredContent);

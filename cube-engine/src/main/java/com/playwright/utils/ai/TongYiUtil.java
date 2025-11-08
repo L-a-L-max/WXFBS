@@ -512,12 +512,6 @@ public class TongYiUtil {
                 try {
                     currentContent = outputLocator.innerText();
                     textContent = outputLocator.innerText();
-                    
-                    // 🔥 第一次获取到内容时输出到终端
-                    if (!currentContent.trim().isEmpty() && lastContent.trim().isEmpty()) {
-                        String preview = currentContent.length() > 100 ? currentContent.substring(0, 100) : currentContent;
-                        System.out.println("📋 [通义千问-" + userId + "] 获取内容预览: " + preview.replace("\n", "\\n"));
-                    }
                 } catch (Exception e) {
                     UserLogUtil.sendAIWarningLog(userId, aiName, "内容提取", "读取元素文本失败：" + e.getMessage(), url + "/saveLogInfo");
                     page.waitForTimeout(2000);

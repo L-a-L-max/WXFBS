@@ -85,17 +85,12 @@ public class MessageScreenshot {
                 return captureFullPageScreenshot(page, uploadUrl);
             }
 
-            System.out.println("找到 " + containerInfo.get("containerCount") + " 个回复容器，准备截取最后一个");
-
             // 获取容器尺寸信息
             double containerX = getDoubleValue(containerInfo, "x");
             double containerY = getDoubleValue(containerInfo, "y");
             double containerWidth = getDoubleValue(containerInfo, "width");
             double containerHeight = getDoubleValue(containerInfo, "height");
             double scrollHeight = getDoubleValue(containerInfo, "scrollHeight");
-
-            System.out.println(String.format("容器尺寸: x=%.0f, y=%.0f, width=%.0f, height=%.0f, scrollHeight=%.0f", 
-                containerX, containerY, containerWidth, containerHeight, scrollHeight));
 
             // 🔥 新的策略：无论内容多大，都尝试单次完整截图
             return captureCompleteContainerScreenshot(page, uploadUrl, containerInfo, originalViewport);
@@ -133,8 +128,6 @@ public class MessageScreenshot {
             double containerHeight = getDoubleValue(containerInfo, "height");
             double scrollHeight = getDoubleValue(containerInfo, "scrollHeight");
 
-            System.out.println(String.format("准备完整截图 - 容器位置: x=%.0f, y=%.0f, 截图尺寸: %.0fx%.0f", 
-                containerX, containerY, containerWidth, containerHeight));
 
             // 🔥 关键优化：设置足够大的视口以容纳整个内容
             int viewportWidth = Math.max(1920, (int) Math.ceil(containerWidth) + 200);
@@ -222,8 +215,6 @@ public class MessageScreenshot {
                 return captureFullPageScreenshot(page, uploadUrl);
             }
 
-            System.out.println(String.format("最终截图参数: x=%.0f, y=%.0f, width=%.0f, height=%.0f", 
-                containerX, containerY, containerWidth, containerHeight));
 
             // 创建截图路径
             Path screenshotPath = Paths.get(System.getProperty("java.io.tmpdir"),
@@ -242,7 +233,6 @@ public class MessageScreenshot {
             // 清理临时文件
             Files.deleteIfExists(screenshotPath);
 
-            System.out.println("完整容器截图完成: " + shareImgUrl);
             return shareImgUrl;
 
         } catch (Exception e) {

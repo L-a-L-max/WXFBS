@@ -104,12 +104,8 @@ public class WebSocketClientService {
                     AIGCController aigcController = SpringContextUtils.getBean(AIGCController.class);
                     UserInfoRequest userInfoRequest = JSONObject.parseObject(message, UserInfoRequest.class);
                     BrowserConcurrencyManager concurrencyManager = SpringContextUtils.getBean(BrowserConcurrencyManager.class);
-                    BrowserTaskWrapper taskWrapper = SpringContextUtils.getBean(BrowserTaskWrapper.class);
                     ZhihuDeliveryController zhihuDeliveryController = SpringContextUtils.getBean(ZhihuDeliveryController.class);
                     BaijiahaoDeliveryController baijiahaoDeliveryController = SpringContextUtils.getBean(BaijiahaoDeliveryController.class);
-
-                    // 打印当前并发状态
-                    taskWrapper.printStatus();
                     String aiName = userInfoRequest.getAiName();
                     if (message.contains("AI排版")) {
                         aiLayoutPrompt(userInfoRequest);
@@ -148,7 +144,7 @@ public class WebSocketClientService {
                                 startAI(userInfoRequest, aiName, "元宝", browserController, aigcController);
                             }, "元宝智能体", userInfoRequest.getUserId());
                         }
-                        // 处理包含"zj-db"的消息 - 使用严格匹配避免误触发
+                          // 处理包含"zj-db"的消息 - 使用严格匹配避免误触发
                         if (message.contains("zj-db,")) {
                             concurrencyManager.submitBrowserTaskWithDeduplication(() -> {
                                 startAI(userInfoRequest, aiName, "豆包", browserController, aigcController);
@@ -775,7 +771,7 @@ public class WebSocketClientService {
                     }
                     
                     // 仅包含文本内容的排版
-                    userInfoRequest.setUserPrompt("文本内容: `" + content + "`" + ", " + znpbPrompt);
+                    userInfoRequest.setUserPrompt(znpbPrompt + " 文本内容: `" + content + "`");
                 } else {
                     // 成功获取素材，解析并处理
                     String listJson = mcp.getResult();
@@ -806,14 +802,14 @@ public class WebSocketClientService {
                     }
                     
                     if (imgInfoList.isEmpty()) {
-                        userInfoRequest.setUserPrompt("文本内容: `" + content + "`" + ", " + znpbPrompt);
+                        userInfoRequest.setUserPrompt(znpbPrompt + " 文本内容: `" + content + "`");
                     } else {
-                        userInfoRequest.setUserPrompt("文本内容: `" + content + "`" + ", 图片信息: {" + imgInfoList.toString() + "} " + znpbPrompt);
+                        userInfoRequest.setUserPrompt(znpbPrompt + " 文本内容: `" + content + "`, 图片信息: {" + imgInfoList.toString() + "}");
                     }
                 }
             } else {
                 // 其他媒体平台（知乎等）
-                userInfoRequest.setUserPrompt("文本内容: `" + content + "`" + ", " + znpbPrompt);
+                userInfoRequest.setUserPrompt(znpbPrompt + " 文本内容: `" + content + "`");
             }
             //TODO 添加其他媒体排版
 
