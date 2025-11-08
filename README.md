@@ -19,7 +19,7 @@
 
 #### 快速启动步骤
 
-1. **启动主机引擎 -> 下载 [NB-U3W.jar](https://u3w.com/chatfile/yuanbao.png)**
+1. **启动主机引擎 -> 下载 [NB-U3W.jar](https://u3w.com/chatfile/NB-U3W.jar)**
 
 ```bash
 java -jar NB-U3W.jar
