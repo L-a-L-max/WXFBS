@@ -12,22 +12,7 @@
 
 ## 第一阶段：基础服务部署
 
-### 1. 获取主机ID并配置
-在开始部署前，您需要填写自己的主机ID。主机ID将用于区分不同的服务实例，确保系统正常运行。
-
-- 克隆仓库到本地后，打开 `src/main/resources/application.yaml` 文件
-- 修改`datadir`地址，此为数据目录，建议单独文件夹存放。例：`datadir: D:\AGI\user-data-dir`
-- 将主机ID填入配置中：
-  ```yaml
-  cube:
-    url: http://127.0.0.1:8081/aigc
-    wssurl: ws://127.0.0.1:8081/websocket?clientId=play-你的主机ID  #主机ID建议使用字母+数字组合，例如play-user01，并在数据库sys_host_whitelist中配置主机id
-    datadir: //文件夹路径
-    uploadurl: http://127.0.0.1:8081/common/upload
-  ```
-  **注意：** `play-`前缀固定，后续部分使用你的主机ID
-
-### 2. 构建与启动
+### 1. 构建与启动
 - 进入项目目录：   
     ```bash
         cd cube-engine
@@ -40,36 +25,25 @@
   ```bash
       java -jar target/U3W.jar
   ```
-- 服务启动后，可通过 http://localhost:8083/swagger-ui/index.html 查看接口文档
+  
+### 2. 配置cube-engine服务连接
+- 启动后按提示输入以下信息：
+```bash
+请输入地址：127.0.0.1:8081（或localhost:8081）
+是否启用HTTPS/WSS？(y/n，默认n)：n
+✅ 检测到可用端口：（默认8083）
+请输入主机ID：[您添加至白名单的主机ID]
+请输入CPU核心数（默认使用系统可用核心数，直接回车跳过）：跳过
+请输入最大线程数（默认使用系统可用处理器数*2，直接回车跳过）：跳过
+```
+
+- 服务启动后，可通过 http://localhost:[检测到的可用端口]/swagger-ui/index.html 查看接口文档
 
 ### 3.后台项目启动
 - 启动项目cube-ui
 - 配置主机ID，登录元宝和豆包(确保后续能够正常咨询)
 
-## 第二阶段：MCP服务配置
-
-### MCP服务概述
-cube-engine 内置了 MCP (Model Context Protocol) 服务，支持与腾讯元器等AI平台的无缝集成。MCP服务默认在8083端口提供以下端点：
-- `/cubeServer/sse` - Server-Sent Events端点
-- `/cubeServer/mcp` - MCP消息处理端点
-
-### 配置说明
-MCP服务已在 `application.yaml` 中预配置，无需额外修改：
-```yaml
-spring:
-  ai:
-    mcp:
-      server:
-        enabled: true
-        name: cube-engine-mcp
-        version: 1.0.0
-        sse-endpoint: /cubeServer/sse
-        sse-message-endpoint: /cubeServer/mcp
-        capabilities:
-          tool: true
-```
-
-## 第三阶段：内网穿透与外部访问
+## 第二阶段：内网穿透与外部访问
 
 ### 内网穿透的必要性
 由于cube-engine和cube-admin运行在本地环境，外部网络无法直接访问。需要通过内网穿透工具将本地服务暴露到公网，使腾讯元器等平台能够连接到您的MCP服务。
@@ -97,7 +71,7 @@ spring:
 - 协议：HTTP
 - 确保穿透后的公网地址能够正常访问
 
-## 第四阶段：服务验证与集成
+## 第三阶段：服务验证与集成
 
 ### MCP服务验证
 完成内网穿透后，通过浏览器访问 `映射IP:映射端口/cubeServer/sse` 来验证服务是否正常响应。如果能看到相关信息，说明MCP服务部署成功。
@@ -112,7 +86,7 @@ spring:
 ### 最终验证
 完成所有配置后，发布并咨询相关问题，发送以"1"开头的问题（确保意图准确识别）来测试整个系统是否正常工作。系统将返回相应的回复链接，确认部署完成。
 
-## 第五阶段：openAI集成与调用
+## 第四阶段：openAI集成与调用
 ### openAI集成
 - 创建springboot项目,版本2.7.x以上
 - 支持模型
