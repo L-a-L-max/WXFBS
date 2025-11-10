@@ -29,13 +29,12 @@
 				register: false,
 				globalConfig: getApp().globalData.config,
 				wxLoginForm: {
-					appId: "",//微信appid
-					appSecret: "",//微信app密钥
 					code: "",
 					encryptedIv: "",
 					encryptedData: "",
 					nickName: "",
-					avatar: ""
+					avatar: "",
+					qwcode: ""
 				},
 				loginForm: {
 					username: "",

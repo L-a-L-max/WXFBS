@@ -19,15 +19,13 @@ export function login(username, password, code, uuid) {
 }
 
 // 微信登录方法
-export function wxLogin(code, encryptedIv, encryptedData, nickName, avatar,appId,appSecret) {
+export function wxLogin(code, encryptedIv, encryptedData, nickName, avatar) {
   const data = {
     code,
     encryptedIv,
     encryptedData,
 	nickName,
-	avatar,
-	appId,
-	appSecret
+	avatar
   }
   return request({
     'url': '/mini/wxLogin',
@@ -39,9 +37,9 @@ export function wxLogin(code, encryptedIv, encryptedData, nickName, avatar,appId
   })
 }
 // 企业登录方法
-export function qywxLogin(code,qwcode,appId,appSecret) {
+export function qywxLogin(code,qwcode) {
   const data = {
-    code,qwcode,appId,appSecret
+    code,qwcode
   }
   return request({
     'url': '/mini/qywxLogin',

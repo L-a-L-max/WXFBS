@@ -373,6 +373,31 @@
         <el-button type="primary" @click="confirmBind">确 定</el-button>
       </div>
     </el-dialog>
+    
+    <!-- 主机ID提醒弹窗 -->
+    <el-dialog
+      title="温馨提示"
+      v-model="corpIdReminderVisible"
+      width="400px"
+      :close-on-click-modal="false"
+      :close-on-press-escape="false"
+      :show-close="true"
+      append-to-body
+    >
+      <div style="text-align: center; padding: 20px 0;">
+        <el-icon style="font-size: 48px; color: #E6A23C; margin-bottom: 16px;">
+          <Warning />
+        </el-icon>
+        <p style="font-size: 16px; margin-bottom: 16px;">您尚未设置主机ID</p>
+        <p style="color: #909399; font-size: 14px;">
+          主机ID是使用系统功能的重要标识，设置后可以获得更好的使用体验
+        </p>
+      </div>
+      <div slot="footer" class="dialog-footer" style="text-align: center;">
+        <el-button @click="closeCorpIdReminder">稍后设置</el-button>
+        <el-button type="primary" @click="goToCorpIdSettings">立即设置</el-button>
+      </div>
+    </el-dialog>
   </div>
 </template>
 
@@ -394,7 +419,7 @@ import {
 import { getUserPointsRecord } from "@/api/wechat/company";
 import websocketClient from "@/utils/websocket";
 import { message } from "@/api/wechat/aigc";
-import { getCorpId, ensureLatestCorpId } from "@/utils/corpId";
+import { getCorpId, ensureLatestCorpId, forceGetLatestCorpId } from "@/utils/corpId";
 
 const lineChartData = {
   newVisitis: {
@@ -578,6 +603,10 @@ export default {
       currentMediaType: "",
       mediaQrCodeUrl: "",
       resetMediaStatusTimeout: null, // 媒体状态检查超时定时器
+      
+      //------ 主机ID提醒相关变量 ------//
+      corpIdReminderVisible: false, // 主机ID提醒弹窗是否可见
+      corpIdReminderShown: false, // 是否已经显示过主机ID提醒，避免重复提醒
     }
   },
 
@@ -624,6 +653,11 @@ export default {
   },
 
   async created() {
+    // 每次页面刷新时重置温馨提醒状态，确保每次都能触发检查
+    // 使用sessionStorage而不是localStorage，确保只在当前会话中记住状态
+    const sessionReminderShown = sessionStorage.getItem('corpIdReminderShown');
+    this.corpIdReminderShown = sessionReminderShown === 'true';
+    
     // 确保主机ID是最新的
     try {
       await ensureLatestCorpId();
@@ -651,11 +685,15 @@ export default {
         
         // 使用企业ID工具确保获取最新的企业ID
         try {
-          this.corpId = await getCorpId();
+          // 强制从服务器获取最新的企业ID，确保与数据库一致
+          this.corpId = await forceGetLatestCorpId();
         } catch (error) {
-          console.warn('获取最新企业ID失败，使用接口返回值:', error);
-        this.corpId = response.data.corpId;
+          console.warn('强制获取最新企业ID失败，使用接口返回值:', error);
+          this.corpId = response.data.corpId;
         }
+        
+        // 每次页面刷新时都检查主机ID状态，确保温馨提醒能够正常显示
+        this.checkCorpIdStatus();
 
         // 初始检测时，AI和媒体按钮分开变灰
         this.isClick.yuanbao = false;
@@ -1406,6 +1444,66 @@ export default {
         this.$message.success(`主机ID已自动更新: ${newCorpId}`);
       }
     },
+    
+    // 处理主机ID更新事件
+    handleCorpIdUpdated(event) {
+      const { corpId, oldCorpId } = event.detail;
+      console.log('主机ID已更新:', { oldCorpId, newCorpId: corpId });
+      
+      // 更新本地主机ID
+      this.corpId = corpId;
+      
+      // 只有在主机ID从无到有时才检查状态，避免重复提醒
+      if (!oldCorpId && corpId) {
+        // 主机ID已设置，清除提醒状态
+        this.corpIdReminderShown = true;
+        sessionStorage.setItem('corpIdReminderShown', 'true');
+      }
+    },
+    
+    // 检查主机ID状态
+    checkCorpIdStatus() {
+      // 检查是否有主机ID
+      if (!this.corpId || this.corpId.trim() === '') {
+        // 延迟显示提醒，避免与其他弹窗冲突
+        setTimeout(() => {
+          // 使用$alert而不是自定义弹窗，确保显示
+          this.$alert(
+            '您的主机ID（企业ID）尚未设置，这可能会影响部分功能的使用。您可以随时在顶部导航栏或个人资料页面进行设置。',
+            '温馨提示',
+            {
+              confirmButtonText: '我知道了',
+              type: 'info',
+              center: true,
+              customClass: 'corp-id-reminder-dialog',
+              showClose: false,
+              callback: action => {
+                // 用户点击确认后，记录已显示过提醒
+                this.corpIdReminderShown = true;
+                // 将状态保存到sessionStorage，确保页面刷新后仍然有效
+                sessionStorage.setItem('corpIdReminderShown', 'true');
+              }
+            }
+          );
+        }, 2000);
+      } else {
+        // 如果有主机ID，确保重置提醒状态，下次刷新时可以再次检查
+        this.corpIdReminderShown = true;
+        sessionStorage.setItem('corpIdReminderShown', 'true');
+      }
+    },
+    
+    // 关闭主机ID提醒弹窗
+    closeCorpIdReminder() {
+      this.corpIdReminderVisible = false;
+    },
+    
+    // 跳转到主机ID设置页面
+    goToCorpIdSettings() {
+      this.corpIdReminderVisible = false;
+      // 这里可以跳转到设置主机ID的页面
+      this.$message.info('请前往个人资料页面设置主机ID');
+    },
   },
   beforeUnmount() {
     // 移除事件监听
@@ -2154,6 +2252,132 @@ export default {
     background-color: #c2e7b0 !important;
     color: #fff !important;
     cursor: not-allowed;
+  }
+}
+
+// 主机ID提醒弹窗样式
+.corp-id-reminder-dialog {
+  .el-message-box {
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+    overflow: hidden;
+    
+    .el-message-box__header {
+      background: linear-gradient(135deg, #409eff, #66b1ff);
+      padding: 16px 20px;
+      
+      .el-message-box__title {
+        color: white;
+        font-size: 18px;
+        font-weight: 600;
+      }
+      
+      .el-message-box__headerbtn {
+        .el-message-box__close {
+          color: white;
+          font-size: 18px;
+          
+          &:hover {
+            color: rgba(255, 255, 255, 0.8);
+          }
+        }
+      }
+    }
+    
+    .el-message-box__content {
+      padding: 24px 20px;
+      
+      .el-message-box__message {
+        font-size: 15px;
+        line-height: 1.6;
+        color: #606266;
+        
+        &::before {
+          content: "";
+          display: block;
+          width: 48px;
+          height: 48px;
+          margin: 0 auto 16px;
+          background: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDgiIGhlaWdodD0iNDgiIHZpZXdCb3g9IjAgMCA0OCA0OCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjQ4IiBoZWlnaHQ9IjQ4IiByeD0iMTIiIGZpbGw9InVybCgjZ3JhZGllbnQwXzFfMSkiLz4KPHBhdGggZD0iTTI0IDMwQzI2LjIwOTEgMzAgMjggMjguMjA5MSAyOCAyNkMyOCAyMy43OTA5IDI2LjIwOTEgMjIgMjQgMjJDMjEuNzkwOSAyMiAyMCAyMy43OTA5IDIwIDI2QzIwIDI4LjIwOTEgMjEuNzkwOSAzMCAyNCAzMFoiIGZpbGw9IndoaXRlIi8+CjxwYXRoIGQ9Ik0yNCAxOEMyNS4xMDQ2IDE4IDI2IDE3LjEwNDYgMjYgMTZDMjYgMTQuODk1NCAyNS4xMDQ2IDE0IDI0IDE0QzIyLjg5NTQgMTQgMjIgMTQuODk1NCAyMiAxNkMyMiAxNy4xMDQ2IDIyLjg5NTQgMTggMjQgMThaIiBmaWxsPSJ3aGl0ZSIvPgo8ZGVmcz4KPGxpbmVhckdyYWRpZW50IGlkPSJncmFkaWVudDBfMV8xIiB4MT0iMCIgeTE9IjAiIHgyPSI0OCIgeTI9IjQ4IiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+CjxzdG9wIHN0b3AtY29sb3I9IiM0MDlFRkYiLz4KPHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjNjZCMUZGIi8+CjwvbGluZWFyR3JhZGllbnQ+CjwvZGVmcz4KPC9zdmc+') no-repeat center;
+          background-size: contain;
+        }
+      }
+    }
+    
+    .el-message-box__btns {
+      padding: 0 20px 20px;
+      
+      .el-button {
+        border-radius: 20px;
+        padding: 10px 24px;
+        font-size: 14px;
+        font-weight: 500;
+        
+        &.el-button--primary {
+          background: linear-gradient(135deg, #409eff, #66b1ff);
+          border: none;
+          
+          &:hover {
+            background: linear-gradient(135deg, #66b1ff, #409eff);
+          }
+        }
+      }
+    }
+  }
+}
+
+// 主机ID显示区域样式
+.corp-id-display {
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  margin-right: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  
+  &:hover {
+    background: rgba(255, 255, 255, 1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transform: translateY(-1px);
+  }
+  
+  .corp-id-icon {
+    color: #409eff;
+    margin-right: 8px;
+    font-size: 16px;
+  }
+  
+  .corp-id-text {
+    font-size: 14px;
+    color: #303133;
+    max-width: 120px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  
+  .corp-id-refresh {
+    margin-left: 8px;
+    color: #909399;
+    font-size: 14px;
+    transition: all 0.3s ease;
+    
+    &:hover {
+      color: #409eff;
+      transform: rotate(180deg);
+    }
+    
+    &.rotating {
+      animation: rotating 1s linear infinite;
+    }
+  }
+  
+  .corp-id-empty {
+    color: #f56c6c;
+    font-style: italic;
   }
 }
 </style>

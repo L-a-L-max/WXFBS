@@ -1,4 +1,4 @@
-import {login, logout, getInfo, weChatlogin,officeLogin, refreshCorpId} from '@/api/login'
+import {login, logout, getInfo, weChatlogin,officeLogin, refreshCorpId, updateCorpId} from '@/api/login'
 import { getToken, setToken, removeToken } from '@/utils/auth'
 
 const user = {
@@ -161,12 +161,37 @@ const user = {
           
           // 更新用户信息
           commit('SET_ID', user.userId)
-          commit('SET_CORP_ID', user.corpId)
+          
+          // 只有当corpId有效时才更新，否则设置为空字符串
+          if (user.corpId && user.corpId !== 'undefined' && user.corpId !== 'null' && user.corpId.trim() !== '') {
+            commit('SET_CORP_ID', user.corpId)
+          } else {
+            console.warn('[前端] 获取到无效的企业ID，清空本地存储:', user.corpId)
+            commit('SET_CORP_ID', '')
+          }
+          
           commit('SET_NAME', user.userName)
           commit('SET_NICKNAME', user.nickName)
           commit('SET_AVATAR', avatar)
           
           resolve(res)
+        }).catch(error => {
+          reject(error)
+        })
+      })
+    },
+
+    // 更新主机ID
+    UpdateCorpId({ commit }, corpId) {
+      return new Promise((resolve, reject) => {
+        updateCorpId(corpId).then(res => {
+          if (res.code === 200) {
+            // 更新store中的corpId
+            commit('SET_CORP_ID', corpId)
+            resolve(res)
+          } else {
+            reject(new Error(res.msg || '更新主机ID失败'))
+          }
         }).catch(error => {
           reject(error)
         })

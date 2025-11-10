@@ -488,6 +488,7 @@
 	import constant from '@/utils/constant'
   import { getToken } from '@/utils/auth';
   import { getCorpId, ensureCorpIdOnShow, ensureLatestCorpId } from '@/utils/corpId'
+  import config from '@/config.js'
 
 	export default {
 		name: 'MiniConsole',
@@ -1230,9 +1231,8 @@
 			
 			this.isConnecting = true;
 
-			// 使用PC端的WebSocket连接方式
-		   // const wsUrl = `${process.env.VUE_APP_WS_API || 'wss://u3w.com/cubeServer/websocket?clientId='}mypc-${this.userId}`;
-			const wsUrl = `${process.env.VUE_APP_WS_API || 'ws://127.0.0.1:8081/websocket?clientId='}mypc-${this.userId}`;
+			// 使用配置文件中的WebSocket连接地址
+			const wsUrl = `${config.wsConfig.wsUrl}mypc-${this.userId}`;
 			console.log('WebSocket URL:', wsUrl);
 
 			this.socketTask = uni.connectSocket({

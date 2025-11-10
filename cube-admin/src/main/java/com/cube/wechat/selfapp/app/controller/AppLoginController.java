@@ -22,6 +22,7 @@ import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 import java.security.spec.AlgorithmParameterSpec;
 import java.util.Arrays;
+import org.springframework.beans.factory.annotation.Value;
 
 /**
  * @author AspireLife
@@ -46,6 +47,13 @@ public class AppLoginController {
 
     @Autowired
     private WeChatApiUtils weChatApiUtils;
+    
+    // 从配置文件中读取小程序的appId和appSecret
+    @Value("${mini.appId}")
+    private String miniAppId;
+    
+    @Value("${mini.appSecret}")
+    private String miniAppSecret;
 
     @PostMapping("/wxLogin")
     public AjaxResult wxLogin(@RequestBody WxLoginBody wxLoginBody) {
@@ -55,7 +63,7 @@ public class AppLoginController {
         //加密数据
         String encryptedData = wxLoginBody.getEncryptedData();
         //向微信服务器发送请求获取用户信息
-        String url = "https://api.weixin.qq.com/sns/jscode2session?appid=" + wxLoginBody.getAppId() + "&secret=" + wxLoginBody.getAppSecret() + "&js_code=" + code + "&grant_type=authorization_code";
+        String url = "https://api.weixin.qq.com/sns/jscode2session?appid=" + miniAppId + "&secret=" + miniAppSecret + "&js_code=" + code + "&grant_type=authorization_code";
         String res = restTemplate.getForObject(url, String.class);
         JSONObject jsonObject = JSONObject.parseObject(res);
 
@@ -88,7 +96,7 @@ public class AppLoginController {
     public AjaxResult qywxLogin(@RequestBody WxLoginBody wxLoginBody) {
         String code = wxLoginBody.getCode();
         String qwcode = wxLoginBody.getQwcode();
-        String wxurl = "https://api.weixin.qq.com/sns/jscode2session?appid=" + wxLoginBody.getAppId() + "&secret=" + wxLoginBody.getAppSecret() + "&js_code=" + code + "&grant_type=authorization_code";
+        String wxurl = "https://api.weixin.qq.com/sns/jscode2session?appid=" + miniAppId + "&secret=" + miniAppSecret + "&js_code=" + code + "&grant_type=authorization_code";
         String wxres = restTemplate.getForObject(wxurl, String.class);
         JSONObject wxjsonObject = JSONObject.parseObject(wxres);
 

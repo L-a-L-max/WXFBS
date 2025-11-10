@@ -59,6 +59,8 @@ public class AppLoginServiceImpl implements AppLoginService {
             user.setAvatar("chatfile/avatar/head.png");
             user.setOpenId(openId);
             user.setUnionId(unionId);
+            // 注册时不设置主机ID/企业ID，由用户后续自行填写
+            // user.setCorpId(corpId); // 注释掉这行，默认不设置企业ID
             user.setCreateTime(DateUtils.getNowDate());
             user.setCreateBy("优立方小程序用户");
             user.setPoints(200);
@@ -71,7 +73,8 @@ public class AppLoginServiceImpl implements AppLoginService {
         }else {
             //更新
             user = wxUser;
-            user.setUserName(unionId);// 生成16位随机用户名
+            // 登录时不更改用户名，保持用户原有的用户名
+            // user.setUserName(unionId);// 注释掉这行，避免每次登录都更改用户名
             user.setUpdateTime(DateUtils.getNowDate());
             Integer isFirst = pointsSystem.checkPointIsOk("每日优立方登录",String.valueOf(wxUser.getUserId()),1);
             if(isFirst==0){
@@ -114,7 +117,8 @@ public class AppLoginServiceImpl implements AppLoginService {
             user.setOpenId(openId);
             user.setQwId(qwId);
             user.setUnionId(unionId);
-            user.setCorpId(corpId);
+            // 注册时不设置主机ID/企业ID，由用户后续自行填写
+            // user.setCorpId(corpId); // 注释掉这行，默认不设置企业ID
             user.setCreateTime(DateUtils.getNowDate());
             user.setCreateBy("企业微信小程序用户");
             user.setPoints(200);
@@ -128,6 +132,8 @@ public class AppLoginServiceImpl implements AppLoginService {
             //更新
             user = wxUser;
             user.setQwId(qwId);
+            // 登录时不更改用户名，保持用户原有的用户名
+            // user.setUserName(unionId);// 注释掉这行，避免每次登录都更改用户名
             user.setUnionId(unionId);
             user.setCorpId(corpId);
             user.setUpdateTime(DateUtils.getNowDate());
@@ -166,6 +172,8 @@ public class AppLoginServiceImpl implements AppLoginService {
             user.setAvatar("chatfile/avatar/head.png");
             user.setOpenId(openId);
             user.setUnionId(unionId);
+            // 注册时不设置主机ID/企业ID，由用户后续自行填写
+            // user.setCorpId(corpId); // 注释掉这行，默认不设置企业ID
             user.setCreateTime(DateUtils.getNowDate());
             user.setCreateBy("优立方用户");
             user.setPoints(200);
@@ -178,6 +186,8 @@ public class AppLoginServiceImpl implements AppLoginService {
         }else{
             //更新
             user = wxUser;
+            // 登录时不更改用户名，保持用户原有的用户名
+            // user.setUserName(unionId);// 注释掉这行，避免每次登录都更改用户名
             user.setUpdateTime(DateUtils.getNowDate());
             Integer isFirst = pointsSystem.checkPointIsOk("每日优立方登录",String.valueOf(wxUser.getUserId()),1);
             if(isFirst==0){

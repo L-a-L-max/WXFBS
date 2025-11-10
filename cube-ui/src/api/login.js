@@ -71,6 +71,15 @@ export function refreshCorpId() {
   })
 }
 
+// 更新主机ID
+export function updateCorpId(corpId) {
+  return request({
+    url: '/system/user/profile/updateCorpId',
+    method: 'put',
+    data: { corpId }
+  })
+}
+
 // 退出方法
 export function logout() {
   return request({

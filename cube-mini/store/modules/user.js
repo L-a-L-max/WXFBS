@@ -80,10 +80,8 @@ const user = {
 	  const encryptedData = userInfo.encryptedData
 	  const nickName = userInfo.nickName
 	  const avatar = userInfo.avatar
-	  const appId = userInfo.appId
-	  const appSecret = userInfo.appSecret
 	  return new Promise((resolve, reject) => {
-	    wxLogin(code, encryptedIv, encryptedData, nickName, avatar,appId,appSecret).then(res => {
+	    wxLogin(code, encryptedIv, encryptedData, nickName, avatar).then(res => {
 	      setToken(res.token)
 	      commit('SET_TOKEN', res.token)
 	      resolve()
@@ -96,10 +94,8 @@ const user = {
 	QyWxLogin({ commit }, userInfo) {
 	  const code = userInfo.code
 	  const qwcode = userInfo.qwcode
-	  const appId = userInfo.appId
-	  const appSecret = userInfo.appSecret
 	  return new Promise((resolve, reject) => {
-	    qywxLogin(code,qwcode,appId,appSecret).then(res => {
+	    qywxLogin(code,qwcode).then(res => {
 	      setToken(res.token)
 	      commit('SET_TOKEN', res.token)
 	      resolve()
