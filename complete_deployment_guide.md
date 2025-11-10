@@ -178,32 +178,33 @@ npm run dev
 
 ## 第五阶段：核心服务部署（cube-engine）
 
-### 5.1 配置cube-engine
-编辑 `cube-engine/src/main/resources/application.yaml`：
-```yaml
-cube:
-   url: http://127.0.0.1:8081/aigc
-   wssurl: ws://127.0.0.1:8081/websocket?clientId=play-您的主机ID  # 与数据库白名单中的主机ID一致
-   datadir: F:\AGI\user-data-dir  # 数据目录，建议单独文件夹存放
-   uploadurl: http://127.0.0.1:8081/common/upload
-```
 
-### 5.2 启动cube-engine服务
+### 5.1 启动cube-engine服务
 ```bash
 cd cube-engine
 mvn clean package -DskipTests
 java -jar target/U3W.jar
 ```
+### 5.2 配置cube-engine服务连接
+启动后按提示输入以下信息：
+```bash
+请输入地址：127.0.0.1:8081（或localhost:8081）
+是否启用HTTPS/WSS？(y/n，默认n)：n
+✅ 检测到可用端口：（默认8083）
+请输入主机ID：[您添加至白名单的主机ID]
+请输入CPU核心数（默认使用系统可用核心数，直接回车跳过）：跳过
+请输入最大线程数（默认使用系统可用处理器数*2，直接回车跳过）：跳过
+```
 
 ### 5.3 验证服务
-访问 `http://localhost:8083/swagger-ui/index.html` 查看接口文档
+访问 `http://localhost:检测到的可用端口/swagger-ui/index.html` 查看接口文档
 
 ## 第六阶段：主机绑定和AI登录
 
 ### 6.1 主机绑定
 1. 登录后台管理系统
 2. 点击右上角名称→个人中心
-3. 在基本资料的主机ID输入框中填写您的主机ID（不包含play-前缀）
+3. 在基本资料的主机ID输入框中填写您的主机ID
 4. 保存配置
 
 ### 6.2 登录AI服务
