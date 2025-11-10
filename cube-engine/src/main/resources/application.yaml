@@ -1,15 +1,32 @@
+# 新增：SSL配置（控制是否启用加密协议）
+ssl:
+  enabled: false  # true=启用https/wss；false=使用http/ws（默认）
+
+
 server:
-  port: 8083
+  port: ${SERVER_PORT}
+
+host:
+  check:
+    url: ${protocol}://${server.ip}/hostId/check  # 动态协议+端口
 
 cube:
-  url: http://127.0.0.1:8081/aigc
-  wssurl: ws://127.0.0.1:8081/websocket?clientId=play-user01 #主机ID建议使用字母+数字组合，例如play-user01
-  datadir:  D:\AGI\user-data-dir
-  uploadurl: http://127.0.0.1:8081/common/upload
+  url: ${protocol}://${server.ip}/aigc  # 动态协议+端口
+  wssurl: ${wsProtocol}://${server.ip}/websocket?clientId=play-${CONTAINER_ID}  # 动态ws协议+端口
+  datadir: ./user-data-dir
+  uploadurl: ${protocol}://${server.ip}/common/upload  # 动态协议+端口
 
 spring:
   main:
     allow-circular-references: true
+
+
+# CPU配置
+cpu:
+  # CPU核心数（默认使用系统可用核心数）
+  cores: ${CPU_CORES:}
+  # 最大线程数（默认使用系统可用处理器数*2）
+  maxThreads: ${MAX_THREADS:}
 
 # mcp服务 从cube-engine 迁移到 cube-admin
 #  ai:
