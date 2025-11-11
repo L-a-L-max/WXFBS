@@ -783,7 +783,7 @@ import { ChatDotSquare, Document, Link, Loading, Plus, Promotion } from '@elemen
           if(newValue && this.taskStarted) {
             // 所有任务完成时的处理
             this.$nextTick(() => {
-              this.$message.success('所有AI任务已完成！');
+              console.log('所有AI任务已完成！');
               // 可以考虑自动折叠任务流程区域或其他UI优化
             });
           }
@@ -801,9 +801,9 @@ import { ChatDotSquare, Document, Link, Loading, Plus, Promotion } from '@elemen
 
         // 显示操作反馈
         if(newState) {
-          this.$message.success('已启动全部AI智能体');
+          console.log('已启动全部AI智能体');
         } else {
-          this.$message.success('已关闭全部AI智能体');
+          console.log('已关闭全部AI智能体');
         }
       },
       // 处理企业ID更新事件
@@ -812,7 +812,7 @@ import { ChatDotSquare, Document, Link, Loading, Plus, Promotion } from '@elemen
         if(newCorpId && newCorpId !== this.corpId) {
           console.log('Chrome页面接收到企业ID更新事件，更新本地corpId:', newCorpId);
           this.corpId = newCorpId;
-          this.$message.success(`主机ID已自动更新: ${newCorpId}`);
+          console.log(`主机ID已自动更新: ${newCorpId}`);
         }
       },
 
@@ -1122,7 +1122,7 @@ import { ChatDotSquare, Document, Link, Loading, Plus, Promotion } from '@elemen
         textarea.select();
         document.execCommand("copy");
         document.body.removeChild(textarea);
-        this.$message.success("已复制纯文本到剪贴板");
+        console.log("已复制纯文本到剪贴板");
       },
 
       exportResult(result) {
@@ -1136,7 +1136,7 @@ import { ChatDotSquare, Document, Link, Loading, Plus, Promotion } from '@elemen
           .slice(0, 10)}.md`;
         link.click();
         URL.revokeObjectURL(link.href);
-        this.$message.success("已导出Markdown文件");
+        console.log("已导出Markdown文件");
       },
 
       openShareUrl(shareUrl) {
@@ -1661,7 +1661,7 @@ import { ChatDotSquare, Document, Link, Loading, Plus, Promotion } from '@elemen
         }
 
         this.$forceUpdate();
-        this.$message.success("评分请求已发送，请等待结果");
+        console.log("评分请求已发送，请等待结果");
       },
       // 显示历史记录抽屉
       showHistoryDrawer() {
@@ -1808,7 +1808,7 @@ import { ChatDotSquare, Document, Link, Loading, Plus, Promotion } from '@elemen
           this.activeCollapses = ["ai-selection", "prompt-input"];
           this.taskStarted = true;
 
-          this.$message.success("历史记录加载成功");
+          console.log("历史记录加载成功");
           this.historyDrawerVisible = false;
         } catch(error) {
           console.error("加载历史记录失败:", error);
@@ -2017,7 +2017,7 @@ import { ChatDotSquare, Document, Link, Loading, Plus, Promotion } from '@elemen
         // 展开相关区域
         this.activeCollapses = ["ai-selection", "prompt-input"];
 
-        this.$message.success("已创建新对话");
+        console.log("已创建新对话");
       },
 
       // 加载上次会话
@@ -2306,7 +2306,7 @@ import { ChatDotSquare, Document, Link, Loading, Plus, Promotion } from '@elemen
 
 
         this.$forceUpdate();
-        this.$message.success("排版请求已发送，请等待结果");
+        console.log("排版请求已发送，请等待结果");
       },
 
 
@@ -2321,7 +2321,7 @@ import { ChatDotSquare, Document, Link, Loading, Plus, Promotion } from '@elemen
           return;
         }
 
-        this.$message.success("开始投递公众号！");
+        console.log("开始投递公众号！");
         this.pushingToWechat = true;
         this.pushOfficeNum += 1;
 
@@ -2338,7 +2338,7 @@ import { ChatDotSquare, Document, Link, Loading, Plus, Promotion } from '@elemen
           pushAutoOffice(params)
             .then((res) => {
               if(res.code === 200) {
-                this.$message.success("投递到公众号成功！");
+                console.log("投递到公众号成功！");
               } else {
                 this.$message.error(res.msg || "投递失败，请重试");
               }
@@ -2414,7 +2414,7 @@ import { ChatDotSquare, Document, Link, Loading, Plus, Promotion } from '@elemen
           }
 
           this.$forceUpdate();
-          this.$message.success("知乎投递请求已发送，请等待结果");
+          console.log("知乎投递请求已发送，请等待结果");
           this.pushingToWechat = false;
         }
       },

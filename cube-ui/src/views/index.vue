@@ -3,7 +3,7 @@
     <!--    <panel-group @handleSetLineChartData="handleSetLineChartData" />-->
     <div class="app-container">
       <el-row :gutter="30">
-        <el-col :span="6" :xs="30">
+        <el-col :span="6" :xs="24" :sm="12" :md="8" :lg="6">
           <el-card class="box-card">
             <div slot="header" class="clearfix">
               <span>个人信息</span>
@@ -52,7 +52,7 @@
             </div>
           </el-card>
         </el-col>
-        <el-col :span="6" :xs="30">
+        <el-col :span="6" :xs="24" :sm="12" :md="8" :lg="6">
           <el-card class="box-card ai-status-card">
             <div slot="header" class="clearfix">
               <span class="card-title">
@@ -108,15 +108,16 @@
                     :disabled="!isClick[type]"
                     @click="handleAiLogin(type)"
                     :class="'ai-login-btn'"
+                    :title="'点击登录'"
                   >
-                    <el-icon><Connection /></el-icon> 点击登录
+                    <el-icon><Connection /></el-icon> <span class="btn-text">点击登录</span>
                   </el-button>
                 </div>
               </div>
             </div>
           </el-card>
         </el-col>
-        <el-col :span="6" :xs="30">
+        <el-col :span="6" :xs="24" :sm="12" :md="8" :lg="6">
           <el-card class="box-card ai-status-card">
             <div slot="header" class="clearfix">
               <span class="card-title">
@@ -174,8 +175,9 @@
                     :disabled="!mediaIsClick[type]"
                     @click="handleMediaLogin(type)"
                     :class="'media-login-btn'"
+                    :title="'点击登录'"
                   >
-                    <el-icon><Connection /></el-icon> 点击登录
+                    <el-icon><Connection /></el-icon> <span class="btn-text">点击登录</span>
                   </el-button>
                 </div>
               </div>
@@ -196,8 +198,9 @@
                     size="small"
                     class="login-btn"
                     @click="handleBindWechat"
+                    :title="form.appId ? '修改信息' : '绑定公众号'"
                   >
-                    {{ form.appId ? '修改信息' : '绑定公众号' }}
+                    <span class="btn-text">{{ form.appId ? '修改信息' : '绑定公众号' }}</span>
                   </el-button>
                 </div>
               </div>
@@ -814,7 +817,7 @@ export default {
         if (valid) {
           // 表单验证通过，继续提交
           bindWcOfficeAccount(this.form).then((response) => {
-            this.$message.success(response.data);
+            console.log(response.data);
             this.dialogFormVisible = false;
           });
         } else {
@@ -1080,7 +1083,7 @@ export default {
       websocketClient.connect(wsUrl, (event) => {
         switch (event.type) {
           case "open":
-            this.$message.success("正在获取最新登录状态，请稍后...");
+            console.log("正在获取最新登录状态，请稍后...");
             break;
           case "message":
             this.handleWebSocketMessage(event.data);
@@ -1441,7 +1444,7 @@ export default {
       if (newCorpId && newCorpId !== this.corpId) {
         console.log('页面接收到企业ID更新事件，更新本地corpId:', newCorpId);
         this.corpId = newCorpId;
-        this.$message.success(`主机ID已自动更新: ${newCorpId}`);
+        console.log(`主机ID已自动更新: ${newCorpId}`);
       }
     },
     
@@ -1502,7 +1505,7 @@ export default {
     goToCorpIdSettings() {
       this.corpIdReminderVisible = false;
       // 这里可以跳转到设置主机ID的页面
-      this.$message.info('请前往个人资料页面设置主机ID');
+      console.log('请前往个人资料页面设置主机ID');
     },
   },
   beforeUnmount() {
@@ -1663,6 +1666,34 @@ export default {
   .dashboard-editor-container {
     padding: 20px;
   }
+  
+  .ai-status-card {
+    .ai-status-list {
+      .ai-status-item {
+        padding: 12px 10px;
+        
+        .ai-platform {
+          .platform-icon {
+            width: 32px;
+            height: 32px;
+            margin-right: 10px;
+          }
+          
+          .platform-name {
+            font-size: 13px;
+          }
+        }
+        
+        .status-action {
+          .status-tag,
+          .login-btn {
+            font-size: 12px;
+            padding: 6px 12px;
+          }
+        }
+      }
+    }
+  }
 }
 
 @media (max-width: 1200px) {
@@ -1673,6 +1704,40 @@ export default {
       .list-group-item {
         font-size: 13px;
         padding: 12px 10px;
+      }
+    }
+  }
+  
+  .ai-status-card {
+    .ai-status-list {
+      .ai-status-item {
+        flex-wrap: wrap;
+        
+        .ai-platform {
+          flex: 1;
+          min-width: 120px;
+        }
+        
+        .status-action {
+          margin-top: 8px;
+          margin-left: 42px;
+        }
+      }
+    }
+  }
+}
+
+@media (max-width: 992px) {
+  .dashboard-editor-container {
+    .ai-status-card {
+      .ai-status-list {
+        .ai-status-item {
+          .platform-name {
+            .platform-text {
+              display: none;
+            }
+          }
+        }
       }
     }
   }
@@ -1709,10 +1774,69 @@ export default {
         }
       }
     }
+    
+    .ai-status-card {
+      .card-title {
+        font-size: 14px;
+        
+        .title-icon {
+          font-size: 16px;
+        }
+      }
+      
+      .ai-status-list {
+        .ai-status-item {
+          padding: 10px 8px;
+          
+          .ai-platform {
+            .platform-icon {
+              width: 28px;
+              height: 28px;
+              margin-right: 8px;
+            }
+            
+            .platform-name {
+              font-size: 12px;
+            }
+          }
+          
+          .status-action {
+            margin-top: 6px;
+            margin-left: 36px;
+            
+            .status-tag,
+            .login-btn {
+              font-size: 11px;
+              padding: 4px 8px;
+            }
+          }
+        }
+      }
+    }
   }
   
   .chart-wrapper {
     padding: 8px;
+  }
+}
+
+@media (max-width: 480px) {
+  .dashboard-editor-container {
+    padding: 8px;
+    
+    .ai-status-card {
+      .ai-status-list {
+        .ai-status-item {
+          .platform-name {
+            display: none;
+          }
+          
+          .status-action {
+            margin-left: 36px;
+          }
+        }
+      }
+    }
   }
 }
 
@@ -2021,6 +2145,9 @@ export default {
           border-radius: 16px;
           white-space: nowrap;
           font-size: 13px;
+          max-width: 100px;
+          overflow: hidden;
+          text-overflow: ellipsis;
 
           i {
             margin-right: 4px;
@@ -2033,6 +2160,9 @@ export default {
           white-space: nowrap;
           font-size: 13px;
           transition: all 0.3s ease;
+          max-width: 120px;
+          overflow: hidden;
+          text-overflow: ellipsis;
 
           &:hover {
             transform: translateY(-2px);
@@ -2043,6 +2173,15 @@ export default {
             margin-right: 4px;
           }
         }
+      }
+      
+      // 按钮文字超出四个字显示省略号
+      .btn-text {
+        max-width: 4em;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        display: inline-block;
+        vertical-align: middle;
       }
     }
   }
@@ -2236,6 +2375,9 @@ export default {
   color: #fff !important;
   border-radius: 16px;
   border: none;
+  max-width: 100px;
+  overflow: hidden;
+  text-overflow: ellipsis;
   &:disabled {
     background-color: #bcdcff !important;
     color: #fff !important;
@@ -2248,6 +2390,9 @@ export default {
   color: #fff !important;
   border-radius: 16px;
   border: none;
+  max-width: 100px;
+  overflow: hidden;
+  text-overflow: ellipsis;
   &:disabled {
     background-color: #c2e7b0 !important;
     color: #fff !important;
