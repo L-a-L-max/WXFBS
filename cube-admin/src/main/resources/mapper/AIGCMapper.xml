@@ -9,6 +9,22 @@
 
 
 
+    <!-- 查询总数的方法 -->
+    <select id="getChromeDataCount" parameterType="com.cube.wechat.selfapp.app.domain.WcChromeData" resultType="java.lang.Long">
+        SELECT COUNT(DISTINCT wd.id)
+        FROM wc_chrome_data wd 
+        LEFT JOIN sys_user u ON wd.user_name = u.user_name
+        WHERE
+            aiName != '嘟嘟'
+            <if test="username != 'o3lds67b1zyFvifHTC_32epnmzqM'">
+               AND wd.user_name = #{username}
+            </if>
+            <if test="keyWord != null and keyWord != ''">
+                AND (wd.prompt LIKE CONCAT('%', #{keyWord}, '%') OR u.nick_name LIKE CONCAT('%', #{keyWord}, '%'))
+            </if>
+    </select>
+
+    <!-- 优化后的分页查询方法 -->
     <select id="getChromeDataList" parameterType="com.cube.wechat.selfapp.app.domain.WcChromeData" resultType="java.util.Map">
         SELECT
         wd.id,
@@ -27,21 +43,27 @@
         MAX(CASE WHEN aiName = '嘟嘟' THEN answerNum END) AS yqNum,
         MAX(CASE WHEN aiName = '通义千问' THEN answer END) AS tongyi,
         MAX(CASE WHEN aiName = '通义千问' THEN answerNum END) AS tongyiNum,
-        DATE_FORMAT( wd.create_time, '%Y-%c-%d %H:%i:%s') createTime,
+        DATE_FORMAT(wd.create_time, '%Y-%c-%d %H:%i:%s') createTime,
         u.nick_name nickName
         FROM
-        wc_chrome_data wd left join sys_user u on wd.user_name = u.user_name
-      where
-        aiName !='嘟嘟'
-        <if test="username !='o3lds67b1zyFvifHTC_32epnmzqM'">
-           and wd.user_name = #{username}
-        </if>
-        <if test="keyWord !=null and keyWord !=''">
-            and (wd.prompt like '%${keyWord}%' or u.nick_name like '%${keyWord}%')
-        </if>
+        wc_chrome_data wd 
+        LEFT JOIN sys_user u ON wd.user_name = u.user_name
+        WHERE
+            aiName != '嘟嘟'
+            <if test="username != 'o3lds67b1zyFvifHTC_32epnmzqM'">
+               AND wd.user_name = #{username}
+            </if>
+            <if test="keyWord != null and keyWord != ''">
+                AND (wd.prompt LIKE CONCAT('%', #{keyWord}, '%') OR u.nick_name LIKE CONCAT('%', #{keyWord}, '%'))
+            </if>
         GROUP BY
         wd.id
-        order by wd.create_time desc
+        ORDER BY
+        wd.create_time DESC
+        <!-- 分页参数 -->
+        <if test="pageNum != null and pageSize != null">
+            LIMIT #{pageSize} OFFSET #{offset}
+        </if>
     </select>
 
     <select id="getChromeLinkList" parameterType="com.cube.wechat.selfapp.app.domain.WcChromeData" resultType="java.util.Map">

@@ -20,19 +20,50 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         select id, user_id, method_name, description, method_params, execution_time, execution_result, execution_time_millis, is_success from wc_log_info
     </sql>
 
+    <!-- 优化后的日志查询方法 -->
     <select id="selectLogInfoList" parameterType="LogInfo" resultMap="LogInfoResult">
         <include refid="selectLogInfoVo"/>
         <where>  
-            <if test="userId != null  and userId != ''"> and user_id = #{userId}</if>
-            <if test="methodName != null  and methodName != ''"> and method_name like concat('%', #{methodName}, '%')</if>
-            <if test="description != null  and description != ''"> and description like concat('%', #{description}, '%')</if>
-            <if test="executionResult != null  and executionResult != ''"> and execution_result like concat('%', #{executionResult}, '%')</if>
-            <if test="methodParams != null  and methodParams != ''"> and method_params like concat('%', #{methodParams}, '%')</if>
-            <if test="params.beginExecutionTime != null and params.beginExecutionTime != '' and params.endExecutionTime != null and params.endExecutionTime != ''"> and execution_time between #{params.beginExecutionTime} and #{params.endExecutionTime}</if>
-            <if test="params.executionTimeMillisMin != null"> and execution_time_millis &gt;= #{params.executionTimeMillisMin}</if>
-            <if test="params.executionTimeMillisMax != null"> and execution_time_millis &lt;= #{params.executionTimeMillisMax}</if>
-            <if test="isSuccess != null "> and is_success = #{isSuccess}</if>
-            <!-- 警告信息筛选：通过description或executionResult包含"警告"、"WARN"等关键词 -->
+            <!-- 优先使用userId和时间范围的组合索引 -->
+            <choose>
+                <when test="userId != null and userId != '' and params.beginExecutionTime != null and params.beginExecutionTime != '' and params.endExecutionTime != null and params.endExecutionTime != ''">
+                    <!-- 有userId和时间范围时，优先匹配user_time索引 -->
+                    and user_id = #{userId}
+                    and execution_time between #{params.beginExecutionTime} and #{params.endExecutionTime}
+                </when>
+                <when test="userId != null and userId != ''">
+                    <!-- 只有userId时，使用user_id索引 -->
+                    and user_id = #{userId}
+                </when>
+                <when test="params.beginExecutionTime != null and params.beginExecutionTime != '' and params.endExecutionTime != null and params.endExecutionTime != ''">
+                    <!-- 只有时间范围时，使用execution_time索引 -->
+                    and execution_time between #{params.beginExecutionTime} and #{params.endExecutionTime}
+                </when>
+            </choose>
+            
+            <!-- 其他筛选条件 -->
+            <if test="methodName != null  and methodName != ''"> 
+                and method_name like concat('%', #{methodName}, '%')
+            </if>
+            <if test="description != null  and description != ''"> 
+                and description like concat('%', #{description}, '%')
+            </if>
+            <if test="executionResult != null  and executionResult != ''"> 
+                and execution_result like concat('%', #{executionResult}, '%')
+            </if>
+            <if test="methodParams != null  and methodParams != ''"> 
+                and method_params like concat('%', #{methodParams}, '%')
+            </if>
+            <if test="params.executionTimeMillisMin != null"> 
+                and execution_time_millis &gt;= #{params.executionTimeMillisMin}
+            </if>
+            <if test="params.executionTimeMillisMax != null"> 
+                and execution_time_millis &lt;= #{params.executionTimeMillisMax}
+            </if>
+            <if test="isSuccess != null "> 
+                and is_success = #{isSuccess}
+            </if>
+            <!-- 警告信息筛选 -->
             <if test="params != null and params.isWarning != null">
                 <if test="params.isWarning == 'true' or params.isWarning == true"> 
                     and (description like '%警告%' or description like '%WARN%' or description like '%warn%'
@@ -40,7 +71,11 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
                 </if>
             </if>
         </where>
+        
+        <!-- 排序优化：使用execution_time索引 -->
         order by execution_time desc
+        
+        <!-- 分页参数，由BaseController的startPage()方法设置 -->
     </select>
     
     <select id="selectLogInfoById" parameterType="Long" resultMap="LogInfoResult">

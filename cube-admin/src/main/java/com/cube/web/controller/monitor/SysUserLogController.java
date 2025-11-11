@@ -44,7 +44,7 @@ public class SysUserLogController extends BaseController
      */
     @Log(title = "日志信息（记录方法执行日志）", businessType = BusinessType.EXPORT)
     @PostMapping("/export")
-    public void export(HttpServletResponse response, LogInfo logInfo)
+    public void export(jakarta.servlet.http.HttpServletResponse response, LogInfo logInfo)
     {
         List<LogInfo> list = logInfoService.selectLogInfoList(logInfo);
         ExcelUtil<LogInfo> util = new ExcelUtil<LogInfo>(LogInfo.class);

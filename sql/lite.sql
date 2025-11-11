@@ -771,7 +771,8 @@ CREATE TABLE `sys_oper_log`  (
   INDEX `idx_oper_name`(`oper_name`) USING BTREE,
   INDEX `idx_oper_ip`(`oper_ip`) USING BTREE,
   INDEX `idx_status_time`(`status`, `oper_time` DESC) USING BTREE,
-  INDEX `idx_business_status`(`business_type`, `status`, `oper_time` DESC) USING BTREE
+  INDEX `idx_business_status`(`business_type`, `status`, `oper_time` DESC) USING BTREE,
+  INDEX `idx_oper_name_time`(`oper_name`, `oper_time` DESC) USING BTREE
 ) ENGINE = InnoDB AUTO_INCREMENT = 10025 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci COMMENT = '操作日志记录' ROW_FORMAT = Dynamic;
 
 -- ----------------------------
@@ -1318,14 +1319,19 @@ CREATE TABLE `wc_chat_history`  (
 -- ----------------------------
 DROP TABLE IF EXISTS `wc_chrome_data`;
 CREATE TABLE `wc_chrome_data`  (
-  `id` varchar(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '主建',
+  `id` varchar(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '主建',
   `prompt` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL COMMENT '提示词',
   `promptNum` int(11) NULL DEFAULT NULL COMMENT '提示词长度',
   `answer` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL COMMENT '答案',
   `answerNum` int(11) NULL DEFAULT NULL COMMENT '答案长度',
   `aiName` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT 'ai名称',
   `create_time` datetime(0) NULL DEFAULT NULL COMMENT '创建时间',
-  `user_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '创建人'
+  `user_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '创建人',
+  PRIMARY KEY (`id`) USING BTREE,
+  INDEX `idx_user_name`(`user_name`) USING BTREE,
+  INDEX `idx_create_time`(`create_time` DESC) USING BTREE,
+  INDEX `idx_ai_name`(`aiName`) USING BTREE,
+  INDEX `idx_user_create_time`(`user_name`, `create_time` DESC) USING BTREE
 ) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
@@ -1374,7 +1380,12 @@ CREATE TABLE `wc_chrome_hotlink`  (
   `create_time` datetime(0) NULL DEFAULT NULL COMMENT '创建时间',
   `user_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT '0' COMMENT '创建人',
   `text` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL COMMENT '正文',
-  PRIMARY KEY (`link_id`) USING BTREE
+  PRIMARY KEY (`link_id`) USING BTREE,
+  INDEX `idx_create_time`(`create_time` DESC) USING BTREE,
+  INDEX `idx_user_name`(`user_name`) USING BTREE,
+  INDEX `idx_ai_name`(`aiName`) USING BTREE,
+  INDEX `idx_is_push`(`isPush`) USING BTREE,
+  INDEX `idx_title`(`title`) USING BTREE
 ) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
@@ -1386,7 +1397,7 @@ CREATE TABLE `wc_chrome_hotlink`  (
 -- ----------------------------
 DROP TABLE IF EXISTS `wc_chrome_hotword`;
 CREATE TABLE `wc_chrome_hotword`  (
-  `id` varchar(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '主建',
+  `id` varchar(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '主建',
   `prompt` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL COMMENT '提示词',
   `userPrompt` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '用户',
   `promptNum` int(11) NULL DEFAULT NULL COMMENT '提示词长度',
@@ -1396,7 +1407,13 @@ CREATE TABLE `wc_chrome_hotword`  (
   `isFetch` int(5) NULL DEFAULT 0 COMMENT '是否抓取过链接',
   `create_time` datetime(0) NULL DEFAULT NULL COMMENT '创建时间',
   `user_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '创建人',
-  `update_time` datetime(0) NULL DEFAULT NULL COMMENT '修改时间'
+  `update_time` datetime(0) NULL DEFAULT NULL COMMENT '修改时间',
+  PRIMARY KEY (`id`) USING BTREE,
+  INDEX `idx_create_time`(`create_time` DESC) USING BTREE,
+  INDEX `idx_update_time`(`update_time` DESC) USING BTREE,
+  INDEX `idx_user_name`(`user_name`) USING BTREE,
+  INDEX `idx_ai_name`(`aiName`) USING BTREE,
+  INDEX `idx_is_fetch`(`isFetch`) USING BTREE
 ) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
@@ -1850,8 +1867,13 @@ CREATE TABLE `wc_user_chat`  (
   `user_id` int(11) NULL DEFAULT NULL COMMENT '用户ID',
   `title` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '用户问题标题',
   `chat_history` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL COMMENT '对话内容',
-  `conversation_id` varchar(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '唯一会话ID',
-  `create_time` datetime(0) NULL DEFAULT NULL COMMENT '上次对话时间'
+  `conversation_id` varchar(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '唯一会话ID',
+  `create_time` datetime(0) NULL DEFAULT NULL COMMENT '上次对话时间',
+  PRIMARY KEY (`conversation_id`) USING BTREE,
+  INDEX `idx_wc_user_chat_user_id` (`user_id`) USING BTREE,
+  INDEX `idx_wc_user_chat_create_time` (`create_time` DESC) USING BTREE,
+  INDEX `idx_wc_user_chat_user_time` (`user_id`, `create_time` DESC) USING BTREE,
+  INDEX `idx_wc_user_chat_title` (`title`) USING BTREE
 ) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
