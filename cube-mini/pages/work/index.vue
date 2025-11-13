@@ -1418,6 +1418,17 @@
 
 				console.log('📨 [WebSocket] 收到消息, 类型:', dataObj.type);
 				console.log('📨 [WebSocket] aiName:', dataObj.aiName);
+				
+				// 🔥 添加消息接收确认，帮助调试消息丢失问题
+				if (dataObj.messageId) {
+					console.log('📨 [WebSocket] 消息ID:', dataObj.messageId);
+				}
+				if (dataObj.taskId) {
+					console.log('📨 [WebSocket] 任务ID:', dataObj.taskId);
+				}
+				if (dataObj.userId) {
+					console.log('📨 [WebSocket] 用户ID:', dataObj.userId, '当前用户ID:', this.userId);
+				}
 
 				// 忽略心跳响应
 				if (dataObj.type === 'HEARTBEAT_RESPONSE' || dataObj.type === 'HEARTBEAT') {
@@ -1443,9 +1454,8 @@
 				if (dataObj.type === 'RETURN_PC_TASK_LOG' && dataObj.aiName) {
 				console.log(`📋 [进度日志] AI: ${dataObj.aiName}, 内容: ${dataObj.content}`);
 					
-					// 只处理当前任务的日志消息
-					if (dataObj.taskId && dataObj.taskId !== this.userInfoReq.taskId) {
-						console.log(`⚠️ [进度日志] 忽略其他任务的日志`);
+					// 🔥 使用统一的消息验证逻辑
+					if (!this.shouldProcessMessage(dataObj)) {
 						return;
 					}
 					
@@ -1472,12 +1482,13 @@
 
 				// 处理截图消息
 				if (dataObj.type === 'RETURN_PC_TASK_IMG' && dataObj.url) {
-					// 只处理当前任务的截图
-					if (dataObj.taskId && dataObj.taskId !== this.userInfoReq.taskId) {
+					// 🔥 使用统一的消息验证逻辑
+					if (!this.shouldProcessMessage(dataObj)) {
 						return;
 					}
 					// 将新的截图添加到数组开头
 					this.screenshots.unshift(dataObj.url);
+					console.log(`📷 [截图消息] 添加新截图，当前截图数量: ${this.screenshots.length}`);
 					return;
 				}
 
@@ -1888,9 +1899,8 @@
 			console.log(`✅ 找到目标AI: ${targetAI.name}, 当前状态: ${targetAI.status}`);
 			console.log(`📋 当前taskId: ${this.userInfoReq.taskId}, 消息taskId: ${dataObj.taskId}`);
 			
-				// 只处理当前任务的结果
-				if (dataObj.taskId && dataObj.taskId !== this.userInfoReq.taskId) {
-					console.log(`⚠️ 忽略其他任务的消息`);
+				// 🔥 使用统一的消息验证逻辑
+				if (!this.shouldProcessMessage(dataObj)) {
 					return;
 				}
 				
@@ -3437,6 +3447,32 @@
 					console.error('格式化时间错误:', error, timestamp);
 					return '时间未知';
 				}
+			},
+			
+			// 🔥 统一的消息验证方法
+			shouldProcessMessage(dataObj) {
+				// 用户ID验证：如果消息包含用户ID，必须匹配当前用户
+				// 🔥 修复：确保转换为字符串后再调用trim()
+				const messageUserId = dataObj.userId != null ? String(dataObj.userId).trim() : "";
+				const currentUserId = this.userId != null ? String(this.userId).trim() : "";
+				
+				if (messageUserId !== "" && currentUserId !== "" && messageUserId !== currentUserId) {
+					console.log(`⚠️ [消息过滤] 用户ID不匹配 - 消息用户:${dataObj.userId}, 当前用户:${this.userId}, 消息类型:${dataObj.type}`);
+					return false;
+				}
+				
+				// 任务ID验证：只有当消息明确包含taskId且与当前任务不匹配时才忽略
+				// 🔥 修复：确保转换为字符串后再调用trim()
+				const messageTaskId = dataObj.taskId != null ? String(dataObj.taskId).trim() : "";
+				const currentTaskId = this.userInfoReq.taskId != null ? String(this.userInfoReq.taskId).trim() : "";
+				
+				if (messageTaskId !== "" && currentTaskId !== "" && messageTaskId !== currentTaskId) {
+					console.log(`⚠️ [消息过滤] 任务ID不匹配 - 消息任务:${dataObj.taskId}, 当前任务:${this.userInfoReq.taskId}, 消息类型:${dataObj.type}`);
+					return false;
+				}
+				
+				console.log(`✅ [消息验证] 消息通过验证 - 任务ID:${dataObj.taskId || '无'}, 用户ID:${dataObj.userId || '无'}, 消息类型:${dataObj.type}`);
+				return true;
 			}
 		}
 	};

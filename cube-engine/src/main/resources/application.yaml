@@ -1,7 +1,33 @@
+# ==================== 用户自定义配置区域 ====================
+# 如果你经常使用同一个服务器环境，可以在这里预设配置信息
+# 配置后可以直接启动项目，无需每次手动输入
+# 如果不配置，启动时会提示在终端输入
+custom:
+  server:
+    # 服务器IP和端口 (例如: 192.168.0.1:8081)
+    address: ""
+    # 主机ID (例如: office01)
+    hostId: ""
+    # 是否启用SSL (true=https/wss, false=http/ws)
+    sslEnabled: false
+
+# 示例配置（取消注释并修改为你的实际配置）:
+# custom:
+#   server:
+#     address: "192.168.0.1:8081"
+#     hostId: "zpy001"
+#     sslEnabled: false
+
+# ==================== 使用说明 ====================
+# 1. 如果你经常使用同一个服务器环境，建议配置上面的 custom.server 区域
+# 2. 配置完成后，启动时会自动读取配置，无需手动输入
+# 3. 如果没有配置或配置不完整，启动时会提示你在终端输入
+# 4. 这样既保证了打包文件的通用性，又方便了固定环境用户的使用
+
+# ==================== 系统配置区域 ====================
 # 新增：SSL配置（控制是否启用加密协议）
 ssl:
   enabled: false  # true=启用https/wss；false=使用http/ws（默认）
-
 
 server:
   port: ${SERVER_PORT}
@@ -39,20 +65,3 @@ cpu:
 #        sse-message-endpoint: /cubeServer/mcp
 #        capabilities:
 #          tool: true
-
-
-#如果配置url是加了https证书的域名，则需要改为wss://你的域名/cubeServer/websocket?clientId=play-你的主机ID
-#https域名示例：
-#cube:
-#  url: https://你的域名/cubeServer/aigc
-#  wssurl: wss://你的域名/cubeServer/websocket?clientId=play-你的主机ID
-#  datadir: C:\AGI\user-data-dir   用户数据存放目录
-#  uploadurl: https://你的域名/cubeServer/common/upload
-
-#如果配置url是ip，则需要去掉cubeServer这一层，wssurl填写为ws://你的ip:端口//websocket?clientId=play-你的主机ID
-#ip示例：
-#cube:
-#  url: http://你的ip:端口/aigc
-#  wssurl: ws://你的ip:端口/websocket?clientId=play-你的主机ID
-#  datadir: C:\AGI\user-data-dir   用户数据存放目录
-#  uploadurl: http://你的ip:端口/common/upload

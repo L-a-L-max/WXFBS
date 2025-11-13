@@ -67,8 +67,10 @@ public class BrowserUtil {
                 Playwright playwright = null;
                 try {
                     
-                    // 🔥 优化：保守的退避策略，避免用户长时间等待
+                    // 🔥 新增：每次重试前清理可能的锁文件
                     if (attempt > 1) {
+                        cleanupBrowserLockFiles(userId, name);
+                        
                         long waitTime = Math.min(BASE_WAIT_TIME + (attempt - 1) * 2000, MAX_WAIT_TIME); // 保持2秒步长
                         Thread.sleep(waitTime);
                         
@@ -118,6 +120,11 @@ public class BrowserUtil {
                     
                     // 强制清理资源
                     cleanupPlaywrightResources(playwright);
+                    
+                    // 🔥 新增：检查是否为SingletonLock问题并进行清理
+                    if (e.getMessage() != null && e.getMessage().contains("SingletonLock")) {
+                        cleanupBrowserLockFiles(userId, name);
+                    }
                     
                     if (attempt < MAX_RETRIES) {
                         
@@ -426,6 +433,87 @@ public class BrowserUtil {
             )) {
             } else {
             }
+        }
+    }
+    
+    /**
+     * 清理浏览器锁文件和相关进程
+     * 🔥 新增：解决SingletonLock问题的核心方法
+     */
+    private void cleanupBrowserLockFiles(String userId, String name) {
+        try {
+            String userDataPath = userDataDir + "/" + name + "/" + userId;
+            java.io.File userDataDirectory = new java.io.File(userDataPath);
+            
+            if (userDataDirectory.exists()) {
+                // 清理SingletonLock文件
+                java.io.File singletonLock = new java.io.File(userDataDirectory, "SingletonLock");
+                if (singletonLock.exists()) {
+                    boolean deleted = singletonLock.delete();
+                    if (deleted) {
+                        System.out.println("🔧 [浏览器修复] 已清理SingletonLock文件: " + singletonLock.getPath());
+                    }
+                }
+                
+                // 清理其他可能的锁文件
+                java.io.File[] lockFiles = userDataDirectory.listFiles((dir, filename) -> 
+                    filename.contains("Lock") || filename.contains("lock") || filename.endsWith(".lock"));
+                
+                if (lockFiles != null) {
+                    for (java.io.File lockFile : lockFiles) {
+                        try {
+                            if (lockFile.delete()) {
+                                System.out.println("🔧 [浏览器修复] 已清理锁文件: " + lockFile.getName());
+                            }
+                        } catch (Exception e) {
+                            // 静默处理单个文件删除失败
+                        }
+                    }
+                }
+                
+                // 尝试终止可能的僵尸Chrome进程
+                cleanupZombieProcesses(userDataPath);
+            }
+            
+        } catch (Exception e) {
+            // 静默处理清理异常，不影响主流程
+            System.err.println("⚠️ [浏览器修复] 清理锁文件时出现异常: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * 清理僵尸Chrome进程
+     */
+    private void cleanupZombieProcesses(String userDataPath) {
+        try {
+            // 在macOS上查找并终止使用相同用户数据目录的Chrome进程
+            ProcessBuilder pb = new ProcessBuilder("bash", "-c", 
+                "ps aux | grep 'user-data-dir=" + userDataPath + "' | grep -v grep | awk '{print $2}'");
+            Process process = pb.start();
+            
+            java.io.BufferedReader reader = new java.io.BufferedReader(
+                new java.io.InputStreamReader(process.getInputStream()));
+            
+            String line;
+            while ((line = reader.readLine()) != null) {
+                try {
+                    int pid = Integer.parseInt(line.trim());
+                    // 尝试优雅终止进程
+                    ProcessBuilder killPb = new ProcessBuilder("kill", "-TERM", String.valueOf(pid));
+                    killPb.start().waitFor(2, java.util.concurrent.TimeUnit.SECONDS);
+                    
+                    System.out.println("🔧 [浏览器修复] 已终止僵尸Chrome进程: PID " + pid);
+                } catch (NumberFormatException e) {
+                    // 忽略非数字行
+                } catch (Exception e) {
+                    // 静默处理进程终止失败
+                }
+            }
+            
+            process.waitFor(5, java.util.concurrent.TimeUnit.SECONDS);
+            
+        } catch (Exception e) {
+            // 静默处理进程清理异常
         }
     }
 }

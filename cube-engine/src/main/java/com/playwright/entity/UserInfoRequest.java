@@ -84,4 +84,7 @@ public class UserInfoRequest {
 
     @ToolParam(description = "分享图片链接", required = false)
     private String shareImgUrl;
+
+    @ToolParam(description = "AI类型标识", required = false)
+    private String aiType;
 }

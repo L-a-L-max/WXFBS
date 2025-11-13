@@ -150,10 +150,12 @@ public class LogAspect {
                                 aiName = "腾讯元宝";
                             }
                         }
-                        // 统一日志格式：用户ID + AI智能体 + 登录成功的用户名或已登录
-                        String loginStatus = loginResult.contains("未登录") ? "已登录" : loginResult;
-                        System.out.println(String.format("✅ [登录检测] 用户ID:%s | AI智能体:%s | 状态:%s", 
-                            logInfo.getUserId(), aiName, loginStatus));
+                        // 只记录登录成功的情况，包含用户信息
+                        if (!loginResult.contains("未登录")) {
+                            String userId = logInfo.getUserId();
+                            String userName = loginResult.length() > 10 ? loginResult.substring(0, 10) + "..." : loginResult;
+                            System.out.println(String.format("✅ %s登录成功 | 用户:%s | 账号:%s", aiName, userId, userName));
+                        }
                     }
                     break;
                 }

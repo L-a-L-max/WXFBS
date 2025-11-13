@@ -1192,6 +1192,21 @@ import { ChatDotSquare, Document, Link, Loading, Plus, Promotion } from '@elemen
       handleWebSocketMessage(data) {
         const datastr = data;
         const dataObj = JSON.parse(datastr);
+        
+        // 🔥 添加消息接收确认，帮助调试消息丢失问题
+        console.log('📨 [WebSocket] 收到消息, 类型:', dataObj.type);
+        if (dataObj.messageId) {
+          console.log('📨 [WebSocket] 消息ID:', dataObj.messageId);
+        }
+        if (dataObj.taskId) {
+          console.log('📨 [WebSocket] 任务ID:', dataObj.taskId);
+        }
+        if (dataObj.userId) {
+          console.log('📨 [WebSocket] 用户ID:', dataObj.userId, '当前用户ID:', this.userId);
+        }
+        if (dataObj.aiName) {
+          console.log('📨 [WebSocket] AI名称:', dataObj.aiName);
+        }
 
         // 处理chatId消息
         if(dataObj.type === "RETURN_YBT1_CHATID" && dataObj.chatId) {
@@ -1218,8 +1233,8 @@ import { ChatDotSquare, Document, Link, Loading, Plus, Promotion } from '@elemen
 
         // 处理进度日志消息
         if(dataObj.type === "RETURN_PC_TASK_LOG" && dataObj.aiName) {
-          // 只处理当前任务的日志消息
-          if(dataObj.taskId && dataObj.taskId !== this.userInfoReq.taskId) {
+          // 🔥 使用统一的消息验证逻辑
+          if(!this.shouldProcessMessage(dataObj)) {
             return; // 忽略其他任务的消息
           }
 
@@ -1270,13 +1285,18 @@ import { ChatDotSquare, Document, Link, Loading, Plus, Promotion } from '@elemen
 
         // 处理截图消息
         if(dataObj.type === "RETURN_PC_TASK_IMG" && dataObj.url) {
-          // 只处理当前任务的截图
-          if(dataObj.taskId && dataObj.taskId !== this.userInfoReq.taskId) {
-            return; // 忽略其他任务的截图
+          // 🔥 截图消息只验证用户ID，不验证任务ID（因为截图可能没有taskId）
+          const messageUserId = dataObj.userId ? String(dataObj.userId).trim() : "";
+          const currentUserId = this.userId ? String(this.userId).trim() : "";
+          
+          if (messageUserId !== "" && currentUserId !== "" && messageUserId !== currentUserId) {
+            console.log(`⚠️ [截图过滤] 用户ID不匹配 - 消息用户:${dataObj.userId}, 当前用户:${this.userId}`);
+            return; // 忽略其他用户的截图
           }
 
           // 将新的截图添加到数组开头
           this.screenshots.unshift(dataObj.url);
+          console.log(`📷 [截图消息] 添加新截图，当前截图数量: ${this.screenshots.length}`);
           return;
         }
 
@@ -1394,9 +1414,8 @@ import { ChatDotSquare, Document, Link, Loading, Plus, Promotion } from '@elemen
           console.log(`📋 [结果处理] 当前taskId: ${this.userInfoReq.taskId}, 消息taskId: ${dataObj.taskId}`);
           console.log(`📊 [结果处理] AI当前状态: ${targetAI.status}`);
 
-          // 只处理当前任务的结果
-          if(dataObj.taskId && dataObj.taskId !== this.userInfoReq.taskId) {
-            console.warn(`⚠️ [结果处理] 忽略其他任务的消息`);
+          // 🔥 使用统一的消息验证逻辑
+          if(!this.shouldProcessMessage(dataObj)) {
             return; // 忽略其他任务的消息
           }
 
@@ -2419,7 +2438,33 @@ import { ChatDotSquare, Document, Link, Loading, Plus, Promotion } from '@elemen
         }
       },
 
-    },
+      // 🔥 统一的消息验证方法
+      shouldProcessMessage(dataObj) {
+        // 用户ID验证：如果消息包含用户ID，必须匹配当前用户
+        // 🔥 修复：确保转换为字符串后再调用trim()
+        const messageUserId = dataObj.userId != null ? String(dataObj.userId).trim() : "";
+        const currentUserId = this.userId != null ? String(this.userId).trim() : "";
+        
+        if (messageUserId !== "" && currentUserId !== "" && messageUserId !== currentUserId) {
+          console.log(`⚠️ [消息过滤] 用户ID不匹配 - 消息用户:${dataObj.userId}, 当前用户:${this.userId}, 消息类型:${dataObj.type}`);
+          return false;
+        }
+        
+        // 任务ID验证：只有当消息明确包含taskId且与当前任务不匹配时才忽略
+        // 🔥 修复：确保转换为字符串后再调用trim()
+        const messageTaskId = dataObj.taskId != null ? String(dataObj.taskId).trim() : "";
+        const currentTaskId = this.userInfoReq.taskId != null ? String(this.userInfoReq.taskId).trim() : "";
+        
+        if (messageTaskId !== "" && currentTaskId !== "" && messageTaskId !== currentTaskId) {
+          console.log(`⚠️ [消息过滤] 任务ID不匹配 - 消息任务:${dataObj.taskId}, 当前任务:${this.userInfoReq.taskId}, 消息类型:${dataObj.type}`);
+          return false;
+        }
+        
+        console.log(`✅ [消息验证] 消息通过验证 - 任务ID:${dataObj.taskId || '无'}, 用户ID:${dataObj.userId || '无'}, 消息类型:${dataObj.type}`);
+        return true;
+      }
+
+    }
   };
 </script>
 

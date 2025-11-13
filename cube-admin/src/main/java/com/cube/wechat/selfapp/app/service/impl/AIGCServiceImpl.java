@@ -74,7 +74,13 @@ public class AIGCServiceImpl implements AIGCService {
     @Override
     public ResultBody saveLogInfo(UserLogInfo userLogInfo) {
         aigcMapper.saveLogInfo(userLogInfo);
-        return ResultBody.success("保存成功");
+        // 🔥 返回数据库自增ID
+        Long generatedId = userLogInfo.getId();
+        if (generatedId != null) {
+            return ResultBody.success(generatedId);
+        } else {
+            return ResultBody.success("保存成功，但未获取到ID");
+        }
     }
 
     @Override

@@ -56,6 +56,29 @@ public class  LogMsgUtil {
         }
     }
 
+    /**
+     * 发送图片数据消息（带任务ID）
+     * @param page Playwright页面对象
+     * @param imageName 图片名称（自动添加.png后缀）
+     * @param userId 用户ID
+     * @param taskId 任务ID
+     */
+    public void sendImgData(Page page, String imageName, String userId, String taskId){
+        try {
+        // 截图并上传到指定存储服务
+        String url = screenshotUtil.screenshotAndUpload(page,imageName+".png");
+
+        JSONObject imgData = new JSONObject();
+        imgData.put("url",url);
+        imgData.put("userId",userId);
+        imgData.put("taskId",taskId);
+        imgData.put("type","RETURN_PC_TASK_IMG");
+        webSocketClientService.sendMessage(imgData.toJSONString());
+        } catch (Exception e) {
+            System.err.println("发送截图数据失败: " + e.getMessage());
+            // 静默处理，不影响主要业务流程
+        }
+    }
 
     /**
      * 发送任务日志消息
@@ -64,12 +87,30 @@ public class  LogMsgUtil {
      * @param aiName AI服务名称
      */
     public void sendTaskLog(String taskNode,String userId,String aiName){
+        sendTaskLog(taskNode, userId, aiName, null);
+    }
+    
+    /**
+     * 发送任务日志消息（带taskId）
+     * @param taskNode 任务节点描述信息
+     * @param userId 用户ID
+     * @param aiName AI服务名称
+     * @param taskId 任务ID
+     */
+    public void sendTaskLog(String taskNode,String userId,String aiName,String taskId){
 
         JSONObject logData = new JSONObject();
         logData.put("content",taskNode);
         logData.put("userId",userId);
         logData.put("type","RETURN_PC_TASK_LOG");
         logData.put("aiName",aiName);
+        
+        // 🔥 使用统一的消息增强工具
+        logData = MessageValidationUtil.enhanceMessage(logData, userId, taskId);
+        
+        // 记录消息发送日志
+        MessageValidationUtil.logMessageSent("RETURN_PC_TASK_LOG", userId, taskId, aiName, taskNode);
+        
         webSocketClientService.sendMessage(logData.toJSONString());
     }
 
@@ -106,11 +147,6 @@ public class  LogMsgUtil {
         resData.put("type", type);
         resData.put("userId",userId);
         
-        // 🔥 修复前端状态不更新问题：添加 taskId 字段
-        if (taskId != null && !taskId.trim().isEmpty()) {
-            resData.put("taskId", taskId);
-        }
-        
         // 🔥 修复前端错误：添加 aiResponses 字段以兼容前端期望的数据格式
         JSONObject aiResponse = new JSONObject();
         aiResponse.put("content", copiedText);
@@ -122,24 +158,39 @@ public class  LogMsgUtil {
         aiResponses.add(aiResponse);
         resData.put("aiResponses", aiResponses);
         
-        // 统一的日志输出格式：AI智能体信息、用户ID、内容前20字、截图链接、分享链接，一行显示
-        String contentPreview = "";
-        if (copiedText != null && !copiedText.trim().isEmpty()) {
-            // 移除HTML标签和换行符，只保留纯文本
-            String plainText = copiedText.replaceAll("<[^>]+>", "").replaceAll("\\s+", " ").trim();
-            contentPreview = plainText.length() > 20 ? plainText.substring(0, 20) + "..." : plainText;
-        }
-        String screenshotInfo = (shareImgUrl != null && !shareImgUrl.trim().isEmpty()) ? shareImgUrl : "无截图";
-        String shareInfo = (shareUrl != null && !shareUrl.trim().isEmpty()) ? shareUrl : "无分享链接";
-        System.out.println(String.format("✅ [%s] 用户ID:%s | 内容预览:%s | 截图:%s | 分享链接:%s", 
-            aiName, userId, contentPreview, screenshotInfo, shareInfo));
+        // 🔥 使用统一的消息增强工具
+        resData = MessageValidationUtil.enhanceMessage(resData, userId, taskId);
         
-        // 🔥 添加AI内容生成后的分隔线，方便查找问题
-        System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        // 记录完整的AI结果信息（包含分享链接和截图）
+        String chatId = extractChatIdFromShareUrl(shareUrl);
+        MessageValidationUtil.logCompleteAIResult(userId, aiName, copiedText, shareUrl, shareImgUrl, chatId);
         
         webSocketClientService.sendMessage(resData.toJSONString());
     }
 
+    /**
+     * 从分享链接中提取会话ID
+     */
+    private String extractChatIdFromShareUrl(String shareUrl) {
+        if (shareUrl == null || shareUrl.isEmpty()) {
+            return null;
+        }
+        try {
+            // 提取URL中的ID部分（通常在最后一个/之后）
+            String[] parts = shareUrl.split("/");
+            if (parts.length > 0) {
+                String lastPart = parts[parts.length - 1];
+                // 如果包含查询参数，只取ID部分
+                if (lastPart.contains("?")) {
+                    lastPart = lastPart.split("\\?")[0];
+                }
+                return lastPart;
+            }
+        } catch (Exception e) {
+            // 静默处理异常
+        }
+        return null;
+    }
 
     /**
      * 发送聊天数据消息（从页面URL提取参数）

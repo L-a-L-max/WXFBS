@@ -217,6 +217,7 @@
       width="1200px"
       height="800px"
       center
+      @close="handleAiLoginDialogClose"
     >
       <div class="qr-code-container" v-loading="!qrCodeUrl && !qrCodeError">
         <div v-if="qrCodeUrl" class="qr-code">
@@ -896,6 +897,11 @@ export default {
       }
     },
     handleAiLogin(type) {
+      // 🔥 修复截图传台问题：切换登录时先清理之前的登录会话
+      if (this.currentAiType && this.currentAiType !== type) {
+        this.cleanupPreviousLogin();
+      }
+      
       this.currentAiType = type;
       this.aiLoginDialogVisible = true;
       this.isLoading[type] = true;
@@ -904,6 +910,38 @@ export default {
       this.qrCodeUrl = "";
       this.qrCodeError = "";
       this.getQrCode(type);
+    },
+    
+    // 🔥 新增：处理登录对话框关闭事件
+    handleAiLoginDialogClose() {
+      console.log("🔒 [登录对话框] 用户关闭登录窗口");
+      this.cleanupPreviousLogin();
+      this.resetLoginState();
+    },
+    
+    // 🔥 新增：清理之前的登录会话
+    cleanupPreviousLogin() {
+      if (this.currentAiType) {
+        console.log(`🧹 [登录清理] 清理${this.currentAiType}的登录会话`);
+        // 发送清理消息到后端
+        this.sendMessage({
+          type: "CLEANUP_LOGIN_SESSION",
+          userId: this.userId,
+          aiType: this.currentAiType,
+          corpId: this.corpId,
+        });
+      }
+    },
+    
+    // 🔥 新增：重置登录状态
+    resetLoginState() {
+      if (this.currentAiType) {
+        this.isLoading[this.currentAiType] = false;
+        this.isClick[this.currentAiType] = true;
+      }
+      this.qrCodeUrl = "";
+      this.qrCodeError = "";
+      this.currentAiType = null;
     },
     getQrCode(type) {
       this.qrCodeUrl = "";

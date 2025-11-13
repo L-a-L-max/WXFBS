@@ -122,6 +122,151 @@ public class UserLogUtil {
     }
     
     /**
+     * 发送日志并返回数据库ID的核心方法
+     */
+    private static String sendLogWithId(String userId, String description, String methodName, Exception e, Integer isSuccess, Long startTime, String result, String url) {
+        try {
+            LogInfo logInfo = new LogInfo();
+            logInfo.setUserId(StringUtils.hasText(userId) ? userId : "未知用户");
+            logInfo.setMethodName(StringUtils.hasText(methodName) ? methodName : "未知方法");
+            logInfo.setDescription(StringUtils.hasText(description) ? description : "无描述");
+            
+            if(e != null) {
+                String errorMessage = e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName();
+                
+                // 🔥 增强：添加详细的堆栈信息
+                StringBuilder detailedError = new StringBuilder();
+                detailedError.append(String.format("错误类型：%s | 错误信息：%s | 发生时间：%s", 
+                    e.getClass().getSimpleName(), errorMessage, java.time.LocalDateTime.now()));
+                
+                // 添加堆栈跟踪信息（取前3层，避免过长）
+                StackTraceElement[] stackTrace = e.getStackTrace();
+                if (stackTrace != null && stackTrace.length > 0) {
+                    detailedError.append("\n【堆栈信息】：");
+                    int maxStackLines = Math.min(3, stackTrace.length);
+                    for (int i = 0; i < maxStackLines; i++) {
+                        StackTraceElement element = stackTrace[i];
+                        detailedError.append(String.format("\n  → %s.%s(%s:%d)", 
+                            element.getClassName(),
+                            element.getMethodName(),
+                            element.getFileName(),
+                            element.getLineNumber()));
+                    }
+                }
+                
+                logInfo.setExecutionResult(detailedError.toString());
+            } else {
+                logInfo.setExecutionResult(StringUtils.hasText(result) ? result : "执行成功");
+            }
+            
+            long executionTime = startTime != null ? System.currentTimeMillis() - startTime : 0;
+            logInfo.setExecutionTimeMillis(executionTime);
+            logInfo.setExecutionTime(java.time.LocalDateTime.now());
+            logInfo.setMethodParams("通过UserLogUtil记录");
+            logInfo.setIsSuccess(isSuccess);
+            
+            // 发送到数据库并获取返回的ID
+            com.alibaba.fastjson.JSONObject responseJson = RestUtils.post(url, logInfo);
+            
+            // 尝试从响应中提取数据库ID
+            return extractDatabaseId(responseJson);
+            
+        } catch (Exception ex) {
+            // 避免日志记录本身出现异常影响主流程
+            System.err.println("UserLogUtil记录日志失败: " + ex.getMessage());
+            return null;
+        }
+    }
+    
+    /**
+     * 从API响应中提取数据库ID
+     */
+    private static String extractDatabaseId(com.alibaba.fastjson.JSONObject responseJson) {
+        try {
+            if (responseJson != null) {
+                // 调试：打印完整的API响应（仅在需要时启用）
+                // System.out.println("🔍 [数据库ID提取] API响应: " + responseJson.toJSONString());
+                
+                // 尝试从JSONObject中提取ID字段
+                if (responseJson.containsKey("id")) {
+                    Object idValue = responseJson.get("id");
+                    if (idValue != null) {
+                        String extractedId = String.valueOf(idValue);
+                        // System.out.println("✅ [数据库ID提取] 成功提取ID: " + extractedId);
+                        return extractedId;
+                    }
+                }
+                
+                // 尝试提取logId字段
+                if (responseJson.containsKey("logId")) {
+                    Object logIdValue = responseJson.get("logId");
+                    if (logIdValue != null) {
+                        String extractedId = String.valueOf(logIdValue);
+                        // System.out.println("✅ [数据库ID提取] 成功提取logId: " + extractedId);
+                        return extractedId;
+                    }
+                }
+                
+                // 🔥 新增：尝试提取data字段（可能直接是ID值）
+                if (responseJson.containsKey("data")) {
+                    Object dataObj = responseJson.get("data");
+                    if (dataObj instanceof com.alibaba.fastjson.JSONObject) {
+                        com.alibaba.fastjson.JSONObject dataJson = (com.alibaba.fastjson.JSONObject) dataObj;
+                        if (dataJson.containsKey("id")) {
+                            Object idValue = dataJson.get("id");
+                            if (idValue != null) {
+                                String extractedId = String.valueOf(idValue);
+                                // System.out.println("✅ [数据库ID提取] 成功提取data.id: " + extractedId);
+                                return extractedId;
+                            }
+                        }
+                    } else if (dataObj instanceof Number) {
+                        // data字段直接是数字ID
+                        String extractedId = String.valueOf(dataObj);
+                        // System.out.println("✅ [数据库ID提取] 成功提取data(数字): " + extractedId);
+                        return extractedId;
+                    } else if (dataObj != null) {
+                        // data字段是其他类型，尝试转换为字符串
+                        String dataStr = String.valueOf(dataObj);
+                        if (dataStr.matches("\\d+")) {
+                            // System.out.println("✅ [数据库ID提取] 成功提取data(字符串): " + dataStr);
+                            return dataStr;
+                        }
+                    }
+                }
+                
+                // 🔥 新增：尝试提取其他可能的ID字段名
+                String[] possibleIdFields = {"logInfoId", "recordId", "insertId", "generatedId", "dbId"};
+                for (String fieldName : possibleIdFields) {
+                    if (responseJson.containsKey(fieldName)) {
+                        Object idValue = responseJson.get(fieldName);
+                        if (idValue != null) {
+                            String extractedId = String.valueOf(idValue);
+                            // System.out.println("✅ [数据库ID提取] 成功提取" + fieldName + ": " + extractedId);
+                            return extractedId;
+                        }
+                    }
+                }
+                
+                // 如果响应只是一个数字（作为字符串返回）
+                String responseStr = responseJson.toJSONString();
+                if (responseStr != null && responseStr.matches("\\d+")) {
+                    // System.out.println("✅ [数据库ID提取] 响应为纯数字: " + responseStr);
+                    return responseStr;
+                }
+                
+                // 🔥 调试：打印所有可用的键
+                // System.out.println("⚠️ [数据库ID提取] 未找到ID字段，可用键: " + responseJson.keySet());
+            }
+        } catch (Exception e) {
+            // 打印解析异常，不再静默处理
+            // System.err.println("❌ [数据库ID提取] 解析异常: " + e.getMessage());
+            // e.printStackTrace();
+        }
+        return null;
+    }
+    
+    /**
      * 根据异常类型提供可能的解决方案
      */
     private static String getPossibleSolution(Exception e) {
@@ -151,6 +296,12 @@ public class UserLogUtil {
             if (message.contains("closed") || message.contains("关闭")) {
                 return "页面已关闭，可能是：1) 用户手动关闭了浏览器 2) 会话超时 3) 程序异常导致页面关闭 4) 浏览器崩溃";
             }
+        }
+        
+        // 🔥 新增：浏览器进程单例锁问题
+        if (message.contains("singletonlock") || message.contains("processsingleton") || 
+            message.contains("profile corruption") || message.contains("multiple instances")) {
+            return "浏览器进程锁冲突，可能是：1) 有其他浏览器进程正在使用相同的用户数据目录 2) 上次浏览器进程异常退出留下锁文件 3) 系统资源不足导致进程清理失败 4) 多个任务同时启动相同用户的浏览器";
         }
         
         // 网络相关
@@ -257,6 +408,22 @@ public class UserLogUtil {
         String description = String.format("智能体执行成功 | AI：%s | 操作：%s", aiName, operation);
         String detailedResult = String.format("成功执行 | AI：%s | 操作：%s | 结果：%s", aiName, operation, result);
         sendLog(userId, description, operation, null, 1, startTime, detailedResult, url);
+    }
+    
+    /**
+     * 记录智能体成功执行日志并返回数据库ID
+     */
+    public static String sendAISuccessLogWithId(String userId, String aiName, String operation, String result, Long startTime, String url) {
+        String description = String.format("智能体执行成功 | AI：%s | 操作：%s", aiName, operation);
+        String detailedResult = String.format("成功执行 | AI：%s | 操作：%s | 结果：%s", aiName, operation, result);
+        return sendLogWithId(userId, description, operation, null, 1, startTime, detailedResult, url);
+    }
+    
+    /**
+     * 记录异常日志并返回数据库ID
+     */
+    public static String sendExceptionLogWithId(String userId, String description, String methodName, Exception e, String url) {
+        return sendLogWithId(userId, description, methodName, e, 0, System.currentTimeMillis(), null, url);
     }
     
     /**

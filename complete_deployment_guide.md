@@ -132,19 +132,6 @@ upload:
    url: http://localhost:8081/profile/
 ```
 
-修改 `cube-common/src/main/java/com/cube/common/config/RuoYiConfig.java`：
-``` java
-public static String getUploadPath()
-{
-    return "F:/AGI/chatfile";    与上面路径保持一致
-}
-```
-
-修改日志路径 `cube-admin/src/main/resources/logback.xml`：
-```xml
-<!-- 日志存放路径 -->
-<property name="log.path" value="F:/AGI/logs" />
-```
 
 ### 3.3 启动cube-admin服务
 ```bash

@@ -365,7 +365,7 @@ from wc_chrome_hotlink wck left join sys_user u on wck.user_name = u.user_name
             baidu_chat_id = #{baiduChatId},
             zhzd_chat_id = #{zhzdChatId}
    </insert>
-    <insert id="saveLogInfo" parameterType="java.util.Map">
+    <insert id="saveLogInfo" parameterType="java.util.Map" useGeneratedKeys="true" keyProperty="id">
         INSERT INTO wc_log_info (
             method_name,
             method_params,

@@ -14,7 +14,7 @@ import java.time.LocalDateTime;
 @Schema(name = "UserLogInfo", description = "日志信息")
 public class UserLogInfo {
     @Schema(description = "日志 ID")
-    private String id;
+    private Long id;
 
     @Schema(description = "用户 ID")
     private String userId;

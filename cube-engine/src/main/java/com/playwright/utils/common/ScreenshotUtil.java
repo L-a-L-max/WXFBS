@@ -74,29 +74,45 @@ public class ScreenshotUtil {
         try {
             // 检查页面是否已关闭
             if (page.isClosed()) {
+                System.out.println("⚠️ [截图工具] 页面已关闭，跳过截图: " + imageName);
                 return "";
             }
 
-            // 🔥 优化：截取全屏截图，增加超时设置
+            // 🔥 优化：添加唯一时间戳防止文件名冲突
+            String timestamp = String.valueOf(System.currentTimeMillis());
+            String uniqueImageName = timestamp + "_" + imageName;
+            
+            // 🔥 优化：截取全屏截图，增加超时设置和错误处理
             page.screenshot(new Page.ScreenshotOptions()
-                    .setPath(Paths.get(imageName))
+                    .setPath(Paths.get(uniqueImageName))
                     .setFullPage(true)
-                    .setTimeout(45000) // 45秒超时，防止长时间等待
+                    .setTimeout(30000) // 30秒超时，防止长时间等待
             );
-
+            
+            // 截图过程日志静默处理，减少终端噪音
 
             // 上传截图
-            String response = uploadFile(uploadUrl, imageName);
+            String response = uploadFile(uploadUrl, uniqueImageName);
             JSONObject jsonObject = JSONObject.parseObject(response);
 
             String url = jsonObject.get("url")+"";
-            Files.delete(Paths.get(imageName));
+            
+            // 🔥 优化：安全删除临时文件
+            try {
+                Files.delete(Paths.get(uniqueImageName));
+            } catch (Exception deleteError) {
+                System.err.println("⚠️ [截图工具] 删除临时文件失败: " + deleteError.getMessage());
+            }
+            
             return url;
         } catch (com.microsoft.playwright.impl.TargetClosedError e) {
+            System.out.println("⚠️ [截图工具] 目标页面已关闭: " + imageName);
             return "";
         } catch (com.microsoft.playwright.PlaywrightException e) {
+            System.err.println("❌ [截图工具] Playwright异常: " + e.getMessage());
             return "";
         } catch (Exception e) {
+            System.err.println("❌ [截图工具] 截图失败: " + e.getMessage());
             throw e;
         }
     }

@@ -44,34 +44,34 @@
 
 6. **修改配置文件**
 
-#### 6.1 配置小程序AppID
-编辑 `<项目根目录>/cube-mini/pages/login/index.vue` 文件，设置小程序AppID：
+#### 6.1 配置小程序AppID在后端配置文件
+编辑 `<项目根目录>/cube-admin/src/main/resources/application.yml` 文件，设置小程序AppID：
 前往https://mp.weixin.qq.com/登录获取AppSecret并进行配置
 ```
-// 用户注册开关
-				register: false,
-				globalConfig: getApp().globalData.config,
-				wxLoginForm: {
-					appId: "<APPID>",
-					appSecret: "<APPSECRET>",
+# 小程序配置
+mini:
+  appId:
+  appSecret: 
 ```
+然后重启后端服务
 
 #### 6.2 连接后端
-编辑 `<项目根目录>/cube-mini/config.js` 文件，修改baseUrl为自己的域名：
+编辑 `<项目根目录>/cube-mini/config.js` 文件，修改baseUrl和wsconfig.wsURL为自己的后端admin服务地址：
 ```
 // 应用全局配置
 module.exports = {
 	//生产
-	baseUrl: 'http://127.0.0.1:端口',
+	baseUrl: 'http://localhost:8081',
+	
+	// WebSocket配置
+	wsConfig: {
+		// WebSocket连接地址
+		wsUrl: 'ws://127.0.0.1:8081/websocket?clientId='
+	},
+
 ```
 
-#### 6.3 配置WebSocket地址
-编辑 `<项目根目录>/cube-mini/pages/work/index.vue` 文件，修改wsurl为自己的域名：
-```
-// 使用PC端的WebSocket连接方式
-			const wsUrl = `${process.env.VUE_APP_WS_API || 'ws://127.0.0.1:端口/websocket?clientId='}mypc-${this.userId}`;
-```
-#### 6.4 运行项目
+#### 6.3  运行项目
 打开微信开发者工具登录后，点击HBuilderX菜单栏「运行」→「运行到小程序模拟器」→「微信开发者工具-[cube-mini]」，即可在微信开发者工具运行项目。
 
 ### 常见问题

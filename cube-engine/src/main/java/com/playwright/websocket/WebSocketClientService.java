@@ -110,6 +110,25 @@ public class WebSocketClientService {
                     if (message.contains("AI排版")) {
                         aiLayoutPrompt(userInfoRequest);
                     }
+                    
+                    // 🔥 新增：处理登录会话清理消息
+                    if (message.contains("CLEANUP_LOGIN_SESSION")) {
+                        try {
+                            String userId = userInfoRequest.getUserId();
+                            String aiType = userInfoRequest.getAiType();
+                            
+                            System.out.println(String.format("🧹 [WebSocket] 收到登录会话清理请求 - 用户:%s AI:%s", userId, aiType));
+                            
+                            // 调用登录会话管理器清理用户会话
+                            LoginSessionManager loginSessionManager = SpringContextUtils.getBean(LoginSessionManager.class);
+                            if (loginSessionManager != null) {
+                                loginSessionManager.cleanupUserSessions(userId);
+                            }
+                        } catch (Exception e) {
+                            System.err.println("❌ [WebSocket] 处理登录会话清理消息失败: " + e.getMessage());
+                        }
+                        return;
+                    }
 
                     // 处理包含"使用F8S"的消息
                     if (message.contains("使用F8S") || message.contains("AI评分") || message.contains("AI排版")) {
@@ -308,6 +327,7 @@ public class WebSocketClientService {
                                 e.printStackTrace();
                             }
                         }, "获取知乎二维码", userInfoRequest.getUserId());
+                        return;
                     }
 
                     // 处理检查知乎登录状态的消息
@@ -621,8 +641,82 @@ public class WebSocketClientService {
      * 发送消息到WebSocket服务器
      */
     public void sendMessage(String message) {
-        if (webSocketClient != null && webSocketClient.isOpen()) {
-            webSocketClient.send(message);
+        sendMessageWithRetry(message, 3); // 默认重试3次
+    }
+    
+    /**
+     * 带重试机制的消息发送
+     * @param message 要发送的消息
+     * @param maxRetries 最大重试次数
+     */
+    private void sendMessageWithRetry(String message, int maxRetries) {
+        int retryCount = 0;
+        boolean sent = false;
+        
+        while (!sent && retryCount <= maxRetries) {
+            if (webSocketClient != null && webSocketClient.isOpen()) {
+                try {
+                    webSocketClient.send(message);
+                    // 静默发送，减少日志噪音
+                    sent = true;
+                } catch (Exception e) {
+                    retryCount++;
+                    // 压缩错误日志显示，并保存到数据库
+                    String errorMsg = e.getMessage();
+                    if (errorMsg != null && errorMsg.length() > 50) {
+                        errorMsg = errorMsg.substring(0, 50) + "...";
+                    }
+                    
+                    // 保存错误到数据库并获取ID
+                    String errorLogId = com.playwright.utils.common.UserLogUtil.sendExceptionLogWithId(
+                        "系统", "WebSocket发送失败", "sendMessageWithRetry", e, 
+                        "http://175.178.154.216:8080/saveLogInfo");
+                    
+                    System.err.println("❌ WebSocket发送失败[" + retryCount + "/" + (maxRetries + 1) + "]: " + errorMsg + 
+                        " | 已存储:数据库ID[" + (errorLogId != null ? errorLogId : "保存失败") + "]");
+                    
+                    if (retryCount <= maxRetries) {
+                        // 等待一段时间后重试
+                        try {
+                            Thread.sleep(1000 * retryCount); // 递增等待时间
+                        } catch (InterruptedException ie) {
+                            Thread.currentThread().interrupt();
+                            break;
+                        }
+                        System.out.println("🔄 [WebSocket] 准备第" + (retryCount + 1) + "次重试...");
+                    } else {
+                        System.err.println("❌ [WebSocket] 消息发送失败，已达到最大重试次数: " + maxRetries);
+                        // 尝试重连
+                        if (!reconnecting) {
+                            System.out.println("🔄 [WebSocket] 尝试重新连接...");
+                            // TODO: 实现重连逻辑
+                        }
+                    }
+                }
+            } else {
+                retryCount++;
+                System.err.println("❌ [WebSocket未连接] 第" + retryCount + "次尝试，连接状态: " + 
+                    (webSocketClient == null ? "null" : (webSocketClient.isOpen() ? "已连接" : "已断开")));
+                System.err.println("❌ [WebSocket未连接] 消息内容: " + message.substring(0, Math.min(200, message.length())));
+                
+                if (retryCount <= maxRetries) {
+                    // 如果连接断开，尝试重连并等待
+                    if (!reconnecting) {
+                        System.out.println("🔄 [WebSocket] 连接断开，尝试重新连接...");
+                        // TODO: 实现重连逻辑
+                    }
+                    
+                    // 等待重连
+                    try {
+                        Thread.sleep(2000 * retryCount); // 递增等待时间
+                    } catch (InterruptedException ie) {
+                        Thread.currentThread().interrupt();
+                        break;
+                    }
+                } else {
+                    System.err.println("❌ [WebSocket] 消息发送失败，连接无法建立，已达到最大重试次数: " + maxRetries);
+                }
+            }
         }
     }
 

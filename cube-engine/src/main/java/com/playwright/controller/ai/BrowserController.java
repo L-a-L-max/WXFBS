@@ -24,10 +24,12 @@ import org.springframework.web.bind.annotation.RestController;
 import java.io.IOException;
 import java.util.concurrent.ConcurrentHashMap;
 
-
+/**
+ * 浏览器控制器
+ */
 @RestController
 @RequestMapping("/api/browser")
-@Tag(name = "AI登录登录控制器", description = "AI登录相关接口")
+@Tag(name = "浏览器控制器", description = "处理浏览器相关操作")
 @Slf4j
 public class BrowserController {
 
@@ -60,6 +62,9 @@ public class BrowserController {
     @Autowired
     private TongYiUtil tongYiUtil;
 
+    @Autowired
+    private LoginSessionManager loginSessionManager;
+
     @Value("${cube.url}")
     private String url;
     public static final ConcurrentHashMap<String, String> loginMap = new ConcurrentHashMap<>();
@@ -84,40 +89,119 @@ public class BrowserController {
             webSocketClientService.sendMessage(jsonObjectTwo.toJSONString());
             return loginMap.get(key);
         }
+        
+        String sessionKey = userId + "-Metaso";
+        
+        // 🔥 智能会话复用：检查是否已有活跃会话（连续点击同一个AI）
+        LoginSessionManager.LoginSession existingSession = loginSessionManager.getSession(sessionKey);
+        if (existingSession != null) {
+            // 复用现有会话，直接重新截图
+            try {
+                Page page = existingSession.getPage();
+                String url = screenshotUtil.screenshotAndUpload(page, "checkMetasoLogin.png");
+                JSONObject jsonObject = new JSONObject();
+                jsonObject.put("url", url);
+                jsonObject.put("userId", userId);
+                jsonObject.put("type", "RETURN_PC_METASO_QRURL");
+                webSocketClientService.sendMessage(jsonObject.toJSONString());
+                return url;
+            } catch (Exception e) {
+                // 如果复用失败，继续创建新会话
+                System.err.println("⚠️ [Metaso登录] 复用会话失败，创建新会话: " + e.getMessage());
+            }
+        }
+        
+        // 创建新会话
         try (BrowserContext context = browserUtil.createPersistentBrowserContext(false, userId, "metaso")) {
             Page page = browserUtil.getOrCreatePage(context);
+            
+            // 注册新的登录会话
+            sessionKey = loginSessionManager.startLoginSession(userId, "Metaso", context, page);
+            
             page.navigate("https://metaso.cn/");
             Thread.sleep(2000);
+            
+            // 🔥 修复：先关闭可能存在的模态框（如"打开个人资料"弹窗）
+            try {
+                // 查找模态框的关闭按钮或背景遮罩
+                Locator modalBackdrop = page.locator(".MuiBackdrop-root, .MuiModal-backdrop");
+                if (modalBackdrop.count() > 0) {
+                    // 点击背景遮罩关闭模态框，或按ESC键
+                    page.keyboard().press("Escape");
+                    Thread.sleep(1000);
+                }
+            } catch (Exception e) {
+                // 如果没有模态框，忽略错误
+            }
+            
             String s = metasoUtil.checkLogin(page, userId);
-//            未登录
+            
+            // 未登录
             if (s == null) {
-//                每20秒刷新一次二维码
+                // 每20秒刷新一次二维码
                 for (int j = 0; j < 3; j++) {
-                    Locator loginLocator = page.locator("//button[contains(text(),'登录/注册')]");
-                    loginLocator.click();
-                    Thread.sleep(3000);
+                    // 检查会话是否仍然活跃
+                    if (!loginSessionManager.isSessionActive(sessionKey)) {
+                        return "session_terminated";
+                    }
+                    
+                    // 🔥 修复：使用更健壮的点击方式，强制点击
+                    try {
+                        Locator loginLocator = page.locator("//button[contains(text(),'登录/注册')]");
+                        // 等待按钮可见
+                        loginLocator.waitFor(new Locator.WaitForOptions().setTimeout(5000));
+                        // 使用JavaScript强制点击，绕过遮挡检查
+                        loginLocator.evaluate("el => el.click()");
+                        Thread.sleep(3000);
+                    } catch (Exception clickException) {
+                        System.err.println("❌ [Metaso登录] 点击登录按钮失败，尝试备用方案: " + clickException.getMessage());
+                        // 备用方案：直接导航到登录页面
+                        page.navigate("https://metaso.cn/login");
+                        Thread.sleep(3000);
+                    }
                     String url = screenshotUtil.screenshotAndUpload(page, "checkMetasoLogin.png");
                     JSONObject jsonObject = new JSONObject();
                     jsonObject.put("url", url);
                     jsonObject.put("userId", userId);
                     jsonObject.put("type", "RETURN_PC_METASO_QRURL");
-                    // 发送二维码URL
                     webSocketClientService.sendMessage(jsonObject.toJSONString());
+                    
                     for (int i = 0; i < 10; i++) {
-//                每两秒检擦一次登陆状态
+                        // 检查会话是否仍然活跃
+                        if (!loginSessionManager.isSessionActive(sessionKey)) {
+                            return "session_terminated";
+                        }
+                        
                         Thread.sleep(2000);
                         String userName = metasoUtil.checkLogin(page, userId);
                         if (userName != null) {
-                            loginMap.put(key, s);
+                            loginMap.put(key, userName);
+                            loginSessionManager.endLoginSession(sessionKey);
                             return userName;
                         }
                     }
                 }
+                loginSessionManager.endLoginSession(sessionKey);
+            } else {
+                JSONObject jsonObjectTwo = new JSONObject();
+                jsonObjectTwo.put("status", s);
+                jsonObjectTwo.put("userId", userId);
+                jsonObjectTwo.put("type", "RETURN_METASO_STATUS");
+                webSocketClientService.sendMessage(jsonObjectTwo.toJSONString());
+                loginMap.put(key, s);
+                loginSessionManager.endLoginSession(sessionKey);
+                return s;
             }
-            return s;
         } catch (Exception e) {
+            System.err.println("❌ [Metaso登录] 获取登录二维码失败: " + e.getMessage());
             throw e;
+        } finally {
+            // 🔥 确保无论如何都清理会话记录
+            if (sessionKey != null) {
+                loginSessionManager.endLoginSession(sessionKey);
+            }
         }
+        return "false";
     }
 
 
@@ -203,11 +287,36 @@ public class BrowserController {
     @Operation(summary = "获取通义千问登录二维码", description = "返回二维码截图 URL 或 false 表示失败")
     @GetMapping("/getTongYiQrCode")
     public String getTongYiQrCode(@Parameter(description = "用户唯一标识") @RequestParam("userId") String userId) throws IOException {
+        String sessionKey = userId + "-TongYi";
+        
+        // 🔥 智能会话复用：检查是否已有活跃会话（连续点击同一个AI）
+        LoginSessionManager.LoginSession existingSession = loginSessionManager.getSession(sessionKey);
+        if (existingSession != null) {
+            // 复用现有会话，直接重新截图
+            try {
+                Page page = existingSession.getPage();
+                String url = screenshotUtil.screenshotAndUpload(page, "checkTongYiLogin.png");
+                JSONObject jsonObject = new JSONObject();
+                jsonObject.put("url", url);
+                jsonObject.put("userId", userId);
+                jsonObject.put("type", "RETURN_PC_QW_QRURL");
+                webSocketClientService.sendMessage(jsonObject.toJSONString());
+                return url;
+            } catch (Exception e) {
+                System.err.println("⚠️ [通义千问登录] 复用会话失败，创建新会话: " + e.getMessage());
+            }
+        }
+        
+        // 创建新会话
         try (BrowserContext context = browserUtil.createPersistentBrowserContext(false, userId, "ty")) {
             Page page = browserUtil.getOrCreatePage(context);
+            
+            // 🔥 注册新的登录会话
+            sessionKey = loginSessionManager.startLoginSession(userId, "TongYi", context, page);
+            
             page.navigate("https://www.tongyi.com/");
             page.waitForTimeout(3000);
-//            Locator loginButton = page.locator("(//button[contains(text(),'立即登录')])");
+            
             Locator loginButton = page.locator("(//span[contains(text(),'立即登录')])[1]");
             if (loginButton.count() > 0 && loginButton.isVisible()) {
                 loginButton.click();
@@ -222,27 +331,48 @@ public class BrowserController {
                 jsonObject.put("type", "RETURN_PC_QW_QRURL");
                 webSocketClientService.sendMessage(jsonObject.toJSONString());
 
+                // 🔥 检查会话状态并等待登录
                 Locator userAvatarArea = page.locator(".popupUser");
-                userAvatarArea.waitFor(new Locator.WaitForOptions().setTimeout(60000));
-
-                page.waitForTimeout(3000);
-
-                if (userAvatarArea.count() > 0) {
-                    userAvatarArea.hover();
-                    page.waitForTimeout(1000);
-
-                    Locator userNameElement = page.locator(".userName");
-                    if (userNameElement.count() > 0 && userNameElement.isVisible()) {
-                        JSONObject jsonObjectTwo = new JSONObject();
-                        jsonObjectTwo.put("status", userNameElement.textContent());
-                        jsonObjectTwo.put("userId", userId);
-                        jsonObjectTwo.put("type", "RETURN_TY_STATUS");
-                        webSocketClientService.sendMessage(jsonObjectTwo.toJSONString());
+                try {
+                    userAvatarArea.waitFor(new Locator.WaitForOptions().setTimeout(60000));
+                    
+                    // 🔥 再次检查会话是否仍然活跃
+                    if (!loginSessionManager.isSessionActive(sessionKey)) {
+                        return "session_terminated";
                     }
+                    
+                    page.waitForTimeout(3000);
+
+                    if (userAvatarArea.count() > 0) {
+                        userAvatarArea.hover();
+                        page.waitForTimeout(1000);
+
+                        Locator userNameElement = page.locator(".userName");
+                        if (userNameElement.count() > 0 && userNameElement.isVisible()) {
+                            JSONObject jsonObjectTwo = new JSONObject();
+                            jsonObjectTwo.put("status", userNameElement.textContent());
+                            jsonObjectTwo.put("userId", userId);
+                            jsonObjectTwo.put("type", "RETURN_TY_STATUS");
+                            webSocketClientService.sendMessage(jsonObjectTwo.toJSONString());
+                            
+                            loginSessionManager.endLoginSession(sessionKey);
+                            return userNameElement.textContent();
+                        }
+                    }
+                } catch (Exception waitException) {
+                    System.err.println("❌ [通义千问登录] 等待登录超时: " + waitException.getMessage());
                 }
+                
+                loginSessionManager.endLoginSession(sessionKey);
             }
         } catch (Exception e) {
+            System.err.println("❌ [通义千问登录] 获取登录二维码失败: " + e.getMessage());
             throw e;
+        } finally {
+            // 🔥 确保无论如何都清理会话记录
+            if (sessionKey != null) {
+                loginSessionManager.endLoginSession(sessionKey);
+            }
         }
         return "false";
     }
@@ -275,7 +405,6 @@ public class BrowserController {
 
             // 如果检测到已登录，直接返回
             if (!"false".equals(loginStatus) && !"未登录".equals(loginStatus)) {
-                logMsgUtil.sendTaskLog("DeepSeek已登录，用户: " + loginStatus, userId, "DeepSeek");
                 loginMap.put(key, loginStatus);
                 return loginStatus;
             }
@@ -296,8 +425,34 @@ public class BrowserController {
     @Operation(summary = "获取DeepSeek登录二维码", description = "返回二维码截图 URL 或 false 表示失败")
     @GetMapping("/getDSQrCode")
     public String getDSQrCode(@Parameter(description = "用户唯一标识") @RequestParam("userId") String userId) throws Exception, IOException {
+        String sessionKey = userId + "-DeepSeek";
+        
+        // 🔥 智能会话复用：检查是否已有活跃会话（连续点击同一个AI）
+        LoginSessionManager.LoginSession existingSession = loginSessionManager.getSession(sessionKey);
+        if (existingSession != null) {
+            // 复用现有会话，直接重新截图
+            try {
+                Page page = existingSession.getPage();
+                String url = deepSeekUtil.waitAndGetQRCode(page, userId, screenshotUtil);
+                if (!"false".equals(url)) {
+                    JSONObject jsonObject = new JSONObject();
+                    jsonObject.put("url", url);
+                    jsonObject.put("userId", userId);
+                    jsonObject.put("type", "RETURN_PC_DEEPSEEK_QRURL");
+                    webSocketClientService.sendMessage(jsonObject.toJSONString());
+                    return url;
+                }
+            } catch (Exception e) {
+                System.err.println("⚠️ [DeepSeek登录] 复用会话失败，创建新会话: " + e.getMessage());
+            }
+        }
+        
+        // 创建新会话
         try (BrowserContext context = browserUtil.createPersistentBrowserContext(false, userId, "deepseek")) {
             Page page = browserUtil.getOrCreatePage(context);
+            
+            // 🔥 注册新的登录会话
+            sessionKey = loginSessionManager.startLoginSession(userId, "DeepSeek", context, page);
 
             // 首先检查当前登录状态
             String currentStatus = deepSeekUtil.checkLoginStatus(page, true);
@@ -308,8 +463,9 @@ public class BrowserController {
                 statusObject.put("userId", userId);
                 statusObject.put("type", "RETURN_DEEPSEEK_STATUS");
                 webSocketClientService.sendMessage(statusObject.toJSONString());
-                logMsgUtil.sendTaskLog("DeepSeek已登录，用户: " + currentStatus, userId, "DeepSeek");
 
+                // 结束会话
+                loginSessionManager.endLoginSession(sessionKey);
                 // 截图返回当前页面
                 return screenshotUtil.screenshotAndUpload(page, "deepseekLoggedIn.png");
             }
@@ -318,6 +474,9 @@ public class BrowserController {
             String url = deepSeekUtil.waitAndGetQRCode(page, userId, screenshotUtil);
 
             if (!"false".equals(url)) {
+                // 🔥 添加延迟确保截图完成
+                Thread.sleep(1000);
+                
                 // 发送二维码URL到WebSocket
                 JSONObject jsonObject = new JSONObject();
                 jsonObject.put("url", url);
@@ -328,6 +487,11 @@ public class BrowserController {
                 // 实时监测登录状态 - 最多等待60秒
                 int maxAttempts = 30; // 30次尝试
                 for (int i = 0; i < maxAttempts; i++) {
+                    // 🔥 检查会话是否仍然活跃
+                    if (!loginSessionManager.isSessionActive(sessionKey)) {
+                        return "session_terminated";
+                    }
+                    
                     // 每2秒检查一次登录状态（不刷新页面）
                     Thread.sleep(2000);
 
@@ -342,14 +506,19 @@ public class BrowserController {
                         jsonObjectTwo.put("type", "RETURN_DEEPSEEK_STATUS");
                         webSocketClientService.sendMessage(jsonObjectTwo.toJSONString());
 
-                        // 登录成功，跳出循环
-                        logMsgUtil.sendTaskLog("DeepSeek登录成功: " + loginStatus, userId, "DeepSeek");
+                        // 登录成功，结束会话
+                        loginSessionManager.endLoginSession(sessionKey);
                         break;
                     }
 
                     // 每5次尝试重新截图一次，可能二维码已更新
                     if (i % 5 == 4) {
                         try {
+                            // 🔥 再次检查会话状态
+                            if (!loginSessionManager.isSessionActive(sessionKey)) {
+                                return "session_terminated";
+                            }
+                            
                             url = screenshotUtil.screenshotAndUpload(page, "checkDeepSeekLogin.png");
                             JSONObject qrUpdateObject = new JSONObject();
                             qrUpdateObject.put("url", url);
@@ -361,12 +530,22 @@ public class BrowserController {
                         }
                     }
                 }
-
+                
+                // 监测结束，清理会话
+                loginSessionManager.endLoginSession(sessionKey);
                 return url;
             }
+            
+            // 获取二维码失败，清理会话
+            loginSessionManager.endLoginSession(sessionKey);
         } catch (Exception e) {
-            logMsgUtil.sendTaskLog("获取DeepSeek登录二维码失败: " + e.getMessage(), userId, "DeepSeek");
+            System.err.println("❌ [DeepSeek登录] 获取登录二维码失败: " + e.getMessage());
             throw e;
+        } finally {
+            // 🔥 确保无论如何都清理会话记录
+            if (sessionKey != null) {
+                loginSessionManager.endLoginSession(sessionKey);
+            }
         }
         return "false";
     }
@@ -598,11 +777,37 @@ public class BrowserController {
     @Operation(summary = "获取豆包登录二维码", description = "返回二维码截图 URL 或 false 表示失败")
     @GetMapping("/getDBQrCode")
     public String getDBQrCode(@Parameter(description = "用户唯一标识") @RequestParam("userId") String userId) throws InterruptedException, IOException {
+        String sessionKey = userId + "-Doubao";
+        
+        // 🔥 智能会话复用：检查是否已有活跃会话（连续点击同一个AI）
+        LoginSessionManager.LoginSession existingSession = loginSessionManager.getSession(sessionKey);
+        if (existingSession != null) {
+            // 复用现有会话，直接重新截图
+            try {
+                Page page = existingSession.getPage();
+                String url = screenshotUtil.screenshotAndUpload(page, "checkDBLogin.png");
+                JSONObject jsonObject = new JSONObject();
+                jsonObject.put("url", url);
+                jsonObject.put("userId", userId);
+                jsonObject.put("type", "RETURN_PC_DB_QRURL");
+                webSocketClientService.sendMessage(jsonObject.toJSONString());
+                return url;
+            } catch (Exception e) {
+                System.err.println("⚠️ [豆包登录] 复用会话失败，创建新会话: " + e.getMessage());
+            }
+        }
+        
+        // 创建新会话
         try (BrowserContext context = browserUtil.createPersistentBrowserContext(false, userId, "db")) {
             Page page = browserUtil.getOrCreatePage(context);
+            
+            // 🔥 注册新的登录会话
+            sessionKey = loginSessionManager.startLoginSession(userId, "Doubao", context, page);
+            
             page.navigate("https://www.doubao.com/chat/");
             Locator locator = page.locator("[data-testid='to_login_button']");
             Thread.sleep(2000);
+            
             if (locator.count() > 0 && locator.isVisible()) {
                 locator.click();
                 page.locator("[data-testid='qrcode_switcher']").evaluate("el => el.click()");
@@ -615,27 +820,50 @@ public class BrowserController {
                 jsonObject.put("userId", userId);
                 jsonObject.put("type", "RETURN_PC_DB_QRURL");
                 webSocketClientService.sendMessage(jsonObject.toJSONString());
-                Locator login = page.getByText("登录成功");
-                login.waitFor(new Locator.WaitForOptions().setTimeout(60000));
-                Thread.sleep(5000);
-                page.locator("[data-testid=\"chat_header_avatar_button\"]").click();
-                Thread.sleep(1000);
-                page.locator("[data-testid=\"chat_header_setting_button\"]").click();
-                Thread.sleep(1000);
-                Locator phone = page.locator(".nickName-cIcGuG");
-                if (phone.count() > 0) {
-                    String phoneText = phone.textContent();
-                    JSONObject jsonObjectTwo = new JSONObject();
-                    jsonObjectTwo.put("status", phoneText);
-                    jsonObjectTwo.put("userId", userId);
-                    jsonObjectTwo.put("type", "RETURN_DB_STATUS");
-                    webSocketClientService.sendMessage(jsonObjectTwo.toJSONString());
+                
+                try {
+                    Locator login = page.getByText("登录成功");
+                    login.waitFor(new Locator.WaitForOptions().setTimeout(60000));
+                    
+                    // 🔥 检查会话是否仍然活跃
+                    if (!loginSessionManager.isSessionActive(sessionKey)) {
+                        return "session_terminated";
+                    }
+                    
+                    Thread.sleep(5000);
+                    page.locator("[data-testid=\"chat_header_avatar_button\"]").click();
+                    Thread.sleep(1000);
+                    page.locator("[data-testid=\"chat_header_setting_button\"]").click();
+                    Thread.sleep(1000);
+                    Locator phone = page.locator(".nickName-cIcGuG");
+                    if (phone.count() > 0) {
+                        String phoneText = phone.textContent();
+                        JSONObject jsonObjectTwo = new JSONObject();
+                        jsonObjectTwo.put("status", phoneText);
+                        jsonObjectTwo.put("userId", userId);
+                        jsonObjectTwo.put("type", "RETURN_DB_STATUS");
+                        webSocketClientService.sendMessage(jsonObjectTwo.toJSONString());
+                        
+                        loginSessionManager.endLoginSession(sessionKey);
+                        return phoneText;
+                    }
+                } catch (Exception loginException) {
+                    System.err.println("❌ [豆包登录] 等待登录超时: " + loginException.getMessage());
                 }
-            }else{
-                UserLogUtil.sendExceptionLog(userId,"豆包登录按钮未找到","getDBQrCode",new RuntimeException("豆包登录按钮未找到"),url+"/saveLogInfo");
+                
+                loginSessionManager.endLoginSession(sessionKey);
+            } else {
+                System.err.println("❌ [豆包登录] 登录按钮未找到");
+                loginSessionManager.endLoginSession(sessionKey);
             }
         } catch (Exception e) {
+            System.err.println("❌ [豆包登录] 获取登录二维码失败: " + e.getMessage());
             throw e;
+        } finally {
+            // 🔥 确保无论如何都清理会话记录
+            if (sessionKey != null) {
+                loginSessionManager.endLoginSession(sessionKey);
+            }
         }
         return "false";
     }
@@ -692,8 +920,35 @@ public class BrowserController {
     @Operation(summary = "获取百度登录二维码", description = "返回二维码截图 URL 或 false 表示失败")
     @GetMapping("/getBaiduQrCode")
     public String getBaiduQrCode(@Parameter(description = "用户唯一标识") @RequestParam("userId") String userId) {
+        String sessionKey = userId + "-Baidu";
+        
+        // 🔥 智能会话复用：检查是否已有活跃会话（连续点击同一个AI）
+        LoginSessionManager.LoginSession existingSession = loginSessionManager.getSession(sessionKey);
+        if (existingSession != null) {
+            // 复用现有会话，直接重新截图
+            try {
+                Page page = existingSession.getPage();
+                String url = baiduUtil.waitAndGetQRCode(page, userId);
+                if (url != null && !url.trim().isEmpty()) {
+                    JSONObject jsonObject = new JSONObject();
+                    jsonObject.put("url", url);
+                    jsonObject.put("userId", userId);
+                    jsonObject.put("type", "RETURN_PC_BAIDU_QRURL");
+                    webSocketClientService.sendMessage(jsonObject.toJSONString());
+                    return url;
+                }
+            } catch (Exception e) {
+                System.err.println("⚠️ [百度AI登录] 复用会话失败，创建新会话: " + e.getMessage());
+            }
+        }
+        
+        // 创建新会话
         try (BrowserContext context = browserUtil.createPersistentBrowserContext(false, userId, "baidu")) {
             Page page = browserUtil.getOrCreatePage(context);
+            
+            // 🔥 注册新的登录会话
+            sessionKey = loginSessionManager.startLoginSession(userId, "Baidu", context, page);
+            
             // 首先检查当前登录状态
             String currentStatus = baiduUtil.checkBaiduLogin(page, true);
             if (!"false".equals(currentStatus)) {
@@ -703,7 +958,6 @@ public class BrowserController {
                 statusObject.put("userId", userId);
                 statusObject.put("type", "RETURN_BAIDU_STATUS");
                 webSocketClientService.sendMessage(statusObject.toJSONString());
-                logMsgUtil.sendTaskLog("百度AI已登录，用户: " + currentStatus, userId, "百度AI");
 
                 // 截图返回当前页面
                 String url = screenshotUtil.screenshotAndUpload(page, "getBaiduLoggedIn.png");
@@ -712,6 +966,8 @@ public class BrowserController {
                 qrUpdateObject.put("userId", userId);
                 qrUpdateObject.put("type", "RETURN_PC_BAIDU_QRURL");
                 webSocketClientService.sendMessage(qrUpdateObject.toJSONString());
+                
+                loginSessionManager.endLoginSession(sessionKey);
                 return url;
             }
 
@@ -729,6 +985,11 @@ public class BrowserController {
                 // 实时监测登录状态 - 最多等待60秒
                 int maxAttempts = 30; // 30次尝试，每次2秒
                 for (int i = 0; i < maxAttempts; i++) {
+                    // 🔥 检查会话是否仍然活跃
+                    if (!loginSessionManager.isSessionActive(sessionKey)) {
+                        return "session_terminated";
+                    }
+                    
                     Thread.sleep(2000);
 
                     // 检查当前页面登录状态
@@ -742,13 +1003,18 @@ public class BrowserController {
                         statusSuccessObject.put("type", "RETURN_BAIDU_STATUS");
                         webSocketClientService.sendMessage(statusSuccessObject.toJSONString());
 
-                        logMsgUtil.sendTaskLog("百度AI登录成功: " + loginStatus, userId, "百度AI");
+                        loginSessionManager.endLoginSession(sessionKey);
                         break;
                     }
 
                     // 每5次尝试重新截图一次，可能二维码已更新
                     if (i % 5 == 4) {
                         try {
+                            // 🔥 再次检查会话状态
+                            if (!loginSessionManager.isSessionActive(sessionKey)) {
+                                return "session_terminated";
+                            }
+                            
                             String newUrl = screenshotUtil.screenshotAndUpload(page, "getBaiduQrCode_refresh.png");
                             JSONObject qrRefreshObject = new JSONObject();
                             qrRefreshObject.put("url", newUrl);
@@ -756,13 +1022,14 @@ public class BrowserController {
                             qrRefreshObject.put("type", "RETURN_PC_BAIDU_QRURL");
                             webSocketClientService.sendMessage(qrRefreshObject.toJSONString());
                         } catch (Exception e) {
-                            UserLogUtil.sendExceptionLog(userId, "获取百度AI二维码", "getBaiduQrCode", e, logUrl + "/saveLogInfo");
+                            System.err.println("❌ [百度AI登录] 刷新二维码失败: " + e.getMessage());
                         }
                     }
                 }
+                
+                loginSessionManager.endLoginSession(sessionKey);
                 return url;
             } else {
-                logMsgUtil.sendTaskLog("获取百度AI二维码失败", userId, "百度AI");
                 // 发送失败消息到前端
                 JSONObject errorObject = new JSONObject();
                 errorObject.put("url", "");
@@ -770,11 +1037,13 @@ public class BrowserController {
                 errorObject.put("type", "RETURN_PC_BAIDU_QRURL");
                 errorObject.put("error", "获取二维码失败");
                 webSocketClientService.sendMessage(errorObject.toJSONString());
+                
+                loginSessionManager.endLoginSession(sessionKey);
                 return "false";
             }
 
         } catch (Exception e) {
-            logMsgUtil.sendTaskLog("获取百度AI二维码失败", userId, "百度AI");
+            System.err.println("❌ [百度AI登录] 获取登录二维码失败: " + e.getMessage());
             // 发送异常消息到前端
             JSONObject errorObject = new JSONObject();
             errorObject.put("url", "");
@@ -782,8 +1051,12 @@ public class BrowserController {
             errorObject.put("type", "RETURN_PC_BAIDU_QRURL");
             errorObject.put("error", "获取二维码异常");
             webSocketClientService.sendMessage(errorObject.toJSONString());
-            UserLogUtil.sendExceptionLog(userId, "获取百度AI二维码", "getBaiduQrCode", e, logUrl + "/saveLogInfo");
             return "false";
+        } finally {
+            // 🔥 确保无论如何都清理会话记录
+            if (sessionKey != null) {
+                loginSessionManager.endLoginSession(sessionKey);
+            }
         }
     }
 
@@ -791,133 +1064,18 @@ public class BrowserController {
      * 获取知乎登录二维码
      *
      * @param userId 用户唯一标识
-     * @return 二维码图片URL 或 "false"表示失败
-     */
-    @GetMapping("/getZhihuQrCode")
-    @Operation(summary = "获取知乎登录二维码", description = "返回二维码截图 URL 或 false 表示失败")
-    public String getZhihuQrCode(@Parameter(description = "用户唯一标识") @RequestParam("userId") String userId) {
-        try (BrowserContext context = browserUtil.createPersistentBrowserContext(false, userId, "zhzd")) {
-            Page page = browserUtil.getOrCreatePage(context);
-            page.navigate("https://www.zhihu.com/signin");
-            page.setDefaultTimeout(120000);
-            page.waitForLoadState();
-            Thread.sleep(3000);
-
-            // 首先检查是否已经登录
-            String currentUrl = page.url();
-            if (!currentUrl.contains("signin")) {
-                // 已经登录，直接返回登录状态
-                JSONObject loginStatusObject = new JSONObject();
-                loginStatusObject.put("status", "已登录");
-                loginStatusObject.put("userId", userId);
-                loginStatusObject.put("type", "RETURN_ZHZD_STATUS");
-                webSocketClientService.sendMessage(loginStatusObject.toJSONString());
-
-                return screenshotUtil.screenshotAndUpload(page, "zhihuAlreadyLogin.png");
             }
-
-            // 查找并点击扫码登录选项卡（如果存在）
-            try {
-                Locator qrCodeTab = page.locator("div[role='tab']:has-text('扫码登录'), .login-tab:has-text('扫码登录')");
-                if (qrCodeTab.count() > 0) {
-                    qrCodeTab.first().click();
-                    Thread.sleep(1000);
-                }
-            } catch (Exception e) {
-                UserLogUtil.sendExceptionLog(userId, "知乎切换扫码标签页", "getZhihuQrCode", e, url + "/saveLogInfo");
-            }
-
-            // 等待二维码加载
-            try {
-                Locator qrCodeArea = page.locator(".Qrcode, .qrcode, canvas, img[src*='qr']");
-                if (qrCodeArea.count() > 0) {
-                    qrCodeArea.first().waitFor(new Locator.WaitForOptions()
-                            .setState(WaitForSelectorState.VISIBLE)
-                            .setTimeout(10000));
-                } else {
-                }
-            } catch (Exception e) {
-                UserLogUtil.sendExceptionLog(userId, "知乎等待二维码加载", "getZhihuQrCode", e, url + "/saveLogInfo");
-
-            }
-
-            // 截图并上传二维码
-            String qrCodeUrl = screenshotUtil.screenshotAndUpload(page, "zhihuQrCode_" + userId + ".png");
-
-            // 发送二维码URL到前端
-            JSONObject qrCodeObject = new JSONObject();
-            qrCodeObject.put("url", qrCodeUrl);
-            qrCodeObject.put("userId", userId);
-            qrCodeObject.put("type", "RETURN_PC_ZHZD_QRURL");
-            webSocketClientService.sendMessage(qrCodeObject.toJSONString());
-
-
-            // 监听登录状态变化 - 最多等待60秒
-            int maxAttempts = 30; // 30次尝试，每次2秒
-            boolean loginSuccess = false;
-            String finalUserName = "false";
-
-            for (int i = 0; i < maxAttempts; i++) {
-
-
-                try {
-                    Thread.sleep(2000);
-                    // 检查当前页面URL是否已经跳转（登录成功）
-                    String nowUrl = page.url();
-
-                    if (!nowUrl.contains("signin") && !nowUrl.contains("login")) {
-
-                        // 验证登录状态并获取用户名
-                        String userName = zhiHuUtil.checkLoginStatus(page);
-                        if (!"false".equals(userName)) {
-                            finalUserName = userName;
-                            loginSuccess = true;
-                            break;
-                        } else {
-                        }
-                        break;
-                    }
-
-                    // 检查登录页面是否有错误提示或状态变化
-                    Locator errorMsg = page.locator(".Error, .error, .ErrorMessage, [class*='error']");
-                    if (errorMsg.count() > 0) {
-                        String errorText = errorMsg.first().textContent();
-                        if (errorText != null && !errorText.trim().isEmpty()) {
-                        }
-                    }
-                } catch (Exception e) {
-                    UserLogUtil.sendExceptionLog(userId, "知乎登录状态检查", "getZhihuQrCode", e, url + "/saveLogInfo");
-                }
-            }
-
-            // 发送最终的登录状态
-            if (loginSuccess) {
-                JSONObject loginSuccessObject = new JSONObject();
-                loginSuccessObject.put("status", finalUserName);
-                loginSuccessObject.put("userId", userId);
-                loginSuccessObject.put("type", "RETURN_ZHZD_STATUS");
-                webSocketClientService.sendMessage(loginSuccessObject.toJSONString());
-
-            } else {
-                // 超时未登录，发送超时提示
-                JSONObject timeoutObject = new JSONObject();
-                timeoutObject.put("status", "timeout");
-                timeoutObject.put("userId", userId);
-                timeoutObject.put("type", "RETURN_ZHZD_LOGIN_TIMEOUT");
-                webSocketClientService.sendMessage(timeoutObject.toJSONString());
-
-            }
-
-            return qrCodeUrl;
-
         } catch (Exception e) {
-            UserLogUtil.sendExceptionLog(userId, "获取知乎二维码", "getZhihuQrCode", e, url + "/saveLogInfo");
+            System.err.println("❌ [知乎登录] 切换扫码标签页失败: " + e.getMessage());
         }
-        return "false";
-    }
 
-
-    /**
+        // 等待二维码加载
+        try {
+            Locator qrCodeArea = page.locator(".Qrcode, .qrcode, canvas, img[src*='qr']");
+            if (qrCodeArea.count() > 0) {
+                qrCodeArea.first().waitFor(new Locator.WaitForOptions()
+                        .setState(WaitForSelectorState.VISIBLE)
+                        .setTimeout(10000));
      * 检查知乎登录状态
      *
      * @param userId 用户唯一标识
@@ -957,6 +1115,211 @@ public class BrowserController {
 
         } catch (Exception e) {
             throw e;
+        }
+    }
+
+    /**
+     * 获取知乎登录二维码
+     *
+     * @param userId 用户唯一标识
+     * @return 二维码图片URL 或 "false"表示失败
+     */
+    @Operation(summary = "获取知乎登录二维码", description = "返回二维码截图 URL 或 false 表示失败")
+    @GetMapping("/getZhihuQrCode")
+    public String getZhihuQrCode(@Parameter(description = "用户唯一标识") @RequestParam("userId") String userId) throws Exception {
+        String sessionKey = userId + "-知乎直答";
+        
+        // 🔥 智能会话复用：检查是否已有活跃会话（连续点击同一个AI）
+        LoginSessionManager.LoginSession existingSession = loginSessionManager.getSession(sessionKey);
+        if (existingSession != null) {
+            // 复用现有会话，直接重新截图
+            try {
+                Page page = existingSession.getPage();
+                String url = screenshotUtil.screenshotAndUpload(page, "zhihu_qrcode_" + userId);
+                if (url != null && !url.isEmpty() && !"false".equals(url)) {
+                    JSONObject jsonObject = new JSONObject();
+                    jsonObject.put("url", url);
+                    jsonObject.put("userId", userId);
+                    jsonObject.put("type", "RETURN_PC_ZHZD_QRURL");
+                    webSocketClientService.sendMessage(jsonObject.toJSONString());
+                    return url;
+                }
+            } catch (Exception e) {
+                System.err.println("⚠️ [知乎登录] 复用会话失败，创建新会话: " + e.getMessage());
+            }
+        }
+        
+        // 创建新会话
+        try (BrowserContext context = browserUtil.createPersistentBrowserContext(false, userId, "zhzd")) {
+            Page page = browserUtil.getOrCreatePage(context);
+            
+            // 🔥 注册新的登录会话
+            sessionKey = loginSessionManager.startLoginSession(userId, "知乎直答", context, page);
+
+            try {
+                // 导航到知乎登录页面
+                page.navigate("https://www.zhihu.com/signin");
+                page.waitForLoadState();
+                Thread.sleep(3000); // 增加等待时间
+
+                // 🔥 在关键步骤检查会话是否仍然活跃
+                if (!loginSessionManager.isSessionActive(sessionKey)) {
+                    return "session_terminated";
+                }
+
+                // 尝试点击扫码登录选项卡（如果存在）
+                try {
+                    Locator qrTab = page.locator("div[role='tab']:has-text('扫码登录'), .SignFlow-tab:has-text('扫码'), [data-testid='qr-tab']").first();
+                    if (qrTab.count() > 0 && qrTab.isVisible()) {
+                        qrTab.click();
+                        Thread.sleep(2000);
+                    }
+                } catch (Exception e) {
+                    // 继续查找二维码
+                }
+
+                // 查找二维码区域 - 使用更全面的选择器
+                String[] qrSelectors = {
+                    ".SignFlow-qrcode img",
+                    ".qr-code img", 
+                    "[class*='qrcode'] img",
+                    ".SignFlow-qrcode canvas",
+                    ".qr-code canvas",
+                    "[class*='qrcode'] canvas",
+                    "img[alt*='二维码']",
+                    "canvas[class*='qr']",
+                    ".signin-qr img",
+                    ".signin-qr canvas"
+                };
+                
+                Locator qrCodeArea = null;
+                String usedSelector = "";
+                
+                for (String selector : qrSelectors) {
+                    Locator element = page.locator(selector).first();
+                    if (element.count() > 0) {
+                        qrCodeArea = element;
+                        usedSelector = selector;
+                        break;
+                    }
+                }
+                
+                if (qrCodeArea != null && qrCodeArea.count() > 0) {
+                    try {
+                        // 等待二维码加载
+                        qrCodeArea.waitFor(new Locator.WaitForOptions()
+                                .setState(WaitForSelectorState.VISIBLE)
+                                .setTimeout(10000));
+                        
+                        // 🔥 再次检查会话状态
+                        if (!loginSessionManager.isSessionActive(sessionKey)) {
+                            return "session_terminated";
+                        }
+                        
+                        // 截图整个页面（参考其他AI的做法）
+                        String screenshotPath = screenshotUtil.screenshotAndUpload(page, "zhzd_qrcode_" + userId + ".png");
+                        
+                        if (screenshotPath != null && !screenshotPath.isEmpty() && !"null".equals(screenshotPath)) {
+                            
+                            // 🔥 参考豆包的做法，立即发送WebSocket消息
+                            JSONObject jsonObject = new JSONObject();
+                            jsonObject.put("url", screenshotPath);
+                            jsonObject.put("userId", userId);
+                            jsonObject.put("type", "RETURN_PC_ZHZD_QRURL");
+                            webSocketClientService.sendMessage(jsonObject.toJSONString());
+                            
+                            // 🔥 参考豆包的做法，等待登录状态变化
+                            try {
+                                // 等待登录成功或页面跳转 (60秒超时)
+                                boolean loginSuccess = false;
+                                long startTime = System.currentTimeMillis();
+                                long timeout = 60000; // 60秒超时
+                                
+                                while (System.currentTimeMillis() - startTime < timeout) {
+                                    // 🔥 检查会话是否仍然活跃
+                                    if (!loginSessionManager.isSessionActive(sessionKey)) {
+                                        return "session_terminated";
+                                    }
+                                    
+                                    // 检查是否已经跳转到知乎主页或其他页面
+                                    String currentUrl = page.url();
+                                    if (!currentUrl.contains("signin") && !currentUrl.contains("login")) {
+                                        loginSuccess = true;
+                                        break;
+                                    }
+                                    
+                                    // 检查是否有登录成功的元素
+                                    try {
+                                        if (page.locator(".Avatar.AppHeader-profileAvatar, [class*='Avatar'][class*='AppHeader-profileAvatar']").count() > 0) {
+                                            loginSuccess = true;
+                                            break;
+                                        }
+                                    } catch (Exception e) {
+                                        // 继续等待
+                                    }
+                                    
+                                    Thread.sleep(2000); // 每2秒检查一次
+                                }
+                                
+                                if (loginSuccess) {
+                                    // 获取用户信息
+                                    String userName = zhiHuUtil.checkLoginStatus(page);
+                                    if (!"false".equals(userName) && !"未登录".equals(userName)) {
+                                        
+                                        // 发送登录状态消息
+                                        JSONObject statusObject = new JSONObject();
+                                        statusObject.put("status", userName);
+                                        statusObject.put("userId", userId);
+                                        statusObject.put("type", "RETURN_ZHZD_STATUS");
+                                        webSocketClientService.sendMessage(statusObject.toJSONString());
+                                        
+                                        loginSessionManager.endLoginSession(sessionKey);
+                                        return userName;
+                                    }
+                                }
+                                
+                            } catch (Exception loginException) {
+                                System.err.println("❌ [知乎登录] 等待登录异常: " + loginException.getMessage());
+                            }
+                            
+                            // 🔥 登录完成或超时后结束会话
+                            loginSessionManager.endLoginSession(sessionKey);
+                            return screenshotPath;
+                        } else {
+                            System.err.println("❌ [知乎登录] 页面截图失败，返回: " + screenshotPath);
+                        }
+                    } catch (Exception e) {
+                        System.err.println("❌ [知乎登录] 二维码截图异常: " + e.getMessage());
+                    }
+                } else {
+                    System.err.println("❌ [知乎登录] 未找到二维码元素，尝试截图整个页面进行调试");
+                    // 调试：截图整个页面
+                    try {
+                        screenshotUtil.screenshotAndUpload(page, "zhzd_debug_" + userId);
+                    } catch (Exception e) {
+                        // 静默处理调试截图失败
+                    }
+                }
+
+                // 🔥 登录失败也要结束会话
+                loginSessionManager.endLoginSession(sessionKey);
+                return "false";
+
+            } catch (Exception e) {
+                // 🔥 异常时也要结束会话
+                loginSessionManager.endLoginSession(sessionKey);
+                System.err.println("❌ [知乎登录] 获取登录二维码失败: " + e.getMessage());
+                throw e;
+            }
+
+        } catch (Exception e) {
+            System.err.println("❌ [知乎登录] 获取登录二维码失败: " + e.getMessage());
+            throw e;
+        } finally {
+            // 🔥 确保无论如何都清理会话记录
+            if (sessionKey != null) {
+                loginSessionManager.endLoginSession(sessionKey);
+            }
         }
     }
 }
