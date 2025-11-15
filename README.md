@@ -111,5 +111,5 @@ java -jar NB-U3W.jar
    - 开始体验U3W-AI 主机的强大功能！
 
 
-## **进阶** [优立方完整部署说明](complete_deployment_guide.md) - **一站式全面部署，拥有全套前后端系统**
+## 【**进阶**】 [优立方完整部署说明](complete_deployment_guide.md) - **一站式全面部署，拥有全套前后端系统**
 
