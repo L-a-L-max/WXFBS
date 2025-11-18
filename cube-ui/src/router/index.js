@@ -27,6 +27,11 @@ import Layout from '@/layout'
 
 // 公共路由
 export const constantRoutes = [
+    {
+        path:'/',
+        redirect: '/loginpwd'  // 关键修改：重定向到密码登录页面
+    },
+    
   {
     path: '/redirect',
     component: Layout,
