@@ -69,11 +69,17 @@ public class OfficeAccountLogin {
             InputStream inputStream = request.getInputStream();
             Map<String, Object> map = XmlUtil.parseXML(inputStream);
 
+            System.out.println("========== 收到微信推送事件 ==========");
+            System.out.println("完整事件数据: " + map);
+            
             String userOpenId = (String) map.get("FromUserName");
             String toUserName = (String) map.get("ToUserName");
             String msgType = (String) map.get("MsgType");
             String msgId = (String) map.get("MsgId");
             String createTimeStr = (String) map.get("CreateTime");
+            
+            System.out.println("用户OpenID: " + userOpenId);
+            System.out.println("消息类型: " + msgType);
             
             Long createTime = null;
             if (createTimeStr != null) {
@@ -92,14 +98,26 @@ public class OfficeAccountLogin {
             JSONObject fansInfoRes = RestUtils.get(fansInfoUrl);
             String unionId = (String) fansInfoRes.get("unionid");
             
+            System.out.println("用户UnionID: " + unionId);
+            
             String event = (String) map.get("Event");
+            String ticket = (String) map.get("Ticket");
+            
+            System.out.println("事件类型: " + event);
+            System.out.println("Ticket: " + ticket);
+            
             if("subscribe".equals(event)){
-                redisUtil.set(map.get("Ticket")+"_unionid",unionId,300);
-                redisUtil.set(map.get("Ticket")+"_openid",userOpenId,300);
+                System.out.println("处理关注事件，保存到Redis: " + ticket);
+                redisUtil.set(ticket+"_unionid",unionId,300);
+                redisUtil.set(ticket+"_openid",userOpenId,300);
+                System.out.println("Redis保存成功");
             }else if("SCAN".equals(event)){
-                redisUtil.set(map.get("Ticket")+"_unionid",unionId,300);
-                redisUtil.set(map.get("Ticket")+"_openid",userOpenId,300);
+                System.out.println("处理扫码事件，保存到Redis: " + ticket);
+                redisUtil.set(ticket+"_unionid",unionId,300);
+                redisUtil.set(ticket+"_openid",userOpenId,300);
+                System.out.println("Redis保存成功");
             }
+            System.out.println("========== 事件处理完成 ==========");
             
             // 处理普通消息（文本、图片、语音、视频、小视频、地理位置、链接）
             if ("text".equals(msgType) || "image".equals(msgType) || "voice".equals(msgType) || 

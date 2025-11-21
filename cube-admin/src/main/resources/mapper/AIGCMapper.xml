@@ -351,19 +351,18 @@ from wc_chrome_hotlink wck left join sys_user u on wck.user_name = u.user_name
                 #{tyChatId}, #{deepseekChatId}, #{maxChatId}, #{metasoChatId}, #{kimiChatId}, #{baiduChatId},
                 #{zhzdChatId}, #{chatId})
         ON DUPLICATE KEY UPDATE
-            userPrompt = #{userPrompt},
-            data = #{data},
-            create_time = now(),
-            tone_chat_id = #{toneChatId},
-            ybds_chat_id = #{ybDsChatId},
-            db_chat_id = #{dbChatId},
-            ty_chat_id = #{tyChatId},
-            deepseek_chat_id = #{deepseekChatId},
-            max_chat_id = #{maxChatId},
-            metaso_chat_id = #{metasoChatId},
-            kimi_chat_id = #{kimiChatId},
-            baidu_chat_id = #{baiduChatId},
-            zhzd_chat_id = #{zhzdChatId}
+            userPrompt = VALUES(userPrompt),
+            data = VALUES(data),
+            tone_chat_id = VALUES(tone_chat_id),
+            ybds_chat_id = VALUES(ybds_chat_id),
+            db_chat_id = VALUES(db_chat_id),
+            ty_chat_id = VALUES(ty_chat_id),
+            deepseek_chat_id = VALUES(deepseek_chat_id),
+            max_chat_id = VALUES(max_chat_id),
+            metaso_chat_id = VALUES(metaso_chat_id),
+            kimi_chat_id = VALUES(kimi_chat_id),
+            baidu_chat_id = VALUES(baidu_chat_id),
+            zhzd_chat_id = VALUES(zhzd_chat_id)
    </insert>
     <insert id="saveLogInfo" parameterType="java.util.Map" useGeneratedKeys="true" keyProperty="id">
         INSERT INTO wc_log_info (

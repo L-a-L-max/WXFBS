@@ -1,0 +1,226 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cube.system.mapper.AiAgentMapper">
+    
+    <resultMap type="AiAgent" id="AiAgentResult">
+        <result property="id"                   column="id"                   />
+        <result property="agentName"            column="agent_name"           />
+        <result property="agentCode"            column="agent_code"           />
+        <result property="agentIcon"            column="agent_icon"           />
+        <result property="backendInterface"     column="backend_interface"    />
+        <result property="loginCheckApi"        column="login_check_api"      />
+        <result property="loginQrcodeApi"       column="login_qrcode_api"     />
+        <result property="chatApi"              column="chat_api"             />
+        <result property="websocketCheckType"   column="websocket_check_type" />
+        <result property="websocketQrcodeType"  column="websocket_qrcode_type"/>
+        <result property="websocketChatType"    column="websocket_chat_type"  />
+        <result property="agentStatus"          column="agent_status"         />
+        <result property="onlineStatus"         column="online_status"        />
+        <result property="sortOrder"            column="sort_order"           />
+        <result property="isGlobal"             column="is_global"            />
+        <result property="configJson"           column="config_json"          />
+        <result property="description"          column="description"          />
+        <result property="createBy"             column="create_by"            />
+        <result property="createTime"           column="create_time"          />
+        <result property="updateBy"             column="update_by"            />
+        <result property="updateTime"           column="update_time"          />
+        <result property="remark"               column="remark"               />
+    </resultMap>
+
+    <sql id="selectAiAgentVo">
+        select id, agent_name, agent_code, agent_icon, backend_interface, login_check_api, login_qrcode_api, chat_api, websocket_check_type, websocket_qrcode_type, websocket_chat_type, agent_status, online_status, sort_order, is_global, config_json, description, create_by, create_time, update_by, update_time, remark from ai_agent
+    </sql>
+
+    <select id="selectAiAgentList" parameterType="AiAgent" resultMap="AiAgentResult">
+        <include refid="selectAiAgentVo"/>
+        <where>  
+            <if test="agentName != null  and agentName != ''"> and agent_name like concat('%', #{agentName}, '%')</if>
+            <if test="agentCode != null  and agentCode != ''"> and agent_code = #{agentCode}</if>
+            <if test="agentStatus != null "> and agent_status = #{agentStatus}</if>
+            <if test="onlineStatus != null "> and online_status = #{onlineStatus}</if>
+            <if test="isGlobal != null "> and is_global = #{isGlobal}</if>
+        </where>
+        order by sort_order asc, create_time desc
+    </select>
+    
+    <select id="selectAiAgentById" parameterType="Long" resultMap="AiAgentResult">
+        <include refid="selectAiAgentVo"/>
+        where id = #{id}
+    </select>
+
+    <select id="selectAiAgentByCode" parameterType="String" resultMap="AiAgentResult">
+        <include refid="selectAiAgentVo"/>
+        where agent_code = #{agentCode}
+    </select>
+
+    <select id="selectActiveAgentList" resultMap="AiAgentResult">
+        <include refid="selectAiAgentVo"/>
+        where agent_status = 1
+        order by sort_order asc, create_time desc
+    </select>
+
+    <select id="selectUserAvailableAgents" resultMap="AiAgentResult">
+        SELECT DISTINCT a.* 
+        FROM ai_agent a
+        WHERE a.agent_status = 1 
+          AND (
+            -- 情况1：全局可用的AI
+            a.is_global = 1
+            -- 情况2：用户有明确的允许权限
+            OR EXISTS (
+                SELECT 1 FROM ai_agent_permission p 
+                WHERE p.agent_id = a.id 
+                  AND p.permission_type = 2 
+                  AND p.target_id = #{userId} 
+                  AND p.permission_action = 1
+            )
+            -- 情况3：用户的角色有明确的允许权限
+            <if test="roleIds != null and roleIds.size() > 0">
+            OR EXISTS (
+                SELECT 1 FROM ai_agent_permission p 
+                WHERE p.agent_id = a.id 
+                  AND p.permission_type = 1 
+                  AND p.target_id IN 
+                  <foreach collection="roleIds" item="roleId" open="(" separator="," close=")">
+                      #{roleId}
+                  </foreach>
+                  AND p.permission_action = 1
+            )
+            </if>
+          )
+          -- 排除用户有明确禁止权限的AI（用户权限优先级最高）
+          AND NOT EXISTS (
+              SELECT 1 FROM ai_agent_permission p 
+              WHERE p.agent_id = a.id 
+                AND p.permission_type = 2 
+                AND p.target_id = #{userId} 
+                AND p.permission_action = 0
+          )
+          -- 排除角色有明确禁止权限的AI（如果用户没有明确允许权限）
+          <if test="roleIds != null and roleIds.size() > 0">
+          AND NOT EXISTS (
+              SELECT 1 FROM ai_agent_permission p 
+              WHERE p.agent_id = a.id 
+                AND p.permission_type = 1 
+                AND p.target_id IN 
+                <foreach collection="roleIds" item="roleId" open="(" separator="," close=")">
+                    #{roleId}
+                </foreach>
+                AND p.permission_action = 0
+                -- 只有在用户没有明确允许权限时，角色禁止才生效
+                AND NOT EXISTS (
+                    SELECT 1 FROM ai_agent_permission up 
+                    WHERE up.agent_id = a.id 
+                      AND up.permission_type = 2 
+                      AND up.target_id = #{userId} 
+                      AND up.permission_action = 1
+                )
+          )
+          </if>
+        ORDER BY a.sort_order ASC, a.create_time DESC
+    </select>
+
+    <select id="checkAgentCodeUnique" parameterType="String" resultMap="AiAgentResult">
+        <include refid="selectAiAgentVo"/>
+        where agent_code = #{agentCode} limit 1
+    </select>
+        
+    <insert id="insertAiAgent" parameterType="AiAgent" useGeneratedKeys="true" keyProperty="id">
+        insert into ai_agent
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="agentName != null and agentName != ''">agent_name,</if>
+            <if test="agentCode != null and agentCode != ''">agent_code,</if>
+            <if test="agentIcon != null">agent_icon,</if>
+            <if test="backendInterface != null">backend_interface,</if>
+            <if test="loginCheckApi != null">login_check_api,</if>
+            <if test="loginQrcodeApi != null">login_qrcode_api,</if>
+            <if test="chatApi != null">chat_api,</if>
+            <if test="websocketCheckType != null">websocket_check_type,</if>
+            <if test="websocketQrcodeType != null">websocket_qrcode_type,</if>
+            <if test="websocketChatType != null">websocket_chat_type,</if>
+            <if test="agentStatus != null">agent_status,</if>
+            <if test="onlineStatus != null">online_status,</if>
+            <if test="sortOrder != null">sort_order,</if>
+            <if test="isGlobal != null">is_global,</if>
+            <if test="configJson != null">config_json,</if>
+            <if test="description != null">description,</if>
+            <if test="createBy != null">create_by,</if>
+            <if test="remark != null">remark,</if>
+            create_time
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="agentName != null and agentName != ''">#{agentName},</if>
+            <if test="agentCode != null and agentCode != ''">#{agentCode},</if>
+            <if test="agentIcon != null">#{agentIcon},</if>
+            <if test="backendInterface != null">#{backendInterface},</if>
+            <if test="loginCheckApi != null">#{loginCheckApi},</if>
+            <if test="loginQrcodeApi != null">#{loginQrcodeApi},</if>
+            <if test="chatApi != null">#{chatApi},</if>
+            <if test="websocketCheckType != null">#{websocketCheckType},</if>
+            <if test="websocketQrcodeType != null">#{websocketQrcodeType},</if>
+            <if test="websocketChatType != null">#{websocketChatType},</if>
+            <if test="agentStatus != null">#{agentStatus},</if>
+            <if test="onlineStatus != null">#{onlineStatus},</if>
+            <if test="sortOrder != null">#{sortOrder},</if>
+            <if test="isGlobal != null">#{isGlobal},</if>
+            <if test="configJson != null">#{configJson},</if>
+            <if test="description != null">#{description},</if>
+            <if test="createBy != null">#{createBy},</if>
+            <if test="remark != null">#{remark},</if>
+            sysdate()
+        </trim>
+    </insert>
+
+    <update id="updateAiAgent" parameterType="AiAgent">
+        update ai_agent
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="agentName != null and agentName != ''">agent_name = #{agentName},</if>
+            <if test="agentCode != null and agentCode != ''">agent_code = #{agentCode},</if>
+            <if test="agentIcon != null">agent_icon = #{agentIcon},</if>
+            <if test="backendInterface != null">backend_interface = #{backendInterface},</if>
+            <if test="loginCheckApi != null">login_check_api = #{loginCheckApi},</if>
+            <if test="loginQrcodeApi != null">login_qrcode_api = #{loginQrcodeApi},</if>
+            <if test="chatApi != null">chat_api = #{chatApi},</if>
+            <if test="websocketCheckType != null">websocket_check_type = #{websocketCheckType},</if>
+            <if test="websocketQrcodeType != null">websocket_qrcode_type = #{websocketQrcodeType},</if>
+            <if test="websocketChatType != null">websocket_chat_type = #{websocketChatType},</if>
+            <if test="agentStatus != null">agent_status = #{agentStatus},</if>
+            <if test="onlineStatus != null">online_status = #{onlineStatus},</if>
+            <if test="sortOrder != null">sort_order = #{sortOrder},</if>
+            <if test="isGlobal != null">is_global = #{isGlobal},</if>
+            <if test="configJson != null">config_json = #{configJson},</if>
+            <if test="description != null">description = #{description},</if>
+            <if test="updateBy != null">update_by = #{updateBy},</if>
+            <if test="remark != null">remark = #{remark},</if>
+            update_time = sysdate()
+        </trim>
+        where id = #{id}
+    </update>
+
+    <delete id="deleteAiAgentById" parameterType="Long">
+        delete from ai_agent where id = #{id}
+    </delete>
+
+    <delete id="deleteAiAgentByIds" parameterType="String">
+        delete from ai_agent where id in 
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+    <update id="updateOnlineStatus">
+        update ai_agent set online_status = #{onlineStatus}, update_time = sysdate()
+        where agent_code = #{agentCode}
+    </update>
+
+    <update id="batchUpdateOnlineStatus">
+        update ai_agent set online_status = #{onlineStatus}, update_time = sysdate()
+        where agent_code in
+        <foreach collection="agentCodes" item="agentCode" open="(" separator="," close=")">
+            #{agentCode}
+        </foreach>
+    </update>
+
+</mapper>

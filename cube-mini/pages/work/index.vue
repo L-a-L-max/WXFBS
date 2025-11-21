@@ -2,7 +2,7 @@
 	<view class="console-container">
 		<!-- 顶部固定区域 -->
 		<view class="header-fixed">
-			<view class="header-content" :style="{ paddingTop: statusBarHeight + 'px' }">
+			<view class="header-content" :style="{ paddingTop: (statusBarHeight - 39) + 'px' }">
 				<text class="header-title">AI控制台</text>
 				<view class="header-actions">
 					<view class="action-btn refresh-btn" @tap="refreshAiStatus">
@@ -29,7 +29,7 @@
 		<!-- 主体滚动区域 -->
 		<scroll-view class="main-scroll" scroll-y :scroll-into-view="scrollIntoView" :enhanced="true" :bounces="true"
 			:show-scrollbar="false" :fast-deceleration="false"
-			:style="{ height: 'calc(100vh - ' + (statusBarHeight + 100) + 'px)', paddingTop: (statusBarHeight + 60) + 'px' }">
+			:style="{ height: 'calc(100vh - ' + (statusBarHeight + 147) + 'px)', paddingTop: '49px' }">
 
 			<!-- AI配置区块 -->
 			<view class="section-block" id="ai-config">
@@ -42,64 +42,78 @@
 				<view class="section-content" v-if="sectionExpanded.aiConfig">
 					<view class="ai-grid">
 						<view v-for="(ai, index) in aiList" :key="index" class="ai-card"
-							:class="[ai.enabled && isAiLoginEnabled(ai) ? 'ai-enabled' : '', !isAiLoginEnabled(ai) ? 'ai-disabled' : '']">
+							:class="[ai.enabled && isAiLoginEnabled(ai) && ai.onlineStatus ? 'ai-enabled' : '', (!isAiLoginEnabled(ai) || !ai.onlineStatus) ? 'ai-disabled' : '']">
+							
+							<!-- 离线状态遮罩层 - 优先级最高 -->
+							<view v-if="!ai.onlineStatus" class="card-offline-overlay">
+								<view class="card-offline-message">
+									<text class="overlay-icon">⚠️</text>
+									<text class="overlay-text">AI已离线</text>
+									<text class="overlay-hint">管理员已将此AI设置为离线状态</text>
+								</view>
+							</view>
+							
+							<!-- 未登录遮罩层 - 只在在线但未登录时显示 -->
+							<view v-else-if="!isAiLoginEnabled(ai) && !isAiInLoading(ai)" class="card-login-overlay">
+								<view class="card-login-message">
+									<text class="overlay-icon">🔒</text>
+									<text class="overlay-text">未登录</text>
+									<text class="overlay-hint">请先登录此AI账号</text>
+								</view>
+							</view>
+							
 							<view class="ai-header">
-								<!-- <image class="ai-avatar" :src="ai.avatar" mode="aspectFill" :class="[!isAiLoginEnabled(ai) ? 'avatar-disabled' : '']"></image> -->
+								<!-- <image class="ai-avatar" :src="ai.avatar" mode="aspectFill" :class="[(!isAiLoginEnabled(ai) || !ai.onlineStatus) ? 'avatar-disabled' : '']"></image> -->
 								<view class="ai-info">
 									<view class="ai-name-container">
-										<text class="ai-name" :class="[!isAiLoginEnabled(ai) ? 'name-disabled' : '']">{{
-											ai.name }}</text>
+										<text class="ai-name" :class="[(!isAiLoginEnabled(ai) || !ai.onlineStatus) ? 'name-disabled' : '']">{{ ai.name }}</text>
                     <text
                         v-if="!isAiLoginEnabled(ai) && !isAiInLoading(ai)"
                           class="login-required"
                     >
                       需登录
                     </text>
-										<text v-if="isAiInLoading(ai)" class="loading-text">检查中...</text>
+											<text v-if="!ai.onlineStatus && isAiLoginEnabled(ai)" class="offline-text">离线</text>
+											<text v-if="isAiInLoading(ai)" class="loading-text">检查中...</text>
 									</view>
-									<switch :checked="ai.enabled && isAiLoginEnabled(ai)"
-										:disabled="!isAiLoginEnabled(ai) || isAiInLoading(ai)"
+									<switch :checked="ai.enabled && isAiLoginEnabled(ai) && ai.onlineStatus"
+										:disabled="!isAiLoginEnabled(ai) || isAiInLoading(ai) || !ai.onlineStatus"
 										@change="toggleAI(ai, $event)" color="#409EFF" style="transform: scale(0.8);" />
 								</view>
 							</view>
-							<!-- 腾讯元宝模型选择 -->
-							<view v-if="ai.name === '腾讯元宝' && ai.models" class="model-selection">
-								<text class="model-label">模型选择:</text>
-								<picker mode="selector" :range="ai.models" range-key="label" :value="getModelIndex(ai)" 
-									@change="onModelChange(ai, $event)" :disabled="!ai.enabled || !isAiLoginEnabled(ai)">
-									<view class="model-picker">
-										<text class="model-text">{{ getSelectedModelLabel(ai) }}</text>
-										<text class="picker-arrow">▼</text>
+							<!-- 动态渲染AI选项配置 -->
+							<view v-if="ai.options && ai.options.length > 0" class="ai-options">
+								<!-- 下拉选择框选项 -->
+								<view v-for="option in ai.selectOptions" :key="option.id" class="option-item">
+									<view class="select-option"
+										:class="[(!ai.enabled || !isAiLoginEnabled(ai) || !ai.onlineStatus || isOptionDisabled(ai, option)) ? 'option-disabled' : '']">
+										<text class="option-label">{{ option.label }}:</text>
+										<picker mode="selector" :range="option.values" range-key="label" 
+											:value="getOptionValueIndex(ai, option)" 
+											@change="onOptionSelectChange(ai, option, $event)" 
+											:disabled="!ai.enabled || !isAiLoginEnabled(ai) || !ai.onlineStatus || isOptionDisabled(ai, option)">
+											<view class="option-picker">
+												<text class="option-text">{{ getSelectedOptionLabel(ai, option) }}</text>
+												<text class="picker-arrow">▼</text>
+											</view>
+										</picker>
 									</view>
-								</picker>
+								</view>
+								<!-- 按钮选项组 -->
+								<view v-if="ai.buttonOptions.length > 0" class="button-options-group">
+									<view class="ai-capabilities" :class="ai.buttonLayoutClass">
+										<view v-for="option in ai.buttonOptions" :key="option.id" 
+											class="capability-tag"
+											:class="[
+												ai.selectedValues[option.id] ? 'capability-active' : '', 
+												(!ai.enabled || !isAiLoginEnabled(ai) || !ai.onlineStatus || isOptionDisabled(ai, option)) ? 'capability-disabled' : ''
+											]"
+											@tap="toggleOptionButton(ai, option)">
+											<text class="capability-text">{{ option.label }}</text>
+										</view>
+									</view>
+								</view>
 							</view>
-              <view class="ai-capabilities" v-if="ai.capabilities.length > 0">
-                <!-- 知乎直答使用单选按钮逻辑 -->
-                <view v-if="ai.name === '知乎直答'" class="capability-tags-container">
-                  <view v-for="(capability, capIndex) in ai.capabilities"
-                        :key="capIndex"
-                        class="capability-tag"
-                        :class="[ai.selectedCapability === capability.value ? 'capability-active' : '', (!ai.enabled || !isAiLoginEnabled(ai)) ? 'capability-disabled' : '']"
-                        @tap="selectSingleCapability(ai, capability.value)">
-                    <text class="capability-text">{{ capability.label }}</text>
-                  </view>
-                </view>
-                <!-- 其他ai使用原有逻辑 -->
-                <view v-else class="capability-tags-container">
-                  <view v-for="(capability, capIndex) in ai.capabilities"
-                        :key="capIndex"
-                        class="capability-tag"
-                        :class="[
-                          ai.isSingleSelect
-                            ? (ai.selectedCapabilities === capability.value ? 'capability-active' : '')
-                            : (ai.selectedCapabilities.includes(capability.value) ? 'capability-active' : ''),
-                          (!ai.enabled || !isAiLoginEnabled(ai)) ? 'capability-disabled' : ''
-                        ]"
-                        @tap="toggleCapability(ai, capability.value)">
-                    <text class="capability-text">{{ capability.label }}</text>
-                  </view>
-                </view>
-              </view>
 						</view>
 					</view>
 				</view>
@@ -268,7 +282,7 @@
 				<view class="drawer-content">
 					<view class="drawer-header">
 						<text class="drawer-title">历史会话记录</text>
-						<text class="close-icon" @tap="closeHistoryDrawer">✕</text>
+						<text class="drawer-close" @tap="closeHistoryDrawer">✕</text>
 					</view>
 					
 					<!-- 加载状态 -->
@@ -281,10 +295,52 @@
 					<scroll-view v-else-if="chatHistory.length > 0" class="history-list" scroll-y>
 						<view v-for="(group, date) in groupedHistory" :key="date" class="history-group">
 							<text class="history-date">{{ date }}</text>
-							<view v-for="(item, index) in group" :key="index" class="history-item"
-								@tap="loadHistoryItem(item)">
-								<text class="history-prompt">{{ item.userPrompt }}</text>
-								<text class="history-time">{{ formatHistoryTime(item.createTime) }}</text>
+							<view v-for="(item, index) in group" :key="index" class="history-item-wrapper">
+								<!-- 会话组父记录 -->
+								<view class="history-item" 
+									@tap="item.isChatGroup ? toggleHistoryExpansion(item) : loadHistoryItem(item)">
+									<view class="history-header">
+										<!-- 会话组展开/收起箭头 -->
+										<text v-if="item.isChatGroup" 
+											class="history-arrow"
+											:class="{ 'is-expanded': item.isExpanded }">
+											▶
+										</text>
+										<!-- 单轮对话图标 -->
+										<text v-else class="history-icon">💬</text>
+										
+										<view class="history-content">
+											<text class="history-prompt">{{ item.userPrompt }}</text>
+											<view class="history-meta">
+												<text class="history-time">{{ formatHistoryTime(item.createTime) }}</text>
+												<text class="history-separator">•</text>
+												<text class="history-chatid">会话 {{ item.chatId.substring(0, 8) }}</text>
+												<text v-if="item.isChatGroup" class="children-count">
+													• {{ item.totalRounds }}轮对话
+												</text>
+											</view>
+										</view>
+									</view>
+								</view>
+								
+								<!-- 展开显示各轮对话 -->
+								<view v-if="item.isChatGroup && item.children && item.children.length > 0 && item.isExpanded" 
+									class="history-children">
+									<view v-for="(round, roundIndex) in item.children" 
+										:key="roundIndex" 
+										class="history-child-item"
+										@tap.stop="loadHistoryItem(round)">
+										<view class="history-child-content">
+											<text class="child-index">第{{ roundIndex + 1 }}轮</text>
+											<text class="history-prompt">{{ round.roundPrompt }}</text>
+											<view class="history-meta">
+												<text class="history-time">{{ formatHistoryTime(round.createTime) }}</text>
+												<text class="history-separator">•</text>
+												<text class="ai-count">{{ round.aiResponseCount }}个AI响应</text>
+											</view>
+										</view>
+									</view>
+								</view>
 							</view>
 						</view>
 					</scroll-view>
@@ -489,6 +545,7 @@
   import { getToken } from '@/utils/auth';
   import { getCorpId, ensureCorpIdOnShow, ensureLatestCorpId } from '@/utils/corpId'
   import config from '@/config.js'
+	import { mapState, mapActions } from 'vuex'
 
 	export default {
 		name: 'MiniConsole',
@@ -528,123 +585,6 @@
 					promptInput: true,
 					taskStatus: true
 				},
-
-				// AI配置（参考PC端完整配置）
-				aiList: [{
-            name: 'DeepSeek',
-            avatar: 'https://u3w.com/chatfile/Deepseek.png',
-            capabilities: [{
-              label: '深度思考',
-              value: 'deep_thinking'
-            },
-              {
-                label: '联网搜索',
-                value: 'web_search'
-              }
-            ],
-            selectedCapabilities: ['deep_thinking', 'web_search'],
-            enabled: true,
-            status: 'idle',
-            progressLogs: [],
-            isExpanded: true,
-            isSingleSelect: false,  // 添加单选标记
-          },
-					{
-						name: '豆包',
-						avatar: 'https://u3w.com/chatfile/%E8%B1%86%E5%8C%85.png',
-						capabilities: [{
-							label: '深度思考',
-							value: 'deep_thinking'
-						}],
-						selectedCapabilities: ['deep_thinking'],
-						enabled: true,
-						status: 'idle',
-						progressLogs: [],
-						isExpanded: true,
-            isSingleSelect: false,  // 添加单选标记
-					},
-					{
-						name: '腾讯元宝',
-						avatar: 'https://u3w.com/chatfile/yuanbao.png',
-						capabilities: [{
-								label: '深度思考',
-								value: 'deep_thinking'
-							},
-							{
-								label: '联网搜索',
-								value: 'web_search'
-							}
-						],
-						selectedCapabilities: ['deep_thinking', 'web_search'],
-						selectedModel: 'hunyuan', // 默认选择混元
-						models: [
-							{ label: '混元', value: 'hunyuan' },
-							{ label: 'DeepSeek', value: 'deepseek' }
-						],
-						enabled: true,
-						status: 'idle',
-						progressLogs: [],
-						isExpanded: true,
-						isSingleSelect: false
-					},
-
-
-          {
-            name: "秘塔",
-            avatar: 'https://www.aitool6.com/wp-content/uploads/2023/06/9557d1-2.jpg',
-            capabilities: [
-              { label: "极速", value: "fast" },
-              { label: "极速思考", value: "fast_thinking" },
-              { label: "长思考", value: "long_thinking" },
-            ],
-            selectedCapabilities:"fast",
-            enabled: true,
-            status: "idle",
-            progressLogs: [],
-            isExpanded: true,
-            isSingleSelect: true  // 添加单选标记
-          },
-
-          {
-            name: "知乎直答",
-            avatar: 'https://u3w.com/chatfile/ZHZD.png',
-            capabilities: [
-              {
-                label: "智能思考",
-                value: "smart_thinking"
-              },
-              {
-                label: "深度思考",
-                value: "deep_thinking"
-              },
-              {
-                label: "快速回答",
-                value: "fast_answer"
-              },
-            ],
-            selectedCapability: "smart_thinking", // 改为单选，默认智能思考
-            enabled: true,
-            status: 'idle',
-            progressLogs: [],
-            isExpanded: true,
-            isSingleSelect: true, // 设为单选模式
-          },
-          {
-            name: "百度AI",
-            avatar: 'https://u3w.com/chatfile/baiduAI.png',
-            capabilities: [
-              { label: "深度搜索", value: "web_search" }
-            ],
-            selectedCapabilities: [],
-            enabled: true,
-            status: "idle",
-            progressLogs: [],
-            isExpanded: true,
-          },
-
-
-
-				],
 
 				// 输入和任务状态
 				promptInput: '',
@@ -740,6 +680,35 @@
 		},
 
 		computed: {
+			...mapState('aiagent', {
+				aiListFromStore: 'aiList',
+				loading: 'loading',
+				isUserSpecific: 'isUserSpecific'
+			}),
+			// 从store获取AI列表
+			aiList() {
+				// 🔥 直接返回store中的引用，确保修改能够响应式更新
+				this.aiListFromStore.forEach(ai => {
+					// 初始化selectedValues（如果不存在）
+					if (!ai.selectedValues) {
+						this.$set(ai, 'selectedValues', this.initializeSelectedValues(ai));
+					}
+					// 初始化enabled状态（如果不存在）
+					if (ai.enabled === undefined) {
+						this.$set(ai, 'enabled', false);
+					}
+					
+					// 🔥 直接在原对象上添加辅助属性，保持引用关系
+					const selectOptions = ai.options ? ai.options.filter(opt => opt.type === 'select') : [];
+					const buttonOptions = ai.options ? ai.options.filter(opt => opt.type === 'button') : [];
+					
+					// 使用$set确保响应式
+					this.$set(ai, 'selectOptions', selectOptions);
+					this.$set(ai, 'buttonOptions', buttonOptions);
+					this.$set(ai, 'buttonLayoutClass', this.getButtonLayoutClass(buttonOptions.length));
+				});
+				return this.aiListFromStore;
+			},
 			canSend() {
 				// 检查是否有输入内容
 				const hasInput = this.promptInput.trim().length > 0;
@@ -767,44 +736,94 @@
 			},
 
 			groupedHistory() {
-				const groups = {};
-				const chatGroups = {};
+			const groups = {};
+			const chatGroups = {};
 
-				// 首先按chatId分组
-				this.chatHistory.forEach(item => {
-					if (!chatGroups[item.chatId]) {
-						chatGroups[item.chatId] = [];
-					}
-					chatGroups[item.chatId].push(item);
+			// 首先按chatId分组
+			this.chatHistory.forEach((item) => {
+				if (!chatGroups[item.chatId]) {
+					chatGroups[item.chatId] = [];
+				}
+				chatGroups[item.chatId].push(item);
+			});
+
+			console.log('历史记录原始记录数:', this.chatHistory.length);
+			console.log('会话组数:', Object.keys(chatGroups).length);
+
+			// 按chatId聚合，每个chatId作为一个父记录
+			Object.entries(chatGroups).forEach(([chatId, chatGroup]) => {
+				// 按时间升序排序
+				chatGroup.sort((a, b) => {
+					const timeA = new Date(a.createTime).getTime();
+					const timeB = new Date(b.createTime).getTime();
+					return timeA - timeB;
 				});
 
-				// 然后按日期分组，并处理父子关系
-				Object.values(chatGroups).forEach(chatGroup => {
-					// 按时间排序
-					chatGroup.sort((a, b) => new Date(a.createTime) - new Date(b.createTime));
-
-					// 获取最早的记录作为父级
-					const parentItem = chatGroup[0];
-					const date = this.getHistoryDate(parentItem.createTime);
-
-					if (!groups[date]) {
-						groups[date] = [];
+				// 按userPrompt分组（同一个提问的多个AI响应算一轮）
+				const roundGroups = {};
+				chatGroup.forEach((record) => {
+					const prompt = record.userPrompt || '未知提问';
+					if (!roundGroups[prompt]) {
+						roundGroups[prompt] = [];
 					}
-
-					// 添加父级记录
-					groups[date].push({
-						...parentItem,
-						isParent: true,
-						isExpanded: this.expandedHistoryItems[parentItem.chatId] || false,
-						children: chatGroup.slice(1).map(child => ({
-							...child,
-							isParent: false
-						}))
-					});
+					roundGroups[prompt].push(record);
 				});
 
-				return groups;
-			},
+				// 获取第一条记录用于日期分组
+				const firstRecord = chatGroup[0];
+				const date = this.getHistoryDate(firstRecord.createTime);
+
+				if (!groups[date]) {
+					groups[date] = [];
+				}
+
+				// 将每一轮作为子记录，使用该轮最后一条记录（包含完整状态）
+			const rounds = Object.entries(roundGroups).map(([prompt, roundRecords], roundIndex) => {
+				// 🔥 关键：同一轮对话有多条记录，每条记录保存当时的完整状态
+				// 最后一条记录包含了该轮所有AI的完整响应，直接使用它
+				const lastRecord = roundRecords[roundRecords.length - 1];
+				
+				// 解析最后一条记录获取AI响应数量
+				let aiResponseCount = 0;
+				try {
+					const recordData = JSON.parse(lastRecord.data);
+					aiResponseCount = recordData.results ? recordData.results.length : 0;
+				} catch (e) {
+					console.error('解析记录失败:', e);
+				}
+				
+				console.log(`📊 [历史记录] 第${roundIndex + 1}轮 "${prompt}" 有${aiResponseCount}个AI响应（共${roundRecords.length}条记录，使用最后一条）`);
+				
+				return {
+					...lastRecord,
+					// 直接使用最后一条记录的原始data，不做任何加工
+					roundIndex: roundIndex,
+					roundPrompt: prompt,
+					aiResponseCount: aiResponseCount,
+					isRound: true,
+					allRoundRecords: roundRecords, // 保存所有记录供调试
+				};
+			});
+
+				console.log(`会话${chatId.substring(0, 8)} 总计${rounds.length}轮对话`);
+
+				// chatId作为父记录，各轮作为子记录
+				groups[date].push({
+					...firstRecord,
+					isParent: true,
+					isChatGroup: true,
+					totalRounds: rounds.length,
+					chatId: chatId,
+					isExpanded: this.expandedHistoryItems[chatId] !== undefined 
+						? this.expandedHistoryItems[chatId] 
+						: false,
+					children: rounds,
+				});
+			});
+
+			console.log('历史记录分组结果:', Object.keys(groups).map(date => `${date}: ${groups[date].length}条`).join(', '));
+			return groups;
+		},
 
 			// 微头条文章内容字符数
 			tthArticleContentLength() {
@@ -865,6 +884,9 @@
 				return;
 			}
 
+			// 🔥 加载用户可用的AI列表
+			await this.loadAvailableAiList();
+
 			this.initWebSocket();
 			this.loadChatHistory(0); // 加载历史记录
 			this.loadLastChat(); // 加载上次会话
@@ -875,6 +897,8 @@
 		onShow() {
 			// 页面显示时确保企业ID最新
 			this.ensureLatestCorpId();
+			// 🔥 重新加载AI列表以同步状态
+			this.loadAvailableAiList();
 		},
 
 		onUnload() {
@@ -884,6 +908,16 @@
 		},
 
 		methods: {
+			...mapActions('aiagent', ['loadAvailableAiList', 'loadAllActiveAiList']),
+			
+			// 根据按钮数量动态返回布局类名
+			getButtonLayoutClass(buttonCount) {
+				if (buttonCount === 1) return 'buttons-single';
+				if (buttonCount === 2) return 'buttons-two';
+				if (buttonCount === 3) return 'buttons-three';
+				return 'buttons-multiple'; // 4个或更多
+			},
+			
 			// 从result的aiName中提取媒体标签
 			getMediaLabelFromResult(result) {
 				if (!result || !result.aiName) return '公众号';
@@ -976,8 +1010,17 @@
 
 			// 切换AI启用状态
 			toggleAI(ai, event) {
+				const newValue = event.detail.value;
+				console.log(' [toggleAI] 切换AI状态:', ai.name, '新状态:', newValue);
+				console.log(' [toggleAI] AI信息:', {
+					isLogin: this.isAiLoginEnabled(ai),
+					onlineStatus: ai.onlineStatus,
+					currentEnabled: ai.enabled
+				});
+				
 				// 检查AI是否已登录
 				if (!this.isAiLoginEnabled(ai)) {
+					console.warn(' [toggleAI] AI未登录');
 					uni.showModal({
 						title: '提示',
 						content: `${ai.name}需要先登录，请前往PC端进行登录后再使用`,
@@ -986,7 +1029,22 @@
 					});
 					return;
 				}
-				ai.enabled = event.detail.value;
+				
+				// 检查AI是否在线
+				if (!ai.onlineStatus) {
+					console.warn(' [toggleAI] AI离线');
+					uni.showModal({
+						title: '提示',
+						content: `${ai.name}当前离线，无法启用`,
+						showCancel: false,
+						confirmText: '知道了'
+					});
+					return;
+				}
+				
+				// 使用$set确保响应式更新
+				this.$set(ai, 'enabled', newValue);
+				console.log(' [toggleAI] AI状态已更新:', ai.name, 'enabled:', ai.enabled);
 			},
 
 			// 腾讯元宝模型选择相关方法
@@ -1012,6 +1070,229 @@
 						duration: 1500
 					});
 				}
+			},
+
+			// 初始化AI的selectedValues
+			initializeSelectedValues(ai) {
+				const selectedValues = {};
+				if (ai.options) {
+					ai.options.forEach(option => {
+						if (option.type === 'select') {
+							const defaultValue = option.values.find(v => v.default);
+							selectedValues[option.id] = defaultValue ? defaultValue.value : '';
+						} else if (option.type === 'button') {
+							selectedValues[option.id] = false;
+						}
+					});
+				}
+				return selectedValues;
+			},
+
+			// 获取选项值的索引
+			getOptionValueIndex(ai, option) {
+				if (!ai.selectedValues || !option.values) return 0;
+				const selectedValue = ai.selectedValues[option.id];
+				const index = option.values.findIndex(v => v.value === selectedValue);
+				return index >= 0 ? index : 0;
+			},
+
+			// 获取选中的选项标签
+			getSelectedOptionLabel(ai, option) {
+				if (!ai.selectedValues || !option.values) return '请选择';
+				const selectedValue = ai.selectedValues[option.id];
+				const valueObj = option.values.find(v => v.value === selectedValue);
+				return valueObj ? valueObj.label : '请选择';
+			},
+
+			// 处理下拉选择变化
+			onOptionSelectChange(ai, option, event) {
+				if (!ai.enabled || !this.isAiLoginEnabled(ai) || !ai.onlineStatus) return;
+				const index = event.detail.value;
+				if (option.values && option.values[index]) {
+					if (!ai.selectedValues) {
+						this.$set(ai, 'selectedValues', {});
+					}
+					
+					const selectedValue = option.values[index];
+					this.$set(ai.selectedValues, option.id, selectedValue.value);
+					
+					console.log(`✅ [${ai.name}] 下拉选择变化:`, option.label, '选择了:', selectedValue.label);
+				
+				// 🔥 处理互斥逻辑：清除与当前选项冲突的其他选项
+				this.handleOptionConflicts(ai, option, selectedValue);
+				
+				// 强制更新视图，确保禁用状态立即生效
+				this.$forceUpdate();
+				}
+			},
+
+			// 处理按钮点击
+			toggleOptionButton(ai, option) {
+				console.log('🔘 [toggleOptionButton] 点击按钮:', option.label);
+				console.log('🔘 [toggleOptionButton] AI状态:', {
+					name: ai.name,
+					enabled: ai.enabled,
+					isLogin: this.isAiLoginEnabled(ai),
+					onlineStatus: ai.onlineStatus
+				});
+				
+				if (!ai.enabled) {
+					console.warn('⚠️ [toggleOptionButton] AI未启用，无法点击');
+					return;
+				}
+				if (!this.isAiLoginEnabled(ai)) {
+					console.warn('⚠️ [toggleOptionButton] AI未登录，无法点击');
+					return;
+				}
+				if (!ai.onlineStatus) {
+					console.warn('⚠️ [toggleOptionButton] AI离线，无法点击');
+					return;
+				}
+				
+				// 检查按钮是否被其他选项禁用
+				if (this.isOptionDisabled(ai, option)) {
+					console.warn('⚠️ [toggleOptionButton] 按钮被其他选项禁用，无法点击');
+					return;
+				}
+				
+				if (!ai.selectedValues) {
+					this.$set(ai, 'selectedValues', {});
+				}
+				
+				const newValue = !ai.selectedValues[option.id];
+				this.$set(ai.selectedValues, option.id, newValue);
+				console.log(`✅ [${ai.name}] 按钮点击成功:`, option.label, '状态:', newValue);
+				
+				// 🔥 如果按钮被启用，处理互斥逻辑
+				if (newValue) {
+					this.handleOptionConflicts(ai, option, { value: option.value });
+				}
+				// 强制更新视图，确保禁用状态立即生效
+				this.$forceUpdate();
+			},
+
+			// 🔥 处理选项互斥逻辑
+			handleOptionConflicts(ai, currentOption, selectedValue) {
+				if (!ai.options || !ai.selectedValues) return;
+				
+				// 获取当前选项的冲突列表
+				let conflicts = [];
+				
+				// 1. 检查当前选项本身的conflicts字段
+				if (currentOption.conflicts && Array.isArray(currentOption.conflicts)) {
+					conflicts = [...currentOption.conflicts];
+				}
+				
+				// 2. 如果是select类型，检查选中值的conflicts字段
+				if (currentOption.type === 'select' && selectedValue.conflicts && Array.isArray(selectedValue.conflicts)) {
+					conflicts = [...conflicts, ...selectedValue.conflicts];
+				}
+				
+				if (conflicts.length === 0) {
+					console.log(`📋 [${ai.name}] ${currentOption.label} 无冲突配置`);
+					return;
+				}
+				
+				console.log(`⚠️ [${ai.name}] ${currentOption.label} 冲突列表:`, conflicts);
+				
+				// 清除冲突的选项
+				conflicts.forEach(conflictId => {
+					const conflictOption = ai.options.find(opt => opt.id === conflictId);
+					if (!conflictOption) return;
+					
+					if (conflictOption.type === 'select') {
+						// 下拉选择：清空选择（设为空字符串或默认值）
+						const hadValue = ai.selectedValues[conflictId];
+						if (hadValue && hadValue !== '') {
+							this.$set(ai.selectedValues, conflictId, '');
+							console.log(`🔄 [${ai.name}] 清除冲突选项: ${conflictOption.label}`);
+						}
+					} else if (conflictOption.type === 'button') {
+						// 按钮：设为false（关闭）
+						if (ai.selectedValues[conflictId]) {
+							this.$set(ai.selectedValues, conflictId, false);
+							console.log(`🔄 [${ai.name}] 关闭冲突按钮: ${conflictOption.label}`);
+						}
+					}
+				});
+				
+				// 强制更新视图
+				this.$forceUpdate();
+			},
+			
+			// 🔥 判断选项是否被禁用（因为其他选项的互斥关系）
+			isOptionDisabled(ai, option) {
+				if (!ai.options || !ai.selectedValues) return false;
+				
+				// 遍历所有选项，检查是否有其他选项与当前选项冲突
+				for (const otherOption of ai.options) {
+					if (otherOption.id === option.id) continue; // 跳过自己
+					
+					// 检查其他选项的conflicts是否包含当前选项
+					let shouldDisable = false;
+					
+					if (otherOption.type === 'select') {
+						// 下拉选择：检查选中值的conflicts
+						const selectedValue = ai.selectedValues[otherOption.id];
+						if (selectedValue && selectedValue !== '') {
+							// 找到选中的值对象
+							const valueObj = otherOption.values?.find(v => v.value === selectedValue);
+							if (valueObj?.conflicts?.includes(option.id)) {
+								console.log(`🚫 [${ai.name}] ${option.label} 被禁用: ${otherOption.label}的值${selectedValue}与其冲突`);
+								shouldDisable = true;
+							}
+							// 检查选项级别的conflicts
+							if (otherOption.conflicts?.includes(option.id)) {
+								console.log(`🚫 [${ai.name}] ${option.label} 被禁用: ${otherOption.label}选项级别冲突`);
+								shouldDisable = true;
+							}
+						}
+					} else if (otherOption.type === 'button') {
+						// 按钮：检查按钮是否被选中且conflicts包含当前选项
+						if (ai.selectedValues[otherOption.id]) {
+							if (otherOption.conflicts?.includes(option.id)) {
+								console.log(`🚫 [${ai.name}] ${option.label} 被禁用: ${otherOption.label}按钮已启用且与其冲突`);
+								shouldDisable = true;
+							}
+						}
+					}
+					
+					if (shouldDisable) {
+						return true;
+					}
+				}
+				
+				return false;
+			},
+			
+			// 🔥 动态构建AI角色参数（基于config_json配置）
+			buildAiRoles(ai) {
+				let roles = [];
+				
+				// 添加基础agentCode
+				if (ai.agentCode) {
+					roles.push(ai.agentCode);
+				}
+				
+				// 处理options配置
+				if (ai.options && ai.selectedValues) {
+					ai.options.forEach(option => {
+						if (option.type === 'select') {
+							// 下拉选择：获取选中的值
+							const selectedValue = ai.selectedValues[option.id];
+							if (selectedValue && selectedValue !== '') {
+								roles.push(selectedValue);
+							}
+						} else if (option.type === 'button') {
+							// 按钮：如果被选中，添加其value
+							if (ai.selectedValues[option.id]) {
+								roles.push(option.value);
+							}
+						}
+					});
+				}
+				
+				return roles;
 			},
 
 			// 切换AI能力
@@ -1097,84 +1378,14 @@
 				console.log(`▶️ [sendPrompt] 设置${ai.name}状态为: running`);
 				});
 
-				// 构建角色参数
-				this.enabledAIs.forEach(ai => {
-					if (ai.name === '腾讯元宝') {
-						if (ai.selectedModel === 'hunyuan') {
-							// 混元模型
-							this.userInfoReq.roles = this.userInfoReq.roles + 'yb-hunyuan-pt,';
-							if (ai.selectedCapabilities.includes("deep_thinking")) {
-								this.userInfoReq.roles = this.userInfoReq.roles + 'yb-hunyuan-sdsk,';
-							}
-							if (ai.selectedCapabilities.includes("web_search")) {
-								this.userInfoReq.roles = this.userInfoReq.roles + 'yb-hunyuan-lwss,';
-							}
-						} else if (ai.selectedModel === 'deepseek') {
-							// DeepSeek模型
-							this.userInfoReq.roles = this.userInfoReq.roles + 'yb-deepseek-pt,';
-							if (ai.selectedCapabilities.includes("deep_thinking")) {
-								this.userInfoReq.roles = this.userInfoReq.roles + 'yb-deepseek-sdsk,';
-							}
-							if (ai.selectedCapabilities.includes("web_search")) {
-								this.userInfoReq.roles = this.userInfoReq.roles + 'yb-deepseek-lwss,';
-							}
-						}
-					}
-          if (ai.name === 'DeepSeek') {
-            this.userInfoReq.roles = this.userInfoReq.roles + 'deepseek,';
-            if (ai.selectedCapabilities.includes("deep_thinking")) {
-              this.userInfoReq.roles = this.userInfoReq.roles + 'ds-sdsk,';
-            }
-            if (ai.selectedCapabilities.includes("web_search")) {
-              this.userInfoReq.roles = this.userInfoReq.roles + 'ds-lwss,';
-            }
-          }
-					if (ai.name === '豆包') {
-						this.userInfoReq.roles = this.userInfoReq.roles + 'zj-db,';
-						if (ai.selectedCapabilities.includes("deep_thinking")) {
-							this.userInfoReq.roles = this.userInfoReq.roles + 'zj-db-sdsk,';
-						}
-					}
-          if (ai.name === '秘塔') {
-            this.userInfoReq.roles = this.userInfoReq.roles + 'mita,';
-            if (ai.selectedCapabilities.includes("fast")) {
-              this.userInfoReq.roles = this.userInfoReq.roles + 'metaso-jisu,';
-            }
-            if (ai.selectedCapabilities.includes("fast_thinking")) {
-              this.userInfoReq.roles = this.userInfoReq.roles + 'metaso-jssk,';
-            }
-            if (ai.selectedCapabilities.includes("long_thinking")) {
-              this.userInfoReq.roles = this.userInfoReq.roles + 'metaso-csk,';
-            }
-          }
-
-          if(ai.name === '百度AI' && ai.enabled){
-            if(this.isAiLoginEnabled(ai)){
-              this.userInfoReq.roles = this.userInfoReq.roles + 'baidu-agent,';
-              if (ai.selectedCapabilities.includes("web_search")) {
-                this.userInfoReq.roles = this.userInfoReq.roles + 'baidu-sdss,';
-              }
-            }
-          }
-          if (ai.name === "知乎直答") {
-            if (this.isAiLoginEnabled(ai)) {
-              this.userInfoReq.roles = this.userInfoReq.roles + "zhzd-chat,";
-              // 使用单选思考模式
-              if (ai.selectedCapability === "deep_thinking") {
-                this.userInfoReq.roles = this.userInfoReq.roles + "zhzd-sdsk,";
-              } else if (ai.selectedCapability === "fast_answer") {
-                this.userInfoReq.roles = this.userInfoReq.roles + "zhzd-ks,";
-              } else if (ai.selectedCapability === "smart_thinking") {
-                this.userInfoReq.roles = this.userInfoReq.roles + "zhzd-zn,";
-              } else {
-                // 默认智能思考
-                this.userInfoReq.roles = this.userInfoReq.roles + "zhzd-zn,";
-              }
-            }
-          }
-
-
-				});
+				// 🔥 动态构建角色参数（基于数据库配置）
+			this.enabledAIs.forEach(ai => {
+				const aiRoles = this.buildAiRoles(ai);
+				if (aiRoles.length > 0) {
+					this.userInfoReq.roles += aiRoles.join(',') + ',';
+					console.log(`🎯 [${ai.name}] 角色参数:`, aiRoles.join(','));
+				}
+			});
 
 			console.log('🎯 [sendPrompt] 最终角色参数roles:', this.userInfoReq.roles);
 			console.log('📦 [sendPrompt] 完整请求参数:', JSON.stringify(this.userInfoReq));
@@ -1496,6 +1707,12 @@
 				if (dataObj.type === 'RETURN_WKPF_RES') {
 					console.log("✅ 收到智能评分结果", dataObj);
 					
+					// 🔥 使用统一的消息验证逻辑
+					if (!this.shouldProcessMessage(dataObj)) {
+						console.warn('⚠️ [智能评分] 消息验证失败，忽略此消息');
+						return;
+					}
+					
 					const wkpfAI = this.enabledAIs.find(ai => ai.name === '智能评分');
 					if (wkpfAI) {
 						wkpfAI.status = 'completed';
@@ -1536,7 +1753,14 @@
 
 				// 处理智能排版结果
 				if (dataObj.type === 'RETURN_ZNPB_RES') {
-					console.log("收到智能排版结果", dataObj);
+					console.log("✅ 收到智能排版结果", dataObj);
+					
+					// 🔥 使用统一的消息验证逻辑
+					if (!this.shouldProcessMessage(dataObj)) {
+						console.warn('⚠️ [智能排版] 消息验证失败，忽略此消息');
+						return;
+					}
+					
 					console.log("当前 selectedMedia:", this.selectedMedia);
 
 					const znpbAI = this.enabledAIs.find(ai => ai.name === '智能排版');
@@ -1890,10 +2114,28 @@
 					console.log('✅ 匹配到百度AI消息');
             targetAI = this.enabledAIs.find(ai => ai.name === '百度AI');
             break;
-				default:
-					console.log('⚠️ 未匹配到任何AI类型, 消息类型:', dataObj.type);
-					return;
-				}
+          // 以下是状态和chatId消息，不需要处理结果，直接返回
+          case 'RETURN_YBT1_CHATID':
+          case 'RETURN_YBDS_CHATID':
+          case 'RETURN_DB_CHATID':
+          case 'RETURN_DEEPSEEK_CHATID':
+          case 'RETURN_METASO_CHATID':
+          case 'RETURN_BAIDU_CHATID':
+          case 'RETURN_ZHZD_CHATID':
+          case 'RETURN_YB_STATUS':
+          case 'RETURN_DB_STATUS':
+          case 'RETURN_DEEPSEEK_STATUS':
+          case 'RETURN_METASO_STATUS':
+          case 'RETURN_BAIDU_STATUS':
+          case 'RETURN_ZHZD_STATUS':
+          case '使用F8S':
+            // 这些是状态消息和chatId消息，不需要在handleAIResult中处理
+            console.log('ℹ️ 收到状态/chatId消息，类型:', dataObj.type);
+            return;
+			default:
+				console.log('⚠️ 未匹配到任何AI类型, 消息类型:', dataObj.type);
+				return;
+			}
 
 			if (targetAI) {
 			console.log(`✅ 找到目标AI: ${targetAI.name}, 当前状态: ${targetAI.status}`);
@@ -2190,8 +2432,27 @@
 			},
 
 			// 历史记录相关方法
-			showHistoryDrawer() {
+			async showHistoryDrawer() {
+				console.log('📜 [历史会话] 打开历史会话抽屉，刷新AI状态');
 				this.historyDrawerVisible = true;
+				
+				// 🔥 在查看历史会话时获取最新AI状态
+				try {
+					// 从后端获取最新AI列表
+					await this.loadAvailableAiList();
+					console.log('✅ [历史会话] AI列表已更新为最新状态');
+					
+					// 发送AI状态检查，获取实时登录状态
+					if (this.socketTask && this.socketTask.readyState === 1) {
+						this.sendAiStatusCheck();
+						console.log('✅ [历史会话] 已发送AI状态检查请求');
+					} else {
+						console.warn('⚠️ [历史会话] WebSocket未连接，无法检查AI状态');
+					}
+				} catch (error) {
+					console.error('⚠️ [历史会话] 获取AI状态失败:', error);
+				}
+				
 				this.loadChatHistory(1);
 			},
 
@@ -2217,63 +2478,103 @@
 				}
 			},
 
-			loadHistoryItem(item) {
+
+			async loadHistoryItem(item) {
+			try {
+				console.log('📖 [历史记录] 开始加载历史记录项:', item);
+				console.log('📖 [历史记录] 是否为轮次记录:', item.isRound);
+				
+				// 🔥 在加载历史记录时刷新AI状态，确保获取最新状态
 				try {
-					console.log('📖 [历史记录] 开始加载历史记录项:', item);
+					// 从后端获取最新AI列表
+					await this.loadAvailableAiList();
+					console.log('✅ [历史记录加载] AI列表已更新为最新状态');
 					
-					const historyData = JSON.parse(item.data);
-					console.log('📋 [历史记录] 解析后的数据:', historyData);
-					
-					// 恢复AI选择配置
-					this.aiList = historyData.aiList || this.aiList;
-					// 恢复提示词输入
-					this.promptInput = historyData.promptInput || item.userPrompt;
-					// 恢复任务流程
-					this.enabledAIs = historyData.enabledAIs || [];
-					// 恢复主机可视化
-					this.screenshots = historyData.screenshots || [];
-					// 恢复执行结果
-					this.results = historyData.results || [];
-					
-					console.log('✅ [历史记录] 恢复结果数量:', this.results.length);
-					
-					// 恢复chatId
-					this.chatId = item.chatId || this.chatId;
-					this.userInfoReq.toneChatId = item.toneChatId || '';
-					this.userInfoReq.ybDsChatId = item.ybDsChatId || '';
-					this.userInfoReq.dbChatId = item.dbChatId || '';
-					this.userInfoReq.metasoChatId = item.metasoChatId || '';
-					this.userInfoReq.baiduChatId = item.baiduChatId || '';
-					this.userInfoReq.deepseekChatId = item.deepseekChatId || '';
-					this.userInfoReq.zhzdChatId = item.zhzdChatId || '';
-					this.userInfoReq.isNewChat = false;
-					
-					console.log('🔗 [历史记录] 恢复chatId:', this.chatId);
-
-					// 不再根据AI登录状态更新AI启用状态，保持原有选择
-
-					// 展开相关区域
-					this.sectionExpanded.aiConfig = true;
-					this.sectionExpanded.promptInput = true;
-					this.sectionExpanded.taskStatus = true;
-					this.taskStarted = true;
-
-					this.closeHistoryDrawer();
-					uni.showToast({
-						title: '历史记录加载成功',
-						icon: 'success'
-					});
-					console.log('✨ [历史记录] 历史记录加载完成');
+					// 发送AI状态检查，获取实时登录状态
+					if (this.socketTask && this.socketTask.readyState === 1) {
+						this.sendAiStatusCheck();
+						console.log('✅ [历史记录加载] 已发送AI状态检查请求');
+					}
 				} catch (error) {
-					console.error('❌ [历史记录] 加载历史记录失败:', error);
-					console.error('❌ [历史记录] 错误详情:', error.stack);
-					console.error('❌ [历史记录] item数据:', item);
-					uni.showToast({
-						title: '加载失败:' + error.message,
-						icon: 'none'
-					});
+					console.error('⚠️ [历史记录加载] 刷新AI状态失败:', error);
 				}
-			},
+				
+				const historyData = JSON.parse(item.data);
+				console.log('📋 [历史记录] 解析后的数据:', historyData);
+				console.log('📋 [历史记录] results数量:', historyData.results ? historyData.results.length : 0);
+				
+				// 🔥 恢复AI配置：使用当前数据库的AI列表，只恢复历史记录中的选中状态
+				if (historyData.aiList) {
+					const historicalAiList = historyData.aiList;
+					
+					// 遍历当前AI列表，恢复历史记录中的状态
+					this.aiList.forEach(currentAI => {
+						// 在历史记录中查找同名AI
+						const historicalAI = historicalAiList.find(ai => ai.name === currentAI.name);
+						
+						if (historicalAI) {
+							// 恢复历史记录中的状态和选项，但保留当前的onlineStatus和数据库配置
+							this.$set(currentAI, 'enabled', historicalAI.enabled);
+							this.$set(currentAI, 'status', historicalAI.status || 'idle');
+							this.$set(currentAI, 'progressLogs', historicalAI.progressLogs || []);
+							this.$set(currentAI, 'isExpanded', historicalAI.isExpanded !== undefined ? historicalAI.isExpanded : true);
+							this.$set(currentAI, 'selectedValues', historicalAI.selectedValues || currentAI.selectedValues);
+							
+							// 兼容旧格式
+							if (historicalAI.selectedModel) {
+								this.$set(currentAI, 'selectedModel', historicalAI.selectedModel);
+							}
+						}
+					});
+					
+					console.log('✅ [历史记录] AI状态已恢复（保留在线状态和数据库配置）');
+				}
+				
+				// 恢复提示词输入
+				this.promptInput = historyData.promptInput || item.userPrompt || item.roundPrompt || "";
+				
+				// 🔥 直接恢复results（已经在groupedHistory中合并了该轮的所有AI响应）
+				this.results = historyData.results || [];
+				this.enabledAIs = historyData.enabledAIs || [];
+				this.screenshots = historyData.screenshots || [];
+				
+				console.log(`✅ [历史记录] 恢复${item.isRound ? '第' + (item.roundIndex + 1) + '轮' : ''}结果，共${this.results.length}个AI响应`);
+				
+				// 恢复chatId
+				this.chatId = item.chatId || this.chatId;
+				this.userInfoReq.toneChatId = item.toneChatId || '';
+				this.userInfoReq.ybDsChatId = item.ybDsChatId || '';
+				this.userInfoReq.dbChatId = item.dbChatId || '';
+				this.userInfoReq.metasoChatId = item.metasoChatId || '';
+				this.userInfoReq.baiduChatId = item.baiduChatId || '';
+				this.userInfoReq.deepseekChatId = item.deepseekChatId || '';
+				this.userInfoReq.zhzdChatId = item.zhzdChatId || '';
+				this.userInfoReq.isNewChat = false;
+				
+				console.log('🔗 [历史记录] 恢复chatId:', this.chatId);
+
+				// 展开相关区域
+				this.sectionExpanded.aiConfig = true;
+				this.sectionExpanded.promptInput = true;
+				this.sectionExpanded.taskStatus = true;
+				this.taskStarted = true;
+
+				this.closeHistoryDrawer();
+				uni.showToast({
+					title: item.isRound ? `已加载第${item.roundIndex + 1}轮对话(${this.results.length}个响应)` : '历史记录加载成功',
+					icon: 'success'
+				});
+				console.log('✨ [历史记录] 历史记录加载完成');
+			} catch (error) {
+				console.error('❌ [历史记录] 加载历史记录失败:', error);
+				console.error('❌ [历史记录] 错误详情:', error.stack);
+				console.error('❌ [历史记录] item数据:', item);
+				uni.showToast({
+					title: '加载失败:' + error.message,
+					icon: 'none'
+				});
+			}
+		},
 
 			// 加载上次会话
 			async loadLastChat() {
@@ -2458,14 +2759,19 @@
 				}
 			},
 
-			// 修改折叠切换方法
+			// 切换历史记录展开/收起
 			toggleHistoryExpansion(item) {
-				this.expandedHistoryItems[item.chatId] = !this.expandedHistoryItems[item.chatId];
-				this.$forceUpdate(); // 强制更新视图
+				console.log('🔄 [历史记录] 切换展开状态:', item.chatId, '当前状态:', this.expandedHistoryItems[item.chatId]);
+				// 使用$set确保响应式更新
+				const newState = !this.expandedHistoryItems[item.chatId];
+				this.$set(this.expandedHistoryItems, item.chatId, newState);
+				console.log('✅ [历史记录] 新状态:', newState);
+				// 强制更新视图以确保computed重新计算
+				this.$forceUpdate();
 			},
 
 			// 智能评分相关方法
-		async showScoreModal() {
+			async showScoreModal() {
 				this.selectedResults = [];
 				this.scoreModalVisible = true;
 			
@@ -2958,7 +3264,26 @@
 			},
 
 			// 创建新对话
-			createNewChat() {
+			async createNewChat() {
+				console.log('✨ [新建会话] 创建新对话，刷新AI状态');
+				
+				// 🔥 在新建会话时获取最新AI状态
+				try {
+					// 从后端获取最新AI列表
+					await this.loadAvailableAiList();
+					console.log('✅ [新建会话] AI列表已更新为最新状态');
+					
+					// 发送AI状态检查，获取实时登录状态
+					if (this.socketTask && this.socketTask.readyState === 1) {
+						this.sendAiStatusCheck();
+						console.log('✅ [新建会话] 已发送AI状态检查请求');
+					} else {
+						console.warn('⚠️ [新建会话] WebSocket未连接，无法检查AI状态');
+					}
+				} catch (error) {
+					console.error('⚠️ [新建会话] 获取AI状态失败:', error);
+				}
+				
 				// 重置所有数据
 				this.chatId = this.generateUUID();
 				this.promptInput = '';
@@ -2980,120 +3305,18 @@
           zhzdChatId: '',
 					isNewChat: true
 				};
-				// 重置AI列表为初始状态
-				this.aiList = [{
-            name: 'DeepSeek',
-            avatar: 'https://u3w.com/chatfile/Deepseek.png',
-            capabilities: [{
-              label: '深度思考',
-              value: 'deep_thinking'
-            },
-              {
-                label: '联网搜索',
-                value: 'web_search'
-              }
-            ],
-            selectedCapabilities: ['deep_thinking', 'web_search'],
-            enabled: true,
-            status: 'idle',
-            progressLogs: [],
-            isExpanded: true,
-          isSingleSelect: false,  // 添加单选标记
-          },
-					{
-						name: '豆包',
-						avatar: 'https://u3w.com/chatfile/%E8%B1%86%E5%8C%85.png',
-						capabilities: [{
-							label: '深度思考',
-							value: 'deep_thinking'
-						}],
-						selectedCapabilities: ['deep_thinking'],
-						enabled: true,
-						status: 'idle',
-						progressLogs: [],
-						isExpanded: true,
-            isSingleSelect: false,  // 添加单选标记
-          },
-          {
-            name: '秘塔',
-            avatar: 'https://www.aitool6.com/wp-content/uploads/2023/06/9557d1-2.jpg',
-            capabilities: [
-              {label: '极速', value: 'fast'},
-              {label: '极速思考', value: 'fast_thinking'},
-              {label: '长思考', value: 'long_thinking'},
-            ],
-            selectedCapabilities: "fast",
-            enabled: true,
-            status: 'idle',
-            progressLogs: [],
-            isExpanded: true,
-            isSingleSelect: true,  // 添加单选标记
-          },
-
-          {
-            name: "知乎直答",
-            avatar: 'https://u3w.com/chatfile/ZHZD.png',
-            capabilities: [
-              {
-                label: "智能思考",
-                value: "smart_thinking"
-              },
-              {
-                label: "深度思考",
-                value: "deep_thinking"
-              },
-              {
-                label: "快速回答",
-                value: "fast_answer"
-              },
-            ],
-            selectedCapability: "smart_thinking", // 改为单选，默认智能思考
-            enabled: true,
-            status: 'idle',
-            progressLogs: [],
-            isExpanded: true,
-            isSingleSelect: true, // 设为单选模式
-          },
-          {
-            name: "百度AI",
-            avatar: 'https://u3w.com/chatfile/baiduAI.png',
-            capabilities: [
-              { label: "深度搜索", value: "web_search" }
-            ],
-            selectedCapabilities: [],
-            enabled: true,
-            status: "idle",
-            progressLogs: [],
-            isExpanded: true,
-          },
-
-					{
-						name: '腾讯元宝',
-						avatar: 'https://u3w.com/chatfile/yuanbao.png',
-						capabilities: [{
-								label: '深度思考',
-								value: 'deep_thinking'
-							},
-							{
-								label: '联网搜索',
-								value: 'web_search'
-							}
-						],
-						selectedCapabilities: ['deep_thinking', 'web_search'],
-						selectedModel: 'hunyuan', // 默认选择混元
-						models: [
-							{ label: '混元', value: 'hunyuan' },
-							{ label: 'DeepSeek', value: 'deepseek' }
-						],
-						enabled: true,
-						status: 'idle',
-						progressLogs: [],
-						isExpanded: true,
-						isSingleSelect: false
-					},
-
-				];
-				// 不再根据AI登录状态更新AI启用状态，保持原有选择
+				// 🔥 不再使用硬编码AI列表，完全依赖从后端获取的最新数据
+				// AI列表已通过 loadAvailableAiList() 从后端获取最新状态
+				console.log('✅ [新建会话] 使用从后端获取的AI列表，共', this.aiList.length, '个AI');
+				
+				// 重置所有AI为未启用状态（用户需要手动选择）
+				this.aiList.forEach(ai => {
+					if (ai.enabled !== undefined) {
+						ai.enabled = false;
+					}
+					ai.status = 'idle';
+					ai.progressLogs = [];
+				});
 
 				// 展开相关区域
 				this.sectionExpanded.aiConfig = true;
@@ -3218,6 +3441,25 @@
 						console.error('确保企业ID最新失败:', error);
 					}
 
+					// 🔥 从后端获取最新AI选项列表
+					try {
+						console.log('🔄 [刷新按钮] 开始从后端获取最新AI列表');
+						await this.loadAvailableAiList();
+						console.log('✅ [刷新按钮] AI列表已更新为最新状态，共', this.aiList.length, '个AI');
+						
+						// 输出AI列表详情
+						this.aiList.forEach(ai => {
+							console.log(`📋 [刷新按钮] AI: ${ai.name}, 在线状态: ${ai.onlineStatus === 1 ? '在线' : '离线'}, 选项数量: ${ai.options ? ai.options.length : 0}`);
+						});
+					} catch (error) {
+						console.error('⚠️ [刷新按钮] 获取AI列表失败:', error);
+						uni.showToast({
+							title: '获取AI列表失败',
+							icon: 'none',
+							duration: 2000
+						});
+					}
+
 				// 重置所有AI状态为加载中
 				this.isLoading = {
 					yuanbao: true,
@@ -3250,9 +3492,9 @@
 
 				// 显示刷新提示
 				uni.showToast({
-					title: '正在刷新连接状态...',
+					title: '正在获取最新AI配置...',
 					icon: 'loading',
-					duration: 1500
+					duration: 2000
 				});
 
 				// 重新建立WebSocket连接，使用最新的主机ID
@@ -3652,17 +3894,21 @@
 
 	.ai-card {
 		width: calc(50% - 5px);
-		border: 1px solid #ebeef5;
-		border-radius: 8px;
-		padding: 10px;
+		border: 1.5px solid #e4e7ed;
+		border-radius: 12px;
+		padding: 8px;
 		transition: all 0.3s;
-		min-height: 65px;
+		min-height: 60px;
 		box-sizing: border-box;
+		background: #ffffff;
+		box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+		position: relative;
 	}
 
 	.ai-card.ai-enabled {
 		border-color: #409EFF;
-		background-color: #f0f8ff;
+		background: linear-gradient(135deg, #f0f8ff 0%, #e8f4ff 100%);
+		box-shadow: 0 2px 6px rgba(64, 158, 255, 0.15);
 	}
 
 	.ai-card.ai-disabled {
@@ -3695,29 +3941,40 @@
 		line-height: 1;
 	}
 
+	.offline-text {
+		font-size: 9px;
+		color: #f56c6c;
+		margin-top: 2px;
+		line-height: 1;
+	}
+
 	.capability-tag.capability-disabled {
-		opacity: 0.5;
-		background-color: #f5f5f5;
+		opacity: 0.6;
+		background: #f5f7fa;
 		border-color: #e4e7ed;
 		pointer-events: none;
+		box-shadow: none;
+		cursor: not-allowed;
 	}
 
 	.capability-tag.capability-disabled .capability-text {
 		color: #c0c4cc;
+		font-weight: 400;
 	}
 
 	.ai-header {
 		display: flex;
 		align-items: flex-start;
-		margin-bottom: 8px;
-		min-height: 24px;
+		margin-bottom: 6px;
+		min-height: 22px;
 	}
 
 	.ai-avatar {
-		width: 24px;
-		height: 24px;
-		border-radius: 12px;
-		margin-right: 8px;
+		width: 22px;
+		height: 22px;
+		border-radius: 11px;
+		margin-right: 6px;
+		box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 	}
 
 	.ai-info {
@@ -3725,6 +3982,7 @@
 		display: flex;
 		justify-content: space-between;
 		align-items: center;
+		gap: 4px;
 	}
 
 	.ai-name-container {
@@ -3736,7 +3994,7 @@
 	}
 
 	.ai-name {
-		font-size: 12px;
+		font-size: 11px;
 		font-weight: 500;
 		color: #303133;
 		white-space: nowrap;
@@ -3748,29 +4006,62 @@
 	.ai-capabilities {
 		display: flex;
 		flex-wrap: wrap;
-		gap: 4px;
+		gap: 6px;
+		margin-top: 4px;
+	}
+
+	/* 动态按钮布局 */
+	.ai-capabilities.buttons-single .capability-tag {
+		flex: 0 0 100%; /* 单个按钮占满宽 */
+	}
+
+	.ai-capabilities.buttons-two .capability-tag {
+		flex: 0 0 calc(50% - 3px); /* 两个按钮一行 */
+	}
+
+	.ai-capabilities.buttons-three .capability-tag {
+		flex: 0 0 calc(33.333% - 4px); /* 三个按钮一行 */
+	}
+
+	.ai-capabilities.buttons-multiple .capability-tag {
+		flex: 0 0 calc(50% - 3px); /* 四个或更多按钮，两个一行 */
 	}
 
 	.capability-tag {
-		padding: 2px 6px;
-		border-radius: 10px;
-		border: 1px solid #dcdfe6;
-		background-color: #fff;
-		transition: all 0.3s;
+		min-width: 0;
+		padding: 5px 8px;
+		border-radius: 14px;
+		border: 1.5px solid #e4e7ed;
+		background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+		transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+		box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+		cursor: pointer;
+		text-align: center;
+	}
+
+	.capability-tag:active {
+		transform: scale(0.96);
 	}
 
 	.capability-tag.capability-active {
-		background-color: #409EFF;
+		background: linear-gradient(135deg, #409EFF 0%, #66b1ff 100%);
 		border-color: #409EFF;
+		box-shadow: 0 2px 8px rgba(64, 158, 255, 0.3);
 	}
 
 	.capability-text {
 		font-size: 10px;
+		font-weight: 500;
 		color: #606266;
+		letter-spacing: 0.2px;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
 	}
 
 	.capability-tag.capability-active .capability-text {
-		color: #fff;
+		color: #ffffff;
+		font-weight: 600;
 	}
 
 	/* 提示词输入区域 */
@@ -4247,6 +4538,14 @@
 		color: #303133;
 	}
 
+	.drawer-close {
+		font-size: 20px;
+		color: #909399;
+		cursor: pointer;
+		padding: 5px;
+		line-height: 1;
+	}
+
 	/* 历史记录加载状态 */
 	.history-loading {
 		display: flex;
@@ -4307,11 +4606,43 @@
 		border-bottom: 1px solid #f0f0f0;
 	}
 
+	.history-item-wrapper {
+		margin-bottom: 8px;
+	}
+
 	.history-item {
 		background-color: #f9f9f9;
 		border-radius: 8px;
 		padding: 10px;
-		margin-bottom: 8px;
+	}
+
+	.history-header {
+		display: flex;
+		align-items: flex-start;
+		gap: 8px;
+	}
+
+	.history-arrow {
+		font-size: 12px;
+		color: #909399;
+		transition: transform 0.3s;
+		flex-shrink: 0;
+		margin-top: 2px;
+	}
+
+	.history-arrow.is-expanded {
+		transform: rotate(90deg);
+	}
+
+	.history-icon {
+		font-size: 14px;
+		flex-shrink: 0;
+		margin-top: 1px;
+	}
+
+	.history-content {
+		flex: 1;
+		min-width: 0;
 	}
 
 	.history-prompt {
@@ -4323,11 +4654,66 @@
 		-webkit-line-clamp: 2;
 		-webkit-box-orient: vertical;
 		overflow: hidden;
+		word-break: break-all;
+	}
+
+	.history-meta {
+		display: flex;
+		align-items: center;
+		gap: 4px;
+		flex-wrap: wrap;
 	}
 
 	.history-time {
 		font-size: 10px;
 		color: #909399;
+	}
+
+	.history-separator {
+		font-size: 10px;
+		color: #d0d0d0;
+	}
+
+	.history-chatid {
+		font-size: 10px;
+		color: #909399;
+	}
+
+	.children-count {
+		font-size: 10px;
+		color: #409EFF;
+		font-weight: 500;
+	}
+
+	/* 子轮对话样式 */
+	.history-children {
+		margin-top: 8px;
+		padding-left: 20px;
+	}
+
+	.history-child-item {
+		background-color: #fff;
+		border-radius: 6px;
+		padding: 8px;
+		margin-bottom: 6px;
+		border-left: 2px solid #409EFF;
+	}
+
+	.history-child-content {
+		display: flex;
+		flex-direction: column;
+		gap: 4px;
+	}
+
+	.child-index {
+		font-size: 10px;
+		color: #409EFF;
+		font-weight: 500;
+	}
+
+	.ai-count {
+		font-size: 10px;
+		color: #67C23A;
 	}
 
 	/* 智能评分弹窗 */
@@ -4733,15 +5119,185 @@
     margin-left: 8rpx;
   }
 
-  /* 禁用状态样式 */
-  .ai-card.ai-disabled .model-picker {
+  /* 动态AI选项样式 */
+  .ai-options {
+    margin-top: 6px;
+    padding: 6px;
+    background-color: #fafbfc;
+    border-radius: 10px;
+  }
+
+  .option-item {
+    margin-bottom: 6px;
+  }
+
+  .option-item:last-child {
+    margin-bottom: 0;
+  }
+
+  .select-option {
+    padding: 6px 8px;
+    background-color: #ffffff;
+    border-radius: 10px;
+    border: 1px solid #e4e7ed;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+  }
+
+  .option-label {
+    font-size: 10px;
+    font-weight: 600;
+    color: #606266;
+    margin-bottom: 4px;
+    display: block;
+    letter-spacing: 0.2px;
+  }
+
+  .option-picker {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 4px 10px;
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+    border: 1.5px solid #e4e7ed;
+    border-radius: 14px;
+    min-height: 28px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .option-text {
+    font-size: 10px;
+    font-weight: 500;
+    color: #606266;
+    flex: 1;
+    letter-spacing: 0.2px;
+  }
+
+  .button-options-group {
+    margin-top: 6px;
+  }
+
+  /* 禁用状态样式（离线/未登录） */
+  .ai-card.ai-disabled {
+    opacity: 0.6;
+  }
+
+  .ai-card.ai-disabled .model-picker,
+  .ai-card.ai-disabled .option-picker {
     background-color: #f5f5f5;
     border-color: #e0e0e0;
   }
 
   .ai-card.ai-disabled .model-text,
-  .ai-card.ai-disabled .picker-arrow {
+  .ai-card.ai-disabled .picker-arrow,
+  .ai-card.ai-disabled .option-text {
     color: #ccc;
+  }
+
+  .ai-card.ai-disabled .select-option {
+    background-color: #f5f5f5;
+    border-color: #e0e0e0;
+    opacity: 0.7;
+  }
+
+  .ai-card.ai-disabled .option-label,
+  .ai-card.ai-disabled .model-label {
+    color: #999;
+  }
+
+  /* 离线AI的选项禁用样式 */
+  .option-disabled {
+    opacity: 0.5;
+    pointer-events: none;
+  }
+
+  .option-disabled .model-picker,
+  .option-disabled .option-picker {
+    background-color: #f5f5f5;
+    border-color: #e0e0e0;
+  }
+
+  .option-disabled .model-text,
+  .option-disabled .option-text,
+  .option-disabled .picker-arrow {
+    color: #ccc;
+  }
+
+  /* 离线状态遮罩层 */
+  .card-offline-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(144, 147, 153, 0.85);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 25;
+    border-radius: 12px;
+  }
+
+  .card-offline-message {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4rpx;
+    background: #909399;
+    color: white;
+    padding: 20rpx 32rpx;
+    border-radius: 40rpx;
+    font-size: 28rpx;
+    font-weight: 600;
+    box-shadow: 0 8rpx 24rpx rgba(144, 147, 153, 0.4);
+    text-align: center;
+  }
+
+  /* 未登录状态遮罩层 */
+  .card-login-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(245, 166, 35, 0.85);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 25;
+    border-radius: 12px;
+  }
+
+  .card-login-message {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4rpx;
+    background: #f5a623;
+    color: white;
+    padding: 20rpx 32rpx;
+    border-radius: 40rpx;
+    font-size: 28rpx;
+    font-weight: 600;
+    box-shadow: 0 8rpx 24rpx rgba(245, 166, 35, 0.4);
+    text-align: center;
+  }
+
+  .overlay-icon {
+    font-size: 32rpx;
+    margin-bottom: 4rpx;
+  }
+
+  .overlay-text {
+    font-size: 28rpx;
+    font-weight: 600;
+  }
+
+  .overlay-hint {
+    font-size: 22rpx;
+    font-weight: 400;
+    opacity: 0.9;
+    margin-top: 4rpx;
   }
 </style>
 

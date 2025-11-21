@@ -34,26 +34,59 @@
             <div class="history-date">{{ date }}</div>
             <div class="history-list">
               <div v-for="(item, index) in group" :key="index" class="history-item">
-                <div class="history-parent" @click="loadHistoryItem(item)">
+                <!-- 🔥 会话组父记录 -->
+                <div class="history-parent" 
+                     @click="item.isChatGroup ? toggleHistoryExpansion(item) : loadHistoryItem(item)">
                   <div class="history-header">
-                    <i :class="[
-                      'el-icon-arrow-right',
-                      { 'is-expanded': item.isExpanded },
-                    ]" @click.stop="toggleHistoryExpansion(item)"></i>
-                    <div class="history-prompt">{{ item.userPrompt }}</div>
-                  </div>
-                  <div class="history-time">
-                    {{ formatHistoryTime(item.createTime) }}
+                    <!-- 会话组展开/收起箭头 -->
+                    <i v-if="item.isChatGroup"
+                       :class="[
+                         'el-icon-arrow-right',
+                         { 'is-expanded': item.isExpanded },
+                       ]" 
+                       :title="item.isExpanded ? '收起对话轮次' : '展开对话轮次'">
+                    </i>
+                    <!-- 单轮对话图标 -->
+                    <i v-else class="el-icon-chat-dot-round" 
+                       style="color: #909399; font-size: 14px;"
+                       title="点击加载此对话"></i>
+                    <div class="history-content-wrapper">
+                      <!-- 会话组显示首轮提问 -->
+                      <div v-if="item.isChatGroup" class="history-prompt">
+                        {{ item.userPrompt }}
+                      </div>
+                      <!-- 单轮对话显示提问内容 -->
+                      <div v-else class="history-prompt">{{ item.userPrompt }}</div>
+                      
+                      <div class="history-meta">
+                        <span class="history-time">{{ formatHistoryTime(item.createTime) }}</span>
+                        <span class="history-separator">•</span>
+                        <span class="history-chatid" :title="'会话ID: ' + item.chatId">
+                          会话 {{ item.chatId.substring(0, 8) }}
+                        </span>
+                        <span v-if="item.isChatGroup" class="children-count">
+                          • {{ item.totalRounds }}轮对话
+                        </span>
+                      </div>
+                    </div>
                   </div>
                 </div>
-                <div v-if="
-                  item.children && item.children.length > 0 && item.isExpanded
-                " class="history-children">
-                  <div v-for="(child, childIndex) in item.children" :key="childIndex" class="history-child-item"
-                    @click="loadHistoryItem(child)">
-                    <div class="history-prompt">{{ child.userPrompt }}</div>
-                    <div class="history-time">
-                      {{ formatHistoryTime(child.createTime) }}
+                
+                <!-- 🔥 展开显示各轮对话 -->
+                <div v-if="item.isChatGroup && item.children && item.children.length > 0 && item.isExpanded" 
+                     class="history-children">
+                  <div v-for="(round, roundIndex) in item.children" 
+                       :key="roundIndex" 
+                       class="history-child-item"
+                       @click="loadHistoryItem(round)">
+                    <div class="history-child-content">
+                      <span class="child-index">第{{ roundIndex + 1 }}轮</span>
+                      <div class="history-prompt">{{ round.roundPrompt }}</div>
+                      <div class="history-meta">
+                        <span class="history-time">{{ formatHistoryTime(round.createTime) }}</span>
+                        <span class="history-separator">•</span>
+                        <span class="ai-count">{{ round.aiResponseCount }}个AI响应</span>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -84,7 +117,31 @@
           </template>
           <div class="ai-selection-section">
             <div class="ai-cards">
-              <el-card v-for="(ai, index) in aiList" :key="index" class="ai-card" shadow="hover">
+              <el-card 
+                v-for="(ai, index) in processedAiList" 
+                :key="index" 
+                class="ai-card" 
+                :class="{ 'ai-card-offline': !ai.onlineStatus, 'ai-card-not-logged': !isAiLoggedIn(ai) }"
+                shadow="hover"
+              >
+                <!-- 离线状态遮罩层 - 优先级最高 -->
+                <div v-if="!ai.onlineStatus" class="card-offline-overlay">
+                  <div class="card-offline-message">
+                    <i class="el-icon-connection"></i>
+                    <span>AI已离线</span>
+                    <div class="offline-hint">管理员已将此AI设置为离线状态</div>
+                  </div>
+                </div>
+                
+                <!-- 未登录遮罩层 - 只在在线但未登录时显示 -->
+                <div v-else-if="!isAiLoggedIn(ai)" class="card-login-overlay">
+                  <div class="card-login-message">
+                    <i class="el-icon-warning"></i>
+                    <span>未登录</span>
+                    <div class="login-hint">请先登录此AI账号</div>
+                  </div>
+                </div>
+                
                 <div class="ai-card-header">
                   <div class="ai-left">
                     <div class="ai-avatar">
@@ -93,96 +150,53 @@
                     <div class="ai-name">{{ ai.name }}</div>
                   </div>
                   <div class="ai-status">
-                    <el-switch v-model="ai.enabled" active-color="#13ce66" inactive-color="#ff4949">
+                    <el-switch 
+                      v-model="ai.enabled" 
+                      active-color="#13ce66" 
+                      inactive-color="#ff4949"
+                      :disabled="!ai.onlineStatus || !isAiLoggedIn(ai)"
+                    >
                     </el-switch>
                   </div>
                 </div>
-                <div class="ai-capabilities" v-if="ai.capabilities && ai.capabilities.length > 0">
-                  <!-- 通义只支持单选-->
-                  <!-- 通义千问已注释 -->
-                  <!-- <div v-if="ai.name === '通义千问'" class="button-capability-group">
-                    <el-button v-for="capability in ai.capabilities" :key="capability.value" size="small"
-                      :type="ai.selectedCapability === capability.value ? 'primary' : 'info'" :disabled="!ai.enabled"
-                      :plain="ai.selectedCapability !== capability.value"
-                      @click="selectSingleCapability(ai, capability.value)" class="capability-button">
-                      {{ capability.label }}
-                    </el-button>
-                  </div> -->
-                  <!-- 百度AI选择 -->
-                  <div v-if="ai.name === '百度AI'" class="button-capability-group">
-                    <el-button size="small" :type="getCapabilityType(ai, 'deep_search')" :disabled="!ai.enabled"
-                      :plain="getCapabilityPlain(ai, 'deep_search')" @click="toggleCapability(ai, 'deep_search')"
-                      class="capability-button">
-                      深度搜索
-                    </el-button>
-                    <!-- <el-select :disabled="!ai.enabled || ai.selectedCapabilities.includes('deep_search')"
-                      v-model="ai.selectedModel" placeholder="请选择模型">
-                      <el-option label="百度AI助手" value="">
-                      </el-option>
-                      <el-option label="DeepSeek-R1" value="dsr1">
-                      </el-option>
-                      <el-option label="DeepSeek-V3" value="dsv3">
-                      </el-option>
-                      <el-option label="文心 4.5 Turbo" value="wenxin">
-                      </el-option>
-                    </el-select>
-                    联网搜索
-                    <el-switch v-model="ai.isWeb" active-color="#13ce66" inactive-color="#ff4949"
-                      :disabled="!ai.enabled || ai.selectedCapabilities.includes('deep_search')" class="web-switch">
-                    </el-switch> -->
-                    <el-dropdown size="small" :disabled="!ai.enabled || ai.selectedCapabilities.includes('deep_search')"
-                      :type="ai.isModel ? 'primary' : 'default'" @click="ai.isModel = !ai.isModel" split-button
-                      trigger="click" :hide-on-click="false"
-                      @command="function (command) { command == ai.selectedModel ? ai.isModel = false : ((ai.selectedModel = command) & (ai.isModel = true)) }">
-                      {{ ai.selectedModel == "dsr1" ? "DeepSeek-R1" : ai.selectedModel == "dsv3" ? "DeepSeek-V3"
-                        : ai.selectedModel == "wenxin" ? "文心4.5Turbo" : "百度AI助手" }}
-                      <template #dropdown>
-                        <el-dropdown-menu>
-                          <el-dropdown-item command="dsr1">DeepSeek-R1</el-dropdown-item>
-                          <el-dropdown-item command="dsv3">DeepSeek-V3</el-dropdown-item>
-                          <el-dropdown-item command="wenxin">文心 4.5 Turbo</el-dropdown-item>
-                          <span style="font-size: 12px; text-align:center; margin: 0px 0px 0px 10px">联网搜索</span>
-                          <el-switch size="small" v-model="ai.isWeb" style="zoom: 0.8"></el-switch>
-                        </el-dropdown-menu>
-                      </template>
-                    </el-dropdown>
-                  </div>
-                  <!-- 腾讯元宝 -->
-                  <div v-else-if="ai.name === '腾讯元宝'" class="button-capability-group">
-                    <!-- 模型选择 -->
-                    <div class="model-selection">
-                      <span class="selection-label">模型:</span>
-                      <el-select v-model="ai.selectedModel" placeholder="选择模型" size="small" :disabled="!ai.enabled">
-                        <el-option v-for="model in ai.models" :key="model.value" :label="model.label"
-                          :value="model.value">
-                        </el-option>
+                <!-- 统一的AI选项配置 -->
+                <div class="ai-options" v-if="ai.options && ai.options.length > 0">
+                  <!-- 下拉选择框选项 -->
+                  <div v-for="option in ai.selectOptions" :key="option.id" class="option-item">
+                    <div class="select-option">
+                      <span class="option-label">{{ option.label }}:</span>
+                      <el-select 
+                        v-model="ai.selectedValues[option.id]" 
+                        size="small" 
+                        :disabled="!ai.enabled || !isAiLoggedIn(ai) || isOptionDisabled(ai, option)"
+                        @change="handleSelectChange(ai, option, $event)"
+                        placeholder="请选择"
+                      >
+                        <el-option 
+                          v-for="value in option.values" 
+                          :key="value.value" 
+                          :label="value.label" 
+                          :value="value.value"
+                        />
                       </el-select>
                     </div>
-                    <!-- 功能选择 -->
-                    <el-button v-for="capability in ai.capabilities" :key="capability.value" size="small"
-                      :type="getCapabilityType(ai, capability.value)" :disabled="!ai.enabled"
-                      :plain="getCapabilityPlain(ai, capability.value)" @click="toggleCapability(ai, capability.value)"
-                      class="capability-button">
-                      {{ capability.label }}
-                    </el-button>
                   </div>
-                  <!-- 知乎直答单选思考模式 -->
-                  <div v-else-if="ai.name === '知乎直答'" class="button-capability-group">
-                    <el-button v-for="capability in ai.capabilities" :key="capability.value" size="small"
-                      :type="ai.selectedCapability === capability.value ? 'primary' : 'info'" :disabled="!ai.enabled"
-                      :plain="ai.selectedCapability !== capability.value"
-                      @click="selectSingleCapability(ai, capability.value)" class="capability-button">
-                      {{ capability.label }}
-                    </el-button>
-                  </div>
-                  <!-- 其他AI -->
-                  <div v-else class="button-capability-group">
-                    <el-button v-for="capability in ai.capabilities" :key="capability.value" size="small"
-                      :type="getCapabilityType(ai, capability.value)" :disabled="!ai.enabled"
-                      :plain="getCapabilityPlain(ai, capability.value)" @click="toggleCapability(ai, capability.value)"
-                      class="capability-button">
-                      {{ capability.label }}
-                    </el-button>
+                  
+                  <!-- 按钮选项组 -->
+                  <div v-if="ai.buttonOptions && ai.buttonOptions.length > 0" class="button-options-group">
+                    <div class="ai-capabilities" :class="ai.buttonLayoutClass">
+                      <el-button 
+                        v-for="option in ai.buttonOptions" 
+                        :key="option.id"
+                        :type="ai.selectedValues[option.id] ? 'primary' : 'default'"
+                        size="small"
+                        :disabled="!ai.enabled || !isAiLoggedIn(ai) || isOptionDisabled(ai, option)"
+                        @click="handleButtonClick(ai, option)"
+                        class="capability-button"
+                      >
+                        {{ option.label }}
+                      </el-button>
+                    </div>
                   </div>
                 </div>
               </el-card>
@@ -475,6 +489,7 @@ import { ChatDotSquare, Document, Link, Loading, Plus, Promotion } from '@elemen
   import store from "@/store";
   import TurndownService from "turndown";
   import { getCorpId, ensureLatestCorpId } from "@/utils/corpId";
+  import { listUserAvailableAiagent } from "@/api/system/aiagent";
 
   export default {
     name: "AIManagementPlatform",
@@ -497,6 +512,7 @@ import { ChatDotSquare, Document, Link, Loading, Plus, Promotion } from '@elemen
           userId: "",
           corpId: "",
           taskId: "",
+          chatId: "", // 🔥 添加chatId字段，用于标识会话
           roles: "",
           toneChatId: "",
           ybDsChatId: "",
@@ -515,112 +531,13 @@ import { ChatDotSquare, Document, Link, Loading, Plus, Promotion } from '@elemen
           method: "",
           params: {},
         },
-        aiList: [
-          {
-            name: "豆包",
-            avatar: require("../../../assets/ai/豆包.png"),
-            capabilities: [{ label: "深度思考", value: "deep_thinking" }],
-            selectedCapabilities: ["deep_thinking"],
-            enabled: true,
-            status: "idle",
-            progressLogs: [],
-            isExpanded: true,
-            isSingleSelect: false  // 添加单选标记
-          },
-
-          {
-            name: '百度AI',
-            avatar: require('../../../assets/logo/Baidu.png'),
-            capabilities: [
-              { label: '深度搜索', value: 'deep_search' },
-            ],
-            selectedCapabilities: ["deep_search"],
-            selectedModel: 'dsr1',
-            isModel: false,
-            isWeb: false,
-            enabled: true,
-            status: 'idle',
-            progressLogs: [],
-            isExpanded: true,
-          },
-          {
-            name: '腾讯元宝',
-            avatar: require('../../../assets/ai/yuanbao.png'),
-            capabilities: [
-              { label: '深度思考', value: 'deep_thinking' },
-              { label: '联网搜索', value: 'web_search' }
-            ],
-            selectedCapabilities: ['deep_thinking', 'web_search'],
-            selectedModel: 'hunyuan', // 默认选择混元
-            models: [
-              { label: '混元', value: 'hunyuan' },
-              { label: 'DeepSeek', value: 'deepseek' }
-            ],
-            enabled: true,
-            status: 'idle',
-            progressLogs: [],
-            isExpanded: true,
-            isSingleSelect: false
-          },
-          {
-            name: "DeepSeek",
-            avatar: require("../../../assets/logo/Deepseek.png"),
-            capabilities: [
-              { label: "深度思考", value: "deep_thinking" },
-              { label: "联网搜索", value: "web_search" },
-            ],
-            selectedCapabilities: ["deep_thinking", "web_search"],
-            enabled: true,
-            status: "idle",
-            progressLogs: [],
-            isExpanded: true,
-            isSingleSelect: false,  // 添加单选标记
-          },
-          // 通义千问已注释
-          // {
-          //   name: '通义千问',
-          //   avatar: require('../../../assets/ai/qw.png'),
-          //   capabilities: [
-          //     { label: '深度思考', value: 'deep_thinking' },
-          //   ],
-          //   selectedCapability: '',
-          //   enabled: true,
-          //   status: 'idle',
-          //   progressLogs: [],
-          //   isExpanded: true
-          // },
-          {
-            name: "秘塔",
-            avatar: require("../../../assets/ai/Metaso.png"),
-            capabilities: [
-              { label: "极速", value: "fast" },
-              { label: "极速思考", value: "fast_thinking" },
-              { label: "长思考", value: "long_thinking" },
-            ],
-            selectedCapabilities: "fast",// 单选使用字符串
-            enabled: true,
-            status: "idle",
-            progressLogs: [],
-            isExpanded: true,
-            isSingleSelect: true,  // 添加单选标记,用于capabilities中状态只能多选一的时候改成true,然后把selectedCapabilities赋值为字符串，不要是数组
-          },
-          {
-            name: "知乎直答",
-            avatar: require("../../../assets/ai/ZHZD.png"),
-            capabilities: [
-              { label: "智能思考", value: "smart_thinking" },
-              { label: "深度思考", value: "deep_thinking" },
-              { label: "快速回答", value: "fast_answer" },
-            ],
-            selectedCapability: "smart_thinking", // 改为单选，默认智能思考
-            enabled: true,
-            status: 'idle',
-            progressLogs: [],
-            isExpanded: true,
-            isSingleSelect: true, // 设为单选模式
-          },
-
-        ],
+        // 动态AI配置
+        availableAiList: [], // 从数据库加载的AI列表
+        aiList: [], // 实际使用的AI列表，完全从后端动态加载
+        
+        // 🔥 登录状态管理
+        aiLoginStatus: {}, // AI登录状态 {agentCode: boolean}
+        accounts: {}, // AI账户信息 {agentCode: string}
         mediaList: [
           {
             name: "wechat_layout",
@@ -675,10 +592,12 @@ import { ChatDotSquare, Document, Link, Loading, Plus, Promotion } from '@elemen
     },
     computed: {
       canSend() {
-        return (
-          this.promptInput.trim().length > 0 &&
-          this.aiList.some((ai) => ai.enabled)
-        );
+        const hasInput = this.promptInput.trim().length > 0;
+        const hasEnabledAndLoggedInAI = this.aiList.some((ai) => ai.enabled && this.isAiLoggedIn(ai));
+        
+        console.log('🔍 [canSend] 输入检查:', hasInput, '已启用且登录的AI:', hasEnabledAndLoggedInAI);
+        
+        return hasInput && hasEnabledAndLoggedInAI;
       },
       canScore() {
         return (
@@ -703,7 +622,7 @@ import { ChatDotSquare, Document, Link, Loading, Plus, Promotion } from '@elemen
         const groups = {};
         const chatGroups = {};
 
-        // 首先按chatId分组
+        // 🔥 首先按chatId分组
         this.chatHistory.forEach((item) => {
           if(!chatGroups[item.chatId]) {
             chatGroups[item.chatId] = [];
@@ -711,38 +630,107 @@ import { ChatDotSquare, Document, Link, Loading, Plus, Promotion } from '@elemen
           chatGroups[item.chatId].push(item);
         });
 
-        // 然后按日期分组，并处理父子关系
-        Object.values(chatGroups).forEach((chatGroup) => {
-          // 按时间排序
-          chatGroup.sort(
-            (a, b) => new Date(a.createTime) - new Date(b.createTime)
-          );
+        console.log('📊 [历史记录] 原始记录数:', this.chatHistory.length);
+        console.log('📊 [历史记录] 会话组数:', Object.keys(chatGroups).length);
 
-          // 获取最早的记录作为父级
-          const parentItem = chatGroup[0];
-          const date = this.getHistoryDate(parentItem.createTime);
+        // 🔥🔥 按chatId聚合，每个chatId作为一个父记录
+        Object.entries(chatGroups).forEach(([chatId, chatGroup]) => {
+          // 按时间升序排序
+          chatGroup.sort((a, b) => {
+            const timeA = new Date(a.createTime).getTime();
+            const timeB = new Date(b.createTime).getTime();
+            return timeA - timeB;
+          });
+
+          // 🔥 按userPrompt分组（同一个提问的多个AI响应算一轮）
+          const roundGroups = {};
+          chatGroup.forEach((record) => {
+            const prompt = record.userPrompt || '未知提问';
+            if(!roundGroups[prompt]) {
+              roundGroups[prompt] = [];
+            }
+            roundGroups[prompt].push(record);
+          });
+
+          // 获取第一条记录用于日期分组
+          const firstRecord = chatGroup[0];
+          const date = this.getHistoryDate(firstRecord.createTime);
 
           if(!groups[date]) {
             groups[date] = [];
           }
 
-          // 添加父级记录
+          // 🔥🔥 将每一轮作为子记录，使用该轮最后一条记录（包含完整状态）
+          const rounds = Object.entries(roundGroups).map(([prompt, roundRecords], roundIndex) => {
+            // 🔥 关键：同一轮对话有多条记录，每条记录保存当时的完整状态
+            // 最后一条记录包含了该轮所有AI的完整响应，直接使用它
+            const lastRecord = roundRecords[roundRecords.length - 1];
+            
+            // 解析最后一条记录获取AI响应数量
+            let aiResponseCount = 0;
+            try {
+              const recordData = JSON.parse(lastRecord.data);
+              aiResponseCount = recordData.results ? recordData.results.length : 0;
+            } catch (e) {
+              console.error('解析记录失败:', e);
+            }
+            
+            console.log(`📊 [历史记录] 第${roundIndex + 1}轮 "${prompt}" 有${aiResponseCount}个AI响应（共${roundRecords.length}条记录，使用最后一条）`);
+            
+            return {
+              ...lastRecord,
+              roundIndex: roundIndex,
+              roundPrompt: prompt,
+              aiResponseCount: aiResponseCount,
+              isRound: true,
+              allRoundRecords: roundRecords, // 保存所有记录供调试
+            };
+          });
+
+          console.log(`📝 [会话${chatId.substring(0, 8)}] 总计${rounds.length}轮对话, 首轮: "${rounds[0]?.roundPrompt?.substring(0, 20)}..."`);
+
+          // 🔥🔥 chatId作为父记录，各轮作为子记录
           groups[date].push({
-            ...parentItem,
+            ...firstRecord,
             isParent: true,
-            isExpanded: this.expandedHistoryItems[parentItem.chatId] || false,
-            children: chatGroup.slice(1).map((child) => ({
-              ...child,
-              isParent: false,
-            })),
+            isChatGroup: true, // 标记这是一个会话组
+            totalRounds: rounds.length,
+            chatId: chatId,
+            // 🔥 默认收起状态
+            isExpanded: this.expandedHistoryItems[chatId] !== undefined 
+              ? this.expandedHistoryItems[chatId] 
+              : false,
+            children: rounds, // 各轮作为子记录
           });
         });
 
+        console.log('📊 [历史记录] 分组结果:', Object.keys(groups).map(date => `${date}: ${groups[date].length}条`).join(', '));
         return groups;
       },
-      // 检查是否所有AI都已启用
+      // 检查是否所有AI都已启用（只包含已登录的AI）
       allAIsEnabled() {
-        return this.aiList.every(ai => ai.enabled);
+        const loggedInAIs = this.aiList.filter(ai => this.isAiLoggedIn(ai));
+        return loggedInAIs.length > 0 && loggedInAIs.every(ai => ai.enabled);
+      },
+      // 🔥 处理AI选项分类和布局（参考小程序实现）
+      processedAiList() {
+        return this.aiList.map(ai => {
+          // 初始化selectedValues（如果不存在）
+          if (!ai.selectedValues) {
+            this.$set(ai, 'selectedValues', this.initializeSelectedValues(ai));
+          }
+          
+          // 处理选项分类
+          const selectOptions = ai.options ? ai.options.filter(opt => opt.type === 'select') : [];
+          const buttonOptions = ai.options ? ai.options.filter(opt => opt.type === 'button') : [];
+          
+          // 使用$set确保响应式
+          this.$set(ai, 'selectOptions', selectOptions);
+          this.$set(ai, 'buttonOptions', buttonOptions);
+          this.$set(ai, 'buttonLayoutClass', this.getButtonLayoutClass(buttonOptions.length));
+          
+          return ai;
+        });
       },
     },
     async created() {
@@ -757,8 +745,15 @@ import { ChatDotSquare, Document, Link, Loading, Plus, Promotion } from '@elemen
         console.log(this.corpId);
       }
 
+      // 加载用户可用的AI配置
+      await this.loadAvailableAiList();
+
       this.initWebSocket(this.userId);
-      this.loadChatHistory(0); // 加载历史记录
+      
+      // 同步首页的登录状态
+      this.syncLoginStatusFromHomepage();
+      
+      // 不在created中预加载历史记录，只在打开抽屉时加载
       this.loadLastChat(); // 加载上次会话
     },
     mounted() {
@@ -792,18 +787,311 @@ import { ChatDotSquare, Document, Link, Loading, Plus, Promotion } from '@elemen
       }
     },
     methods: {
-      // 全局AI控制方法
+      // 根据按钮数量动态返回布局类名
+      getButtonLayoutClass(buttonCount) {
+        if (buttonCount === 1) return 'buttons-single';
+        if (buttonCount === 2) return 'buttons-two';
+        if (buttonCount === 3) return 'buttons-three';
+        return 'buttons-multiple'; // 4个或更多
+      },
+      
+      // 🔥 同步首页的登录状态到主机页面
+      syncLoginStatusFromHomepage() {
+        try {
+          // 从localStorage或sessionStorage获取首页的登录状态
+          const homepageLoginStatus = localStorage.getItem('aiLoginStatus');
+          const homepageAccounts = localStorage.getItem('aiAccounts');
+          
+          if (homepageLoginStatus) {
+            const loginStatus = JSON.parse(homepageLoginStatus);
+            console.log('🔄 [状态同步] 从首页同步登录状态:', loginStatus);
+            
+            // 更新当前页面的登录状态
+            Object.keys(loginStatus).forEach(aiCode => {
+              this.$set(this.aiLoginStatus, aiCode, loginStatus[aiCode]);
+            });
+          }
+          
+          if (homepageAccounts) {
+            const accounts = JSON.parse(homepageAccounts);
+            console.log('🔄 [状态同步] 从首页同步账户信息:', accounts);
+            
+            // 更新当前页面的账户信息
+            Object.keys(accounts).forEach(aiCode => {
+              this.$set(this.accounts, aiCode, accounts[aiCode]);
+            });
+          }
+          
+          console.log('✅ [状态同步] 登录状态同步完成');
+        } catch (error) {
+          console.warn('⚠️ [状态同步] 同步首页登录状态失败:', error);
+        }
+      },
+      
+      // 🔥 保存登录状态到本地存储，供其他页面同步
+      saveLoginStatusToStorage() {
+        try {
+          localStorage.setItem('aiLoginStatus', JSON.stringify(this.aiLoginStatus));
+          localStorage.setItem('aiAccounts', JSON.stringify(this.accounts));
+          console.log('💾 [状态同步] 登录状态已保存到本地存储');
+        } catch (error) {
+          console.warn('⚠️ [状态同步] 保存登录状态失败:', error);
+        }
+      },
+      
+      // 🔥 判断AI是否已登录（只检查登录状态，不检查在线状态）
+      isAiLoggedIn(ai) {
+        if (!ai || !ai.agentCode) return false;
+        
+        // 只检查登录状态，不检查在线状态
+        const loginStatus = this.aiLoginStatus[ai.agentCode];
+        const isOnline = ai.onlineStatus === 1;
+        
+        console.log(`🔍 [登录检查] ${ai.name}(${ai.agentCode}): 登录状态=${loginStatus}, 在线状态=${isOnline}`);
+        
+        // 只返回登录状态，离线状态通过其他方式处理
+        return !!loginStatus;
+      },
+      
+      // 加载用户可用的AI列表
+      async loadAvailableAiList() {
+        try {
+          const response = await listUserAvailableAiagent();
+          this.availableAiList = response.data || [];
+          
+          // 根据数据库配置构建aiList
+          this.aiList = this.availableAiList.map(ai => {
+            // 解析JSON配置
+            let configJson = {};
+            try {
+              configJson = ai.configJson ? JSON.parse(ai.configJson) : {};
+            } catch (e) {
+              console.warn('解析AI配置JSON失败:', ai.agentName, e);
+            }
+            
+            // 构建AI配置对象
+            const aiConfig = {
+              name: ai.agentName,
+              avatar: ai.agentIcon, // 直接使用后端返回的图标URL
+              options: configJson.options || [], // 直接使用数据库的options配置
+              selectedValues: {}, // 存储用户选择的值
+              enabled: false, // 🔥 默认关闭状态
+              status: 'idle',
+              progressLogs: [],
+              isExpanded: true,
+              agentCode: ai.agentCode, // 添加agentCode用于后端识别
+              agentStatus: ai.agentStatus,
+              onlineStatus: ai.onlineStatus
+            };
+            
+            // 初始化选中值
+            this.initializeSelectedValues(aiConfig);
+            
+            return aiConfig;
+          });
+          
+          console.log('✅ [Chrome页面] 加载用户可用AI列表:', this.aiList.length, '个');
+        } catch (error) {
+          console.error('❌ [Chrome页面] 加载AI列表失败:', error);
+          // 加载失败时显示空列表，不再使用本地配置
+          this.aiList = [];
+          this.$message.error('加载AI列表失败，请刷新页面重试');
+        }
+      },
+      
+      // 解析配置中的capabilities
+      parseCapabilities(configJson) {
+        if (!configJson.options) return [];
+        
+        return configJson.options
+          .filter(option => option.type === 'select')
+          .map(option => ({
+            label: option.label,
+            value: option.id,  // 使用option.id而不是backendField
+            values: option.values || []
+          }))
+          .flat();
+      },
+      
+      // 获取默认选中的capabilities
+      getDefaultSelectedCapabilities(configJson) {
+        if (!configJson.options) return [];
+        
+        const defaultValues = [];
+        configJson.options.forEach(option => {
+          if (option.type === 'select' && option.values) {
+            const defaultItems = option.values.filter(v => v.default);
+            if (option.selectType === 'single') {
+              return defaultItems.length > 0 ? defaultItems[0].value : '';
+            } else {
+              defaultValues.push(...defaultItems.map(v => v.value));
+            }
+          }
+        });
+        
+        return defaultValues;
+      },
+      
+      // 判断是否为单选模式
+      isSingleSelectMode(configJson) {
+        if (!configJson.options) return false;
+        return configJson.options.some(option => 
+          option.type === 'select' && option.selectType === 'single'
+        );
+      },
+
+      // 初始化AI的选中值
+      initializeSelectedValues(aiConfig) {
+        aiConfig.selectedValues = {};
+        if (aiConfig.options) {
+          aiConfig.options.forEach(option => {
+            if (option.type === 'select') {
+              const defaultValue = option.values.find(v => v.default);
+              aiConfig.selectedValues[option.id] = defaultValue ? defaultValue.value : '';
+            } else if (option.type === 'button') {
+              aiConfig.selectedValues[option.id] = false;
+            }
+          });
+        }
+      },
+
+      // 处理下拉选择变化
+      handleSelectChange(ai, option, value) {
+        console.log(`✅ [${ai.name}] 下拉选择变化:`, option.label, '选择了:', value);
+        ai.selectedValues[option.id] = value;
+        
+        // 处理冲突逻辑
+        this.handleOptionConflicts(ai, option);
+      },
+
+      // 处理按钮点击
+      handleButtonClick(ai, option) {
+        console.log(`✅ [${ai.name}] 按钮点击:`, option.label);
+        // 切换按钮状态
+        ai.selectedValues[option.id] = !ai.selectedValues[option.id];
+        
+        // 处理冲突逻辑
+        this.handleOptionConflicts(ai, option);
+      },
+
+      // 检查选项是否被禁用
+      isOptionDisabled(ai, option) {
+        // 检查选项级别的冲突
+        if (option.conflicts && option.conflicts.length > 0) {
+          const hasConflict = option.conflicts.some(conflictId => {
+            const conflictOption = ai.options.find(opt => opt.id === conflictId);
+            if (!conflictOption) return false;
+            
+            if (conflictOption.type === 'select') {
+              const selectedValue = ai.selectedValues[conflictId];
+              return selectedValue && selectedValue !== '';
+            } else if (conflictOption.type === 'button') {
+              return !!ai.selectedValues[conflictId];
+            }
+            return false;
+          });
+          if (hasConflict) return true;
+        }
+
+        // 检查选项值级别的冲突（针对下拉选择）
+        if (option.type === 'select') {
+          // 检查其他选项的选项值是否与当前选项冲突
+          return ai.options.some(otherOption => {
+            if (otherOption.id === option.id) return false;
+            
+            if (otherOption.type === 'select') {
+              const selectedValue = ai.selectedValues[otherOption.id];
+              if (!selectedValue || selectedValue === '') return false;
+              
+              // 查找选中的选项值
+              const selectedValueObj = otherOption.values.find(v => v.value === selectedValue);
+              if (selectedValueObj && selectedValueObj.conflicts) {
+                return selectedValueObj.conflicts.includes(option.id);
+              }
+            }
+            return false;
+          });
+        }
+        
+        return false;
+      },
+
+      // 🔥 处理选项互斥逻辑
+      handleOptionConflicts(ai, changedOption) {
+        if (!ai.options || !ai.selectedValues) return;
+        
+        // 获取当前选项的冲突列表
+        let conflicts = [];
+        
+        // 1. 检查当前选项本身的conflicts字段
+        if (changedOption.conflicts && Array.isArray(changedOption.conflicts)) {
+          const isCurrentActive = changedOption.type === 'select' 
+            ? (ai.selectedValues[changedOption.id] && ai.selectedValues[changedOption.id] !== '')
+            : !!ai.selectedValues[changedOption.id];
+            
+          if (isCurrentActive) {
+            conflicts = [...changedOption.conflicts];
+            console.log(`⚠️ [${ai.name}] ${changedOption.label} 选项级冲突:`, conflicts);
+          }
+        }
+
+        // 2. 如果是select类型，检查选中值的conflicts字段
+        if (changedOption.type === 'select') {
+          const selectedValue = ai.selectedValues[changedOption.id];
+          if (selectedValue && selectedValue !== '') {
+            // 查找选中的选项值对象
+            const selectedValueObj = changedOption.values.find(v => v.value === selectedValue);
+            if (selectedValueObj && selectedValueObj.conflicts && Array.isArray(selectedValueObj.conflicts)) {
+              conflicts = [...conflicts, ...selectedValueObj.conflicts];
+              console.log(`⚠️ [${ai.name}] ${changedOption.label}="${selectedValueObj.label}" 值级冲突:`, selectedValueObj.conflicts);
+            }
+          }
+        }
+        
+        if (conflicts.length === 0) {
+          console.log(`📋 [${ai.name}] ${changedOption.label} 无冲突配置`);
+          return;
+        }
+        
+        // 清除冲突的选项
+        conflicts.forEach(conflictId => {
+          const conflictOption = ai.options.find(opt => opt.id === conflictId);
+          if (!conflictOption) return;
+          
+          if (conflictOption.type === 'select') {
+            // 下拉选择：清空选择（设为空字符串）
+            const hadValue = ai.selectedValues[conflictId];
+            if (hadValue && hadValue !== '') {
+              ai.selectedValues[conflictId] = '';
+              console.log(`🔄 [${ai.name}] 清除冲突选项: ${conflictOption.label}`);
+            }
+          } else if (conflictOption.type === 'button') {
+            // 按钮：设为false（关闭）
+            if (ai.selectedValues[conflictId]) {
+              ai.selectedValues[conflictId] = false;
+              console.log(`🔄 [${ai.name}] 关闭冲突按钮: ${conflictOption.label}`);
+            }
+          }
+        });
+        
+        // 强制更新视图
+        this.$forceUpdate();
+      },
+
+      // 全局AI控制方法（只操作已登录的AI）
       toggleAllAIs() {
+        const loggedInAIs = this.aiList.filter(ai => this.isAiLoggedIn(ai));
         const newState = !this.allAIsEnabled;
-        this.aiList.forEach(ai => {
+        
+        loggedInAIs.forEach(ai => {
           ai.enabled = newState;
         });
 
         // 显示操作反馈
         if(newState) {
-          console.log('已启动全部AI智能体');
+          console.log(`已启动全部已登录的AI智能体 (${loggedInAIs.length}个)`);
         } else {
-          console.log('已关闭全部AI智能体');
+          console.log(`已关闭全部已登录的AI智能体 (${loggedInAIs.length}个)`);
         }
       },
       // 处理企业ID更新事件
@@ -832,10 +1120,38 @@ import { ChatDotSquare, Document, Link, Loading, Plus, Promotion } from '@elemen
       async sendPrompt() {
         if(!this.canSend) return;
 
+        // 🔥 检查启用的AI中，有多少是在线的
+        const enabledAIs = this.aiList.filter(ai => ai.enabled);
+        const onlineEnabledAIs = enabledAIs.filter(ai => ai.onlineStatus);
+        const offlineEnabledAIs = enabledAIs.filter(ai => !ai.onlineStatus);
+        
+        // 如果所有启用的AI都离线，则阻止请求
+        if (onlineEnabledAIs.length === 0) {
+          if (offlineEnabledAIs.length > 0) {
+            const offlineNames = offlineEnabledAIs.map(ai => ai.name).join('、');
+            this.$message.error(`所有启用的AI都已离线，无法发送请求：${offlineNames}`);
+          } else {
+            this.$message.warning('请至少启用一个AI');
+          }
+          return;
+        }
+        
+        // 🔥 静默跳过离线AI，不显示提示（避免影响用户体验）
+        if (offlineEnabledAIs.length > 0) {
+          console.log(`ℹ️ [AI过滤] 以下AI已离线，将被跳过:`, offlineEnabledAIs.map(ai => ai.name).join('、'));
+          console.log(`✅ [AI过滤] 将使用在线AI:`, onlineEnabledAIs.map(ai => ai.name).join('、'));
+        }
+
         // 确保使用最新的企业ID
         await this.ensureLatestCorpId();
 
         this.screenshots = [];
+        
+        // 🔧 移除发送按钮焦点，避免折叠时的aria-hidden警告
+        if (document.activeElement) {
+          document.activeElement.blur();
+        }
+        
         // 只折叠提示词输入区域，保持AI选择配置区域展开
         this.activeCollapses = ["ai-selection"];
 
@@ -847,15 +1163,19 @@ import { ChatDotSquare, Document, Link, Loading, Plus, Promotion } from '@elemen
         this.userInfoReq.taskId = uuidv4();
         this.userInfoReq.userId = this.userId;
         this.userInfoReq.corpId = this.corpId;
+        this.userInfoReq.chatId = this.chatId; // 🔥 传递chatId给后端
         this.userInfoReq.userPrompt = this.promptInput;
 
-        // 获取启用的AI列表及其状态，并重置状态
-        this.enabledAIs = this.aiList.filter((ai) => ai.enabled).map(ai => ({
+        // 🔥 获取启用、在线且已登录的AI列表及其状态，并重置状态
+        this.enabledAIs = this.aiList.filter((ai) => ai.enabled && ai.onlineStatus && this.isAiLoggedIn(ai)).map(ai => ({
           ...ai,
           status: "running",
           progressLogs: [], // 清空之前的进度日志
           isExpanded: true  // 确保展开状态一致
         }));
+        
+        console.log('🔥 [sendPrompt] 筛选后的AI数量:', this.enabledAIs.length);
+        console.log('🔥 [sendPrompt] 已登录的AI:', this.enabledAIs.map(ai => ai.name).join(', '));
 
         // 将所有启用的AI状态设置为运行中（使用Vue的响应式更新）
         this.enabledAIs.forEach((ai) => {
@@ -864,101 +1184,56 @@ import { ChatDotSquare, Document, Link, Loading, Plus, Promotion } from '@elemen
                    ai.isExpanded = true;
         });
 
+        // 🔥 统一处理AI配置（完全动态，支持占位符替换）
         this.enabledAIs.forEach((ai) => {
-          if(ai.name === "豆包") {
-            this.userInfoReq.roles = this.userInfoReq.roles + "zj-db,";
-            if(ai.selectedCapabilities.includes("deep_thinking")) {
-              this.userInfoReq.roles = this.userInfoReq.roles + "zj-db-sdsk,";
-            }
-          }
-
-
-          // 通义千问已注释
-          // if(ai.name === '通义千问' && ai.enabled) {
-          //   this.userInfoReq.roles = this.userInfoReq.roles + 'ty-qw,';
-          //   if(ai.selectedCapability.includes("deep_thinking")) {
-          //     this.userInfoReq.roles = this.userInfoReq.roles + 'ty-qw-sdsk,'
-          //   }
-          // }
-
-          if(ai.name === '腾讯元宝') {
-            // 根据选择的模型设置角色
-            if(ai.selectedModel === 'hunyuan') {
-              this.userInfoReq.roles = this.userInfoReq.roles + 'yb-hunyuan-pt,';
-              if(ai.selectedCapabilities.includes("deep_thinking")) {
-                this.userInfoReq.roles = this.userInfoReq.roles + 'yb-hunyuan-sdsk,';
+          // 1. 先添加基础的agentCode
+          this.userInfoReq.roles += `${ai.agentCode},`;
+          
+          // 2. 处理AI的选项配置
+          if (ai.options && ai.selectedValues) {
+            // 🔥 先收集所有select选项的值，用于占位符替换
+            const selectValues = {};
+            ai.options.forEach(option => {
+              if (option.type === 'select') {
+                const selectedValue = ai.selectedValues[option.id];
+                if (selectedValue) {
+                  selectValues[option.id] = selectedValue;
+                }
               }
-              if(ai.selectedCapabilities.includes("web_search")) {
-                this.userInfoReq.roles = this.userInfoReq.roles + 'yb-hunyuan-lwss,';
+            });
+            
+            // 🔥 然后处理所有选项
+            ai.options.forEach(option => {
+              const selectedValue = ai.selectedValues[option.id];
+              
+              if (option.type === 'select' && selectedValue) {
+                // 下拉选择：直接使用value
+                this.userInfoReq.roles += `${selectedValue},`;
+                console.log(`✅ [${ai.name}] 下拉选择: ${option.label} = ${selectedValue}`);
+              } else if (option.type === 'button' && selectedValue) {
+                // 按钮选择：支持{model}占位符替换
+                let buttonValue = option.value;
+                
+                // 🔥 通用占位符替换逻辑
+                if (buttonValue.includes('{model}') && option.dependsOn) {
+                  // 从dependsOn的选项中获取模型值
+                  const modelSelectValue = selectValues[option.dependsOn] || '';
+                  // 提取模型名称（如 yb-hunyuan-pt → hunyuan, baidu-dsr1 → dsr1）
+                  // 去掉前缀，取中间部分
+                  const parts = modelSelectValue.split('-');
+                  const modelName = parts.length >= 2 ? parts.slice(1, -1).join('-') || parts[parts.length - 1] : parts[0];
+                  // 替换占位符
+                  buttonValue = buttonValue.replace('{model}', modelName);
+                  console.log(`✅ [${ai.name}] 按钮占位符替换: {model} → ${modelName} (来自${modelSelectValue}), 最终: ${buttonValue}`);
+                }
+                
+                this.userInfoReq.roles += `${buttonValue},`;
+                console.log(`✅ [${ai.name}] 按钮点击: ${option.label} → ${buttonValue}`);
               }
-            } else if(ai.selectedModel === 'deepseek') {
-              this.userInfoReq.roles = this.userInfoReq.roles + 'yb-deepseek-pt,';
-              if(ai.selectedCapabilities.includes("deep_thinking")) {
-                this.userInfoReq.roles = this.userInfoReq.roles + 'yb-deepseek-sdsk,';
-              }
-              if(ai.selectedCapabilities.includes("web_search")) {
-                this.userInfoReq.roles = this.userInfoReq.roles + 'yb-deepseek-lwss,';
-              }
-            }
+            });
           }
-          if(ai.name === '百度AI') {
-            this.userInfoReq.roles = this.userInfoReq.roles + 'baidu-agent,';
-            if(ai.selectedCapabilities.includes("deep_search")) {
-              this.userInfoReq.roles = this.userInfoReq.roles + 'baidu-sdss,';
-            } else if(ai.isModel) {
-              if(ai.isWeb) {
-                this.userInfoReq.roles = this.userInfoReq.roles + 'baidu-web,';
-              }
-
-              if(ai.selectedModel.includes("dsr1")) {
-                this.userInfoReq.roles = this.userInfoReq.roles + 'baidu-dsr1,';
-              } else if(ai.selectedModel.includes("dsv3")) {
-                this.userInfoReq.roles = this.userInfoReq.roles + 'baidu-dsv3,';
-              } else if(ai.selectedModel.includes("wenxin")) {
-                this.userInfoReq.roles = this.userInfoReq.roles + 'baidu-wenxin,';
-              }
-            }
-
-          }
-
-          if(ai.name === "DeepSeek" && ai.enabled) {
-            this.userInfoReq.roles = this.userInfoReq.roles + "deepseek,";
-            if(ai.selectedCapabilities.includes("deep_thinking")) {
-              this.userInfoReq.roles = this.userInfoReq.roles + "ds-sdsk,";
-            }
-            if(ai.selectedCapabilities.includes("web_search")) {
-              this.userInfoReq.roles = this.userInfoReq.roles + "ds-lwss,";
-            }
-          }
-
-          if(ai.name === "秘塔") {
-            this.userInfoReq.roles = this.userInfoReq.roles + "mita,";
-            if(ai.selectedCapabilities === "fast") {
-              this.userInfoReq.roles = this.userInfoReq.roles + "metaso-jisu,";
-            }
-            if(ai.selectedCapabilities === "fast_thinking") {
-              this.userInfoReq.roles = this.userInfoReq.roles + "metaso-jssk,";
-            }
-            if(ai.selectedCapabilities === "long_thinking") {
-              this.userInfoReq.roles = this.userInfoReq.roles + "metaso-csk,";
-            }
-          }
-
-          if(ai.name === "知乎直答") {
-            this.userInfoReq.roles = this.userInfoReq.roles + "zhzd-chat,";
-            // 使用单选思考模式
-            if(ai.selectedCapability === "deep_thinking") {
-              this.userInfoReq.roles = this.userInfoReq.roles + "zhzd-sdsk,";
-            } else if(ai.selectedCapability === "fast_answer") {
-              this.userInfoReq.roles = this.userInfoReq.roles + "zhzd-ks,";
-            } else if(ai.selectedCapability === "smart_thinking") {
-              this.userInfoReq.roles = this.userInfoReq.roles + "zhzd-zn,";
-            } else {
-              // 默认智能思考
-              this.userInfoReq.roles = this.userInfoReq.roles + "zhzd-zn,";
-            }
-          }
-
+          
+          console.log(`✅ [${ai.name}] 配置完成，当前roles:`, this.userInfoReq.roles);
         });
 
         console.log("参数：", this.userInfoReq);
@@ -977,99 +1252,18 @@ import { ChatDotSquare, Document, Link, Loading, Plus, Promotion } from '@elemen
           }
         });
       },
-      // 辅助方法：判断按钮类型
+      // 🔥 移除硬编码的辅助方法，这些方法已不再使用
       getCapabilityType(ai, value) {
-        // 确保单选时使用字符串比较，多选时使用数组包含
-        if(ai.isSingleSelect) {
-          // 知乎直答使用selectedCapability，通义使用selectedCapability
-          if(ai.name === '知乎直答') {
-            return ai.selectedCapability === value ? 'primary' : 'info';
-          } else {
-            return ai.selectedCapabilities === value ? 'primary' : 'info';
-          }
-        } else {
-          return ai.selectedCapabilities && ai.selectedCapabilities.includes(value) ? 'primary' : 'info';
-        }
+        // 此方法已废弃
+        return 'info';
       },
 
-      // 辅助方法：判断按钮是否为朴素样式
       getCapabilityPlain(ai, value) {
-        if(ai.isSingleSelect) {
-          // 知乎直答使用selectedCapability，通义使用selectedCapability
-          if(ai.name === '知乎直答') {
-            return ai.selectedCapability !== value;
-          } else {
-            return ai.selectedCapabilities !== value;
-          }
-        } else {
-          return !(ai.selectedCapabilities && ai.selectedCapabilities.includes(value));
-        }
+        // 此方法已废弃
+        return true;
       },
-      // 处理单选逻辑（知乎直答）
-      selectSingleCapability(ai, capabilityValue) {
-        if(!ai.enabled) return;
-
-        // 知乎直答不允许取消选择，至少保持一个选项
-        if(ai.name === '知乎直答') {
-          ai.selectedCapability = capabilityValue;
-        }
-        // 通义千问已注释
-        // else {
-        //   // 通义千问允许取消选择
-        //   if(ai.selectedCapability === capabilityValue) {
-        //    ai.selectedCapability = '';
-        //   } else {
-        //    ai.selectedCapability = capabilityValue;
-        //   }
-        // }
-        this.$forceUpdate();
-      },
-      toggleCapability(ai, capabilityValue) {
-        console.log(this.aiList)
-        if(!ai.enabled) return;
-
-        console.log("切换前:", ai.selectedCapabilities, "类型:", typeof ai.selectedCapabilities);
-
-        // 单选逻辑
-        if(ai.isSingleSelect) {
-          // 强制使用字符串类型赋值
-        ai.selectedCapabilities = String(capabilityValue);
-        }
-        // 多选逻辑
-        else {
-          // 确保selectedCapabilities是数组
-          if(!Array.isArray(ai.selectedCapabilities)) {
-           ai.selectedCapabilities = [];
-          }
-
-          const index = ai.selectedCapabilities.indexOf(capabilityValue);
-               if(index === -1) {
-                    // 添加选中项
-                    ai.selectedCapabilities.push(capabilityValue);
-                  } else {
-                    // 移除选中项
-                    const newCapabilities = [...ai.selectedCapabilities];
-                    newCapabilities.splice(index, 1);
-                    ai.selectedCapabilities = newCapabilities;
-                  }
-                  if(ai.name === "百度AI") {
-                    // 如果选择了deep-search，则取消其他，反之亦然
-                    if(capabilityValue === "deep_search" && ai.selectedCapabilities.includes("deep_search")) {
-                      ai.selectedCapabilities = ["deep_search"];
-                      ai.isModel = false;
-                      ai.isWeb = false;
-                    } else if(capabilityValue !== "deep_search" && ai.selectedCapabilities.includes("deep_search")) {
-                      ai.selectedCapabilities = [];
-                      ai.selectedCapabilities = filtered;
-                    }
-                  }
-                }
-
-
-
-        console.log("切换后:", ai.selectedCapabilities, "类型:", typeof ai.selectedCapabilities);
-        this.$forceUpdate(); // 强制更新视图
-      },
+      // 🔥 toggleCapability 已废弃，使用 handleSelectChange 和handleButtonClick 代替
+      
       getStatusText(status) {
         switch(status) {
           case "idle":
@@ -1406,6 +1600,24 @@ import { ChatDotSquare, Document, Link, Loading, Plus, Promotion } from '@elemen
             console.log("收到知乎直答消息:", dataObj);
             targetAI = this.enabledAIs.find((ai) => ai.name === "知乎直答");
             break;
+          // 以下是状态和chatId消息，不需要处理结果，直接返回
+          case "RETURN_YBT1_CHATID":
+          case "RETURN_YBDS_CHATID":
+          case "RETURN_DB_CHATID":
+          case "RETURN_DEEPSEEK_CHATID":
+          case "RETURN_METASO_CHATID":
+          case "RETURN_BAIDU_CHATID":
+          case "RETURN_ZHZD_CHATID":
+          case "RETURN_YB_STATUS":
+          case "RETURN_DB_STATUS":
+          case "RETURN_DEEPSEEK_STATUS":
+          case "RETURN_METASO_STATUS":
+          case "RETURN_BAIDU_STATUS":
+          case "RETURN_ZHZD_STATUS":
+          case "使用F8S":
+            // 这些是状态消息和chatId消息，不需要在此处理
+            console.log("ℹ️ [消息处理] 收到状态/chatId消息，类型:", dataObj.type);
+            return;
 
         }
 
@@ -1700,12 +1912,31 @@ import { ChatDotSquare, Document, Link, Loading, Plus, Promotion } from '@elemen
       async loadChatHistory(isAll) {
         this.historyLoading = true;
         try {
+          console.log(`📂 [加载历史] 请求参数 isAll=${isAll}, userId=${this.userId}`);
           const res = await getChatHistory(this.userId, isAll);
+          
           if(res.code === 200) {
             this.chatHistory = res.data || [];
+            console.log(`✅ [加载历史] 成功加载 ${this.chatHistory.length} 条记录`);
+            
+            // 🔍 检查数据结构
+            if (this.chatHistory.length > 0) {
+              const uniqueChatIds = [...new Set(this.chatHistory.map(item => item.chatId))];
+              console.log(`📋 [加载历史] 独特会话ID数: ${uniqueChatIds.length}`);
+              
+              // 显示每个chatId的记录数
+              uniqueChatIds.forEach(chatId => {
+                const count = this.chatHistory.filter(item => item.chatId === chatId).length;
+                const firstPrompt = this.chatHistory.find(item => item.chatId === chatId)?.userPrompt;
+                console.log(`  📝 chatId=${chatId}: ${count}条记录, 首条: ${firstPrompt?.substring(0, 30)}...`);
+              });
+            }
+          } else {
+            console.error('❌ [加载历史] 服务器返回错误:', res);
+            this.$message.error(res.msg || '加载历史记录失败');
           }
         } catch(error) {
-          console.error("加载历史记录失败:", error);
+          console.error("❌ [加载历史] 请求异常:", error);
           this.$message.error("加载历史记录失败");
         } finally {
           this.historyLoading = false;
@@ -1754,22 +1985,35 @@ import { ChatDotSquare, Document, Link, Loading, Plus, Promotion } from '@elemen
       loadHistoryItem(item) {
         try {
           const historyData = JSON.parse(item.data);
-          // 恢复AI选择配置 - 确保包含新添加的AI
+          
+          // 🔥 恢复AI配置：使用当前数据库的AI列表，只恢复历史记录中的选中状态
           if(historyData.aiList) {
-            // 合并历史记录中的aiList和当前默认的aiList
             const historicalAiList = historyData.aiList;
-            const currentAiList = this.aiList;
-
-            // 创建合并后的aiList，保留历史记录中的状态，同时包含当前默认的AI
-            // this.aiList = [...historicalAiList,...currentAiList];
-
-            // 添加当前默认的但不在历史记录中的AI
-            currentAiList.forEach(currentAI => {
-              const exists = this.aiList.find(historicalAI => historicalAI.name === currentAI.name);
-              if(!exists) {
-                this.aiList.push(currentAI);
+            
+            // 遍历当前AI列表，恢复历史记录中的状态
+            this.aiList.forEach(currentAI => {
+              // 在历史记录中查找同名AI
+              const historicalAI = historicalAiList.find(ai => ai.name === currentAI.name);
+              
+              if(historicalAI) {
+                // 恢复历史记录中的状态和选项，但保留当前的onlineStatus和数据库配置
+                currentAI.enabled = historicalAI.enabled;
+                currentAI.status = historicalAI.status || 'idle';
+                currentAI.progressLogs = historicalAI.progressLogs || [];
+                currentAI.isExpanded = historicalAI.isExpanded !== undefined ? historicalAI.isExpanded : true;
+                currentAI.selectedOptions = historicalAI.selectedOptions || currentAI.selectedOptions;
+                
+                // 兼容旧格式
+                if(historicalAI.selectedCapabilities) {
+                  currentAI.selectedCapabilities = historicalAI.selectedCapabilities;
+                }
+                if(historicalAI.selectedModel) {
+                  currentAI.selectedModel = historicalAI.selectedModel;
+                }
               }
             });
+            
+            console.log('✅ [历史记录] AI状态已恢复（保留在线状态和数据库配置）');
           }
           // 恢复提示词输入
           this.promptInput = historyData.promptInput || "";
@@ -1809,8 +2053,9 @@ import { ChatDotSquare, Document, Link, Loading, Plus, Promotion } from '@elemen
           this.screenshots = historyData.screenshots || [];
           // 恢复执行结果
           this.results = historyData.results || [];
-          // 恢复chatId
+          // 🔥 恢复chatId（关键：确保续文使用相同的chatId）
           this.chatId = item.chatId || this.chatId;
+          this.userInfoReq.chatId = item.chatId || ""; // 恢复到请求参数中
           this.userInfoReq.toneChatId = item.toneChatId || "";
           this.userInfoReq.ybDsChatId = item.ybDsChatId || "";
           this.userInfoReq.dbChatId = item.dbChatId || "";
@@ -1822,6 +2067,8 @@ import { ChatDotSquare, Document, Link, Loading, Plus, Promotion } from '@elemen
           this.userInfoReq.metasoChatId = item.metasoChatId || "";
           this.userInfoReq.zhzdChatId = item.zhzdChatId || "";
           this.userInfoReq.isNewChat = false;
+          
+          console.log('📝 [加载历史] 恢复会话ID:', item.chatId);
 
           // 展开相关区域
           this.activeCollapses = ["ai-selection", "prompt-input"];
@@ -1883,14 +2130,18 @@ import { ChatDotSquare, Document, Link, Loading, Plus, Promotion } from '@elemen
       },
 
       // 修改折叠切换方法
-       toggleHistoryExpansion(item) {
-              this.expandedHistoryItems[item.chatId] = !this.expandedHistoryItems[item.chatId];
-            },
+      toggleHistoryExpansion(item) {
+        // 直接使用chatId作为key
+        const key = item.chatId;
+        const currentState = this.expandedHistoryItems[key];
+        this.$set(this.expandedHistoryItems, key, !currentState);
+      },
 
       // 创建新对话
       createNewChat() {
-        // 重置所有数据
+        // 🔥 重置所有数据，生成新的会话ID
         this.chatId = uuidv4();
+        console.log('📝 [新建会话] 生成新的chatId:', this.chatId);
         this.isNewChat = true;
         this.promptInput = "";
         this.taskStarted = false;
@@ -1898,11 +2149,27 @@ import { ChatDotSquare, Document, Link, Loading, Plus, Promotion } from '@elemen
         this.results = [];
         this.enabledAIs = [];
 
-        // 重置所有AI状态为初始状态
+        // 🔥 只重置AI的状态和选项，不重置整个aiList（保留数据库配置）
         this.aiList.forEach(ai => {
           ai.status = "idle";
-                   ai.progressLogs = [];
-                   ai.isExpanded = true;
+          ai.progressLogs = [];
+          ai.isExpanded = true;
+          
+          // 重置AI的选项为默认值
+          if (ai.options) {
+            ai.options.forEach(option => {
+              if (option.type === 'select') {
+                // 找到默认选中的值
+                const defaultValue = option.values?.find(v => v.default)?.value;
+                ai.selectedOptions = ai.selectedOptions || {};
+                ai.selectedOptions[option.id] = defaultValue || '';
+              } else if (option.type === 'button') {
+                // 按钮默认不选中
+                ai.selectedOptions = ai.selectedOptions || {};
+                ai.selectedOptions[option.id] = false;
+              }
+            });
+          }
         });
 
         this.userInfoReq = {
@@ -1920,123 +2187,14 @@ import { ChatDotSquare, Document, Link, Loading, Plus, Promotion } from '@elemen
           metasoChatId: "",
           maxChatId: "",
           zhzdChatId: "",
+          chatId: "", // 🔥 重置chatId
           isNewChat: true,
         };
-        // 重置AI列表为初始状态
-        this.aiList = [
-          {
-            name: "豆包",
-            avatar: require("../../../assets/ai/豆包.png"),
-            capabilities: [{ label: "深度思考", value: "deep_thinking" }],
-            selectedCapabilities: ["deep_thinking"],
-            enabled: true,
-            status: "idle",
-            progressLogs: [],
-            isExpanded: true,
-            isSingleSelect: false,  // 添加单选标记
-          },
 
-
-          // 元宝AI配置
-          {
-            name: '腾讯元宝',
-            avatar: require('../../../assets/ai/yuanbao.png'),
-            capabilities: [
-              { label: '深度思考', value: 'deep_thinking' },
-              { label: '联网搜索', value: 'web_search' }
-            ],
-            selectedCapabilities: ['deep_thinking', 'web_search'],
-            selectedModel: 'hunyuan', // 默认选择混元
-            models: [
-              { label: '混元', value: 'hunyuan' },
-              { label: 'DeepSeek', value: 'deepseek' }
-            ],
-            enabled: true,
-            status: "idle",
-            progressLogs: [],
-            isExpanded: true,
-            isSingleSelect: false
-          },
-          {
-            name: '百度AI',
-            avatar: require('../../../assets/logo/Baidu.png'),
-            capabilities: [
-              { label: '深度搜索', value: 'deep_search' },
-            ],
-            selectedCapabilities: ["deep_search"],
-            selectedModel: 'dsr1',
-            isModel: false,
-            isWeb: false,
-            enabled: true,
-            status: 'idle',
-            progressLogs: [],
-            isExpanded: true,
-          },
-          {
-            name: "DeepSeek",
-            avatar: require("../../../assets/logo/Deepseek.png"),
-            capabilities: [
-              { label: "深度思考", value: "deep_thinking" },
-              { label: "联网搜索", value: "web_search" },
-            ],
-            selectedCapabilities: ["deep_thinking", "web_search"],
-            enabled: true,
-            status: "idle",
-            progressLogs: [],
-            isExpanded: true,
-            isSingleSelect: false,  // 添加单选标记
-          },
-          // 通义千问已注释
-          // {
-          //   name: '通义千问',
-          //   avatar: require('../../../assets/ai/qw.png'),
-          //   capabilities: [
-          //     { label: '深度思考', value: 'deep_thinking' },
-          //   ],
-          //   selectedCapability: '',
-          //   enabled: true,
-          //   status: 'idle',
-          //   progressLogs: [],
-          //   isExpanded: true
-          // },
-          {
-            name: "秘塔",
-            avatar: require("../../../assets/ai/Metaso.png"),
-            capabilities: [
-              { label: "极速", value: "fast" },
-              { label: "极速思考", value: "fast_thinking" },
-              { label: "长思考", value: "long_thinking" },
-            ],
-            selectedCapabilities: "fast",// 单选使用字符串
-            enabled: true,
-            status: "idle",
-            progressLogs: [],
-            isExpanded: true,
-            isSingleSelect: true,  // 添加单选标记,用于capabilities中状态只能多选一的时候改成true,然后把selectedCapabilities赋值为字符串，不要是数组
-          },
-
-
-          {
-            name: "知乎直答",
-            avatar: require("../../../assets/ai/ZHZD.png"),
-            capabilities: [
-              { label: "智能思考", value: "smart_thinking" },
-              { label: "深度思考", value: "deep_thinking" },
-              { label: "快速回答", value: "fast_answer" },
-            ],
-            selectedCapability: "smart_thinking", // 改为单选，默认智能思考
-            enabled: true,
-            status: 'idle',
-            progressLogs: [],
-            isExpanded: true,
-            isSingleSelect: true, // 设为单选模式
-          },
-
-        ];
         // 展开相关区域
         this.activeCollapses = ["ai-selection", "prompt-input"];
 
-        console.log("已创建新对话");
+        console.log("✅ [新建对话] 已创建新对话，AI列表已重置状态（保留在线状态和数据库配置）");
       },
 
       // 加载上次会话
@@ -2598,45 +2756,58 @@ import { ChatDotSquare, Document, Link, Loading, Plus, Promotion } from '@elemen
   }
 
   .ai-cards {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 20px;
-    margin-bottom: 0px;
-    margin-left: 20px;
-    margin-top: 10px;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin: 16px 20px;
+    padding: 0;
   }
 
   .ai-card {
-    width: calc(25% - 20px);
+    width: 100%;
     box-sizing: border-box;
+    transition: all 0.3s ease;
+    border-radius: 12px;
+    overflow: hidden;
+  }
+
+  .ai-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
   }
 
   .ai-card-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 15px;
+    margin-bottom: 12px;
+    padding: 4px 0;
   }
 
   .ai-left {
     display: flex;
     align-items: center;
+    flex: 1;
   }
 
   .ai-avatar {
-    margin-right: 10px;
+    margin-right: 12px;
+    flex-shrink: 0;
   }
 
   .ai-avatar img {
-    width: 30px;
-    height: 30px;
+    width: 36px;
+    height: 36px;
     border-radius: 50%;
     object-fit: cover;
+    border: 2px solid #f0f0f0;
   }
 
   .ai-name {
-    font-weight: bold;
-    font-size: 12px;
+    font-weight: 600;
+    font-size: 14px;
+    color: #303133;
+    line-height: 1.2;
   }
 
   .ai-status {
@@ -2974,21 +3145,26 @@ import { ChatDotSquare, Document, Link, Loading, Plus, Promotion } from '@elemen
     padding: 0 10px;
   }
 
-  @media (max-width: 1200px) {
-    .ai-card {
-      width: calc(33.33% - 14px);
+  @media (max-width: 1400px) {
+    .ai-cards {
+      grid-template-columns: repeat(3, 1fr);
     }
   }
 
-  @media (max-width: 992px) {
-    .ai-card {
-      width: calc(50% - 10px);
+  @media (max-width: 1024px) {
+    .ai-cards {
+      grid-template-columns: repeat(2, 1fr);
     }
   }
 
   @media (max-width: 768px) {
-    .ai-card {
-      width: 100%;
+    .ai-cards {
+      grid-template-columns: repeat(1, 1fr);
+    }
+    
+    .main-content {
+      width: 95%;
+      padding: 0 15px;
     }
   }
 
@@ -3191,34 +3367,46 @@ import { ChatDotSquare, Document, Link, Loading, Plus, Promotion } from '@elemen
   }
 
   .history-item {
-    margin-bottom: 15px;
-    border-radius: 4px;
-    background-color: #f5f7fa;
-    overflow: hidden;
-  }
-
-  .history-parent {
-    padding: 10px;
-    cursor: pointer;
-    transition: background-color 0.3s;
-    border-bottom: 1px solid #ebeef5;
-  }
-
-  .history-parent:hover {
-    background-color: #ecf5ff;
-  }
-
-  .history-children {
-    padding-left: 20px;
+    margin-bottom: 12px;
+    border-radius: 8px;
     background-color: #fff;
+    border: 1px solid #e4e7ed;
+    overflow: hidden;
     transition: all 0.3s ease;
   }
 
+  .history-item:hover {
+    box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+    border-color: #409eff;
+  }
+
+  .history-parent {
+    padding: 12px 15px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+  }
+
+  .history-parent:hover {
+    background-color: #f5f7fa;
+  }
+
+  .history-content-wrapper {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .history-children {
+    padding: 0;
+    background-color: #fafafa;
+    border-top: 1px solid #ebeef5;
+  }
+
   .history-child-item {
-    padding: 8px 10px;
+    padding: 10px 15px 10px 45px;
     cursor: pointer;
     transition: background-color 0.3s;
     border-bottom: 1px solid #f0f0f0;
+    position: relative;
   }
 
   .history-child-item:last-child {
@@ -3226,13 +3414,52 @@ import { ChatDotSquare, Document, Link, Loading, Plus, Promotion } from '@elemen
   }
 
   .history-child-item:hover {
-    background-color: #f5f7fa;
+    background-color: #ecf5ff;
+  }
+
+  .history-child-item::before {
+    content: '';
+    position: absolute;
+    left: 25px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background-color: #e4e7ed;
+  }
+
+  .history-child-content {
+    position: relative;
+  }
+
+  .child-index {
+    display: inline-block;
+    font-size: 11px;
+    color: #fff;
+    background-color: #409eff;
+    padding: 2px 8px;
+    border-radius: 3px;
+    margin-bottom: 6px;
+    font-weight: 500;
+  }
+
+  .history-child-item .history-meta {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 4px;
+    font-size: 11px;
+    color: #909399;
+  }
+
+  .ai-count {
+    color: #67c23a;
+    font-weight: 500;
   }
 
   .history-header {
     display: flex;
     align-items: flex-start;
-    gap: 8px;
+    gap: 10px;
   }
 
   .history-header .el-icon-arrow-right {
@@ -3240,28 +3467,69 @@ import { ChatDotSquare, Document, Link, Loading, Plus, Promotion } from '@elemen
     color: #909399;
     transition: transform 0.3s;
     cursor: pointer;
-    margin-top: 3px;
+    margin-top: 4px;
+    flex-shrink: 0;
   }
 
   .history-header .el-icon-arrow-right.is-expanded {
     transform: rotate(90deg);
+    color: #409eff;
+  }
+
+  .history-meta {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 8px;
+    font-size: 12px;
+    color: #909399;
+  }
+
+  .history-separator {
+    color: #dcdfe6;
+  }
+
+  .history-chatid {
+    font-family: 'Courier New', monospace;
+    background-color: #f0f2f5;
+    padding: 2px 6px;
+    border-radius: 3px;
+    cursor: help;
+  }
+
+  .round-label {
+    color: #409eff;
+    font-weight: 500;
+    background-color: #ecf5ff;
+    padding: 2px 6px;
+    border-radius: 3px;
+  }
+
+  .children-count {
+    color: #67c23a;
+    font-weight: 500;
+  }
+
+  .no-children-hint {
+    color: #c0c4cc;
+    font-style: italic;
   }
 
   .history-prompt {
     font-size: 14px;
     color: #303133;
-    margin-bottom: 5px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    flex: 1;
+    line-height: 1.6;
+    word-break: break-word;
+    margin-bottom: 0;
   }
 
   .history-time {
     font-size: 12px;
     color: #909399;
+  }
+
+  .history-child-item .history-time {
+    margin-top: 6px;
   }
 
   .capability-button {
@@ -3487,5 +3755,264 @@ import { ChatDotSquare, Document, Link, Loading, Plus, Promotion } from '@elemen
     color: #303133;
   }
 
+  /* 统一AI选项配置样式 */
+  .ai-options {
+    margin-top: 12px;
+    padding: 12px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+  }
+
+  .ai-options .option-item {
+    margin-bottom: 10px;
+  }
+
+  .ai-options .option-item:last-child {
+    margin-bottom: 0;
+  }
+
+  .select-option, .button-option {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .option-label {
+    font-weight: 600;
+    color: #303133;
+    font-size: 13px;
+    min-width: 60px;
+  }
+
+  .disabled-hint {
+    color: #909399;
+    font-size: 11px;
+    font-style: italic;
+    margin-left: 8px;
+  }
+
+  .ai-options .el-select {
+    min-width: 120px;
+    flex: 1;
+  }
+
+  .select-option {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .option-label {
+    font-size: 12px;
+    color: #606266;
+    white-space: nowrap;
+    min-width: fit-content;
+  }
+
+  /* AI卡片离线状态样式 - 简化版 */
+  .ai-card-offline {
+    background: #f0f0f0 !important;
+    border: 2px solid #d0d0d0 !important;
+    position: relative;
+    cursor: not-allowed !important;
+    opacity: 0.6;
+    filter: grayscale(100%);
+    pointer-events: none !important;
+  }
+
+  .ai-card-offline::after {
+    content: '离线';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 48px;
+    font-weight: bold;
+    color: rgba(0, 0, 0, 0.15);
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  .ai-card-offline:hover {
+    box-shadow: none !important;
+    transform: none !important;
+  }
+
+  /* 离线状态下的所有元素都已通过卡片级别的样式处理 */
+  /* pointer-events: none 确保无法点击 */
+  /* filter: grayscale(100%) 确保整体变灰 */
+  /* opacity: 0.6 确保视觉上明显变淡 */
+
+  /* 按钮选项组样式 */
+  .button-options-group {
+    margin-top: 8px;
+  }
+
+  .ai-capabilities {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    justify-content: flex-start;
+  }
+
+  /* 动态布局类 */
+  .ai-capabilities.buttons-single .capability-button {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .ai-capabilities.buttons-two .capability-button {
+    flex: 0 0 calc(50% - 3px);
+    min-width: 0;
+  }
+
+  .ai-capabilities.buttons-three .capability-button {
+    flex: 0 0 calc(33.333% - 4px);
+    min-width: 0;
+  }
+
+  .ai-capabilities.buttons-multiple .capability-button {
+    flex: 0 0 calc(50% - 3px);
+    min-width: 0;
+  }
+
+  .capability-button {
+    margin: 0 !important;
+    padding: 4px 8px !important;
+    font-size: 12px !important;
+    border-radius: 16px !important;
+    height: 28px !important;
+    line-height: 1.2 !important;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transition: all 0.2s ease;
+  }
+
+  .capability-button:hover {
+    transform: translateY(-1px);
+  }
+
+  .disabled-hint-group {
+    margin-top: 6px;
+    text-align: center;
+  }
+
+  /* 登录状态相关样式 */
+  .ai-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  /* 未登录AI卡片样式 */
+  .ai-card-not-logged {
+    position: relative;
+    background: #fef7e6 !important;
+    border-color: #f5dab1 !important;
+  }
+
+  /* 整个卡片的未登录遮罩层 */
+  .card-login-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(245, 218, 177, 0.85);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 20;
+    border-radius: 12px;
+    backdrop-filter: blur(2px);
+  }
+
+  .card-login-message {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    background: #f56c6c;
+    color: white;
+    padding: 12px 16px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 600;
+    box-shadow: 0 4px 12px rgba(245, 108, 108, 0.4);
+    transform: scale(1);
+    transition: transform 0.2s ease;
+    text-align: center;
+  }
+
+  .login-hint {
+    font-size: 12px;
+    font-weight: 400;
+    opacity: 0.9;
+    margin-top: 2px;
+  }
+
+  /* 离线状态遮罩层 */
+  .card-offline-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(144, 147, 153, 0.85);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 25;
+    border-radius: 12px;
+    backdrop-filter: blur(2px);
+  }
+
+  .card-offline-message {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    background: #909399;
+    color: white;
+    padding: 12px 16px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 600;
+    box-shadow: 0 4px 12px rgba(144, 147, 153, 0.4);
+    transform: scale(1);
+    transition: transform 0.2s ease;
+    text-align: center;
+  }
+
+  .offline-hint {
+    font-size: 12px;
+    font-weight: 400;
+    opacity: 0.9;
+    margin-top: 2px;
+  }
+
+  .card-login-message:hover {
+    transform: scale(1.05);
+  }
+
+  .card-login-message i {
+    font-size: 16px;
+  }
+
+  /* 未登录状态下禁用所有交互 */
+  .ai-card-not-logged .el-switch,
+  .ai-card-not-logged .el-select,
+  .ai-card-not-logged .el-button {
+    pointer-events: none;
+  }
+
+  .ai-card-not-logged .ai-card-header,
+  .ai-card-not-logged .ai-options {
+    opacity: 0.6;
+  }
 
 </style>

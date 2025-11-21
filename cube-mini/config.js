@@ -7,7 +7,6 @@ module.exports = {
 	wsConfig: {
 		// WebSocket连接地址
 		wsUrl: 'ws://127.0.0.1:8081/websocket?clientId='
-		// 生产环境可以配置为: 'wss://u3w.com/cubeServer/websocket?clientId='
 	},
 
 	// 应用信息

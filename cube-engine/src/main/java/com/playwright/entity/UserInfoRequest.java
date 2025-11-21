@@ -62,6 +62,9 @@ public class UserInfoRequest {
     @ToolParam(description = "是否为新对话。true 表示清空上下文重新开始", required = false)
     private String isNewChat;
 
+    @ToolParam(description = "内部会话ID（用于关联同一会话的所有消息，包括续文）", required = false)
+    private String chatId;
+
     @ToolParam(description = "返回的消息内容", required = false)
     private String draftContent;
 

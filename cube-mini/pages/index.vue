@@ -9,15 +9,24 @@
 		</view>
 		<scroll-view class="content" scroll-y>
 			<view class="section">
-				<view class="section-title" style="margin-left: 150rpx;">
+				<view class="section-title">
 					<uni-icons type="star" size="24" color="#4169E1" />
 					<text class="title-text">优立方AI主机</text>
 				</view>
 				<view class="feature-cards">
-					<view class="feature-card" v-for="(feature, index) in features" :key="index">
-						<image :src="feature.icon" mode="aspectFit" class="feature-icon" />
+					<!-- 🔥 离线AI添加offline-card类，显示半透明效果 -->
+					<view class="feature-card" :class="{ 'offline-card': feature.isOffline }" v-for="(feature, index) in features" :key="index">
+						<view class="feature-header">
+							<image :src="feature.icon" mode="aspectFit" class="feature-icon" :class="{ 'offline-icon': feature.isOffline }" />
+							<!-- 🔥 显示AI在线/离线状态 -->
+							<view class="status-badge" :style="{ backgroundColor: feature.statusColor }">
+								<text class="status-text">{{ feature.statusLabel }}</text>
+							</view>
+						</view>
 						<text class="feature-title">{{ feature.title }}</text>
 						<text class="feature-desc">{{ feature.description }}</text>
+						<!-- 🔥 离线提示 -->
+						<text v-if="feature.isOffline" class="offline-tip">暂时无法使用</text>
 					</view>
 				</view>
 			</view>
@@ -57,6 +66,10 @@
 	</view>
 </template>
 <script>
+import { mapState, mapActions } from 'vuex'
+import storage from '@/utils/storage'
+import constant from '@/utils/constant'
+
 export default {
 	data() {
 		return {
@@ -70,104 +83,78 @@ export default {
 				image: 'https://ai-public.mastergo.com/ai/img_res/ea68981430e1307646a14e900ce6d3e6.jpg'
 			}
 			],
-			features: [			{
-				name: '腾讯元宝',
-				avatar: 'https://u3w.com/chatfile/yuanbao.png',
-				icon: '../static/images/icon/腾讯元宝.png',
-				title: '腾讯元宝',
-				description: '腾讯公司开发的智能体，支持混元和DeepSeek模型',
-				type: 'yuanbao'
-			},
-			{
-				name: '豆包',
-				avatar: 'https://u3w.com/chatfile/%E8%B1%86%E5%8C%85.png',
-				icon: 'https://u3w.com/chatfile/%E8%B1%86%E5%8C%85.png',
-				title: '豆包',
-				description: '字节跳动开发的AI助手，擅长深度思考和逻辑推理',
-				type: 'doubao'
-			},
-			{
-				name: 'DeepSeek',
-				avatar: 'https://u3w.com/chatfile/Deepseek.png',
-				icon: 'https://u3w.com/chatfile/Deepseek.png',
-				title: 'DeepSeek',
-				description: '探索未至之境',
-				type: 'doubao'
-			},
-			{
-				name: '秘塔',
-				avatar: 'https://www.aitool6.com/wp-content/uploads/2023/06/9557d1-2.jpg',
-				icon: 'https://www.aitool6.com/wp-content/uploads/2023/06/9557d1-2.jpg',
-				title: '秘塔',
-				description: '没有广告，直达结果',
-				type: 'metaso'
-			},
-			{
-				name: '知乎直答',
-				avatar: 'https://u3w.com/chatfile/ZHZD.png',
-				icon: 'https://u3w.com/chatfile/ZHZD.png',
-				title: '知乎直答',
-				description: '基于知乎优质内容的智能问答系统',
-				type: 'zhzd'
-			},
-			// {
-			// 	name: '通义千问',
-			// 	avatar: 'https://u3w.com/chatfile/TongYi.png',
-			// 	icon: 'https://u3w.com/chatfile/TongYi.png',
-			// 	title: '通义千问',
-			// 	description: '阿里巴巴达摩院开发的大语言模型',
-			// 	type: 'tongyi'
-			// },
-			{
-				name: '百度AI',
-				avatar: 'https://u3w.com/chatfile/baiduAI.png',
-				icon: 'https://u3w.com/chatfile/baiduAI.png',
-				title: '百度AI',
-				description: '百度智能云提供的AI服务平台',
-				type: 'baidu'
-			},
-
-
-			],
-			advantages: [
-				// {
-				// 	icon: 'star-filled',
-				// 	title: '多模型协同',
-				// 	description: '整合多个AI模型，实现优势互补，提供更全面的解决方案'
-				// },
-				// {
-				// 	icon: 'refresh',
-				// 	title: '实时响应',
-				// 	description: '快速处理请求，毫秒级响应，提供流畅的用户体验'
-				// },
-				// {
-				// 	icon: 'shield',
-				// 	title: '安全可靠',
-				// 	description: '采用先进的安全防护措施，保障数据和隐私安全'
-				// },
-				// {
-				// 	icon: 'staff',
-				// 	title: '专业支持',
-				// 	description: '24小时专业团队支持，解决您的使用疑难'
-				// }
-			],
-			scenarios: [
-				// {
-				// 	image: 'https://ai-public.mastergo.com/ai/img_res/3460a8269aff64d63683572370ab0b59.jpg',
-				// 	title: '企业管理',
-				// 	description: '智能化办公，提升管理效率'
-				// },
-				// {
-				// 	image: 'https://ai-public.mastergo.com/ai/img_res/038be95571253851dbc71264b8a0dc96.jpg',
-				// 	title: '金融分析',
-				// 	description: '精准的市场分析和预测'
-				// },
-				// {
-				// 	image: 'https://ai-public.mastergo.com/ai/img_res/0fa10d1093ca0600699e733d035a67ba.jpg',
-				// 	title: '数据研究',
-				// 	description: '深度挖掘数据价值'
-				// }
-			]
+			advantages: [],
+			scenarios: [],
+			// 用户信息
+			userId: storage.get(constant.userId) || null
+		}
+	},
+	computed: {
+		...mapState('aiagent', {
+			aiListFromStore: 'aiList',
+			loading: 'loading',
+			isUserSpecific: 'isUserSpecific'
+		}),
+		// 从store获取AI列表，转换为features格式
+		features() {
+			return this.aiListFromStore.map(ai => ({
+				name: ai.name,
+				avatar: ai.avatar,
+				icon: ai.avatar,
+				title: ai.name,
+				description: ai.configJson?.description || ai.name,
+				type: ai.agentCode,
+				agentCode: ai.agentCode,
+				onlineStatus: ai.onlineStatus,
+				agentStatus: ai.agentStatus,
+				// 🔥 显示在线/离线状态标识，优化视觉效果
+				statusLabel: ai.onlineStatus === 1 ? '在线' : '离线',
+				statusColor: ai.onlineStatus === 1 ? '#67c23a' : '#f56c6c',  // 在线=绿色，离线=红色
+				// 🔥 添加离线状态的额外标识
+				isOffline: ai.onlineStatus !== 1
+			}))
+		},
+		// 是否已登录
+		isLoggedIn() {
+			return !!this.userId
+		}
+	},
+	onLoad() {
+		// 页面加载时获取最新用户ID
+		this.userId = storage.get(constant.userId) || null
+		this.loadAIList()
+	},
+	onShow() {
+		// 每次显示页面时重新加载，确保状态同步
+		console.log('📍 [小程序主页] 页面显示，重新加载AI列表')
+		// 更新用户登录状态
+		this.userId = storage.get(constant.userId) || null
+		this.loadAIList()
+	},
+	methods: {
+		...mapActions('aiagent', ['loadAvailableAiList', 'loadAllActiveAiList']),
+		async loadAIList() {
+			if (this.isLoggedIn) {
+				// 已登录：加载用户可用的AI列表
+				console.log('✅ [小程序主页] 用户已登录（ID:' + this.userId + '），加载用户可用AI列表')
+				await this.loadAvailableAiList()
+				console.log('✅ [小程序主页] 已加载', this.features.length, '个用户可用AI')
+			} else {
+				// 未登录：加载所有上架的AI列表
+				console.log('ℹ️ [小程序主页] 用户未登录，加载所有上架AI列表')
+				await this.loadAllActiveAiList()
+				console.log('✅ [小程序主页] 已加载', this.features.length, '个上架AI')
+			}
+			
+			// 🔥 输出AI状态详情（用于调试）
+			if (this.features.length > 0) {
+				this.features.forEach(ai => {
+					const statusIcon = ai.onlineStatus === 1 ? '🟢' : '🔴'
+					console.log(`${statusIcon} ${ai.name}: ${ai.statusLabel}`)
+				})
+			} else {
+				console.warn('⚠️ [小程序主页] 未加载到AI列表，请检查后端服务')
+			}
 		}
 	}
 }
@@ -206,14 +193,14 @@ page {
 }
 
 .section {
-	margin: 30rpx 20rpx;
-	background: linear-gradient(135deg, #ffffff 0%, #fafbff 100%);
-	border-radius: 24rpx;
-	padding: 50rpx 40rpx;
+	margin: 24rpx 16rpx;
+	background: linear-gradient(135deg, #ffffff 0%, #f8faff 100%);
+	border-radius: 20rpx;
+	padding: 32rpx 24rpx;
 	box-shadow:
-		0 8rpx 32rpx rgba(0, 0, 0, 0.04),
-		0 2rpx 16rpx rgba(0, 0, 0, 0.02);
-	border: 1rpx solid rgba(255, 255, 255, 0.8);
+		0 6rpx 24rpx rgba(0, 0, 0, 0.04),
+		0 2rpx 12rpx rgba(0, 0, 0, 0.02);
+	border: 1.5rpx solid rgba(102, 126, 234, 0.08);
 	position: relative;
 	overflow: hidden;
 }
@@ -232,18 +219,23 @@ page {
 .section-title {
 	display: flex;
 	align-items: center;
-	margin-bottom: 50rpx;
+	margin-bottom: 32rpx;
 	position: relative;
 	z-index: 2;
+	justify-content: center;
 }
 
 .title-text {
-	margin-left: 20rpx;
-	font-size: 22px;
+	margin-left: 12rpx;
+	font-size: 20px;
 	font-weight: 700;
 	color: #2d3748;
-	letter-spacing: 0.8px;
+	letter-spacing: 0.5px;
 	position: relative;
+	background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+	-webkit-background-clip: text;
+	-webkit-text-fill-color: transparent;
+	background-clip: text;
 }
 
 .title-text::after {
@@ -260,25 +252,26 @@ page {
 
 .feature-cards {
 	display: grid;
-	grid-template-columns: repeat(auto-fit, minmax(280rpx, 1fr));
-	gap: 30rpx;
-	margin-top: 20rpx;
+	grid-template-columns: repeat(2, 1fr);
+	gap: 20rpx;
+	margin-top: 16rpx;
 }
 
 .feature-card {
 	background: linear-gradient(145deg, #ffffff 0%, #f8faff 100%);
-	padding: 40rpx 30rpx 35rpx;
-	border-radius: 20rpx;
+	padding: 24rpx 16rpx 20rpx;
+	border-radius: 16rpx;
 	display: flex;
 	flex-direction: column;
 	align-items: center;
 	position: relative;
 	overflow: hidden;
 	box-shadow:
-		0 8rpx 24rpx rgba(0, 0, 0, 0.06),
-		0 2rpx 8rpx rgba(0, 0, 0, 0.04);
-	border: 1rpx solid rgba(255, 255, 255, 0.8);
+		0 4rpx 16rpx rgba(0, 0, 0, 0.05),
+		0 1rpx 6rpx rgba(0, 0, 0, 0.03);
+	border: 1.5rpx solid rgba(102, 126, 234, 0.1);
 	transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+	min-height: 180rpx;
 }
 
 .feature-card::before {
@@ -287,9 +280,10 @@ page {
 	top: 0;
 	left: 0;
 	right: 0;
-	height: 6rpx;
+	height: 4rpx;
 	background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
-	opacity: 0.8;
+	opacity: 0.7;
+	border-radius: 16rpx 16rpx 0 0;
 }
 
 .feature-card::after {
@@ -316,12 +310,20 @@ page {
 	opacity: 1;
 }
 
+/* 🔥 AI状态显示样式 */
+.feature-header {
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	margin-bottom: 16rpx;
+}
+
 .feature-icon {
-	width: 72rpx;
-	height: 72rpx;
-	margin-bottom: 24rpx;
-	border-radius: 14rpx;
-	box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.08);
+	width: 56rpx;
+	height: 56rpx;
+	border-radius: 12rpx;
+	box-shadow: 0 3rpx 10rpx rgba(0, 0, 0, 0.08);
 	transition: all 0.3s ease;
 	position: relative;
 	z-index: 2;
@@ -332,27 +334,83 @@ page {
 	box-shadow: 0 8rpx 20rpx rgba(102, 126, 234, 0.15);
 }
 
+/* 状态徽章 */
+.status-badge {
+	margin-top: 8rpx;
+	padding: 4rpx 12rpx;
+	border-radius: 16rpx;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	box-shadow: 0 2rpx 6rpx rgba(0, 0, 0, 0.08);
+	transition: all 0.3s ease;
+}
+
+.status-text {
+	font-size: 10px;
+	color: #ffffff;
+	font-weight: 600;
+	letter-spacing: 0.3px;
+}
+
+/* 🔥 离线AI样式 */
+.offline-card {
+	opacity: 0.6;
+	filter: grayscale(30%);
+	position: relative;
+}
+
+.offline-card::after {
+	opacity: 0.3;
+}
+
+.offline-icon {
+	opacity: 0.7;
+	filter: grayscale(40%);
+}
+
+.offline-tip {
+	margin-top: 12rpx;
+	font-size: 10px;
+	color: #f56c6c;
+	text-align: center;
+	font-weight: 500;
+	padding: 3rpx 10rpx;
+	background-color: rgba(245, 108, 108, 0.1);
+	border-radius: 12rpx;
+	position: relative;
+	z-index: 2;
+}
+
 .feature-title {
-	font-size: 16px;
+	font-size: 14px;
 	font-weight: 600;
 	color: #2d3748;
-	margin-bottom: 12rpx;
-	letter-spacing: 0.3px;
+	margin-bottom: 8rpx;
+	letter-spacing: 0.2px;
 	text-align: center;
 	position: relative;
 	z-index: 2;
 	line-height: 1.3;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	max-width: 100%;
 }
 
 .feature-desc {
-	font-size: 13px;
+	font-size: 11px;
 	color: #64748b;
 	text-align: center;
-	line-height: 1.6;
-	max-width: 220rpx;
+	line-height: 1.5;
 	position: relative;
 	z-index: 2;
-	opacity: 0.85;
+	opacity: 0.8;
+	display: -webkit-box;
+	-webkit-line-clamp: 2;
+	-webkit-box-orient: vertical;
+	overflow: hidden;
+	text-overflow: ellipsis;
 }
 
 .advantage-list {

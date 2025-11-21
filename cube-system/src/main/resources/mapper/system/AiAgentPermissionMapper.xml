@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cube.system.mapper.AiAgentPermissionMapper">
+    
+    <resultMap type="AiAgentPermission" id="AiAgentPermissionResult">
+        <result property="id"                column="id"                />
+        <result property="agentId"           column="agent_id"          />
+        <result property="permissionType"    column="permission_type"   />
+        <result property="targetId"          column="target_id"         />
+        <result property="permissionAction"  column="permission_action" />
+        <result property="agentName"         column="agent_name"        />
+        <result property="targetName"        column="target_name"       />
+        <result property="createBy"          column="create_by"         />
+        <result property="createTime"        column="create_time"       />
+        <result property="updateBy"          column="update_by"         />
+        <result property="updateTime"        column="update_time"       />
+        <result property="remark"            column="remark"            />
+    </resultMap>
+
+    <sql id="selectAiAgentPermissionVo">
+        select p.id, p.agent_id, p.permission_type, p.target_id, p.permission_action, p.create_by, p.create_time, p.update_by, p.update_time, p.remark,
+               a.agent_name,
+               case 
+                   when p.permission_type = 1 then r.role_name
+                   when p.permission_type = 2 then u.nick_name
+                   else p.target_id
+               end as target_name
+        from ai_agent_permission p
+        left join ai_agent a on p.agent_id = a.id
+        left join sys_role r on p.permission_type = 1 and p.target_id = r.role_id
+        left join sys_user u on p.permission_type = 2 and p.target_id = u.user_id
+    </sql>
+
+    <select id="selectAiAgentPermissionList" parameterType="AiAgentPermission" resultMap="AiAgentPermissionResult">
+        <include refid="selectAiAgentPermissionVo"/>
+        <where>  
+            <if test="agentId != null "> and p.agent_id = #{agentId}</if>
+            <if test="permissionType != null "> and p.permission_type = #{permissionType}</if>
+            <if test="targetId != null  and targetId != ''"> and p.target_id = #{targetId}</if>
+            <if test="permissionAction != null "> and p.permission_action = #{permissionAction}</if>
+        </where>
+        order by p.create_time desc
+    </select>
+    
+    <select id="selectAiAgentPermissionById" parameterType="Long" resultMap="AiAgentPermissionResult">
+        <include refid="selectAiAgentPermissionVo"/>
+        where p.id = #{id}
+    </select>
+
+    <select id="selectUserPermission" resultType="Integer">
+        select permission_action from ai_agent_permission
+        where agent_id = #{agentId} and permission_type = 2 and target_id = #{userId}
+        limit 1
+    </select>
+
+    <select id="selectRolePermission" resultType="Integer">
+        select permission_action from ai_agent_permission
+        where agent_id = #{agentId} and permission_type = 1 and target_id in
+        <foreach collection="roleIds" item="roleId" open="(" separator="," close=")">
+            #{roleId}
+        </foreach>
+        limit 1
+    </select>
+
+    <select id="selectUserAllPermissions" resultMap="AiAgentPermissionResult">
+        <include refid="selectAiAgentPermissionVo"/>
+        where (p.permission_type = 2 and p.target_id = #{userId})
+        <if test="roleIds != null and roleIds.size() > 0">
+        or (p.permission_type = 1 and p.target_id in
+            <foreach collection="roleIds" item="roleId" open="(" separator="," close=")">
+                #{roleId}
+            </foreach>
+        )
+        </if>
+        order by p.permission_type asc, p.create_time desc
+    </select>
+        
+    <insert id="insertAiAgentPermission" parameterType="AiAgentPermission" useGeneratedKeys="true" keyProperty="id">
+        insert into ai_agent_permission
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="agentId != null">agent_id,</if>
+            <if test="permissionType != null">permission_type,</if>
+            <if test="targetId != null and targetId != ''">target_id,</if>
+            <if test="permissionAction != null">permission_action,</if>
+            <if test="createBy != null">create_by,</if>
+            <if test="remark != null">remark,</if>
+            create_time
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="agentId != null">#{agentId},</if>
+            <if test="permissionType != null">#{permissionType},</if>
+            <if test="targetId != null and targetId != ''">#{targetId},</if>
+            <if test="permissionAction != null">#{permissionAction},</if>
+            <if test="createBy != null">#{createBy},</if>
+            <if test="remark != null">#{remark},</if>
+            sysdate()
+        </trim>
+    </insert>
+
+    <update id="updateAiAgentPermission" parameterType="AiAgentPermission">
+        update ai_agent_permission
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="agentId != null">agent_id = #{agentId},</if>
+            <if test="permissionType != null">permission_type = #{permissionType},</if>
+            <if test="targetId != null and targetId != ''">target_id = #{targetId},</if>
+            <if test="permissionAction != null">permission_action = #{permissionAction},</if>
+            <if test="updateBy != null">update_by = #{updateBy},</if>
+            <if test="remark != null">remark = #{remark},</if>
+            update_time = sysdate()
+        </trim>
+        where id = #{id}
+    </update>
+
+    <delete id="deleteAiAgentPermissionById" parameterType="Long">
+        delete from ai_agent_permission where id = #{id}
+    </delete>
+
+    <delete id="deleteAiAgentPermissionByIds" parameterType="String">
+        delete from ai_agent_permission where id in 
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+    <delete id="deletePermissionByAgentId" parameterType="Long">
+        delete from ai_agent_permission where agent_id = #{agentId}
+    </delete>
+
+    <insert id="batchInsertPermissions">
+        insert into ai_agent_permission (agent_id, permission_type, target_id, permission_action, create_by, create_time)
+        values
+        <foreach collection="permissions" item="permission" separator=",">
+            (#{permission.agentId}, #{permission.permissionType}, #{permission.targetId}, #{permission.permissionAction}, #{permission.createBy}, sysdate())
+        </foreach>
+    </insert>
+
+    <insert id="setUserPermission">
+        insert into ai_agent_permission (agent_id, permission_type, target_id, permission_action, create_by, create_time)
+        values (#{agentId}, 2, #{userId}, #{permissionAction}, #{createBy}, sysdate())
+        on duplicate key update 
+        permission_action = #{permissionAction}, 
+        update_by = #{createBy}, 
+        update_time = sysdate()
+    </insert>
+
+    <insert id="setRolePermission">
+        insert into ai_agent_permission (agent_id, permission_type, target_id, permission_action, create_by, create_time)
+        values (#{agentId}, 1, #{roleId}, #{permissionAction}, #{createBy}, sysdate())
+        on duplicate key update 
+        permission_action = #{permissionAction}, 
+        update_by = #{createBy}, 
+        update_time = sysdate()
+    </insert>
+
+</mapper>

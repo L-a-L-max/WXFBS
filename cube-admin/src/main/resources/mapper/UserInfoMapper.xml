@@ -5,9 +5,9 @@
     <select id="getUserCount" parameterType="java.lang.String" resultType="java.util.Map">
         SELECT
             (SELECT points FROM sys_user WHERE user_id = #{userId}) AS points,
-            (SELECT COUNT(1) FROM wc_down_record WHERE user_id = #{userId}) AS reportNum,
-            (SELECT COUNT(1) FROM wc_collection_record WHERE user_id = #{userId}) AS collectionNum,
-            (SELECT COUNT(1) FROM wc_browse_record WHERE user_id = #{userId}) AS browseNum;
+            0 AS reportNum,
+            0 AS collectionNum,
+            0 AS browseNum;
     </select>
 
     <select id="getUserPointsRecord" parameterType="java.util.Map" resultType="java.util.Map">

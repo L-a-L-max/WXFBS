@@ -70,20 +70,20 @@
             <div class="ai-status-list">
               <div
                 class="ai-status-item"
-                v-for="(status, type) in aiLoginStatus"
-                :key="type"
+                v-for="ai in availableAiList"
+                :key="ai.agentCode"
               >
                 <div class="ai-platform">
                   <div class="platform-icon">
                     <img
-                      :src="getPlatformIcon(type)"
-                      :alt="getPlatformName(type)"
+                      :src="ai.agentIcon"
+                      :alt="ai.agentName"
                     />
                   </div>
                   <div class="platform-name">
-                    {{ getPlatformName(type) }}
+                    {{ ai.agentName }}
                     <el-tooltip
-                      v-if="isLoading[type]"
+                      v-if="isLoading[ai.agentCode]"
                       content="正在登录中..."
                       placement="top"
                     >
@@ -92,21 +92,39 @@
                   </div>
                 </div>
                 <div class="status-action">
+                  <!-- 在线且已登录 -->
                   <el-tag
-                    v-if="status"
+                    v-if="aiLoginStatus[ai.agentCode] && ai.onlineStatus === 1"
                     type="success"
                     effect="dark"
                     class="status-tag"
                   >
                     <el-icon><SuccessFilled /></el-icon>
-                    <span>{{ accounts[type] }}</span>
+                    <span>{{ accounts[ai.agentCode] }}</span>
                   </el-tag>
+                  <!-- 离线状态 - 显示禁用的登录按钮 -->
+                  <el-tooltip
+                    v-else-if="ai.onlineStatus === 0"
+                    content="AI服务离线，暂时无法登录"
+                    placement="top"
+                    effect="dark"
+                  >
+                    <el-button
+                      type="primary"
+                      size="small"
+                      disabled
+                      class="ai-login-btn offline-login-btn"
+                    >
+                      <el-icon><Connection /></el-icon> <span class="btn-text">点击登录</span>
+                    </el-button>
+                  </el-tooltip>
+                  <!-- 在线但未登录 -->
                   <el-button
                     v-else
                     type="primary"
                     size="small"
-                    :disabled="!isClick[type]"
-                    @click="handleAiLogin(type)"
+                    :disabled="!isClick[ai.agentCode]"
+                    @click="handleAiLogin(ai.agentCode)"
                     :class="'ai-login-btn'"
                     :title="'点击登录'"
                   >
@@ -415,12 +433,12 @@ import PieChart from "./dashboard/PieChart";
 import BarChart from "./dashboard/BarChart";
 import userInfo from "@/views/system/user/profile/userInfo";
 import resetPwd from "@/views/system/user/profile/resetPwd";
-import {
-  getUserProfile,
-  bindWcOfficeAccount,
-  getOfficeAccount,
-} from "@/api/system/user";
+import { getInfo } from "@/api/login";
+import { parseTime } from "@/utils/ruoyi";
+import { getUserProfile, getOfficeAccount } from "@/api/system/user";
 import { getUserPointsRecord } from "@/api/wechat/company";
+import { getWechatConfig, saveWechatConfig } from "@/api/wechat/config";
+import { listUserAvailableAiagent } from "@/api/system/aiagent";
 import websocketClient from "@/utils/websocket";
 import { message } from "@/api/wechat/aigc";
 import { getCorpId, ensureLatestCorpId, forceGetLatestCorpId } from "@/utils/corpId";
@@ -462,13 +480,16 @@ export default {
     InfoFilled,
   },
   data() {
+    // 在data外部定义静态资源，避免HMR警告
+    const defaultAvatar = require("@/assets/images/profile.jpg");
+    
     return {
       lineChartData: lineChartData.newVisitis,
       user: {},
       roleGroup: {},
       postGroup: {},
       activeTab: "userinfo",
-      defaultAvatar: require("@/assets/images/profile.jpg"), // 默认头像
+      defaultAvatar, // 默认头像
       //------ 绑定公众号相关变量 ------//
       dialogFormVisible: false, // 绑定公众号弹窗
       dialogAgentFormVisible: false, // 绑定智能体弹窗
@@ -541,30 +562,14 @@ export default {
         new Date(2024, 0, 4),
         new Date(2024, 0, 5),
       ],
-      aiLoginStatus: {
-        yuanbao: false,
-        doubao: false,
-        baidu: false,
-        deepseek: false,
-        metaso: false,
-        zhzd: false,
-      },
-      accounts: {
-        yuanbao: "",
-        doubao: "",
-        baidu: "",
-        deepseek: "",
-        metaso: "",
-        zhzd: "",
-      },
-      isClick: {
-        yuanbao: false,
-        doubao: false,
-        baidu: false,
-        deepseek: false,
-        metaso: false,
-        zhzd: false,
-      },
+      // 动态AI配置
+      availableAiList: [], // 用户可用的AI列表
+      aiLoginStatus: {},
+      aiOnlineStatus: {}, // AI在线状态
+      accounts: {},
+      isClick: {},
+      // 消息类型到agentCode的映射（动态构建，完全无硬编码）
+      messageTypeMapping: {},
       aiLoginDialogVisible: false,
       currentAiType: "",
       qrCodeUrl: "",
@@ -572,14 +577,7 @@ export default {
       // 消息相关变量
       messages: [],
       messageInput: "",
-      isLoading: {
-        yuanbao: true,
-        doubao: true,
-        baidu: true,
-        deepseek: true,
-        metaso: true,
-        zhzd: true,
-      },
+      isLoading: {},
       resetStatusTimeout: null, // 状态检查超时定时器
 
       //------ 媒体登录状态相关变量 ------//
@@ -634,14 +632,9 @@ export default {
       return dates;
     },
     getAiLoginTitle() {
-      const titles = {
-        yuanbao: "腾讯元宝登录",
-        doubao: "豆包登录",
-        baidu: "百度AI登录",
-        deepseek: "DeepSeek登录",
-        // metaso: "秘塔登录",
-      };
-      return titles[this.currentAiType] || "登录";
+      // 🔥 从数据库配置获取AI名称
+      const ai = this.availableAiList.find(item => item.agentCode === this.currentAiType);
+      return ai ? `${ai.agentName}登录` : '登录';
     },
     getMediaLoginTitle() {
       const titles = {
@@ -676,6 +669,17 @@ export default {
     window.addEventListener('corpIdUpdated', this.handleCorpIdUpdated);
   },
   methods: {
+    // 🔥 保存登录状态到本地存储，供主机页面同步
+    saveLoginStatusToStorage() {
+      try {
+        localStorage.setItem('aiLoginStatus', JSON.stringify(this.aiLoginStatus));
+        localStorage.setItem('aiAccounts', JSON.stringify(this.accounts));
+        console.log('💾 [状态同步] 首页登录状态已保存到本地存储');
+      } catch (error) {
+        console.warn('⚠️ [状态同步] 保存登录状态失败:', error);
+      }
+    },
+    
     handleSetLineChartData(type) {
       this.lineChartData = lineChartData[type];
     },
@@ -699,20 +703,8 @@ export default {
         // 每次页面刷新时都检查主机ID状态，确保温馨提醒能够正常显示
         this.checkCorpIdStatus();
 
-        // 初始检测时，AI和媒体按钮分开变灰
-        this.isClick.yuanbao = false;
-        this.isClick.doubao = false;
-        this.isClick.baidu = false;
-        this.isClick.deepseek = false;
-        this.isClick.zhzd = false;
-        // this.isClick.metaso = false;
-
-        this.isLoading.yuanbao = true;
-        this.isLoading.doubao = true;
-        this.isLoading.baidu = true;
-        this.isLoading.deepseek = true;
-        this.isLoading.zhzd = true;
-        // this.isLoading.metaso = true;
+        // 加载用户可用的AI配置
+        await this.loadAvailableAiList();
 
         // 初始化媒体登录状态
         // this.mediaIsClick.zhihu = false; // 已注释：知乎
@@ -725,61 +717,9 @@ export default {
 
         this.initWebSocket(this.userId); // 创建时建立连接
 
+        // 延迟检查AI登录状态
         setTimeout(() => {
-          // 检查腾讯元宝登录状态
-          this.sendMessage({
-            type: "PLAY_CHECK_YB_LOGIN",
-            userId: this.userId,
-            corpId: this.corpId,
-          });
-          // 检查豆包登录状态
-          this.sendMessage({
-            type: "PLAY_CHECK_DB_LOGIN",
-            userId: this.userId,
-            corpId: this.corpId,
-          });
-          // 已注释：检查知乎媒体登录状态
-          // this.sendMessage({
-          //   type: "PLAY_CHECK_ZHIHU_MEDIA_LOGIN",
-          //   userId: this.userId,
-          //   corpId: this.corpId,
-          // });
-          // 已注释：检查微头条登录状态
-          // this.sendMessage({
-          //   type: "PLAY_CHECK_TTH_LOGIN",
-          //   userId: this.userId,
-          //   corpId: this.corpId,
-          // });
-          // 已注释：检查百家号登录状态
-          // this.sendMessage({
-          //   type: "PLAY_CHECK_BAIJIAHAO_LOGIN",
-          //   userId: this.userId,
-          //   corpId: this.corpId,
-          // });
-          // 检查百度登录状态
-          this.sendMessage({
-            type: "PLAY_CHECK_BAIDU_LOGIN",
-            userId: this.userId,
-            corpId: this.corpId,
-          });
-          // 检查DeepSeek登录状态
-          this.sendMessage({
-            type: "PLAY_CHECK_DEEPSEEK_LOGIN",
-            userId: this.userId,
-            corpId: this.corpId,
-          });
-          // 检查秘塔登录状态
-          this.sendMessage({
-            type: "PLAY_CHECK_METASO_LOGIN",
-            userId: this.userId,
-            corpId: this.corpId,
-          });
-          // 检查知乎直答登录状态
-          this.sendMessage({
-            type: "PLAY_CHECK_ZHZD_LOGIN",
-            userId: this.userId,
-            corpId: this.corpId,
-          });
+          this.checkAllAiLoginStatus();
         }, 1000);
 
         // 页面加载时自动获取公众号信息，刷新按钮状态
@@ -851,6 +791,67 @@ export default {
         this.loading = false;
       }).catch(() => {
         this.loading = false;
+      });
+    },
+    // 加载用户可用的AI列表
+    async loadAvailableAiList() {
+      try {
+        const response = await listUserAvailableAiagent();
+        this.availableAiList = response.data || [];
+        
+        // 初始化AI状态对象和消息映射
+        this.aiLoginStatus = {};
+        this.aiOnlineStatus = {};
+        this.accounts = {};
+        this.isClick = {};
+        this.isLoading = {};
+        this.messageTypeMapping = {}; // 清空映射
+        
+        // 为每个可用的AI初始化状态并构建消息映射
+        this.availableAiList.forEach(ai => {
+          const code = ai.agentCode;
+          // 使用$set确保响应式（Vue 2兼容），Vue 3会自动处理
+          this.$set ? this.$set(this.aiLoginStatus, code, false) : this.aiLoginStatus[code] = false;
+          this.$set ? this.$set(this.aiOnlineStatus, code, ai.onlineStatus === 1) : this.aiOnlineStatus[code] = ai.onlineStatus === 1;
+          this.$set ? this.$set(this.accounts, code, "") : this.accounts[code] = "";
+          this.$set ? this.$set(this.isClick, code, false) : this.isClick[code] = false;
+          this.$set ? this.$set(this.isLoading, code, true) : this.isLoading[code] = true;
+          
+          // 🔥 动态构建消息类型映射（避免硬编码）
+          // 从 PLAY_CHECK_YB_LOGIN 转换为 RETURN_YB_STATUS
+          if (ai.websocketCheckType) {
+            const returnType = ai.websocketCheckType.replace('PLAY_CHECK_', 'RETURN_').replace('_LOGIN', '_STATUS');
+            this.messageTypeMapping[returnType] = code;
+            console.log(`📝 [消息映射] ${ai.agentName} - ${returnType} → ${code}`);
+          } else {
+            console.warn(`⚠️ [消息映射] ${ai.agentName} 没有websocketCheckType字段！`);
+          }
+        });
+        
+        console.log('✅ [AI配置] 加载用户可用AI列表:', this.availableAiList.length, '个');
+        console.log('✅ [消息映射] 映射表:', this.messageTypeMapping);
+      } catch (error) {
+        console.error('❌ [AI配置] 加载AI列表失败:', error);
+        this.$message.error('加载AI列表失败，请刷新页面重试');
+        this.availableAiList = [];
+      }
+    },
+    // 检查所有AI的登录状态
+    checkAllAiLoginStatus() {
+      this.availableAiList.forEach(ai => {
+        // 🔥 只检查在线且启用的AI
+        if (ai.websocketCheckType && ai.agentStatus === 1 && ai.onlineStatus === 1) {
+          console.log(`✅ [检查登录] ${ai.agentName}在线，检查登录状态`);
+          this.sendMessage({
+            type: ai.websocketCheckType,
+            userId: this.userId,
+            corpId: this.corpId,
+          });
+        } else if (ai.agentStatus === 0) {
+          console.log(`⏸️ [检查登录] ${ai.agentName}已禁用，跳过检查`);
+        } else if (ai.onlineStatus === 0) {
+          console.log(`📴 [检查登录] ${ai.agentName}已离线，跳过检查`);
+        }
       });
     },
     // 获取当前月份的签到日期
@@ -943,76 +944,47 @@ export default {
       this.qrCodeError = "";
       this.currentAiType = null;
     },
-    getQrCode(type) {
+    getQrCode(agentCode) {
       this.qrCodeUrl = "";
-      if (type == "yuanbao") {
-        this.sendMessage({
-          type: "PLAY_GET_YB_QRCODE",
-          userId: this.userId,
-          corpId: this.corpId,
-        });
+      
+      // 🔥 从数据库配置中查找AI的websocket二维码类型
+      const ai = this.availableAiList.find(item => item.agentCode === agentCode);
+      
+      if (!ai) {
+        console.error(`❌ [二维码] 未找到agentCode为${agentCode}的AI配置`);
+        this.$message.error('AI配置错误，请刷新页面重试');
+        return;
       }
-      if (type == "doubao") {
-        this.sendMessage({
-          type: "PLAY_GET_DB_QRCODE",
-          userId: this.userId,
-          corpId: this.corpId,
-        });
+      
+      if (!ai.websocketQrcodeType) {
+        console.error(`❌ [二维码] ${ai.agentName}未配置websocketQrcodeType`);
+        this.$message.error(`${ai.agentName}未配置二维码获取接口`);
+        return;
       }
-      if (type == "baidu") {
-        this.sendMessage({
-          type: "PLAY_GET_BAIDU_QRCODE",
-          userId: this.userId,
-          corpId: this.corpId,
-        });
-      }
-      if (type == "deepseek") {
-        this.sendMessage({
-          type: "PLAY_GET_DEEPSEEK_QRCODE",
-          userId: this.userId,
-          corpId: this.corpId,
-        });
-      }
-      if (type == "metaso") {
-        this.sendMessage({
-          type: "PLAY_GET_METASO_QRCODE",
-          userId: this.userId,
-          corpId: this.corpId,
-        });
-      }
-      if (type == "zhzd") {
-        this.sendMessage({
-          type: "PLAY_GET_ZHZD_QRCODE",
-          userId: this.userId,
-          corpId: this.corpId,
-        });
-      }
+      
+      console.log(`📲 [二维码] 获取${ai.agentName}的登录二维码，消息类型：${ai.websocketQrcodeType}`);
+      
+      // 动态发送消息
+      this.sendMessage({
+        type: ai.websocketQrcodeType,
+        userId: this.userId,
+        corpId: this.corpId,
+      });
+      
       this.$message({
-        message: "正在获取登录二维码...",
+        message: `正在获取${ai.agentName}登录二维码...`,
         type: "info",
       });
     },
     getPlatformIcon(type) {
-      const icons = {
-        yuanbao: require("@/assets/logo/yuanbao.png"),
-        doubao: require("@/assets/logo/doubao.png"),
-        baidu: require("@/assets/logo/Baidu.png"),
-        deepseek: require("@/assets/logo/Deepseek.png"),
-        metaso: require("@/assets/logo/Metaso.png"),
-        zhzd: require("@/assets/ai/ZHZD.png"),
-      };
-      return icons[type] || "";
+      // 从数据库配置获取
+      const ai = this.availableAiList.find(item => item.agentCode === type);
+      return (ai && ai.agentIcon) ? ai.agentIcon : "";
     },
     getPlatformName(type) {
-      const names = {
-        yuanbao: "腾讯元宝",
-        doubao: "豆包",
-        baidu: "百度",
-        deepseek: "DeepSeek",
-        metaso: "秘塔",
-        zhzd: "知乎直答",
-      };
-      return names[type] || "";
+      // 从数据库配置获取
+      const ai = this.availableAiList.find(item => item.agentCode === type);
+      return (ai && ai.agentName) ? ai.agentName : "";
     },
 
     // 媒体登录相关方法
@@ -1164,6 +1136,52 @@ export default {
           this.qrCodeUrl = "";
         }
       }
+      
+      // 🔥 通用AI状态更新（动态处理，避免硬编码）
+      // 检查是否是AI状态返回消息（RETURN_*_STATUS格式）
+      const statusMessageMatch = datastr.match(/RETURN_(\w+)_STATUS/);
+      if (statusMessageMatch && dataObj.status !== undefined && dataObj.status !== null) {
+        const messageType = statusMessageMatch[0]; // 例如：RETURN_YB_STATUS
+        const agentCode = this.messageTypeMapping[messageType]; // 从映射表查找agentCode
+        
+        if (agentCode) {
+          console.log(`📨 [AI状态] 收到${agentCode}的状态消息:`, dataObj.status);
+          console.log(`📊 [AI状态] 当前状态 - isLoading:`, this.isLoading[agentCode], 'isClick:', this.isClick[agentCode]);
+          
+          if (!datastr.includes("false") && dataObj.status !== "false" && dataObj.status !== "") {
+            // 登录成功
+            this.aiLoginDialogVisible = false;
+            // 使用$set确保响应式更新
+            this.$set ? this.$set(this.aiLoginStatus, agentCode, true) : this.aiLoginStatus[agentCode] = true;
+            this.$set ? this.$set(this.accounts, agentCode, dataObj.status) : this.accounts[agentCode] = dataObj.status;
+            this.$set ? this.$set(this.isLoading, agentCode, false) : this.isLoading[agentCode] = false;
+            this.$set ? this.$set(this.isClick, agentCode, true) : this.isClick[agentCode] = true;
+            
+            console.log(`✅ [AI登录] ${agentCode} 登录成功:`, dataObj.status);
+            
+            // 🔥 保存登录状态到本地存储，供主机页面同步
+            this.saveLoginStatusToStorage();
+            
+            // 检查是否所有AI都已检测完成
+            const allChecked = this.availableAiList.every(ai => !this.isLoading[ai.agentCode]);
+            if (allChecked && this.resetStatusTimeout) {
+              clearTimeout(this.resetStatusTimeout);
+              console.log('✅ [AI状态] 所有AI状态检测完成');
+            }
+          } else {
+            // 未登录或登录失败
+            this.$set ? this.$set(this.isClick, agentCode, true) : this.isClick[agentCode] = true;
+            this.$set ? this.$set(this.isLoading, agentCode, false) : this.isLoading[agentCode] = false;
+            console.log(`ℹ️ [AI登录] ${agentCode} 未登录，状态已更新`);
+          }
+          
+          console.log(`📊 [AI状态] 更新后状态 - isLoading:`, this.isLoading[agentCode], 'isClick:', this.isClick[agentCode]);
+          return; // 已处理，直接返回
+        } else {
+          console.warn(`⚠️ [消息映射] 未找到${messageType}对应的agentCode，映射表:`, this.messageTypeMapping);
+        }
+      }
+      
       // 已注释：媒体登录二维码处理
       // else if (
       //   datastr.includes("RETURN_PC_ZHIHU_MEDIA_QRURL") ||
@@ -1180,97 +1198,9 @@ export default {
       //     this.mediaQrCodeUrl = "";
       //   }
       // }
-      else if (datastr.includes("RETURN_YB_STATUS") && dataObj.status != "") {
-        if (!datastr.includes("false")) {
-          this.aiLoginDialogVisible = false;
-          this.aiLoginStatus.yuanbao = true;
-          this.accounts.yuanbao = dataObj.status;
-          this.isLoading.yuanbao = false;
-          this.isClick.yuanbao = true; // 检测成功后设为true
-          // 检查是否所有AI都已恢复，全部恢复则清除超时定时器
-          if (!this.isLoading.yuanbao && !this.isLoading.doubao && !this.isLoading.baidu) {
-            if (this.resetStatusTimeout) clearTimeout(this.resetStatusTimeout);
-          }
-        } else {
-          this.isClick.yuanbao = true;
-          this.isLoading.yuanbao = false;
-        }
-      } else if (datastr.includes("RETURN_DB_STATUS") && dataObj.status != "") {
-        if (!datastr.includes("false")) {
-          this.aiLoginDialogVisible = false;
-          this.aiLoginStatus.doubao = true;
-          this.accounts.doubao = dataObj.status;
-          this.isLoading.doubao = false;
-          this.isClick.doubao = true; // 检测成功后设为true
-          // 检查是否所有AI都已恢复，全部恢复则清除超时定时器
-          if (!this.isLoading.yuanbao && !this.isLoading.doubao && !this.isLoading.deepseek && /* !this.isLoading.minimax && */ !this.isLoading.metaso && !this.isLoading.zhzd /* && !this.isLoading.kimi */) { // 移除Kimi登录状态检测
-            if (this.resetStatusTimeout) clearTimeout(this.resetStatusTimeout);
-          }
-        } else {
-          this.isClick.doubao = true;
-          this.isLoading.doubao = false;
-        }
-
-      } else if (datastr.includes("RETURN_BAIDU_STATUS") && dataObj.status != "") {
-        if (!datastr.includes("false")) {
-          this.aiLoginDialogVisible = false;
-          this.aiLoginStatus.baidu = true;
-          this.accounts.baidu = dataObj.status;
-          this.isLoading.baidu = false;
-          this.isClick.baidu = true; // 检测成功后设为true
-          // 检查是否所有AI都已恢复，全部恢复则清除超时定时器
-          if (!this.isLoading.yuanbao && !this.isLoading.doubao && !this.isLoading.deepseek && /* !this.isLoading.minimax && */ !this.isLoading.metaso && !this.isLoading.zhzd /* && !this.isLoading.kimi */) { // 移除Kimi登录状态检测
-            if (this.resetStatusTimeout) clearTimeout(this.resetStatusTimeout);
-          }
-        } else {
-          this.isClick.baidu = true;
-          this.isLoading.baidu = false;
-        }
-      }else if (datastr.includes("RETURN_DEEPSEEK_STATUS") && dataObj.status != "") {
-        if (!datastr.includes("false")) {
-          this.aiLoginDialogVisible = false;
-          this.aiLoginStatus.deepseek = true;
-          this.accounts.deepseek = dataObj.status;
-          this.isLoading.deepseek = false;
-          this.isClick.deepseek = true; // 检测成功后设为true
-          if (!this.isLoading.yuanbao && !this.isLoading.doubao && !this.isLoading.deepseek && /* !this.isLoading.minimax && */ !this.isLoading.metaso && !this.isLoading.zhzd /* && !this.isLoading.kimi */) { // 移除Kimi登录状态检测
-            if (this.resetStatusTimeout) clearTimeout(this.resetStatusTimeout);
-          }
-        } else {
-          this.isClick.deepseek = true;
-          this.isLoading.deepseek = false;
-        }
-      }else if(datastr.includes("RETURN_METASO_STATUS") && dataObj.status != ""){
-        if (!datastr.includes("false")) {
-          this.aiLoginDialogVisible = false;
-          this.aiLoginStatus.metaso = true;
-          this.accounts.metaso = dataObj.status;
-          this.isLoading.metaso = false;
-          this.isClick.metaso = true; // 检测成功后设为true
-          if (!this.isLoading.yuanbao && !this.isLoading.doubao && !this.isLoading.deepseek && /* !this.isLoading.minimax && */ !this.isLoading.metaso && !this.isLoading.zhzd /* && !this.isLoading.kimi */) { // 移除Kimi登录状态检测
-            if (this.resetStatusTimeout) clearTimeout(this.resetStatusTimeout);
-          }
-        } else {
-          this.isClick.metaso = true;
-          this.isLoading.metaso = false;
-        }
-      }else if(datastr.includes("RETURN_ZHZD_STATUS") && dataObj.status != ""){
-        if (!datastr.includes("false")) {
-          this.aiLoginDialogVisible = false;
-          // AI登录状态（知乎直答）
-          this.aiLoginStatus.zhzd = true;
-          this.accounts.zhzd = dataObj.status;
-          this.isLoading.zhzd = false;
-          this.isClick.zhzd = true;
-          // 检查AI状态恢复
-          if (!this.isLoading.yuanbao && !this.isLoading.doubao && !this.isLoading.deepseek && /* !this.isLoading.minimax && */ !this.isLoading.metaso && !this.isLoading.zhzd /* && !this.isLoading.kimi */) { // 移除Kimi登录状态检测
-            if (this.resetStatusTimeout) clearTimeout(this.resetStatusTimeout);
-          }
-        } else {
-          this.isClick.zhzd = true;
-          this.isLoading.zhzd = false;
-        }
-      }
+      
+      // ⚠️ 以下是旧的硬编码逻辑，保留作为备用（通用逻辑已处理）
+      // 🔥 旧的硬编码逻辑已移除，使用通用的动态处理逻辑（上面的statusMessageMatch处理）
       // 已注释：微头条状态返回
       // else if(datastr.includes("RETURN_TOUTIAO_STATUS") && dataObj.status != ""){
       //   if (!datastr.includes("false")) {
@@ -1385,51 +1315,43 @@ export default {
       }
       
       if (!this.userId || !this.corpId) return;
-      // 只重置AI相关状态
-      this.isLoading.yuanbao = true;
-      this.isLoading.doubao = true;
-      this.isLoading.deepseek = true;
-      // this.isLoading.minimax = true; // 已移除MiniMax登录状态检测
-      this.isLoading.metaso = true;
-      // this.isLoading.kimi = true; // 移除Kimi登录状态检测
-      this.isLoading.zhzd = true;
-      this.isLoading.baidu = true;
-      this.isClick.yuanbao = false;
-      this.isClick.doubao = false;
-      this.isClick.deepseek = false;
-      // this.isClick.minimax = false; // 已移除MiniMax登录状态检测
-      this.isClick.metaso = false;
-      // this.isClick.kimi = false; // 移除Kimi登录状态检测
-      this.isClick.baidu = false;
-      this.isClick.zhzd = false;
+      
+      // 🔥 动态重置AI状态（从数据库配置获取）
+      this.availableAiList.forEach(ai => {
+        const code = ai.agentCode;
+        this.$set(this.isLoading, code, true);
+        this.$set(this.isClick, code, false);
+      });
       // 清除上一次的超时定时器
       if (this.resetStatusTimeout) clearTimeout(this.resetStatusTimeout);
       // 超时自动恢复（2分半钟）
       this.resetStatusTimeout = setTimeout(() => {
-        this.isLoading.yuanbao = false;
-        this.isLoading.doubao = false;
-        this.isLoading.deepseek = false;
-        this.isLoading.metaso = false;
-
-        this.isLoading.baidu = false;
-        this.isLoading.zhzd = false;
-        this.isClick.yuanbao = true;
-        this.isClick.doubao = true;
-        this.isClick.deepseek = true;
-        this.isClick.metaso = true;
-        this.isClick.baidu = true;
-        this.isClick.zhzd = true;
+        // 🔥 动态设置超时，所有AI都恢复为可点击状态
+        this.availableAiList.forEach(ai => {
+          const code = ai.agentCode;
+          this.$set(this.isLoading, code, false);
+          this.$set(this.isClick, code, true);
+        });
+        console.log('⚠️ [AI状态] 超时未收到响应，已自动恢复状态');
 
         this.$message.warning('AI登录状态刷新超时，请检查网络或稍后重试');
       }, 150000);
-      // 只检测AI登录状态
-      this.sendMessage({ type: "PLAY_CHECK_YB_LOGIN", userId: this.userId, corpId: this.corpId });
-      this.sendMessage({ type: "PLAY_CHECK_DB_LOGIN", userId: this.userId, corpId: this.corpId });
-      this.sendMessage({ type: "PLAY_CHECK_DEEPSEEK_LOGIN", userId: this.userId, corpId: this.corpId });
-      this.sendMessage({ type: "PLAY_CHECK_METASO_LOGIN", userId: this.userId, corpId: this.corpId });
-      this.sendMessage({ type: "PLAY_CHECK_QW_LOGIN", userId: this.userId, corpId: this.corpId });
-      this.sendMessage({ type: "PLAY_CHECK_BAIDU_LOGIN", userId: this.userId, corpId: this.corpId });
-      this.sendMessage({ type: "PLAY_CHECK_ZHZD_LOGIN", userId: this.userId, corpId: this.corpId });
+      
+      // 🔥 只检测在线且启用的AI登录状态
+      this.availableAiList.forEach(ai => {
+        if (ai.websocketCheckType && ai.agentStatus === 1 && ai.onlineStatus === 1) {
+          console.log(`🔄 [刷新AI] 检查${ai.agentName}登录状态`);
+          this.sendMessage({
+            type: ai.websocketCheckType,
+            userId: this.userId,
+            corpId: this.corpId
+          });
+        } else if (ai.agentStatus === 0) {
+          console.log(`⏸️ [刷新AI] ${ai.agentName}已禁用，跳过检查`);
+        } else if (ai.onlineStatus === 0) {
+          console.log(`📴 [刷新AI] ${ai.agentName}已离线，跳过检查`);
+        }
+      });
 
     },
     async handleRefreshMedia() {
@@ -2421,6 +2343,87 @@ export default {
     color: #fff !important;
     cursor: not-allowed;
   }
+}
+
+/* 离线登录按钮样式 */
+.offline-login-btn {
+  background: linear-gradient(135deg, #a0a0a0 0%, #808080 100%) !important;
+  border: 1px solid #909399 !important;
+  color: #e0e0e0 !important;
+  cursor: not-allowed !important;
+  opacity: 0.7;
+  position: relative;
+}
+
+.offline-login-btn:hover {
+  background: linear-gradient(135deg, #a0a0a0 0%, #808080 100%) !important;
+  border-color: #909399 !important;
+  color: #e0e0e0 !important;
+}
+
+.offline-login-btn .el-icon {
+  color: #e0e0e0 !important;
+}
+
+.offline-login-btn .btn-text {
+  color: #e0e0e0 !important;
+}
+
+@keyframes fadeInOut {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+/* 离线状态的AI项整体样式 */
+.ai-status-item:has(.offline-login-btn) {
+  background: linear-gradient(135deg, #f8f8f8 0%, #ececec 100%);
+  border-radius: 8px;
+  padding: 8px;
+  position: relative;
+  opacity: 0.85;
+  transition: all 0.3s ease;
+}
+
+.ai-status-item:has(.offline-login-btn)::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: repeating-linear-gradient(
+    45deg,
+    transparent,
+    transparent 10px,
+    rgba(255, 255, 255, 0.15) 10px,
+    rgba(255, 255, 255, 0.15) 20px
+  );
+  pointer-events: none;
+  border-radius: 8px;
+}
+
+.ai-status-item:has(.offline-login-btn) .platform-icon img {
+  filter: grayscale(100%) brightness(0.85);
+  opacity: 0.65;
+  transition: all 0.3s ease;
+}
+
+.ai-status-item:has(.offline-login-btn) .platform-name {
+  color: #909399;
+  transition: all 0.3s ease;
+}
+
+/* 悬停效果 */
+.ai-status-item:has(.offline-login-btn):hover {
+  background: linear-gradient(135deg, #f0f0f0 0%, #e0e0e0 100%);
+}
+
+.ai-status-item:has(.offline-login-btn):hover .platform-icon img {
+  opacity: 0.75;
 }
 
 .media-login-btn {

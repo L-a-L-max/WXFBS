@@ -11,7 +11,7 @@ const baseUrl = config.baseUrl
 
 const request = config => {
   // 是否需要设置 token
-  const isToken = (config.headers || {}).isToken === false
+  const isToken = (config.header || {}).isToken === false
   config.header = config.header || {}
   if (getToken() && !isToken) {
     config.header['Authorization'] = 'Bearer ' + getToken()
@@ -43,6 +43,15 @@ const request = config => {
         const msg = errorCode[code] || res.data.msg || res.data.messages|| errorCode['default']
         if (code === 401) {
 		  logo.error("请求参数："+JSON.stringify(config)+"返回参数"+JSON.stringify(res));
+          
+          // 🔥 对于不需要token的请求（如获取公开AI列表），不提示登录
+          if (!isToken) {
+            console.warn('⚠️ [请求] 匿名接口返回401，可能是后端配置问题');
+            reject('匿名接口访问失败')
+            return
+          }
+          
+          // 🔥 只对需要登录的接口才提示登录
           showConfirm('登录状态已过期，您可以继续留在该页面，或者重新登录?').then(res => {
             if (res.confirm) {
               store.dispatch('LogOut').then(res => {

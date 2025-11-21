@@ -165,18 +165,23 @@ public class PointsSystem extends BaseController {
             if(changeAmount !=null){
                 pointVal = changeAmount;
             }
-            if(pointVal > 0){
+            // 添加空值检查，避免NullPointerException
+            if(pointVal != null && pointVal > 0){
                 //说明是增积分，从主账户转到用户账户
                 tranId = ethTran(mainAddress,address,BigInteger.valueOf(pointVal),mainPrivateKey);
                 gethMap.put("from",mainAddress);
                 gethMap.put("to",address);
                 gethMap.put("ether",pointVal);
-            } else {
+            } else if(pointVal != null && pointVal < 0) {
                 //说明是减积分, 从用户账号转到主账户
                 tranId = ethTran(address,mainAddress,BigInteger.valueOf(Math.abs(pointVal)),privateKey);
                 gethMap.put("from",address);
                 gethMap.put("to",mainAddress);
                 gethMap.put("ether",Math.abs(pointVal));
+            } else {
+                // pointVal为null或为0时，记录日志并跳过处理
+                System.err.println("Invalid pointVal for user: " + userId + ", changeType: " + changeType + ", pointVal: " + pointVal);
+                return;
             }
             gethMap.put("tranId",tranId);
             gethMap.put("changeType",changeType);
