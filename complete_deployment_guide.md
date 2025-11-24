@@ -177,6 +177,9 @@ java -jar target/U3W.jar
 ### 5.2 配置cube-engine服务连接
 启动后按提示输入以下信息：
 ```bash
+检查配置文件中的预设配置...
+配置文件中未找到预设配置，请手动输入服务器信息
+提示: 你可以在 application.yaml 中的 custom.server 区域预设配置信息
 请输入地址：127.0.0.1:8081（或localhost:8081）
 是否启用HTTPS/WSS？(y/n，默认n)：n
 ✅ 检测到可用端口：（默认8083）
