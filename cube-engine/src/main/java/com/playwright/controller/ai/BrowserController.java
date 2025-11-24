@@ -882,12 +882,28 @@ public class BrowserController {
                 Locator loginButton = page.locator("//span[contains(text(),'登录')]");
                 loginButton.waitFor(new Locator.WaitForOptions().setTimeout(5000));
                 loginButton.click();
+                
+                // 🔥 修复：点击登录后，等待二维码页面加载完成
+                Thread.sleep(2000);
+                
+                // 🔥 修复：显式等待二维码容器出现，确保页面已加载
+                try {
+                    // 等待二维码相关元素出现（元宝的二维码通常在iframe或特定容器中）
+                    page.locator(".qrcode, canvas, img[src*='qr'], iframe").first()
+                        .waitFor(new Locator.WaitForOptions().setTimeout(5000));
+                    System.out.println("✅ [元宝登录] 二维码页面已加载");
+                } catch (Exception qrWaitError) {
+                    // 如果特定元素未找到，继续执行（可能页面结构不同）
+                    System.out.println("⚠️ [元宝登录] 未检测到二维码元素，继续截图");
+                }
+                
             } catch (Exception clickError) {
                 // 如果已经在登录页面，忽略点击错误
+                System.out.println("⚠️ [元宝登录] 登录按钮点击失败或已在登录页: " + clickError.getMessage());
             }
 
-            // 等待页面加载完成
-            Thread.sleep(3000);
+            // 🔥 修复：再等待1秒确保页面完全渲染
+            Thread.sleep(1000);
 
             // 🔥 检查会话是否仍然活跃
             if (!loginSessionManager.isSessionActive(sessionKey)) {
@@ -919,7 +935,8 @@ public class BrowserController {
                 phoneText = "未登录";
             }
 
-            for (int i = 0; i < 6; i++) {
+            // 🔥 优化：将检测循环从6次x10秒改为60次x1秒，确保用户登录后2秒内响应
+            for (int i = 0; i < 60; i++) {
                 // 🔥 每次循环检查会话是否仍然活跃
                 if (!loginSessionManager.isSessionActive(sessionKey)) {
                     loginSessionManager.endLoginSession(sessionKey);
@@ -927,7 +944,7 @@ public class BrowserController {
                 }
 
                 if (phoneText.contains("未登录")) {
-                    Thread.sleep(10000);
+                    Thread.sleep(1000); // 🔥 优化：从10秒减少到1秒，大幅提升响应速度
 
                     // 🔥 再次检查会话（等待后可能已切换）
                     if (!loginSessionManager.isSessionActive(sessionKey)) {
@@ -935,13 +952,15 @@ public class BrowserController {
                         return "session_terminated";
                     }
 
-                    // 刷新二维码截图
-                    url = screenshotUtil.screenshotAndUpload(page, "checkYBLogin.png");
-                    jsonObject.put("url", url);
-                    webSocketClientService.sendMessage(jsonObject.toJSONString());
-
-                    // 再次尝试处理账号类型选择弹窗
-                    handleAccountTypeSelection(page);
+                    // 🔥 优化：每10秒刷新一次二维码（每10次循环）
+                    if (i % 10 == 9) {
+                        url = screenshotUtil.screenshotAndUpload(page, "checkYBLogin.png");
+                        jsonObject.put("url", url);
+                        webSocketClientService.sendMessage(jsonObject.toJSONString());
+                        
+                        // 再次尝试处理账号类型选择弹窗
+                        handleAccountTypeSelection(page);
+                    }
                 } else {
                     break;
                 }
@@ -949,7 +968,7 @@ public class BrowserController {
                 // 🔥 关键修复：使用try-catch包装textContent调用
                 try {
                     Locator phone = page.locator("//p[@class='nick-info-name']");
-                    phone.waitFor(new Locator.WaitForOptions().setTimeout(3000));
+                    phone.waitFor(new Locator.WaitForOptions().setTimeout(1000)); // 🔥 优化：从3秒减少到1秒
                     phoneText = phone.textContent();
                 } catch (Exception e) {
                     phoneText = "未登录";
@@ -1153,19 +1172,37 @@ public class BrowserController {
                 }
 
                 try {
-                    // 🔥 使用循环检查登录状态，而不是直接wait 60秒
+                    // 🔥 修复：直接检测聊天页面的关键元素，而不是依赖"登录成功"文本
+                    // 检测逻辑：头像按钮出现 = 已登录并跳转到聊天页面
                     boolean loginSuccess = false;
-                    for (int i = 0; i < 30; i++) { // 30次 x 2秒 = 60秒
+                    Locator avatarButton = page.locator("[data-testid=\"chat_header_avatar_button\"]");
+                    Locator loginButton = page.locator("[data-testid='to_login_button']"); // 登录按钮（未登录时显示）
+                    
+                    for (int i = 0; i < 120; i++) { // 120次 x 500ms = 60秒
                         // 🔥 每次循环都检查会话是否活跃
                         if (!loginSessionManager.isSessionActive(sessionKey)) {
                             return "session_terminated";
                         }
 
-                        Thread.sleep(2000);
-                        Locator login = page.getByText("登录成功");
-                        if (login.count() > 0 && login.isVisible()) {
-                            loginSuccess = true;
-                            break;
+                        Thread.sleep(500); // 🔥 优化：500ms检测间隔，快速响应
+                        
+                        // 🔥 关键检测：头像按钮出现且登录按钮消失 = 已登录
+                        try {
+                            if (avatarButton.count() > 0 && avatarButton.isVisible() && 
+                                (loginButton.count() == 0 || !loginButton.isVisible())) {
+                                loginSuccess = true;
+                                System.out.println("✅ [豆包登录] 检测到已登录（头像按钮出现）");
+                                break;
+                            }
+                        } catch (Exception e) {
+                            // 🔥 修复：页面导航时执行上下文被销毁，继续等待
+                            String errorMsg = e.getMessage() != null ? e.getMessage().toLowerCase() : "";
+                            if (errorMsg.contains("execution context") || errorMsg.contains("destroyed")) {
+                                // 页面正在导航，继续循环
+                                continue;
+                            }
+                            // 其他异常才抛出
+                            throw e;
                         }
                     }
 
@@ -1175,22 +1212,55 @@ public class BrowserController {
                         return "false";
                     }
 
-                    Thread.sleep(5000);
-                    page.locator("[data-testid=\"chat_header_avatar_button\"]").click();
-                    Thread.sleep(1000);
-                    page.locator("[data-testid=\"chat_header_setting_button\"]").click();
-                    Thread.sleep(1000);
-                    Locator phone = page.locator(".nickName-cIcGuG");
-                    if (phone.count() > 0) {
-                        String phoneText = phone.textContent();
-                        JSONObject jsonObjectTwo = new JSONObject();
-                        jsonObjectTwo.put("status", phoneText);
-                        jsonObjectTwo.put("userId", userId);
-                        jsonObjectTwo.put("type", "RETURN_DB_STATUS");
-                        webSocketClientService.sendMessage(jsonObjectTwo.toJSONString());
+                    // 🔥 已检测到登录，立即获取用户信息
+                    Thread.sleep(500); // 等待页面稳定
+                    
+                    try {
+                        avatarButton.click();
+                        Thread.sleep(800); // 等待下拉菜单展开
+                        page.locator("[data-testid=\"chat_header_setting_button\"]").click();
+                        Thread.sleep(800); // 等待设置页面打开
+                        
+                        Locator phone = page.locator(".nickName-cIcGuG");
+                        phone.waitFor(new Locator.WaitForOptions().setTimeout(5000)); // 等待用户名元素出现
+                        
+                        if (phone.count() > 0) {
+                            String phoneText = phone.textContent();
+                            JSONObject jsonObjectTwo = new JSONObject();
+                            jsonObjectTwo.put("status", phoneText);
+                            jsonObjectTwo.put("userId", userId);
+                            jsonObjectTwo.put("type", "RETURN_DB_STATUS");
+                            webSocketClientService.sendMessage(jsonObjectTwo.toJSONString());
 
-                        loginSessionManager.endLoginSession(sessionKey);
-                        return phoneText;
+                            loginSessionManager.endLoginSession(sessionKey);
+                            return phoneText;
+                        }
+                    } catch (Exception e) {
+                        // 🔥 修复：获取用户信息失败时，记录但继续尝试
+                        String errorMsg = e.getMessage() != null ? e.getMessage().toLowerCase() : "";
+                        if (errorMsg.contains("execution context") || errorMsg.contains("destroyed")) {
+                            System.out.println("⚠️ [豆包登录] 页面导航中，等待稳定后重试");
+                            Thread.sleep(1000);
+                            // 重新尝试一次
+                            try {
+                                Locator phone = page.locator(".nickName-cIcGuG");
+                                phone.waitFor(new Locator.WaitForOptions().setTimeout(3000));
+                                if (phone.count() > 0) {
+                                    String phoneText = phone.textContent();
+                                    JSONObject jsonObjectTwo = new JSONObject();
+                                    jsonObjectTwo.put("status", phoneText);
+                                    jsonObjectTwo.put("userId", userId);
+                                    jsonObjectTwo.put("type", "RETURN_DB_STATUS");
+                                    webSocketClientService.sendMessage(jsonObjectTwo.toJSONString());
+                                    loginSessionManager.endLoginSession(sessionKey);
+                                    return phoneText;
+                                }
+                            } catch (Exception retryError) {
+                                System.err.println("❌ [豆包登录] 重试获取用户信息失败: " + retryError.getMessage());
+                            }
+                        } else {
+                            System.err.println("❌ [豆包登录] 获取用户信息异常: " + e.getMessage());
+                        }
                     }
                 } catch (Exception loginException) {
                     // 🔥 静默处理TargetClosedError（会话已清理，页面关闭是正常的）
