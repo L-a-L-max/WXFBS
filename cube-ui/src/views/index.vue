@@ -249,7 +249,8 @@
         <div v-else-if="qrCodeError" class="error-tip">
           <el-icon><Warning /></el-icon>
           <p>{{qrCodeError}}</p>
-          <el-button size="small" @click="retryGetQrCode">重试</el-button>
+          <p class="error-hint">建议：关闭此窗口后重新打开登录</p>
+          <el-button size="small" type="primary" @click="handleAiLoginDialogClose">关闭窗口</el-button>
         </div>
         <div v-else class="loading-tip">正在获取登录二维码...</div>
       </div>
@@ -437,7 +438,6 @@ import { getInfo } from "@/api/login";
 import { parseTime } from "@/utils/ruoyi";
 import { getUserProfile, getOfficeAccount } from "@/api/system/user";
 import { getUserPointsRecord } from "@/api/wechat/company";
-import { getWechatConfig, saveWechatConfig } from "@/api/wechat/config";
 import { listUserAvailableAiagent } from "@/api/system/aiagent";
 import websocketClient from "@/utils/websocket";
 import { message } from "@/api/wechat/aigc";
@@ -659,7 +659,6 @@ export default {
     try {
       await ensureLatestCorpId();
     } catch (error) {
-      console.warn('刷新主机ID失败:', error);
     }
     
     this.getUser();
@@ -674,9 +673,7 @@ export default {
       try {
         localStorage.setItem('aiLoginStatus', JSON.stringify(this.aiLoginStatus));
         localStorage.setItem('aiAccounts', JSON.stringify(this.accounts));
-        console.log('💾 [状态同步] 首页登录状态已保存到本地存储');
       } catch (error) {
-        console.warn('⚠️ [状态同步] 保存登录状态失败:', error);
       }
     },
     
@@ -696,7 +693,6 @@ export default {
           // 强制从服务器获取最新的企业ID，确保与数据库一致
           this.corpId = await forceGetLatestCorpId();
         } catch (error) {
-          console.warn('强制获取最新企业ID失败，使用接口返回值:', error);
           this.corpId = response.data.corpId;
         }
         
@@ -737,7 +733,7 @@ export default {
           }
         });
       } catch (error) {
-        console.error('获取用户信息失败:', error);
+        // 静默处理
       }
     },
     // 获取公众号信息
@@ -758,7 +754,6 @@ export default {
         if (valid) {
           // 表单验证通过，继续提交
           bindWcOfficeAccount(this.form).then((response) => {
-            console.log(response.data);
             this.dialogFormVisible = false;
           });
         } else {
@@ -799,6 +794,7 @@ export default {
         const response = await listUserAvailableAiagent();
         this.availableAiList = response.data || [];
         
+        
         // 初始化AI状态对象和消息映射
         this.aiLoginStatus = {};
         this.aiOnlineStatus = {};
@@ -810,6 +806,8 @@ export default {
         // 为每个可用的AI初始化状态并构建消息映射
         this.availableAiList.forEach(ai => {
           const code = ai.agentCode;
+          // 初始化AI配置
+          
           // 使用$set确保响应式（Vue 2兼容），Vue 3会自动处理
           this.$set ? this.$set(this.aiLoginStatus, code, false) : this.aiLoginStatus[code] = false;
           this.$set ? this.$set(this.aiOnlineStatus, code, ai.onlineStatus === 1) : this.aiOnlineStatus[code] = ai.onlineStatus === 1;
@@ -822,16 +820,13 @@ export default {
           if (ai.websocketCheckType) {
             const returnType = ai.websocketCheckType.replace('PLAY_CHECK_', 'RETURN_').replace('_LOGIN', '_STATUS');
             this.messageTypeMapping[returnType] = code;
-            console.log(`📝 [消息映射] ${ai.agentName} - ${returnType} → ${code}`);
+            // 消息映射配置
           } else {
-            console.warn(`⚠️ [消息映射] ${ai.agentName} 没有websocketCheckType字段！`);
           }
         });
         
-        console.log('✅ [AI配置] 加载用户可用AI列表:', this.availableAiList.length, '个');
-        console.log('✅ [消息映射] 映射表:', this.messageTypeMapping);
+        // AI配置加载完成
       } catch (error) {
-        console.error('❌ [AI配置] 加载AI列表失败:', error);
         this.$message.error('加载AI列表失败，请刷新页面重试');
         this.availableAiList = [];
       }
@@ -841,16 +836,14 @@ export default {
       this.availableAiList.forEach(ai => {
         // 🔥 只检查在线且启用的AI
         if (ai.websocketCheckType && ai.agentStatus === 1 && ai.onlineStatus === 1) {
-          console.log(`✅ [检查登录] ${ai.agentName}在线，检查登录状态`);
+          // 检查登录状态
           this.sendMessage({
             type: ai.websocketCheckType,
             userId: this.userId,
             corpId: this.corpId,
           });
         } else if (ai.agentStatus === 0) {
-          console.log(`⏸️ [检查登录] ${ai.agentName}已禁用，跳过检查`);
         } else if (ai.onlineStatus === 0) {
-          console.log(`📴 [检查登录] ${ai.agentName}已离线，跳过检查`);
         }
       });
     },
@@ -915,34 +908,49 @@ export default {
     
     // 🔥 新增：处理登录对话框关闭事件
     handleAiLoginDialogClose() {
-      console.log("🔒 [登录对话框] 用户关闭登录窗口");
+      // 关闭登录对话框
+      
+      // 1. 先清理后端登录会话
       this.cleanupPreviousLogin();
+      
+      // 2. 重置前端登录状态
       this.resetLoginState();
+      
+      // 3. 关闭对话框
+      this.aiLoginDialogVisible = false;
+      // 对话框关闭完成
     },
     
     // 🔥 新增：清理之前的登录会话
     cleanupPreviousLogin() {
       if (this.currentAiType) {
-        console.log(`🧹 [登录清理] 清理${this.currentAiType}的登录会话`);
-        // 发送清理消息到后端
-        this.sendMessage({
+        // 清理登录会话
+        
+        const cleanupMessage = {
           type: "CLEANUP_LOGIN_SESSION",
           userId: this.userId,
           aiType: this.currentAiType,
           corpId: this.corpId,
-        });
+        };
+        
+        this.sendMessage(cleanupMessage);
+        // 清理消息已发送
+      } else {
       }
     },
     
     // 🔥 新增：重置登录状态
     resetLoginState() {
+      // 重置登录状态
       if (this.currentAiType) {
         this.isLoading[this.currentAiType] = false;
         this.isClick[this.currentAiType] = true;
       }
+      // 清空状态数据
       this.qrCodeUrl = "";
       this.qrCodeError = "";
       this.currentAiType = null;
+      // 状态重置完成
     },
     getQrCode(agentCode) {
       this.qrCodeUrl = "";
@@ -951,18 +959,15 @@ export default {
       const ai = this.availableAiList.find(item => item.agentCode === agentCode);
       
       if (!ai) {
-        console.error(`❌ [二维码] 未找到agentCode为${agentCode}的AI配置`);
         this.$message.error('AI配置错误，请刷新页面重试');
         return;
       }
       
       if (!ai.websocketQrcodeType) {
-        console.error(`❌ [二维码] ${ai.agentName}未配置websocketQrcodeType`);
         this.$message.error(`${ai.agentName}未配置二维码获取接口`);
         return;
       }
       
-      console.log(`📲 [二维码] 获取${ai.agentName}的登录二维码，消息类型：${ai.websocketQrcodeType}`);
       
       // 动态发送消息
       this.sendMessage({
@@ -1089,11 +1094,9 @@ export default {
     // WebSocket 相关方法
     initWebSocket(id) {
       const wsUrl = process.env.VUE_APP_WS_API + `mypc-${id}`;
-      console.log("WebSocket URL:", process.env.VUE_APP_WS_API);
       websocketClient.connect(wsUrl, (event) => {
         switch (event.type) {
           case "open":
-            console.log("正在获取最新登录状态，请稍后...");
             break;
           case "message":
             this.handleWebSocketMessage(event.data);
@@ -1112,7 +1115,6 @@ export default {
     },
 
     handleWebSocketMessage(data) {
-      console.log("收到消息:", data);
       const datastr = data;
       const dataObj = JSON.parse(datastr);
 
@@ -1125,15 +1127,41 @@ export default {
         datastr.includes("RETURN_PC_METASO_QRURL") ||
         datastr.includes("RETURN_PC_ZHZD_QRURL")
       ) {
+        // 🔥 防串台：提取消息中的AI类型
+        let messageAiType = null;
+        if (datastr.includes("RETURN_PC_YB_QRURL")) messageAiType = "yb";
+        else if (datastr.includes("RETURN_PC_DB_QRURL")) messageAiType = "zj-db";
+        else if (datastr.includes("RETURN_PC_BAIDU_QRURL")) messageAiType = "baidu-agent";
+        else if (datastr.includes("RETURN_PC_DEEPSEEK_QRURL")) messageAiType = "deepseek";
+        else if (datastr.includes("RETURN_PC_QW_QRURL")) messageAiType = "qwen";
+        else if (datastr.includes("RETURN_PC_METASO_QRURL")) messageAiType = "mita";
+        else if (datastr.includes("RETURN_PC_ZHZD_QRURL")) messageAiType = "zhzd-chat";
+        
+        // 🔥 防串台：只处理当前打开对话框的AI的二维码
+        if (!this.aiLoginDialogVisible) {
+          // 对话框已关闭，忽略二维码
+          return;
+        }
+        
+        if (messageAiType && this.currentAiType && messageAiType !== this.currentAiType) {
+          // AI类型不匹配，忽略
+          return; // 忽略其他AI的二维码，防止串台
+        }
+        
         if (dataObj.url && dataObj.url.trim() !== "") {
+          // 接收二维码
           this.qrCodeUrl = dataObj.url;
           this.qrCodeError = ""; // 清除错误信息
         } else if (dataObj.error) {
-          this.qrCodeError = dataObj.error;
-          this.qrCodeUrl = ""; // 清除二维码URL
-        } else {
-          this.qrCodeError = "获取二维码失败，请重试";
-          this.qrCodeUrl = "";
+          // 会话失效或超时：显示友好提示
+          this.$message({
+            message: '登录超时，请重新尝试',
+            type: 'warning',
+            duration: 3000
+          });
+          this.aiLoginDialogVisible = false;
+          this.resetLoginState(this.currentAiType);
+          return;
         }
       }
       
@@ -1142,11 +1170,11 @@ export default {
       const statusMessageMatch = datastr.match(/RETURN_(\w+)_STATUS/);
       if (statusMessageMatch && dataObj.status !== undefined && dataObj.status !== null) {
         const messageType = statusMessageMatch[0]; // 例如：RETURN_YB_STATUS
+        
         const agentCode = this.messageTypeMapping[messageType]; // 从映射表查找agentCode
         
         if (agentCode) {
-          console.log(`📨 [AI状态] 收到${agentCode}的状态消息:`, dataObj.status);
-          console.log(`📊 [AI状态] 当前状态 - isLoading:`, this.isLoading[agentCode], 'isClick:', this.isClick[agentCode]);
+          // AI状态消息映射
           
           if (!datastr.includes("false") && dataObj.status !== "false" && dataObj.status !== "") {
             // 登录成功
@@ -1157,7 +1185,7 @@ export default {
             this.$set ? this.$set(this.isLoading, agentCode, false) : this.isLoading[agentCode] = false;
             this.$set ? this.$set(this.isClick, agentCode, true) : this.isClick[agentCode] = true;
             
-            console.log(`✅ [AI登录] ${agentCode} 登录成功:`, dataObj.status);
+            // AI登录成功
             
             // 🔥 保存登录状态到本地存储，供主机页面同步
             this.saveLoginStatusToStorage();
@@ -1166,19 +1194,16 @@ export default {
             const allChecked = this.availableAiList.every(ai => !this.isLoading[ai.agentCode]);
             if (allChecked && this.resetStatusTimeout) {
               clearTimeout(this.resetStatusTimeout);
-              console.log('✅ [AI状态] 所有AI状态检测完成');
+              // 所有AI状态检测完成
             }
           } else {
             // 未登录或登录失败
             this.$set ? this.$set(this.isClick, agentCode, true) : this.isClick[agentCode] = true;
             this.$set ? this.$set(this.isLoading, agentCode, false) : this.isLoading[agentCode] = false;
-            console.log(`ℹ️ [AI登录] ${agentCode} 未登录，状态已更新`);
           }
           
-          console.log(`📊 [AI状态] 更新后状态 - isLoading:`, this.isLoading[agentCode], 'isClick:', this.isClick[agentCode]);
           return; // 已处理，直接返回
         } else {
-          console.warn(`⚠️ [消息映射] 未找到${messageType}对应的agentCode，映射表:`, this.messageTypeMapping);
         }
       }
       
@@ -1307,11 +1332,10 @@ export default {
       try {
         const result = await ensureLatestCorpId();
         if (result.corpId !== this.corpId) {
-          console.log('刷新AI状态时企业ID已更新:', result.corpId);
           this.corpId = result.corpId;
         }
       } catch (error) {
-        console.error('确保企业ID最新失败:', error);
+        // 静默处理
       }
       
       if (!this.userId || !this.corpId) return;
@@ -1332,24 +1356,25 @@ export default {
           this.$set(this.isLoading, code, false);
           this.$set(this.isClick, code, true);
         });
-        console.log('⚠️ [AI状态] 超时未收到响应，已自动恢复状态');
+        // AI状态超时，已恢复
 
         this.$message.warning('AI登录状态刷新超时，请检查网络或稍后重试');
       }, 150000);
       
       // 🔥 只检测在线且启用的AI登录状态
       this.availableAiList.forEach(ai => {
+        // 检查AI状态
         if (ai.websocketCheckType && ai.agentStatus === 1 && ai.onlineStatus === 1) {
-          console.log(`🔄 [刷新AI] 检查${ai.agentName}登录状态`);
           this.sendMessage({
             type: ai.websocketCheckType,
             userId: this.userId,
             corpId: this.corpId
           });
-        } else if (ai.agentStatus === 0) {
-          console.log(`⏸️ [刷新AI] ${ai.agentName}已禁用，跳过检查`);
-        } else if (ai.onlineStatus === 0) {
-          console.log(`📴 [刷新AI] ${ai.agentName}已离线，跳过检查`);
+        } else {
+          let reason = [];
+          if (!ai.websocketCheckType) reason.push('无checkType');
+          if (ai.agentStatus === 0) reason.push('已禁用');
+          if (ai.onlineStatus === 0) reason.push('已离线');
         }
       });
 
@@ -1359,11 +1384,10 @@ export default {
       try {
         const result = await ensureLatestCorpId();
         if (result.corpId !== this.corpId) {
-          console.log('刷新媒体状态时企业ID已更新:', result.corpId);
           this.corpId = result.corpId;
         }
       } catch (error) {
-        console.error('确保企业ID最新失败:', error);
+        // 静默处理
       }
       
       if (!this.userId || !this.corpId) return;
@@ -1402,16 +1426,13 @@ export default {
     handleCorpIdUpdated(event) {
       const newCorpId = event.detail.corpId;
       if (newCorpId && newCorpId !== this.corpId) {
-        console.log('页面接收到企业ID更新事件，更新本地corpId:', newCorpId);
         this.corpId = newCorpId;
-        console.log(`主机ID已自动更新: ${newCorpId}`);
       }
     },
     
     // 处理主机ID更新事件
     handleCorpIdUpdated(event) {
       const { corpId, oldCorpId } = event.detail;
-      console.log('主机ID已更新:', { oldCorpId, newCorpId: corpId });
       
       // 更新本地主机ID
       this.corpId = corpId;
@@ -1465,7 +1486,6 @@ export default {
     goToCorpIdSettings() {
       this.corpIdReminderVisible = false;
       // 这里可以跳转到设置主机ID的页面
-      console.log('请前往个人资料页面设置主机ID');
     },
   },
   beforeUnmount() {
@@ -1987,8 +2007,14 @@ export default {
     font-size: 16px;
   }
 
+  .error-hint {
+    color: #909399;
+    font-size: 14px;
+    margin-top: 16px;
+  }
+
   .el-button {
-    margin-top: 12px;
+    margin-top: 16px;
   }
 }
 

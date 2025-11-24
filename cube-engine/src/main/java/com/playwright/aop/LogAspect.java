@@ -4,6 +4,7 @@ import com.playwright.entity.LogInfo;
 import com.playwright.entity.UserInfoRequest;
 import com.playwright.entity.mcp.McpResult;
 import com.playwright.utils.common.LogMsgUtil;
+import com.playwright.utils.common.LoginSessionManager;
 import com.playwright.utils.common.RestUtils;
 import com.playwright.utils.common.UserLogUtil;
 import io.swagger.v3.oas.annotations.Operation;
@@ -33,6 +34,8 @@ public class LogAspect {
     private String url;
     @Autowired
     private LogMsgUtil logMsgUtil;
+    @Autowired
+    private LoginSessionManager loginSessionManager;
 
     @Pointcut("execution(* com.playwright.controller..*(..))")
     public void logPointCut() {
@@ -101,6 +104,16 @@ public class LogAspect {
                     }
 
                     if(i < 1) {
+                        // 🔥 重试前检查会话状态（防止用户已切换或关闭）
+                        String aiName = extractAINameFromMethod(logInfo.getMethodName());
+                        if (!aiName.isEmpty()) {
+                            String sessionKey = logInfo.getUserId() + "-" + aiName;
+                            if (!loginSessionManager.isSessionActive(sessionKey)) {
+                                // 会话失效或超时，不再重试
+                                break;
+                            }
+                        }
+                        
                         // 记录详细的错误原因
                         String errorDetail = mcpResult != null ? mcpResult.getResult() : resultStr;
                         log.warn("{}执行失败，准备重试 [第{}次失败，错误详情: {}]", logInfo.getMethodName(), i + 1, errorDetail);
@@ -219,6 +232,17 @@ public class LogAspect {
                 
                 //             传递不同ai的错误信息
                 sendTaskLog(description, logInfo.getUserId(), "");
+                
+                // 🔥 检查方法返回类型，避免ClassCastException
+                MethodSignature signature = (MethodSignature) joinPoint.getSignature();
+                Class<?> returnType = signature.getReturnType();
+                
+                // 如果返回类型是String，返回"false"字符串
+                if (returnType == String.class) {
+                    return "false";
+                }
+                
+                // 否则返回McpResult
                 if (description.contains("检查")) {
                     return McpResult.fail("用户id:" + logInfo.getUserId()  + description + "未登录", "");
                 } else if (description.contains("投递")) {
@@ -286,6 +310,27 @@ public class LogAspect {
         if (description.contains("腾讯元宝DS")) return "腾讯元宝DS";
         if (description.contains("知乎直答") || description.contains("知乎")) return "知乎直答";
         return "未知";
+    }
+
+    /**
+     * 从方法名中提取AI名称（用于会话键构建）
+     * 必须与LoginSessionManager中使用的AI名称保持一致
+     * @param methodName 方法名
+     * @return AI名称，如果无法提取则返回空字符串
+     */
+    private String extractAINameFromMethod(String methodName) {
+        if (methodName == null) {
+            return "";
+        }
+        // 获取登录二维码方法：getBaiduQrCode, getDBQrCode, getDSQrCode等
+        if (methodName.contains("Baidu")) return "Baidu";
+        if (methodName.contains("DB") && methodName.contains("QrCode")) return "Doubao";
+        if (methodName.contains("DS") && methodName.contains("QrCode")) return "DeepSeek";
+        if (methodName.contains("YB") && methodName.contains("QrCode")) return "YuanBao";
+        if (methodName.contains("Metaso")) return "Metaso";
+        if (methodName.contains("TongYi") || methodName.contains("QW")) return "TongYi";
+        if (methodName.contains("Zhihu") || methodName.contains("ZHZD")) return "知乎直答";
+        return "";
     }
 
 }

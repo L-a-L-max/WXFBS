@@ -94,41 +94,67 @@ public class WebSocketClientService {
 
 
                 /**
+                 * 将前端agent_code转换为后端AI名称
+                 * 前端使用agent_code（如baidu-agent），后端使用AI名称（如Baidu）
+                 */
+                private String convertAgentCodeToAiName(String agentCode) {
+                    if (agentCode == null) return null;
+                    
+                    // agent_code -> AI名称 映射表
+                    java.util.Map<String, String> codeToNameMap = new java.util.HashMap<>();
+                    codeToNameMap.put("baidu-agent", "Baidu");
+                    codeToNameMap.put("yb", "元宝");
+                    codeToNameMap.put("zj-db", "Doubao");
+                    codeToNameMap.put("deepseek", "DeepSeek");
+                    codeToNameMap.put("mita", "Metaso");
+                    codeToNameMap.put("zhzd-chat", "知乎直答");
+                    codeToNameMap.put("qwen", "TongYi");
+                    codeToNameMap.put("kimi", "Kimi");
+                    
+                    // 如果映射表中有对应的名称，返回名称；否则返回原始值
+                    return codeToNameMap.getOrDefault(agentCode, agentCode);
+                }
+
+                /**
                  * 当接收到消息时调用
                  */
                 @Override
                 public void onMessage(String message) {
-                    TTHController tthController = SpringContextUtils.getBean(TTHController.class);
-                    MediaController mediaController = SpringContextUtils.getBean(MediaController.class);
-                    BrowserController browserController = SpringContextUtils.getBean(BrowserController.class);
-                    AIGCController aigcController = SpringContextUtils.getBean(AIGCController.class);
-                    UserInfoRequest userInfoRequest = JSONObject.parseObject(message, UserInfoRequest.class);
-                    BrowserConcurrencyManager concurrencyManager = SpringContextUtils.getBean(BrowserConcurrencyManager.class);
-                    ZhihuDeliveryController zhihuDeliveryController = SpringContextUtils.getBean(ZhihuDeliveryController.class);
-                    BaijiahaoDeliveryController baijiahaoDeliveryController = SpringContextUtils.getBean(BaijiahaoDeliveryController.class);
-                    String aiName = userInfoRequest.getAiName();
-                    if (message.contains("AI排版")) {
-                        aiLayoutPrompt(userInfoRequest);
-                    }
-                    
-                    // 🔥 新增：处理登录会话清理消息
-                    if (message.contains("CLEANUP_LOGIN_SESSION")) {
-                        try {
-                            String userId = userInfoRequest.getUserId();
-                            String aiType = userInfoRequest.getAiType();
-                            
-                            System.out.println(String.format("🧹 [WebSocket] 收到登录会话清理请求 - 用户:%s AI:%s", userId, aiType));
-                            
-                            // 调用登录会话管理器清理用户会话
-                            LoginSessionManager loginSessionManager = SpringContextUtils.getBean(LoginSessionManager.class);
-                            if (loginSessionManager != null) {
-                                loginSessionManager.cleanupUserSessions(userId);
+                    try {
+                        // 🔥 优先处理登录会话清理消息（前端关闭登录窗口时触发）
+                        // 必须在 JSON 解析前处理，因为这个消息可能不符合 UserInfoRequest 格式
+                        if (message.contains("CLEANUP_LOGIN_SESSION")) {
+                            try {
+                                JSONObject jsonObject = JSONObject.parseObject(message);
+                                String userId = jsonObject.getString("userId");
+                                
+                                // 调用登录会话管理器清空该用户所有登录会话
+                                LoginSessionManager loginSessionManager = SpringContextUtils.getBean(LoginSessionManager.class);
+                                if (loginSessionManager != null) {
+                                    loginSessionManager.clearAllUserLoginSessions(userId);
+                                }
+                            } catch (Exception e) {
+                                System.err.println("❌ [WebSocket-处理] 处理登录会话清理消息失败");
+                                System.err.println("   错误信息: " + e.getMessage());
+                                e.printStackTrace();
                             }
-                        } catch (Exception e) {
-                            System.err.println("❌ [WebSocket] 处理登录会话清理消息失败: " + e.getMessage());
+                            return;
                         }
-                        return;
-                    }
+                        
+                        // 解析通用消息
+                        TTHController tthController = SpringContextUtils.getBean(TTHController.class);
+                        MediaController mediaController = SpringContextUtils.getBean(MediaController.class);
+                        BrowserController browserController = SpringContextUtils.getBean(BrowserController.class);
+                        AIGCController aigcController = SpringContextUtils.getBean(AIGCController.class);
+                        UserInfoRequest userInfoRequest = JSONObject.parseObject(message, UserInfoRequest.class);
+                        BrowserConcurrencyManager concurrencyManager = SpringContextUtils.getBean(BrowserConcurrencyManager.class);
+                        ZhihuDeliveryController zhihuDeliveryController = SpringContextUtils.getBean(ZhihuDeliveryController.class);
+                        BaijiahaoDeliveryController baijiahaoDeliveryController = SpringContextUtils.getBean(BaijiahaoDeliveryController.class);
+                        String aiName = userInfoRequest.getAiName();
+                        
+                        if (message.contains("AI排版")) {
+                            aiLayoutPrompt(userInfoRequest);
+                        }
 
                     // 处理包含"使用F8S"的消息
                     if (message.contains("使用F8S") || message.contains("AI评分") || message.contains("AI排版")) {
@@ -384,24 +410,25 @@ public class WebSocketClientService {
                                 // 构建并发送状态消息 - 使用与其他AI智能体一致的格式
                                 userInfoRequest.setStatus(checkLogin);
                                 userInfoRequest.setType("RETURN_DEEPSEEK_STATUS");
-                                sendMessage(JSON.toJSONString(userInfoRequest));
+                                String statusMessage = JSON.toJSONString(userInfoRequest);
+                                sendMessage(statusMessage);
                             } catch (Exception e) {
-                                e.printStackTrace();
-                                // 发送错误状态 - 使用与其他AI智能体一致的格式
+                                // 发送错误状态
                                 userInfoRequest.setStatus("false");
                                 userInfoRequest.setType("RETURN_DEEPSEEK_STATUS");
-                                sendMessage(JSON.toJSONString(userInfoRequest));
+                                String errorMessage = JSON.toJSONString(userInfoRequest);
+                                sendMessage(errorMessage);
                             }
                         }, "DeepSeek登录检查", userInfoRequest.getUserId());
                     }
 
-                    // 处理获取DeepSeek二维码的消息
-                    if (message.contains("PLAY_GET_DEEPSEEK_QRCODE")) {
+                    // 处理获取DeepSeek二维码的消息（匹配数据库配置：PLAY_GET_DS_QRCODE）
+                    if (message.contains("PLAY_GET_DS_QRCODE")) {
                         concurrencyManager.submitBrowserTask(() -> {
                             try {
                                 browserController.getDSQrCode(userInfoRequest.getUserId());
                             } catch (Exception e) {
-                                e.printStackTrace();
+                                // 静默处理
                             }
                         }, "获取DeepSeek二维码", userInfoRequest.getUserId());
                     }
@@ -543,8 +570,11 @@ public class WebSocketClientService {
                             }
                         }, "获取豆包二维码", userInfoRequest.getUserId());
                     }
-
-
+                    
+                    } catch (Exception e) {
+                        System.err.println("❌ [WebSocket] 消息处理失败: " + e.getMessage());
+                        e.printStackTrace();
+                    }
                 }
 
                 /**
@@ -672,8 +702,7 @@ public class WebSocketClientService {
                         "系统", "WebSocket发送失败", "sendMessageWithRetry", e, 
                         "http://175.178.154.216:8080/saveLogInfo");
                     
-                    System.err.println("❌ WebSocket发送失败[" + retryCount + "/" + (maxRetries + 1) + "]: " + errorMsg + 
-                        " | 已存储:数据库ID[" + (errorLogId != null ? errorLogId : "保存失败") + "]");
+                    // 发送失败
                     
                     if (retryCount <= maxRetries) {
                         // 等待一段时间后重试
@@ -683,28 +712,17 @@ public class WebSocketClientService {
                             Thread.currentThread().interrupt();
                             break;
                         }
-                        System.out.println("🔄 [WebSocket] 准备第" + (retryCount + 1) + "次重试...");
+                        // 准备重试
                     } else {
-                        System.err.println("❌ [WebSocket] 消息发送失败，已达到最大重试次数: " + maxRetries);
-                        // 尝试重连
-                        if (!reconnecting) {
-                            System.out.println("🔄 [WebSocket] 尝试重新连接...");
-                            // TODO: 实现重连逻辑
-                        }
+                        // 已达到最大重试次数
                     }
                 }
             } else {
                 retryCount++;
-                System.err.println("❌ [WebSocket未连接] 第" + retryCount + "次尝试，连接状态: " + 
-                    (webSocketClient == null ? "null" : (webSocketClient.isOpen() ? "已连接" : "已断开")));
-                System.err.println("❌ [WebSocket未连接] 消息内容: " + message.substring(0, Math.min(200, message.length())));
+                // WebSocket未连接
                 
                 if (retryCount <= maxRetries) {
-                    // 如果连接断开，尝试重连并等待
-                    if (!reconnecting) {
-                        System.out.println("🔄 [WebSocket] 连接断开，尝试重新连接...");
-                        // TODO: 实现重连逻辑
-                    }
+                    // 尝试重连
                     
                     // 等待重连
                     try {
@@ -714,7 +732,7 @@ public class WebSocketClientService {
                         break;
                     }
                 } else {
-                    System.err.println("❌ [WebSocket] 消息发送失败，连接无法建立，已达到最大重试次数: " + maxRetries);
+                    // 最大重试次数
                 }
             }
         }
@@ -849,7 +867,7 @@ public class WebSocketClientService {
                 // 检查获取素材是否成功
                 if (mcp == null || mcp.getCode() != 200 || mcp.getResult() == null || mcp.getResult().isEmpty()) {
                     // 素材获取失败，记录日志并继续排版（不包含图片信息）
-                    System.out.println("获取公众号素材失败，原因：" + (mcp != null ? mcp.getResult() : "未知错误") + "，将继续执行排版但不包含图片信息");
+                    // 素材获取失败
                     
                     // 发送友好提示给用户
                     try {
