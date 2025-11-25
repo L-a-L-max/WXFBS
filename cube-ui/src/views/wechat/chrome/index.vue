@@ -2345,11 +2345,25 @@ import { ChatDotSquare, Document, Link, Loading, Plus, Promotion } from '@elemen
         };
 
         let ai = this.aiList.filter(ai => ai.name === this.layoutAI)[0];
+        
+        // 检查AI是否存在
+        if (!ai) {
+          this.$message.error(`未找到选中的排版AI: ${this.layoutAI}，请重新选择`);
+          return;
+        }
+        
+        // 确保 selectedCapabilities 是数组
+        if (!ai.selectedCapabilities) {
+          ai.selectedCapabilities = [];
+        }
+        if (!Array.isArray(ai.selectedCapabilities)) {
+          ai.selectedCapabilities = [];
+        }
 
         {
           if(ai.name === "豆包") {
             layoutRequest.params.roles = layoutRequest.params.roles + "zj-db,";
-            if(ai.selectedCapabilities.includes("deep_thinking")) {
+            if(ai.selectedCapabilities && ai.selectedCapabilities.includes("deep_thinking")) {
               layoutRequest.params.roles = layoutRequest.params.roles + "zj-db-sdsk,";
             }
           }
@@ -2367,36 +2381,36 @@ import { ChatDotSquare, Document, Link, Loading, Plus, Promotion } from '@elemen
             // 根据选择的模型设置角色
             if(ai.selectedModel === 'hunyuan') {
               layoutRequest.params.roles = layoutRequest.params.roles + 'yb-hunyuan-pt,';
-              if(ai.selectedCapabilities.includes("deep_thinking")) {
+              if(ai.selectedCapabilities && ai.selectedCapabilities.includes("deep_thinking")) {
                 layoutRequest.params.roles = layoutRequest.params.roles + 'yb-hunyuan-sdsk,';
               }
-              if(ai.selectedCapabilities.includes("web_search")) {
+              if(ai.selectedCapabilities && ai.selectedCapabilities.includes("web_search")) {
                 layoutRequest.params.roles = layoutRequest.params.roles + 'yb-hunyuan-lwss,';
               }
             } else if(ai.selectedModel === 'deepseek') {
               layoutRequest.params.roles = layoutRequest.params.roles + 'yb-deepseek-pt,';
-              if(ai.selectedCapabilities.includes("deep_thinking")) {
+              if(ai.selectedCapabilities && ai.selectedCapabilities.includes("deep_thinking")) {
                 layoutRequest.params.roles = layoutRequest.params.roles + 'yb-deepseek-sdsk,';
               }
-              if(ai.selectedCapabilities.includes("web_search")) {
+              if(ai.selectedCapabilities && ai.selectedCapabilities.includes("web_search")) {
                 layoutRequest.params.roles = layoutRequest.params.roles + 'yb-deepseek-lwss,';
               }
             }
           }
           if(ai.name === '百度AI') {
             layoutRequest.params.roles = layoutRequest.params.roles + 'baidu-agent,';
-            if(ai.selectedCapabilities.includes("deep_search")) {
+            if(ai.selectedCapabilities && ai.selectedCapabilities.includes("deep_search")) {
               layoutRequest.params.roles = layoutRequest.params.roles + 'baidu-sdss,';
             } else if(ai.isModel) {
               if(ai.isWeb) {
                 layoutRequest.params.roles = layoutRequest.params.roles + 'baidu-web,';
               }
 
-              if(ai.selectedModel.includes("dsr1")) {
+              if(ai.selectedModel && ai.selectedModel.includes("dsr1")) {
                 layoutRequest.params.roles = layoutRequest.params.roles + 'baidu-dsr1,';
-              } else if(ai.selectedModel.includes("dsv3")) {
+              } else if(ai.selectedModel && ai.selectedModel.includes("dsv3")) {
                 layoutRequest.params.roles = layoutRequest.params.roles + 'baidu-dsv3,';
-              } else if(ai.selectedModel.includes("wenxin")) {
+              } else if(ai.selectedModel && ai.selectedModel.includes("wenxin")) {
                 layoutRequest.params.roles = layoutRequest.params.roles + 'baidu-wenxin,';
               }
             }
@@ -2405,10 +2419,10 @@ import { ChatDotSquare, Document, Link, Loading, Plus, Promotion } from '@elemen
 
           if(ai.name === "DeepSeek") {
             layoutRequest.params.roles = layoutRequest.params.roles + "deepseek,";
-            if(ai.selectedCapabilities.includes("deep_thinking")) {
+            if(ai.selectedCapabilities && ai.selectedCapabilities.includes("deep_thinking")) {
               layoutRequest.params.roles = layoutRequest.params.roles + "ds-sdsk,";
             }
-            if(ai.selectedCapabilities.includes("web_search")) {
+            if(ai.selectedCapabilities && ai.selectedCapabilities.includes("web_search")) {
               layoutRequest.params.roles = layoutRequest.params.roles + "ds-lwss,";
             }
           }
@@ -2428,19 +2442,19 @@ import { ChatDotSquare, Document, Link, Loading, Plus, Promotion } from '@elemen
 
           if(ai.name === "知乎直答") {
             layoutRequest.params.roles = layoutRequest.params.roles + "zhzd-chat,";
-            if(ai.selectedCapabilities.includes("deep_thinking")) {
+            if(ai.selectedCapabilities && ai.selectedCapabilities.includes("deep_thinking")) {
               layoutRequest.params.roles = layoutRequest.params.roles + "zhzd-sdsk,";
             }
-            if(ai.selectedCapabilities.includes("all_web_search")) {
+            if(ai.selectedCapabilities && ai.selectedCapabilities.includes("all_web_search")) {
               layoutRequest.params.roles = layoutRequest.params.roles + "zhzd-qw,";
             }
-            if(ai.selectedCapabilities.includes("zhihu_search")) {
+            if(ai.selectedCapabilities && ai.selectedCapabilities.includes("zhihu_search")) {
               layoutRequest.params.roles = layoutRequest.params.roles + "zhzd-zh,";
             }
-            if(ai.selectedCapabilities.includes("academic_search")) {
+            if(ai.selectedCapabilities && ai.selectedCapabilities.includes("academic_search")) {
               layoutRequest.params.roles = layoutRequest.params.roles + "zhzd-xs,";
             }
-            if(ai.selectedCapabilities.includes("personal_knowledge")) {
+            if(ai.selectedCapabilities && ai.selectedCapabilities.includes("personal_knowledge")) {
               layoutRequest.params.roles = layoutRequest.params.roles + "zhzd-wdzsk,";
             }
           }
