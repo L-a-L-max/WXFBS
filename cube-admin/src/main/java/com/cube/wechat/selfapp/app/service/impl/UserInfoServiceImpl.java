@@ -221,7 +221,10 @@ public class UserInfoServiceImpl implements UserInfoService {
         if (points < 1) {
             return ResultBody.error(201, "积分余额不足，请明日再来或者联系客服充值");
         }
-        pointsSystem.setUserPoint(userId, method, null, "0x2edc4228a84d672affe8a594033cb84a029bcafc", "f34f737203aa370f53ef0e041c1bff36bf59db8eb662cdb447f01d9634374dd");
+        com.cube.point.util.ResultBody pointResult = pointsSystem.setUserPoint(userId, method, null, "0x2edc4228a84d672affe8a594033cb84a029bcafc", "f34f737203aa370f53ef0e041c1bff36bf59db8eb662cdb447f01d9634374dd");
+        if (pointResult == null || pointResult.getCode() != 200) {
+            return ResultBody.error(500, "积分扣减失败: " + (pointResult != null ? pointResult.getMessages() : "未知错误"));
+        }
         return ResultBody.success("执行成功！");
     }
 
@@ -823,10 +826,14 @@ public class UserInfoServiceImpl implements UserInfoService {
             return ResultBody.error(201, "积分余额不足，请明日再来或者联系客服充值");
         }
 
+        com.cube.point.util.ResultBody pointResult;
         if (map.get("agentId").equals("desc")) {
-            pointsSystem.setUserPoint(map.get("userId") + "", "记忆修改", null, "0x2edc4228a84d672affe8a594033cb84a029bcafc", "f34f737203aa370f53ef0e041c1bff36bf59db8eb662cdb447f01d9634374dd");
+            pointResult = pointsSystem.setUserPoint(map.get("userId") + "", "记忆修改", null, "0x2edc4228a84d672affe8a594033cb84a029bcafc", "f34f737203aa370f53ef0e041c1bff36bf59db8eb662cdb447f01d9634374dd");
         } else {
-            pointsSystem.setUserPoint(map.get("userId") + "", "模板配置", null, "0x2edc4228a84d672affe8a594033cb84a029bcafc", "f34f737203aa370f53ef0e041c1bff36bf59db8eb662cdb447f01d9634374dd");
+            pointResult = pointsSystem.setUserPoint(map.get("userId") + "", "模板配置", null, "0x2edc4228a84d672affe8a594033cb84a029bcafc", "f34f737203aa370f53ef0e041c1bff36bf59db8eb662cdb447f01d9634374dd");
+        }
+        if (pointResult == null || pointResult.getCode() != 200) {
+            return ResultBody.error(500, "积分扣减失败: " + (pointResult != null ? pointResult.getMessages() : "未知错误"));
         }
 
         if (map.get("isAllSel").equals(true)) {
