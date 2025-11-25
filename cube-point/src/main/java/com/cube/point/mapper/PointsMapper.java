@@ -31,9 +31,14 @@ public interface PointsMapper {
     Integer getUserPoints(String userId);
 
     /**
-    * 获取积分规则
-    * */
+     * 获取积分规则
+     * */
     Integer getPointRuleVal(String changeType);
+
+    /**
+     * 获取积分规则配置（包括remark字段）
+     * */
+    Map<String, Object> getPointRuleConfig(String changeType);
 
     /**
      * 设置用户积分

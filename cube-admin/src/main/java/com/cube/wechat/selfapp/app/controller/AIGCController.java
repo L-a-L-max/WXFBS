@@ -155,10 +155,18 @@ public class AIGCController extends BaseController {
 
             jsonObject.put("type",jsonRpcRequest.getMethod());
 
+            // 先扣减积分，失败时直接返回
+            com.cube.point.util.ResultBody pointResult = pointsSystem.setUserPoint(
+                    jsonObject.get("userId") + "",
+                    jsonRpcRequest.getMethod(),
+                    null,
+                    "0x2edc4228a84d672affe8a594033cb84a029bcafc",
+                    "f34f737203aa370f53ef0e041c1bff36bf59db8eb662cdb447f01d9634374dd");
+            if (pointResult == null || pointResult.getCode() != 200) {
+                return ResultBody.error(500, "积分扣减失败");
+            }
+
             myWebSocketHandler.sendMsgToClient("mini-"+jsonObject.get("userId"),jsonObject.toJSONString(),jsonObject);
-
-            pointsSystem.setUserPoint(jsonObject.get("userId")+"",jsonRpcRequest.getMethod(),null,"0x2edc4228a84d672affe8a594033cb84a029bcafc","f34f737203aa370f53ef0e041c1bff36bf59db8eb662cdb447f01d9634374dd");
-
 
             return ResultBody.success("发送成功");
 
