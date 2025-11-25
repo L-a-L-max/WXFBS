@@ -405,19 +405,31 @@ public class AIGCController {
             
             logInfo.sendTaskLog("豆包页面打开完成", userId, dynamicAiName);
 
-            // 检测并处理超能模式介绍弹窗
-            douBaoUtil.checkAndClickSuperModeButton(page, userId);
+            // 🔥 新增：开始咨询前检测并处理"试一试"按钮
+            douBaoUtil.checkAndClickSuperModeButton(page, userId, "开始咨询前");
             
             // 智能切换AI模式（根据用户是否选择深度思考能力）
             boolean needDeepThinking = roles != null && roles.contains("zj-db-sdsk");
             System.out.println("====================================================");
             
             douBaoUtil.switchAIMode(page, userId, needDeepThinking);
+            
+            // 🔥 新增：模式切换后再次检测"试一试"按钮
+            douBaoUtil.checkAndClickSuperModeButton(page, userId, "模式切换后");
+            
             page.locator("[data-testid='chat_input_input']").click();
             Thread.sleep(1000);
+            
+            // 🔥 新增：输入框点击后再次检测"试一试"按钮
+            douBaoUtil.checkAndClickSuperModeButton(page, userId, "输入框点击后");
+            
             page.locator("[data-testid='chat_input_input']").fill(userPrompt);
             logInfo.sendTaskLog("用户指令已自动输入完成", userId, dynamicAiName);
             Thread.sleep(1000);
+            
+            // 🔥 新增：发送前最后一次检测"试一试"按钮
+            douBaoUtil.checkAndClickSuperModeButton(page, userId, "发送消息前");
+            
             page.locator("[data-testid='chat_input_input']").press("Enter");
             logInfo.sendTaskLog("指令已自动发送成功", userId, dynamicAiName);
 
