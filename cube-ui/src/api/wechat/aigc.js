@@ -79,6 +79,22 @@ export function setCallWordCommon(platformId, isCommon) {
   })
 }
 
+// 上架平台提示词
+export function publishCallWord(data) {
+  return request({
+    url: `/media/publishCallWord`,
+    method: 'put',
+    data,
+  })
+}
+
+export function unpublishCallWord(platformId) {
+  return request({
+    url: `/media/unpublishCallWord/${platformId}`,
+    method: 'put',
+  })
+}
+
 // 根据ID获取评分提示词
 export function getScorePrompt(id) {
   return request({

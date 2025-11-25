@@ -1,13 +1,18 @@
 package com.cube.wechat.selfapp.app.service.impl;
 
 import com.cube.common.core.domain.AjaxResult;
+import com.cube.common.utils.SecurityUtils;
 import com.cube.wechat.selfapp.app.domain.CallWord;
 import com.cube.wechat.selfapp.app.domain.query.CallWordQuery;
 import com.cube.wechat.selfapp.app.mapper.CallWordMapper;
+import com.cube.wechat.selfapp.app.mapper.TemplateAuthorMapper;
+import com.cube.wechat.selfapp.app.domain.TemplateAuthor;
 import com.cube.wechat.selfapp.app.service.CallWordService;
+import com.cube.wechat.selfapp.app.service.helper.TemplateAuthorIdentityManager;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -25,6 +30,12 @@ public class CallWordServiceImpl implements CallWordService {
     @Autowired
     private CallWordMapper callWordMapper;
 
+    @Autowired
+    private TemplateAuthorIdentityManager templateAuthorIdentityManager;
+
+    @Autowired
+    private TemplateAuthorMapper templateAuthorMapper;
+
     @Override
     public CallWord getCallWord(String platformId) {
         try {
@@ -34,6 +45,10 @@ public class CallWordServiceImpl implements CallWordService {
                 callWord.setPlatformId(platformId);
                 callWord.setWordContent(getBackupPrompt(platformId));
                 callWord.setUpdateTime(LocalDateTime.now());
+                callWord.setStatus(0);
+                callWord.setPrice(BigDecimal.ZERO);
+                callWord.setSalesCount(0);
+                callWord.setIncomeTotal(BigDecimal.ZERO);
             }
             return callWord;
         } catch (Exception e) {
@@ -41,6 +56,10 @@ public class CallWordServiceImpl implements CallWordService {
             callWord.setPlatformId(platformId);
             callWord.setWordContent(getBackupPrompt(platformId));
             callWord.setUpdateTime(LocalDateTime.now());
+            callWord.setStatus(0);
+            callWord.setPrice(BigDecimal.ZERO);
+            callWord.setSalesCount(0);
+            callWord.setIncomeTotal(BigDecimal.ZERO);
             return callWord;
         }
     }
@@ -60,6 +79,27 @@ public class CallWordServiceImpl implements CallWordService {
             if (existing != null) {
                 callWordMapper.updateCallWord(callWord);
             } else {
+                if (callWord.getUserId() == null) {
+                    try {
+                        callWord.setUserId(SecurityUtils.getUserId());
+                    } catch (Exception ignore) {
+                    }
+                }
+                if (callWord.getIsCommon() == null) {
+                    callWord.setIsCommon(0);
+                }
+                if (callWord.getStatus() == null) {
+                    callWord.setStatus(0);
+                }
+                if (callWord.getPrice() == null) {
+                    callWord.setPrice(BigDecimal.ZERO);
+                }
+                if (callWord.getSalesCount() == null) {
+                    callWord.setSalesCount(0);
+                }
+                if (callWord.getIncomeTotal() == null) {
+                    callWord.setIncomeTotal(BigDecimal.ZERO);
+                }
                 callWordMapper.insertCallWord(callWord);
             }
             
@@ -123,6 +163,115 @@ public class CallWordServiceImpl implements CallWordService {
         return callWordMapper.getCallWordList(callWordQuery);
     }
 
+    @Override
+    public AjaxResult setCallWordCommon(String platformId, Integer isCommon) {
+        try {
+            CallWord callWord = callWordMapper.selectByPlatformId(platformId);
+            if (callWord == null) {
+                return AjaxResult.error("提示词不存在");
+            }
+            boolean wasPublished = callWord.getStatus() != null && callWord.getStatus() == 1;
+            boolean willBePublic = isCommon != null && isCommon == 1;
+            if (willBePublic && wasPublished) {
+                forceUnpublish(callWord);
+                wasPublished = false;
+            }
+            CallWord update = new CallWord();
+            update.setPlatformId(platformId);
+            update.setIsCommon(isCommon);
+            if (willBePublic) {
+                update.setStatus(1);
+                update.setPrice(BigDecimal.ZERO);
+            } else {
+                update.setStatus(0);
+            }
+            int rows = callWordMapper.updateCallWord(update);
+            if (rows > 0) {
+                Long ownerId = callWord.getUserId();
+                if (willBePublic) {
+                    templateAuthorIdentityManager.grantAuthorRole(ownerId);
+                    incrementReleaseCount(ownerId, 1);
+                } else if (wasPublished) {
+                    incrementReleaseCount(ownerId, -1);
+                }
+            }
+            return rows > 0 ? AjaxResult.success("设置成功") : AjaxResult.error("设置失败");
+        } catch (Exception e) {
+            return AjaxResult.error("设置失败：" + e.getMessage());
+        }
+    }
+
+    @Override
+    public AjaxResult publishCallWord(String platformId, BigDecimal price) {
+        if (price == null || price.compareTo(BigDecimal.ZERO) <= 0) {
+            return AjaxResult.error("请输入大于0的价格");
+        }
+        CallWord callWord = callWordMapper.getCallWordById(platformId);
+        if (callWord == null) {
+            return AjaxResult.error("模板不存在");
+        }
+        if (callWord.getIsCommon() != null && callWord.getIsCommon() == 1) {
+            return AjaxResult.error("公共模板默认已上架，无需重复操作");
+        }
+        Long operatorId = null;
+        try {
+            operatorId = SecurityUtils.getUserId();
+        } catch (Exception ignore) {
+        }
+        Long ownerId = callWord.getUserId();
+        boolean isOwner = ownerId != null && ownerId.equals(operatorId);
+        boolean isAdmin = false;
+        try {
+            isAdmin = SecurityUtils.hasRole("admin");
+        } catch (Exception ignore) {
+        }
+        if (!isOwner && !isAdmin) {
+            return AjaxResult.error("只能上架自己的模板");
+        }
+        CallWord update = new CallWord();
+        update.setPlatformId(platformId);
+        update.setPrice(price);
+        update.setStatus(1);
+        callWordMapper.updateCallWord(update);
+        templateAuthorIdentityManager.grantAuthorRole(ownerId != null ? ownerId : operatorId);
+        incrementReleaseCount(ownerId != null ? ownerId : operatorId, 1);
+        return AjaxResult.success("上架成功");
+    }
+
+    @Override
+    public AjaxResult unpublishCallWord(String platformId) {
+        CallWord callWord = callWordMapper.getCallWordById(platformId);
+        if (callWord == null) {
+            return AjaxResult.error("模板不存在");
+        }
+        if (callWord.getIsCommon() != null && callWord.getIsCommon() == 1) {
+            return AjaxResult.error("公共模板无需下架");
+        }
+        Long operatorId = null;
+        try {
+            operatorId = SecurityUtils.getUserId();
+        } catch (Exception ignore) {
+        }
+        Long ownerId = callWord.getUserId();
+        boolean isOwner = ownerId != null && ownerId.equals(operatorId);
+        boolean isAdmin = false;
+        try {
+            isAdmin = SecurityUtils.hasRole("admin");
+        } catch (Exception ignore) {
+        }
+        if (!isOwner && !isAdmin) {
+            return AjaxResult.error("只能操作自己的模板");
+        }
+        CallWord update = new CallWord();
+        update.setPlatformId(platformId);
+        update.setStatus(0);
+        callWordMapper.updateCallWord(update);
+        Long targetUser = ownerId != null ? ownerId : operatorId;
+        templateAuthorIdentityManager.grantAuthorRole(targetUser);
+        incrementReleaseCount(targetUser, -1);
+        return AjaxResult.success("模板已下架");
+    }
+
     /**
      * 获取备用提示词（当数据库查询失败时使用）
      */
@@ -155,5 +304,35 @@ public class CallWordServiceImpl implements CallWordService {
             default:
                 return "请对以下内容进行排版：";
         }
+    }
+
+    private void incrementReleaseCount(Long userId, int delta) {
+        if (userId == null || delta == 0) {
+            return;
+        }
+        int affected = templateAuthorMapper.increaseReleaseTemplateCount(userId, delta);
+        if (affected == 0) {
+            TemplateAuthor author = templateAuthorMapper.selectByUserId(userId);
+            if (author == null) {
+                author = new TemplateAuthor();
+                author.setUserId(userId);
+                author.setIncomeTotal(BigDecimal.ZERO);
+                author.setReleaseTemplateCount(Math.max(0, delta));
+                author.setLevel(1);
+                templateAuthorMapper.insertTemplateAuthor(author);
+            }
+        }
+    }
+
+    private void forceUnpublish(CallWord callWord) {
+        if (callWord == null || callWord.getStatus() == null || callWord.getStatus() == 0) {
+            return;
+        }
+        CallWord update = new CallWord();
+        update.setPlatformId(callWord.getPlatformId());
+        update.setStatus(0);
+        callWordMapper.updateCallWord(update);
+        incrementReleaseCount(callWord.getUserId(), -1);
+        callWord.setStatus(0);
     }
 } 
