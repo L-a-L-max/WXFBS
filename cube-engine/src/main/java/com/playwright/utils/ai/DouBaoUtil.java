@@ -135,48 +135,53 @@ public class DouBaoUtil {
             // 等待页面稳定
             page.waitForTimeout(1500);
             
-            // 🔥 方案1：通过文本内容定位"试一试"按钮（主要方案）
-            Locator tryButton = page.locator("button:has-text(\"试一试\")");
+            // 🔥 优化：检测到"试一试"弹窗时，点击关闭按钮而不是点击"试一试"
+            // 根据用户提供的DOM结构，关闭按钮是：<span role="img" class="semi-icon semi-icon-default close-btn-GElrfj">
             
-            // 🔥 方案2：通过DOM结构定位（备用方案）
-            // 根据你提供的DOM结构：<button class="semi-button semi-button-primary samantha-button-BghSMg secondary-DFAUit medium-VC3b8a icon-hKywyK icon-right-FlEKpJ semi-button-with-icon">
-            Locator tryButtonByClass = page.locator("button.semi-button-primary:has-text(\"试一试\")");
+            // 方案1：通过关闭按钮的class定位（最精确方案）
+            Locator closeButton = page.locator("span.close-btn-GElrfj");
             
-            // 🔥 方案3：通过父容器定位（最精确方案）
-            // 定位包含"向你介绍超能模式"文本的容器中的"试一试"按钮
-            Locator tryButtonInModal = page.locator("div:has-text(\"向你介绍超能模式\") button:has-text(\"试一试\")");
+            // 方案2：通过父容器定位关闭按钮（备用方案）
+            // 定位包含"向你介绍超能模式"文本的容器中的关闭按钮
+            Locator closeButtonInModal = page.locator("div:has-text(\"向你介绍超能模式\") span.close-btn-GElrfj");
+            
+            // 方案3：通过SVG图标定位关闭按钮（备用方案）
+            Locator closeButtonBySvg = page.locator("div:has-text(\"向你介绍超能模式\") svg[viewBox*='24']").first();
             
             boolean buttonClicked = false;
             
             // 优先使用最精确的方案
-            if (tryButtonInModal.count() > 0 && tryButtonInModal.isVisible()) {
-                logInfo.sendTaskLog("检测到超能模式介绍弹窗，正在自动点击试一试 [" + scenario + "]", userId, "豆包");
-                tryButtonInModal.click();
+            if (closeButtonInModal.count() > 0) {
+                logInfo.sendTaskLog("检测到超能模式介绍弹窗，正在自动点击关闭按钮 [" + scenario + "]", userId, "豆包");
+                closeButtonInModal.click();
                 buttonClicked = true;
             }
             // 备用方案1
-            else if (tryButtonByClass.count() > 0 && tryButtonByClass.isVisible()) {
-                logInfo.sendTaskLog("检测到超能模式按钮，正在自动点击试一试 [" + scenario + "]", userId, "豆包");
-                tryButtonByClass.click();
+            else if (closeButton.count() > 0) {
+                logInfo.sendTaskLog("检测到关闭按钮，正在自动点击 [" + scenario + "]", userId, "豆包");
+                closeButton.click();
                 buttonClicked = true;
             }
-            // 备用方案2
-            else if (tryButton.count() > 0 && tryButton.isVisible()) {
-                logInfo.sendTaskLog("检测到试一试按钮，正在自动点击 [" + scenario + "]", userId, "豆包");
-                tryButton.click();
+            // 备用方案2：如果找不到关闭按钮，尝试点击SVG
+            else if (closeButtonBySvg.count() > 0) {
+                logInfo.sendTaskLog("检测到关闭图标，正在自动点击 [" + scenario + "]", userId, "豆包");
+                closeButtonBySvg.click();
                 buttonClicked = true;
             }
             
             if (buttonClicked) {
                 page.waitForTimeout(2000); // 等待点击完成和页面响应
-                logInfo.sendTaskLog("已成功点击试一试按钮，继续后续流程 [" + scenario + "]", userId, "豆包");
+                logInfo.sendTaskLog("已成功点击关闭按钮，弹窗已关闭 [" + scenario + "]", userId, "豆包");
                 
                 // 🔥 点击后再次等待，确保模态框完全关闭
                 page.waitForTimeout(1000);
+            } else {
+                // 如果没有检测到弹窗，记录日志但不影响后续流程
+                logInfo.sendTaskLog("未检测到超能模式弹窗，继续后续流程 [" + scenario + "]", userId, "豆包");
             }
         } catch (Exception e) {
             // 如果按钮不存在或点击失败，记录但不抛出异常，不影响后续流程
-            UserLogUtil.sendElementWarningLog(userId, "豆包", "超能模式检测[" + scenario + "]", ".try-button", "试一试按钮检测或点击失败：" + e.getMessage(), url + "/saveLogInfo");
+            UserLogUtil.sendElementWarningLog(userId, "豆包", "超能模式检测[" + scenario + "]", ".close-btn-GElrfj", "关闭按钮检测或点击失败：" + e.getMessage(), url + "/saveLogInfo");
         }
     }
     
