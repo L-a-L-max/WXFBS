@@ -61,4 +61,13 @@ public interface CallWordMapper {
      * @return 提示词配置
      */
     CallWord selectByPlatformId(@Param("platformId") String platformId);
+
+    /**
+     * 仅更新提示词的公共状态
+     *
+     * @param platformId 平台标识
+     * @param isCommon 是否公共
+     * @return 影响行数
+     */
+    int updateCallWordCommon(@Param("platformId") String platformId, @Param("isCommon") Integer isCommon);
 } 

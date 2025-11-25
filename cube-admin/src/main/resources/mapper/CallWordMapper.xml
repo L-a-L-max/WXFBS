@@ -10,10 +10,14 @@
         <result property="isCommon" column="is_common"/>
         <result property="userId" column="user_id"/>
         <result property="updateTime" column="update_time"/>
+        <result property="status" column="status"/>
+        <result property="price" column="price"/>
+        <result property="salesCount" column="sales_count"/>
+        <result property="incomeTotal" column="income_total"/>
     </resultMap>
 
     <sql id="selectCallWordVo">
-        select platform_id, word_content, is_common, user_id, update_time from wc_call_word
+        select platform_id, word_content, is_common, user_id, update_time, status, price, sales_count, income_total from wc_call_word
     </sql>
     <delete id="deleteCallWordByPlatformIds" parameterType="String">
         delete from wc_call_word where platform_id in
@@ -41,6 +45,10 @@
             <if test="wordContent != null and wordContent != ''">word_content,</if>
             <if test="isCommon != null">is_common,</if>
             <if test="userId != null">user_id,</if>
+            <if test="status != null">status,</if>
+            <if test="price != null">price,</if>
+            <if test="salesCount != null">sales_count,</if>
+            <if test="incomeTotal != null">income_total,</if>
             update_time,
         </trim>
         <trim prefix="values (" suffix=")" suffixOverrides=",">
@@ -48,6 +56,10 @@
             <if test="wordContent != null and wordContent != ''">#{wordContent},</if>
             <if test="isCommon != null">#{isCommon},</if>
             <if test="userId != null">#{userId},</if>
+            <if test="status != null">#{status},</if>
+            <if test="price != null">#{price},</if>
+            <if test="salesCount != null">#{salesCount},</if>
+            <if test="incomeTotal != null">#{incomeTotal},</if>
             NOW(),
         </trim>
     </insert>
@@ -58,6 +70,10 @@
             <if test="wordContent != null and wordContent != ''">word_content = #{wordContent},</if>
             <if test="isCommon != null">is_common = #{isCommon},</if>
             <if test="userId != null">user_id = #{userId},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="price != null">price = #{price},</if>
+            <if test="salesCount != null">sales_count = #{salesCount},</if>
+            <if test="incomeTotal != null">income_total = #{incomeTotal},</if>
             update_time = NOW(),
         </trim>
         where platform_id = #{platformId}
@@ -73,5 +89,12 @@
         <include refid="selectCallWordVo"/>
         where platform_id = #{platformId}
     </select>
+
+    <update id="updateCallWordCommon">
+        update wc_call_word
+        set is_common = #{isCommon},
+            update_time = NOW()
+        where platform_id = #{platformId}
+    </update>
 
 </mapper>

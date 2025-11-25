@@ -64,6 +64,18 @@
           </el-tag>
         </template>
       </el-table-column>
+      <el-table-column label="价格" align="center" prop="price" width="100">
+        <template #default="scope">
+          <span>{{ formatPrice(scope.row.price) }}</span>
+        </template>
+      </el-table-column>
+      <el-table-column label="上架状态" align="center" prop="status" width="100">
+        <template #default="scope">
+          <el-tag :type="scope.row.status === 1 ? 'success' : 'info'">
+            {{ scope.row.status === 1 ? '已上架' : '草稿' }}
+          </el-tag>
+        </template>
+      </el-table-column>
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width" width="280">
         <template #default="scope">
           <el-button
@@ -105,6 +117,7 @@
             size="small"
             type="text"
             style="color: #E6A23C"
+            :loading="setCommonLoading && commonPlatformId === scope.row.platformId"
             @click="handleSetCommon(scope.row, 1)"
             v-hasRole="['admin', 'common']"
           >设为公共</el-button>
@@ -113,9 +126,24 @@
             size="small"
             type="text"
             style="color: #909399"
+            :loading="setCommonLoading && commonPlatformId === scope.row.platformId"
             @click="handleSetCommon(scope.row, 0)"
             v-hasRole="['admin', 'common']"
           >取消公共</el-button>
+          <el-button
+            v-if="scope.row.status !== 1 && scope.row.isCommon === 0"
+            size="small"
+            type="text"
+            style="color: #409EFF"
+            @click="openPublishDialog(scope.row)"
+          >上架市场</el-button>
+          <el-button
+            v-if="scope.row.status === 1 && scope.row.isCommon === 0"
+            size="small"
+            type="text"
+            style="color: #F56C6C"
+            @click="handleUnpublish(scope.row)"
+          >下架</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -139,11 +167,29 @@
         <el-form-item label="提示词">
           <el-input type="textarea" autosize v-model="form.wordContent" :min-height="360"/>
         </el-form-item>
+        <el-form-item label="基础价格">
+          <el-input-number v-model="form.price" :min="0" :precision="2" :step="1" controls-position="right" style="width: 100%;" />
+        </el-form-item>
       </el-form>
       <div slot="footer" class="dialog-footer">
         <el-button type="primary" @click="submitForm">确 定</el-button>
         <el-button @click="cancel">取 消</el-button>
       </div>
+    </el-dialog>
+
+    <el-dialog title="模板上架" v-model="publishDialogVisible" width="400px" append-to-body>
+      <el-form ref="publishFormRef" :model="publishForm" :rules="publishRules" label-width="100px">
+        <el-form-item label="模板标识">
+          <span>{{ publishForm.platformId }}</span>
+        </el-form-item>
+        <el-form-item label="上架价格" prop="price">
+          <el-input-number v-model="publishForm.price" :min="0.01" :precision="2" :step="1" controls-position="right" style="width: 100%;" />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="publishDialogVisible = false">取 消</el-button>
+        <el-button type="primary" :loading="publishing" @click="submitPublish">上架</el-button>
+      </template>
     </el-dialog>
   </div>
 </template>
@@ -152,7 +198,7 @@
 import { Delete, Download, Edit, Plus, Refresh, Search } from '@element-plus/icons-vue';
 
 // import { listPrompt, getPrompt, delPrompt, addPrompt, updatePrompt } from "@/api/prompt/prompt";
-import { getMediaCallWordList,getMediaCallWord,updateMediaCallWord,deleteMediaCallWord,setCallWordCommon } from "@/api/wechat/aigc";
+import { getMediaCallWordList,getMediaCallWord,updateMediaCallWord,deleteMediaCallWord,setCallWordCommon,publishCallWord,unpublishCallWord } from "@/api/wechat/aigc";
 export default {
   name: "Prompt",
   components: {},
@@ -202,6 +248,28 @@ export default {
         wordContent: [
           { required: true, message: "提示词内容不能为空", trigger: "blur" }
         ],
+      },
+      // 设为公共/取消公共状态
+      setCommonLoading: false,
+      commonPlatformId: null,
+      publishDialogVisible: false,
+      publishForm: {
+        platformId: '',
+        price: null,
+      },
+      publishing: false,
+      publishRules: {
+        price: [
+          { required: true, message: "请输入上架价格", trigger: "blur" },
+          { validator: (rule, value, callback) => {
+              if (value === null || value === undefined || Number(value) <= 0) {
+                callback(new Error("价格必须大于0"));
+              } else {
+                callback();
+              }
+            }, trigger: "blur"
+          }
+        ]
       }
     };
   },
@@ -228,7 +296,9 @@ export default {
       this.form = {
         platformId: null,
         wordContent: null,
-        updateTime: null
+        updateTime: null,
+        price: 0,
+        status: 0
       };
       this.resetForm("form");
     },
@@ -260,6 +330,12 @@ export default {
       const platformId = row.platformId || this.ids
       getMediaCallWord(platformId).then(response => {
         this.form = response.data;
+        if (this.form.price === undefined || this.form.price === null) {
+          this.form.price = 0;
+        }
+        if (this.form.status === undefined || this.form.status === null) {
+          this.form.status = 0;
+        }
         this.open = true;
         this.title = "修改平台提示词配置";
       });
@@ -304,11 +380,51 @@ export default {
     handleSetCommon(row, isCommon) {
       const text = isCommon === 1 ? '设为公共' : '取消公共';
       this.$modal.confirm(`是否确认${text}该提示词模板？`).then(() => {
+        this.setCommonLoading = true;
+        this.commonPlatformId = row.platformId;
         return setCallWordCommon(row.platformId, isCommon);
       }).then(() => {
         this.getList();
         this.$modal.msgSuccess(`${text}成功`);
+      }).catch(() => {}).finally(() => {
+        this.setCommonLoading = false;
+        this.commonPlatformId = null;
+      });
+    },
+    openPublishDialog(row) {
+      this.publishForm.platformId = row.platformId;
+      this.publishForm.price = row.price && Number(row.price) > 0 ? Number(row.price) : null;
+      this.publishDialogVisible = true;
+      this.$nextTick(() => {
+        this.$refs.publishFormRef && this.$refs.publishFormRef.clearValidate();
+      });
+    },
+    submitPublish() {
+      this.$refs.publishFormRef.validate(valid => {
+        if (!valid) return;
+        this.publishing = true;
+        publishCallWord({
+          platformId: this.publishForm.platformId,
+          price: this.publishForm.price
+        }).then(() => {
+          this.$modal.msgSuccess("上架成功");
+          this.publishDialogVisible = false;
+          this.getList();
+        }).finally(() => {
+          this.publishing = false;
+        });
+      });
+    },
+    handleUnpublish(row) {
+      this.$modal.confirm(`确认下架模板「${row.platformId}」吗？`).then(() => {
+        return unpublishCallWord(row.platformId);
+      }).then(() => {
+        this.$modal.msgSuccess("模板已下架");
+        this.getList();
       }).catch(() => {});
+    },
+    formatPrice(value) {
+      return Number(value || 0).toFixed(2);
     }
   }
 };
