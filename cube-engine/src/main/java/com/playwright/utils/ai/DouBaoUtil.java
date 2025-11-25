@@ -123,32 +123,68 @@ public class DouBaoUtil {
 
     /**
      * 检测并点击超能模式的"试一试"按钮
-     * 如果登录后出现超能模式提示，自动点击试一试按钮
+     * 🔥 增强版：支持多种场景的"试一试"按钮检测
+     * 适用场景：登录检测、扫码登录、开始咨询等各个阶段
      *
      * @param page Playwright页面实例
      * @param userId 用户ID
+     * @param scenario 场景描述（用于日志记录）
      */
-    public void checkAndClickSuperModeButton(Page page, String userId) {
+    public void checkAndClickSuperModeButton(Page page, String userId, String scenario) {
         try {
-            // 等待一下，确保页面加载完成
-            page.waitForTimeout(2000);
+            // 等待页面稳定
+            page.waitForTimeout(1500);
             
-            // 通过文本内容定位"试一试"按钮
+            // 🔥 方案1：通过文本内容定位"试一试"按钮（主要方案）
             Locator tryButton = page.locator("button:has-text(\"试一试\")");
             
-            // 检查按钮是否存在且可见
-            if (tryButton.count() > 0 && tryButton.isVisible()) {
-                logInfo.sendTaskLog("检测到超能模式提示，正在自动点击试一试", userId, "豆包");
+            // 🔥 方案2：通过DOM结构定位（备用方案）
+            // 根据你提供的DOM结构：<button class="semi-button semi-button-primary samantha-button-BghSMg secondary-DFAUit medium-VC3b8a icon-hKywyK icon-right-FlEKpJ semi-button-with-icon">
+            Locator tryButtonByClass = page.locator("button.semi-button-primary:has-text(\"试一试\")");
+            
+            // 🔥 方案3：通过父容器定位（最精确方案）
+            // 定位包含"向你介绍超能模式"文本的容器中的"试一试"按钮
+            Locator tryButtonInModal = page.locator("div:has-text(\"向你介绍超能模式\") button:has-text(\"试一试\")");
+            
+            boolean buttonClicked = false;
+            
+            // 优先使用最精确的方案
+            if (tryButtonInModal.count() > 0 && tryButtonInModal.isVisible()) {
+                logInfo.sendTaskLog("检测到超能模式介绍弹窗，正在自动点击试一试 [" + scenario + "]", userId, "豆包");
+                tryButtonInModal.click();
+                buttonClicked = true;
+            }
+            // 备用方案1
+            else if (tryButtonByClass.count() > 0 && tryButtonByClass.isVisible()) {
+                logInfo.sendTaskLog("检测到超能模式按钮，正在自动点击试一试 [" + scenario + "]", userId, "豆包");
+                tryButtonByClass.click();
+                buttonClicked = true;
+            }
+            // 备用方案2
+            else if (tryButton.count() > 0 && tryButton.isVisible()) {
+                logInfo.sendTaskLog("检测到试一试按钮，正在自动点击 [" + scenario + "]", userId, "豆包");
                 tryButton.click();
-                page.waitForTimeout(1000); // 等待点击完成
-                logInfo.sendTaskLog("已成功进入超能模式", userId, "豆包");
+                buttonClicked = true;
+            }
+            
+            if (buttonClicked) {
+                page.waitForTimeout(2000); // 等待点击完成和页面响应
+                logInfo.sendTaskLog("已成功点击试一试按钮，继续后续流程 [" + scenario + "]", userId, "豆包");
                 
-                 // 不再记录成功日志，按照用户要求
+                // 🔥 点击后再次等待，确保模态框完全关闭
+                page.waitForTimeout(1000);
             }
         } catch (Exception e) {
             // 如果按钮不存在或点击失败，记录但不抛出异常，不影响后续流程
-            UserLogUtil.sendElementWarningLog(userId, "豆包", "超能模式检测", ".switch-button-qHPwBT", "超能模式按钮检测或点击失败：" + e.getMessage(), url + "/saveLogInfo");
+            UserLogUtil.sendElementWarningLog(userId, "豆包", "超能模式检测[" + scenario + "]", ".try-button", "试一试按钮检测或点击失败：" + e.getMessage(), url + "/saveLogInfo");
         }
+    }
+    
+    /**
+     * 兼容性方法：保持原有调用方式
+     */
+    public void checkAndClickSuperModeButton(Page page, String userId) {
+        checkAndClickSuperModeButton(page, userId, "默认场景");
     }
 
     /**

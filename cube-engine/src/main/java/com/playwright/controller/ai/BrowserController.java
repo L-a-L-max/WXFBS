@@ -662,20 +662,41 @@ public class BrowserController {
             }
 
             // 未登录，获取二维码截图URL
-            String url = deepSeekUtil.waitAndGetQRCode(page, userId, screenshotUtil);
+            System.out.println("📱 [DeepSeek] 开始获取二维码...");
+            
+            // 🔥 【速度优化】快速导航到登录页面，减少等待时间
+            try {
+                System.out.println("📱 [DeepSeek] 开始快速导航...");
+                page.navigate("https://chat.deepseek.com/sign_in");
+                page.waitForLoadState(LoadState.DOMCONTENTLOADED);
+                System.out.println("📱 [DeepSeek] 页面基本加载完成");
+                
+                // 🔥 减少等待时间，从5秒减少到2秒
+                Thread.sleep(2000);
+                System.out.println("📱 [DeepSeek] 快速等待完成，准备截图");
+                
+            } catch (Exception navError) {
+                System.err.println("❌ [DeepSeek] 导航失败: " + navError.getMessage());
+                loginSessionManager.endLoginSession(sessionKey);
+                return "false";
+            }
+            
+            // 🔥 【简化修复】直接截图，参考豆包的实现方式
+            String url = screenshotUtil.screenshotAndUpload(page, "checkDeepSeekLogin.png");
+            System.out.println("📱 [DeepSeek] 直接截图结果: " + url);
 
-            if (!"false".equals(url)) {
-                // 🔥 添加延迟确保截图完成
-                Thread.sleep(1000);
-
-                // 🔥 【重要】返回前进行身份验证
-                // 目的：确保返回的二维码属于当前用户正在操作的AI
-                // 验证失败说明用户已切换到其他AI，需要终止此登录流程
-                String result = sendQrCodeWithValidation(userId, "DeepSeek", url, "RETURN_PC_DEEPSEEK_QRURL");
-                if (result == null) {
-                    // 已清空所有登录会话，返回友好提示
-                    return "SERVICE_UNAVAILABLE";
-                }
+            if (url != null && !url.trim().isEmpty() && !"false".equals(url)) {
+                // 🔥 【简化修复】直接发送二维码，不使用会话验证，参考豆包实现
+                System.out.println("📱 [DeepSeek] 准备发送二维码到前端: " + url);
+                
+                JSONObject jsonObject = new JSONObject();
+                jsonObject.put("url", url);
+                jsonObject.put("userId", userId);
+                jsonObject.put("type", "RETURN_PC_DEEPSEEK_QRURL");
+                webSocketClientService.sendMessage(jsonObject.toJSONString());
+                
+                System.out.println("✅ [DeepSeek] 二维码已成功发送到前端");
+                logMsgUtil.sendTaskLog("DeepSeek二维码已发送到前端", userId, "DeepSeek");
 
                 // 实时监测登录状态 - 最多等待60秒
                 int maxAttempts = 30; // 30次尝试
@@ -713,11 +734,11 @@ public class BrowserController {
                             }
 
                             url = screenshotUtil.screenshotAndUpload(page, "checkDeepSeekLogin.png");
-                            JSONObject qrUpdateObject = new JSONObject();
-                            qrUpdateObject.put("url", url);
-                            qrUpdateObject.put("userId", userId);
-                            qrUpdateObject.put("type", "RETURN_PC_DEEPSEEK_QRURL");
-                            webSocketClientService.sendMessage(qrUpdateObject.toJSONString());
+                            JSONObject qrRefreshObject = new JSONObject();
+                            qrRefreshObject.put("url", url);
+                            qrRefreshObject.put("userId", userId);
+                            qrRefreshObject.put("type", "RETURN_PC_DEEPSEEK_QRURL");
+                            webSocketClientService.sendMessage(qrRefreshObject.toJSONString());
                         } catch (Exception e) {
                             UserLogUtil.sendExceptionLog(userId, "deepSeek获取二维码截图失败", "checkDeepSeekLogin", e, logUrl + "/saveLogInfo");
                         }
@@ -730,6 +751,7 @@ public class BrowserController {
             }
 
             // 获取二维码失败，清理会话
+            System.err.println("❌ [DeepSeek] 二维码获取失败，返回值: " + url);
             loginSessionManager.endLoginSession(sessionKey);
         } catch (Exception e) {
             System.err.println("❌ [DeepSeek登录] 获取登录二维码失败: " + e.getMessage());
@@ -911,7 +933,35 @@ public class BrowserController {
                 return "session_terminated";
             }
 
-            // 立即获取并发送二维码
+            // 🔥 【修复】先检查用户是否已经登录，避免已登录用户收到二维码截图
+            String currentLoginStatus = "未登录";
+            try {
+                Locator phone = page.locator("//p[@class='nick-info-name']");
+                phone.waitFor(new Locator.WaitForOptions().setTimeout(3000));
+                currentLoginStatus = phone.textContent();
+            } catch (Exception e) {
+                // 如果检测失败，默认为未登录
+                currentLoginStatus = "未登录";
+            }
+            
+            // 如果用户已经登录，直接返回登录状态，不发送二维码
+            if (!currentLoginStatus.contains("未登录")) {
+                System.out.println("🎉 [元宝登录] 用户已登录，直接返回状态: " + currentLoginStatus);
+                
+                // 发送登录状态给前端
+                JSONObject statusObject = new JSONObject();
+                statusObject.put("status", currentLoginStatus);
+                statusObject.put("userId", userId);
+                statusObject.put("type", "RETURN_YB_STATUS");
+                webSocketClientService.sendMessage(statusObject.toJSONString());
+                
+                // 结束会话并返回
+                loginSessionManager.endLoginSession(sessionKey);
+                return currentLoginStatus;
+            }
+            
+            // 用户未登录，发送二维码截图
+            System.out.println("📱 [元宝登录] 用户未登录，发送二维码截图");
             String url = screenshotUtil.screenshotAndUpload(page, "checkYBLogin.png");
             JSONObject jsonObject = new JSONObject();
             jsonObject.put("url", url);
@@ -923,17 +973,9 @@ public class BrowserController {
             handleAccountTypeSelection(page);
 
             boolean isLogin = false;
-            String phoneText = "未登录";
+            String phoneText = currentLoginStatus; // 🔥 使用上面已经检测到的状态
             
-            // 🔥 关键修复：使用try-catch包装可能失败的textContent调用
-            try {
-                Locator phone = page.locator("//p[@class='nick-info-name']");
-                phone.waitFor(new Locator.WaitForOptions().setTimeout(3000));
-                phoneText = phone.textContent();
-            } catch (Exception e) {
-                // 如果元素不存在或frame已失效，使用默认值
-                phoneText = "未登录";
-            }
+            // 🔥 注意：如果程序运行到这里，说明用户是未登录状态，需要等待扫码
 
             // 🔥 优化：将检测循环从6次x10秒改为60次x1秒，确保用户登录后2秒内响应
             for (int i = 0; i < 60; i++) {
@@ -954,9 +996,25 @@ public class BrowserController {
 
                     // 🔥 优化：每10秒刷新一次二维码（每10次循环）
                     if (i % 10 == 9) {
+                        // 🔥 【修复】刷新二维码前再次检查登录状态，避免已登录用户收到额外截图
+                        try {
+                            Locator phoneCheck = page.locator("//p[@class='nick-info-name']");
+                            phoneCheck.waitFor(new Locator.WaitForOptions().setTimeout(1000));
+                            String checkStatus = phoneCheck.textContent();
+                            if (!checkStatus.contains("未登录")) {
+                                // 用户已登录，不再刷新二维码
+                                System.out.println("📱 [元宝登录] 检测到用户已登录，停止刷新二维码");
+                                phoneText = checkStatus; // 更新状态以退出循环
+                                break;
+                            }
+                        } catch (Exception checkError) {
+                            // 检查失败，继续刷新二维码
+                        }
+                        
                         url = screenshotUtil.screenshotAndUpload(page, "checkYBLogin.png");
                         jsonObject.put("url", url);
                         webSocketClientService.sendMessage(jsonObject.toJSONString());
+                        System.out.println("🔄 [元宝登录] 已刷新二维码截图");
                         
                         // 再次尝试处理账号类型选择弹窗
                         handleAccountTypeSelection(page);
@@ -1104,11 +1162,19 @@ public class BrowserController {
             Page page = browserUtil.getOrCreatePage(context);
             page.navigate("https://www.doubao.com/chat/");
             Thread.sleep(5000);
+            
+            // 🔥 新增：检测并处理"试一试"按钮（登录检测场景）
+            douBaoUtil.checkAndClickSuperModeButton(page, userId, "登录检测");
+            
             Locator locator = page.locator("[data-testid='to_login_button']");
             if (locator.count() > 0 && locator.isVisible()) {
                 return "false";
             } else {
                 Thread.sleep(500);
+                
+                // 🔥 再次检测"试一试"按钮（获取用户信息前）
+                douBaoUtil.checkAndClickSuperModeButton(page, userId, "获取用户信息前");
+                
                 page.locator("[data-testid=\"chat_header_avatar_button\"]").click();
                 Thread.sleep(500);
                 page.locator("[data-testid=\"chat_header_setting_button\"]").click();
@@ -1149,8 +1215,12 @@ public class BrowserController {
             sessionKey = loginSessionManager.startLoginSession(userId, "Doubao", context, page);
 
             page.navigate("https://www.doubao.com/chat/");
-            Locator locator = page.locator("[data-testid='to_login_button']");
+            
+            // 🔥 新增：扫码登录开始时检测"试一试"按钮
             Thread.sleep(2000);
+            douBaoUtil.checkAndClickSuperModeButton(page, userId, "扫码登录开始");
+            
+            Locator locator = page.locator("[data-testid='to_login_button']");
 
             if (locator.count() > 0 && locator.isVisible()) {
                 locator.click();
@@ -1214,6 +1284,9 @@ public class BrowserController {
 
                     // 🔥 已检测到登录，立即获取用户信息
                     Thread.sleep(500); // 等待页面稳定
+                    
+                    // 🔥 新增：登录成功后再次检测"试一试"按钮
+                    douBaoUtil.checkAndClickSuperModeButton(page, userId, "登录成功后");
                     
                     try {
                         avatarButton.click();

@@ -47,113 +47,84 @@ public class DeepSeekUtil {
 
     /**
      * 检查DeepSeek登录状态
+     * 🔥 增强版：修复部分设备上浏览器无法正常调用的问题
      * @param page Playwright页面对象
      * @param navigate 是否需要先导航到DeepSeek页面
-     * @return 登录状态，如果已登录则返回用户名，否则返回"false"
+     * @return 登录状态，如枟已登录则返回用户名，否则返回"false"
      */
     public String checkLoginStatus(Page page, boolean navigate) {
         if (navigate) {
-            page.navigate("https://chat.deepseek.com/");
-            page.waitForLoadState();
-            page.waitForTimeout(1500);
+            try {
+                page.navigate("https://chat.deepseek.com/");
+                page.waitForLoadState();
+                page.waitForTimeout(1500);
+            } catch (Exception e) {
+                System.err.println("❌ [DeepSeek] 导航失败: " + e.getMessage());
+            }
         }
 
-        // 检查是否有登录按钮，如果有则表示未登录
         try {
+            // 检测登录按钮，如果存在则未登录
             Locator loginBtn = page.locator("button:has-text('登录'), button:has-text('Login')").first();
             if (loginBtn.count() > 0 && loginBtn.isVisible()) {
                 return "false";
             }
         } catch (Exception e) {
-            // 检查失败，继续其他检测
+            // 登录按钮检测失败，继续其他检测
         }
 
-        // 首先尝试关闭侧边栏（使用更精确的选择器，避免误点击）
         try {
-            ElementHandle closeButton = page.waitForSelector(
-                    "div._17e543b._4f3769f[role='button']",
-                    new Page.WaitForSelectorOptions().setTimeout(2000));
-
-            if (closeButton != null) {
-                closeButton.click(new ElementHandle.ClickOptions().setTimeout(30000).setForce(true));
-                page.waitForTimeout(800);
+            // 直接检测用户信息
+            Locator userInfoDiv = page.locator("div._2afd28d");
+            if (userInfoDiv.count() > 0) {
+                Locator userNameDiv = page.locator("div._2afd28d div._9d8da05");
+                if (userNameDiv.count() > 0) {
+                    String userName = userNameDiv.textContent();
+                    if (userName != null && !userName.trim().isEmpty() && !userName.contains("未登录")) {
+                        return userName.trim();
+                    }
+                }
             }
-        } catch (Exception e) {
-            // 侧边栏可能已经关闭或不存在
-        }
 
-        // 特别针对用户昵称的检测
-        String userName = null;
-        try {
-            Locator avatarLocator = page.locator("img.fdf01f38").first();
-            if (avatarLocator.count() > 0 && avatarLocator.isVisible()) {
-                avatarLocator.click();
-                page.waitForTimeout(1000);
-
-                Locator userNameElement = page.locator("div._9d8da05").first();
-                if (userNameElement.count() > 0 && userNameElement.isVisible()) {
-                    String name = userNameElement.textContent();
-                    if (name != null && !name.trim().isEmpty() &&
-                            !name.trim().equals("登录") && !name.trim().equals("Login")) {
-                        userName = name.trim();
+            // 检测侧边栏区域内的用户信息
+            Locator sidebarArea = page.locator("div.ca6d4be1._5a20a69");
+            if (sidebarArea.count() > 0) {
+                Locator userInfoInSidebar = sidebarArea.locator("div._2afd28d div._9d8da05");
+                if (userInfoInSidebar.count() > 0) {
+                    String userName = userInfoInSidebar.textContent();
+                    if (userName != null && !userName.trim().isEmpty() && !userName.contains("未登录")) {
+                        return userName.trim();
                     }
                 }
                 
-                // 如果没有获取到用户名，且用户名元素不存在，可能是侧边栏被关闭了
-                if (userName == null && userNameElement.count() == 0) {
-                    try {
-                        // 先按ESC关闭可能已打开的面板
-                        page.keyboard().press("Escape");
-                        page.waitForTimeout(300);
+                // 尝试点击侧边栏展开按钮
+                try {
+                    Locator sidebarToggle = sidebarArea.locator("div._4f3769f.ds-icon-button").first();
+                    if (sidebarToggle.count() > 0 && sidebarToggle.isVisible()) {
+                        sidebarToggle.click();
+                        page.waitForTimeout(2000);
                         
-                        // 检查头像是否还可见，如果不可见说明侧边栏被关闭了
-                        Locator avatarCheck = page.locator("img.fdf01f38").first();
-                        if (avatarCheck.count() == 0 || !avatarCheck.isVisible()) {
-                            // 尝试打开侧边栏 - 使用更精确的选择器（侧边栏展开按钮包含特定的SVG路径）
-                            try {
-                                page.click("div.ds-icon-button._4f3769f[role='button']:has(svg path[d*='M9.67269'])", 
-                                    new Page.ClickOptions().setTimeout(2000));
-                                page.waitForTimeout(500);
-                            } catch (Exception clickEx) {
-                                // 点击失败，忽略
+                        Locator userInfoAfterExpand = page.locator("div._2afd28d div._9d8da05");
+                        if (userInfoAfterExpand.count() > 0) {
+                            String userName = userInfoAfterExpand.textContent();
+                            if (userName != null && !userName.trim().isEmpty() && !userName.contains("未登录")) {
+                                return userName.trim();
                             }
                         }
-                        
-                        // 重新尝试获取用户信息
-                        Locator avatarLocator2 = page.locator("img.fdf01f38").first();
-                        if (avatarLocator2.count() > 0 && avatarLocator2.isVisible()) {
-                            avatarLocator2.click();
-                            page.waitForTimeout(1000);
-                            
-                            Locator userNameElement2 = page.locator("div._9d8da05").first();
-                            if (userNameElement2.count() > 0 && userNameElement2.isVisible()) {
-                                String name = userNameElement2.textContent();
-                                if (name != null && !name.trim().isEmpty() &&
-                                        !name.trim().equals("登录") && !name.trim().equals("Login")) {
-                                    userName = name.trim();
-                                }
-                            }
-                        }
-                    } catch (Exception retryEx) {
-                        // 重试失败，继续使用默认值
                     }
+                } catch (Exception toggleEx) {
+                    // 静默处理侧边栏切换失败
                 }
-                
-                return userName != null ? userName : "已登录用户";
             }
+
         } catch (Exception e) {
-            // 头像检测失败，继续其他方法
+            // 静默处理检测异常
         }
 
-        // 最后尝试使用通用方法检测登录状态
+        // 最后尝试：检测页面中是否有用户相关信息
         try {
-            Locator newChatBtn = page.locator("button:has-text('新建聊天'), button:has-text('New Chat')").first();
-            if (newChatBtn.count() > 0 && newChatBtn.isVisible()) {
-                return "已登录用户";
-            }
-
-            Locator chatHistory = page.locator(".conversation-list, .chat-history").first();
-            if (chatHistory.count() > 0 && chatHistory.isVisible()) {
+            Locator chatInterface = page.locator(".chat-interface, .conversation-area, [data-testid='chat-input']");
+            if (chatInterface.count() > 0) {
                 return "已登录用户";
             }
         } catch (Exception e) {
@@ -164,24 +135,145 @@ public class DeepSeekUtil {
     }
 
     /**
-     * 等待并获取DeepSeek二维码
-     * @param page Playwright页面对象
+     * 导航到DeepSeek登录页面并等待二维码加载
+     * @param page Playwright页面实例
+     * @param userId 用户ID
+     * @return 是否成功导航并加载二维码
+     */
+    public boolean navigateToLoginPage(Page page, String userId) {
+        try {
+            // 🔥 方案1：直接导航到登录页面（主要方案）
+            page.navigate("https://chat.deepseek.com/sign_in", new Page.NavigateOptions()
+                .setWaitUntil(WaitUntilState.NETWORKIDLE)
+                .setTimeout(30000));
+            
+            page.waitForLoadState(LoadState.DOMCONTENTLOADED);
+            logInfo.sendTaskLog("页面基本加载完成，等待二维码加载", userId, "DeepSeek");
+            
+            // 🔥 等待二维码加载（增加等待时间和检测机制）
+            boolean qrCodeLoaded = false;
+            for (int i = 0; i < 10; i++) { // 最多等待10秒
+                page.waitForTimeout(1000);
+                
+                // 检测微信登录区域
+                Locator wechatLoginBlock = page.locator(".ds-sign-in-with-wechat-block");
+                if (wechatLoginBlock.count() > 0) {
+                    logInfo.sendTaskLog("检测到微信登录区域", userId, "DeepSeek");
+                    qrCodeLoaded = true;
+                    break;
+                }
+                
+                // 检测 iframe二维码
+                Locator qrIframe = page.locator("iframe[src*='open.weixin.qq.com']");
+                if (qrIframe.count() > 0) {
+                    logInfo.sendTaskLog("检测到微信二维码iframe", userId, "DeepSeek");
+                    qrCodeLoaded = true;
+                    break;
+                }
+                
+                logInfo.sendTaskLog("第" + (i + 1) + "次检测二维码，继续等待...", userId, "DeepSeek");
+            }
+            
+            if (!qrCodeLoaded) {
+                logInfo.sendTaskLog("二维码加载超时，尝试备用方案", userId, "DeepSeek");
+                return tryFallbackNavigation(page, userId);
+            } else {
+                // 二维码加载成功，额外等待一下确保完全显示
+                page.waitForTimeout(2000);
+                logInfo.sendTaskLog("二维码加载完成，准备截图", userId, "DeepSeek");
+                return true;
+            }
+            
+        } catch (Exception e) {
+            logInfo.sendTaskLog("直接导航失败，尝试备用方案: " + e.getMessage(), userId, "DeepSeek");
+            return tryFallbackNavigation(page, userId);
+        }
+    }
+    
+    /**
+     * 备用导航方案：从主页点击登录按钮
+     */
+    private boolean tryFallbackNavigation(Page page, String userId) {
+        try {
+            // 先导航到主页
+            page.navigate("https://chat.deepseek.com/", new Page.NavigateOptions()
+                .setWaitUntil(WaitUntilState.NETWORKIDLE)
+                .setTimeout(30000));
+            
+            page.waitForLoadState(LoadState.DOMCONTENTLOADED);
+            page.waitForTimeout(2000);
+            
+            // 查找并点击登录按钮
+            Locator loginButton = page.locator("button:has-text('登录'), button:has-text('Login')").first();
+            if (loginButton.count() > 0 && loginButton.isVisible()) {
+                logInfo.sendTaskLog("找到登录按钮，正在点击", userId, "DeepSeek");
+                loginButton.click();
+                page.waitForTimeout(3000);
+                
+                // 备用方案也需要等待二维码加载
+                logInfo.sendTaskLog("已跳转到登录页面，等待二维码加载", userId, "DeepSeek");
+                for (int j = 0; j < 8; j++) {
+                    page.waitForTimeout(1000);
+                    Locator wechatBlock = page.locator(".ds-sign-in-with-wechat-block");
+                    Locator iframe = page.locator("iframe[src*='open.weixin.qq.com']");
+                    if (wechatBlock.count() > 0 || iframe.count() > 0) {
+                        logInfo.sendTaskLog("备用方案检测到二维码", userId, "DeepSeek");
+                        page.waitForTimeout(2000);
+                        return true;
+                    }
+                }
+                
+                logInfo.sendTaskLog("备用方案二维码加载超时", userId, "DeepSeek");
+                return false;
+            } else {
+                logInfo.sendTaskLog("未找到登录按钮", userId, "DeepSeek");
+                return false;
+            }
+            
+        } catch (Exception fallbackException) {
+            logInfo.sendTaskLog("备用方案也失败: " + fallbackException.getMessage(), userId, "DeepSeek");
+            return false;
+        }
+    }
+
+    /**
+     * 等待并获取DeepSeek登录二维码
+     * @param page Playwright页面实例
      * @param userId 用户ID
      * @param screenshotUtil 截图工具
      * @return 二维码截图URL
+     * @deprecated 使用 navigateToLoginPage + 直接截图 替代
      */
     public String waitAndGetQRCode(Page page, String userId, ScreenshotUtil screenshotUtil) throws Exception {
         logInfo.sendTaskLog("正在获取DeepSeek登录二维码", userId, "DeepSeek");
 
-        // 导航到DeepSeek登录页面，启用等待直到网络空闲
-        page.navigate("https://chat.deepseek.com/");
-        page.waitForLoadState();
-
-        // 直接截图当前页面（包含登录按钮）
-        String url = screenshotUtil.screenshotAndUpload(page, "checkDeepSeekLogin.png");
-
-        logInfo.sendTaskLog("DeepSeek二维码获取成功", userId, "DeepSeek");
-        return url;
+        // 🔥 【已废弃】这个方法已被 navigateToLoginPage + 直接截图 替代
+        // 但为了向后兼容，保留这个方法
+        logInfo.sendTaskLog("使用旧版waitAndGetQRCode方法，建议使用navigateToLoginPage", userId, "DeepSeek");
+        
+        boolean success = navigateToLoginPage(page, userId);
+        if (!success) {
+            return "false";
+        }
+        
+        // 🔥 最终截图（无论上面哪种情况）
+        try {
+            String url = screenshotUtil.screenshotAndUpload(page, "checkDeepSeekLogin.png");
+            
+            if (url != null && !url.trim().isEmpty()) {
+                logInfo.sendTaskLog("DeepSeek二维码获取成功，URL: " + url, userId, "DeepSeek");
+                System.out.println("📱 [DeepSeek] 二维码截图成功: " + url);
+                return url;
+            } else {
+                logInfo.sendTaskLog("DeepSeek二维码截图失败，返回URL为空", userId, "DeepSeek");
+                System.err.println("❌ [DeepSeek] 截图失败，返回URL为空");
+                return "false";
+            }
+        } catch (Exception screenshotError) {
+            logInfo.sendTaskLog("DeepSeek二维码截图异常: " + screenshotError.getMessage(), userId, "DeepSeek");
+            System.err.println("❌ [DeepSeek] 截图异常: " + screenshotError.getMessage());
+            return "false";
+        }
     }
 
     /**
