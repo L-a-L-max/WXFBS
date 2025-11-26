@@ -134,57 +134,94 @@ public class DouBaoUtil {
         try {
             // 等待页面稳定
             page.waitForTimeout(1500);
-            
+
             // 🔥 优化：检测到"试一试"弹窗时，点击关闭按钮而不是点击"试一试"
             // 根据用户提供的DOM结构，关闭按钮是：<span role="img" class="semi-icon semi-icon-default close-btn-GElrfj">
-            
-            // 方案1：通过关闭按钮的class定位（最精确方案）
-            Locator closeButton = page.locator("span.close-btn-GElrfj");
-            
-            // 方案2：通过父容器定位关闭按钮（备用方案）
-            // 定位包含"向你介绍超能模式"文本的容器中的关闭按钮
-            Locator closeButtonInModal = page.locator("div:has-text(\"向你介绍超能模式\") span.close-btn-GElrfj");
-            
-            // 方案3：通过SVG图标定位关闭按钮（备用方案）
-            Locator closeButtonBySvg = page.locator("div:has-text(\"向你介绍超能模式\") svg[viewBox*='24']").first();
-            
+
+            // 首先检测是否存在超能模式介绍弹窗
+            Locator modalContainer = page.locator("div.intro-LoENFx");
+            Locator modalTitle = page.locator("div:has-text(\"向你介绍超能模式\")");
+
+            boolean hasModal = modalContainer.count() > 0 || modalTitle.count() > 0;
+
+            if (!hasModal) {
+                // 如果没有检测到弹窗，直接返回
+                return;
+            }
+
+            System.out.println("🔍 [豆包超能模式] 检测到超能模式介绍弹窗 [" + scenario + "]");
+
+            // 🔥 修复：使用正确的关闭按钮定位方式
+            // 方案1：通过精确的class和role属性定位关闭按钮（最准确）
+            Locator closeButtonExact = page.locator("span[role=\"img\"].close-btn-GElrfj");
+
+            // 方案2：通过父容器定位关闭按钮（备用方案1）
+            Locator closeButtonInModal = page.locator("div.intro-LoENFx span.close-btn-GElrfj");
+
+            // 方案3：通过SVG路径定位关闭按钮（备用方案2）
+            Locator closeButtonBySvg = page.locator("div.intro-LoENFx svg path[d*=\"20.307\"]").first();
+
+            // 方案4：通过完整的DOM结构定位（最后备用方案）
+            Locator closeButtonByStructure = page.locator("div:has-text(\"向你介绍超能模式\") span.semi-icon.close-btn-GElrfj");
+
             boolean buttonClicked = false;
-            
+
             // 优先使用最精确的方案
-            if (closeButtonInModal.count() > 0) {
-                logInfo.sendTaskLog("检测到超能模式介绍弹窗，正在自动点击关闭按钮 [" + scenario + "]", userId, "豆包");
+            if (closeButtonExact.count() > 0 && closeButtonExact.isVisible()) {
+                System.out.println("✅ [豆包超能模式] 使用精确定位点击关闭按钮 [" + scenario + "]");
+                closeButtonExact.click();
+                buttonClicked = true;
+            }
+            // 备用方案1：通过父容器定位
+            else if (closeButtonInModal.count() > 0 && closeButtonInModal.isVisible()) {
+                System.out.println("✅ [豆包超能模式] 使用父容器定位点击关闭按钮 [" + scenario + "]");
                 closeButtonInModal.click();
                 buttonClicked = true;
             }
-            // 备用方案1
-            else if (closeButton.count() > 0) {
-                logInfo.sendTaskLog("检测到关闭按钮，正在自动点击 [" + scenario + "]", userId, "豆包");
-                closeButton.click();
-                buttonClicked = true;
-            }
-            // 备用方案2：如果找不到关闭按钮，尝试点击SVG
-            else if (closeButtonBySvg.count() > 0) {
-                logInfo.sendTaskLog("检测到关闭图标，正在自动点击 [" + scenario + "]", userId, "豆包");
+            // 备用方案2：通过SVG路径定位
+            else if (closeButtonBySvg.count() > 0 && closeButtonBySvg.isVisible()) {
+                System.out.println("✅ [豆包超能模式] 使用SVG路径定位点击关闭按钮 [" + scenario + "]");
                 closeButtonBySvg.click();
                 buttonClicked = true;
             }
-            
-            if (buttonClicked) {
-                page.waitForTimeout(2000); // 等待点击完成和页面响应
-                logInfo.sendTaskLog("已成功点击关闭按钮，弹窗已关闭 [" + scenario + "]", userId, "豆包");
-                
-                // 🔥 点击后再次等待，确保模态框完全关闭
-                page.waitForTimeout(1000);
-            } else {
-                // 如果没有检测到弹窗，记录日志但不影响后续流程
-                logInfo.sendTaskLog("未检测到超能模式弹窗，继续后续流程 [" + scenario + "]", userId, "豆包");
+            // 备用方案3：通过完整结构定位
+            else if (closeButtonByStructure.count() > 0 && closeButtonByStructure.isVisible()) {
+                System.out.println("✅ [豆包超能模式] 使用结构定位点击关闭按钮 [" + scenario + "]");
+                closeButtonByStructure.click();
+                buttonClicked = true;
             }
+
+            if (buttonClicked) {
+                // 等待点击完成和页面响应
+                page.waitForTimeout(2000);
+                System.out.println("✅ [豆包超能模式] 关闭按钮点击成功，弹窗已关闭 [" + scenario + "]");
+
+                // 🔥 验证弹窗是否真的关闭了
+                page.waitForTimeout(1000);
+                boolean modalStillExists = page.locator("div.intro-LoENFx").count() > 0;
+                if (modalStillExists) {
+                    System.out.println("⚠️ [豆包超能模式] 弹窗仍然存在，尝试其他方式关闭 [" + scenario + "]");
+                    // 尝试按ESC键关闭
+                    page.keyboard().press("Escape");
+                    page.waitForTimeout(1000);
+                } else {
+                    System.out.println("✅ [豆包超能模式] 弹窗已完全关闭 [" + scenario + "]");
+                }
+            } else {
+                System.out.println("❌ [豆包超能模式] 未找到可点击的关闭按钮 [" + scenario + "]");
+                // 尝试按ESC键关闭弹窗
+                System.out.println("🔄 [豆包超能模式] 尝试使用ESC键关闭弹窗 [" + scenario + "]");
+                page.keyboard().press("Escape");
+                page.waitForTimeout(1000);
+            }
+
         } catch (Exception e) {
             // 如果按钮不存在或点击失败，记录但不抛出异常，不影响后续流程
+            System.err.println("❌ [豆包超能模式] 关闭按钮检测或点击失败 [" + scenario + "]: " + e.getMessage());
             UserLogUtil.sendElementWarningLog(userId, "豆包", "超能模式检测[" + scenario + "]", ".close-btn-GElrfj", "关闭按钮检测或点击失败：" + e.getMessage(), url + "/saveLogInfo");
         }
     }
-    
+
     /**
      * 兼容性方法：保持原有调用方式
      */
@@ -211,18 +248,12 @@ public class DouBaoUtil {
             // 等待页面加载完成，给足够时间让按钮渲染
             page.waitForTimeout(2000);  // 增加等待时间到2秒
             
-            // 🔥 修复：尝试等待至少一个模式按钮出现（最多等待5秒），静默处理
-            try {
-                page.locator(".switch-button-qHPwBT").first().waitFor(new Locator.WaitForOptions().setTimeout(5000));
-            } catch (TimeoutError e) {
-                // 按钮未找到可能是正常情况（比如页面结构变化），静默处理
-            } catch (Exception e) {
-                // 其他异常也静默处理
-            }
-            
-            // 定位所有模式按钮
-            Locator speedModeButton = page.locator(".switch-button-qHPwBT:has-text(\"极速\")").first();
-            Locator thinkModeButton = page.locator(".switch-button-qHPwBT:has-text(\"思考\")");
+            // 🔥 修复：普通用户的深度思考按钮使用不同的选择器
+            // 普通用户深度思考按钮：data-testid="use-deep-thinking-switch-btn"
+            Locator deepThinkingButton = page.locator("[data-testid='use-deep-thinking-switch-btn']");
+            // 超能用户的模式切换按钮
+            Locator speedModeButton = page.locator(".switch-button-iHFX3k:has-text(\"极速\"), .switch-button-qHPwBT:has-text(\"极速\")").first();
+            Locator thinkModeButton = page.locator(".switch-button-iHFX3k:has-text(\"思考\"), .switch-button-qHPwBT:has-text(\"思考\")").first();
             Locator superModeButton = page.locator("[data-testid='super-agent-mode-switch']");
             
             boolean hasSuperMode = superModeButton.count() > 0;
@@ -237,72 +268,91 @@ public class DouBaoUtil {
                     
                     if (thinkModeButton.count() > 0 && !thinkActive) {
                         logInfo.sendTaskLog("任务需要深度思考，正在切换到思考模式", userId, "豆包");
-                        thinkModeButton.click();
-                        page.waitForTimeout(500);
-                        logInfo.sendTaskLog("✓ 已启用思考模式", userId, "豆包");
+                        try {
+                            thinkModeButton.scrollIntoViewIfNeeded();
+                            Thread.sleep(300);
+                            thinkModeButton.click();
+                            page.waitForTimeout(500);
+                            logInfo.sendTaskLog("✓ 已启用思考模式", userId, "豆包");
+                        } catch (Exception e) {
+                            logInfo.sendTaskLog("⚠️ 思考模式点击失败，尝试备选方案：" + e.getMessage(), userId, "豆包");
+                        }
                     } else if (thinkActive) {
                         logInfo.sendTaskLog("✓ 思考模式已启用（无需切换）", userId, "豆包");
                     } else {
-                        // 如果思考模式按钮不存在，则使用超能模式作为备选
-                        boolean superActive = isModeActive(superModeButton);
-                        if (!superActive) {
-                            logInfo.sendTaskLog("思考模式不可用，切换到超能模式", userId, "豆包");
-                            superModeButton.click();
-                            page.waitForTimeout(500);
-                            logInfo.sendTaskLog("✓ 已启用超能模式（备选）", userId, "豆包");
-                        } else {
-                            logInfo.sendTaskLog("✓ 超能模式已启用（无需切换）", userId, "豆包");
-                        }
+                        logInfo.sendTaskLog("⚠️ 思考模式按钮不可用", userId, "豆包");
                     }
                 } else {
-                    // 不需要深度思考：必须使用极速模式
+                    // 不需要深度思考：必须使用极速模式，永不使用超能模式
                     boolean superActive = isModeActive(superModeButton);
                     boolean speedActive = speedModeButton.count() > 0 && isModeActive(speedModeButton);
                     
                     if (superActive) {
-                        // 当前是超能模式，需要切换到极速模式
+                        // 当前是超能模式，必须切换到极速模式
                         logInfo.sendTaskLog("当前为超能模式，但任务无需深度思考，正在切换到极速模式", userId, "豆包");
                         if (speedModeButton.count() > 0) {
-                            speedModeButton.click();
-                            page.waitForTimeout(500);
-                            logInfo.sendTaskLog("✓ 已从超能模式切换到极速模式", userId, "豆包");
+                            try {
+                                speedModeButton.scrollIntoViewIfNeeded();
+                                Thread.sleep(300);
+                                speedModeButton.click();
+                                page.waitForTimeout(500);
+                                logInfo.sendTaskLog("✓ 已从超能模式切换到极速模式", userId, "豆包");
+                            } catch (Exception e) {
+                                logInfo.sendTaskLog("⚠️ 极速模式切换失败：" + e.getMessage(), userId, "豆包");
+                            }
                         }
                     } else if (!speedActive && speedModeButton.count() > 0) {
                         // 既不是超能也不是极速，切换到极速
                         logInfo.sendTaskLog("正在切换到极速模式", userId, "豆包");
-                        speedModeButton.click();
-                        page.waitForTimeout(500);
-                        logInfo.sendTaskLog("✓ 已启用极速模式", userId, "豆包");
+                        try {
+                            speedModeButton.scrollIntoViewIfNeeded();
+                            Thread.sleep(300);
+                            speedModeButton.click();
+                            page.waitForTimeout(500);
+                            logInfo.sendTaskLog("✓ 已启用极速模式", userId, "豆包");
+                        } catch (Exception e) {
+                            logInfo.sendTaskLog("⚠️ 极速模式启用失败：" + e.getMessage(), userId, "豆包");
+                        }
                     } else {
                         logInfo.sendTaskLog("✓ 极速模式已启用（无需切换）", userId, "豆包");
                     }
                 }
             } else {
                 // ========== 普通用户（无超能权限）==========
+                logInfo.sendTaskLog("当前为普通用户，使用深度思考按钮", userId, "豆包");
                 
                 if (needDeepThinking) {
-                    // 需要深度思考：使用思考模式
-                    boolean thinkActive = thinkModeButton.count() > 0 && isModeActive(thinkModeButton);
-                    
-                    if (thinkModeButton.count() > 0 && !thinkActive) {
-                        logInfo.sendTaskLog("任务需要深度思考，正在切换到思考模式", userId, "豆包");
-                        thinkModeButton.click();
-                        page.waitForTimeout(500);
-                        logInfo.sendTaskLog("✓ 已启用思考模式", userId, "豆包");
+                    // 🔥 修复：普通用户使用深度思考按钮，检查是否已激活
+                    if (deepThinkingButton.count() > 0) {
+                        // 检查深度思考按钮是否已激活 (data-checked="true")
+                        String isChecked = deepThinkingButton.getAttribute("data-checked");
+                        if (!"true".equals(isChecked)) {
+                            logInfo.sendTaskLog("任务需要深度思考，正在启用深度思考按钮", userId, "豆包");
+                            deepThinkingButton.scrollIntoViewIfNeeded();
+                            deepThinkingButton.click();
+                            page.waitForTimeout(500);
+                            logInfo.sendTaskLog("✓ 已启用深度思考模式", userId, "豆包");
+                        } else {
+                            logInfo.sendTaskLog("✓ 深度思考模式已启用（无需切换）", userId, "豆包");
+                        }
                     } else {
-                        logInfo.sendTaskLog("✓ 思考模式已启用（无需切换）", userId, "豆包");
+                        logInfo.sendTaskLog("⚠️ 未找到深度思考按钮", userId, "豆包");
                     }
                 } else {
-                    // 不需要深度思考：使用极速模式
-                    boolean speedActive = speedModeButton.count() > 0 && isModeActive(speedModeButton);
-                    
-                    if (speedModeButton.count() > 0 && !speedActive) {
-                        logInfo.sendTaskLog("任务无需深度思考，正在切换到极速模式", userId, "豆包");
-                        speedModeButton.click();
-                        page.waitForTimeout(500);
-                        logInfo.sendTaskLog("✓ 已启用极速模式", userId, "豆包");
+                    // 不需要深度思考：确保深度思考按钮未激活
+                    if (deepThinkingButton.count() > 0) {
+                        String isChecked = deepThinkingButton.getAttribute("data-checked");
+                        if ("true".equals(isChecked)) {
+                            logInfo.sendTaskLog("任务无需深度思考，正在关闭深度思考按钮", userId, "豆包");
+                            deepThinkingButton.scrollIntoViewIfNeeded();
+                            deepThinkingButton.click();
+                            page.waitForTimeout(500);
+                            logInfo.sendTaskLog("✓ 已关闭深度思考模式", userId, "豆包");
+                        } else {
+                            logInfo.sendTaskLog("✓ 深度思考模式已关闭（无需切换）", userId, "豆包");
+                        }
                     } else {
-                        logInfo.sendTaskLog("✓ 极速模式已启用（无需切换）", userId, "豆包");
+                        logInfo.sendTaskLog("✓ 普通模式（未找到深度思考按钮）", userId, "豆包");
                     }
                 }
             }
@@ -923,7 +973,20 @@ public class DouBaoUtil {
                         logInfo.sendTaskLog("⏳ 等待AI开始生成...", userId, aiName);
                     } else {
                         // 曾经检测到生成，现在停止了
-                        // 需要进一步验证：检测复制按钮 + 内容稳定性
+                        // 需要进一步验证：检测复制按钮 + 内容稳定性 + 发送按钮状态
+                        
+                        // 🔥 保底判断：检测发送按钮状态（从中止按钮变回灰色发送按钮）
+                        boolean sendButtonDisabled = false;
+                        try {
+                            Locator sendButton = page.locator("[data-testid='chat_input_send_button']");
+                            if (sendButton.count() > 0) {
+                                // 检查按钮是否被禁用（灰色发送按钮状态）
+                                String disabledAttr = sendButton.getAttribute("aria-disabled");
+                                sendButtonDisabled = "true".equals(disabledAttr);
+                            }
+                        } catch (Exception e) {
+                            // 忽略
+                        }
                         
                         // 1. 检测复制按钮
                         boolean hasCopyButton = false;
@@ -946,16 +1009,32 @@ public class DouBaoUtil {
                         boolean contentStable = (currentContentLength > 0 && currentContentLength == lastContentLength);
                         lastContentLength = currentContentLength;
                         
-                        logInfo.sendTaskLog(String.format("📊 验证完成状态 - 复制按钮: %s, 内容长度: %d, 内容稳定: %s", 
-                            hasCopyButton ? "存在" : "不存在", currentContentLength, contentStable ? "是" : "否"), userId, aiName);
+                        logInfo.sendTaskLog(String.format("📊 验证完成状态 - 发送按钮: %s, 复制按钮: %s, 内容长度: %d, 内容稳定: %s", 
+                            sendButtonDisabled ? "已禁用" : "可用", hasCopyButton ? "存在" : "不存在", currentContentLength, contentStable ? "是" : "否"), userId, aiName);
                         
                         // 判断是否真正完成
                         if (hasCopyButton && contentStable) {
                             stableCount++;
-                            logInfo.sendTaskLog(String.format("✅ 完成验证通过 (稳定次数: %d/2)", stableCount), userId, aiName);
-                            if (stableCount >= 2) {
-                                // 连续2次检测到完成状态（复制按钮存在 + 内容稳定）
+                            logInfo.sendTaskLog(String.format("✅ 完成验证通过 (稳定次数: %d/1)", stableCount), userId, aiName);
+                            if (stableCount >= 1) {
+                                // 检测到完成状态（复制按钮存在 + 内容稳定）
                                 logInfo.sendTaskLog("✅ AI生成已完成（复制按钮出现 + 内容稳定）", userId, aiName);
+                                break;
+                            }
+                        } else if (hasCopyButton && currentContentLength > 0) {
+                            // 即使内容不稳定，但复制按钮存在且有内容，也认为可能完成
+                            stableCount++;
+                            logInfo.sendTaskLog(String.format("⚠️ 复制按钮存在但内容未稳定 (尝试次数: %d/1)", stableCount), userId, aiName);
+                            if (stableCount >= 1) {
+                                logInfo.sendTaskLog("✅ AI生成已完成（复制按钮出现，内容长度: " + currentContentLength + "）", userId, aiName);
+                                break;
+                            }
+                        } else if (sendButtonDisabled && currentContentLength > 0) {
+                            // 🔥 保底条件：发送按钮已禁用（从中止变回灰色）且有内容，说明生成完成
+                            stableCount++;
+                            logInfo.sendTaskLog(String.format("🛡️ 保底判断：发送按钮已禁用，内容长度: %d (尝试次数: %d/1)", currentContentLength, stableCount), userId, aiName);
+                            if (stableCount >= 1) {
+                                logInfo.sendTaskLog("✅ AI生成已完成（发送按钮状态确认）", userId, aiName);
                                 break;
                             }
                         } else {
