@@ -1437,7 +1437,12 @@ public class AIGCController {
             logInfo.sendTaskLog("秘塔页面打开完成", userId, "秘塔");
 
 
-            if (!"true".equalsIgnoreCase(userInfoRequest.getIsNewChat()) && metasoChatId != null && !metasoChatId.isEmpty()) {
+            // 🔥 修复：判断是否为继续对话（非新对话且有chatId）
+            boolean isContinueChat = !"true".equalsIgnoreCase(userInfoRequest.getIsNewChat()) && metasoChatId != null && !metasoChatId.isEmpty();
+            
+            if (isContinueChat) {
+                // 继续对话：直接输入，无需选择模型
+                logInfo.sendTaskLog("继续对话模式，无需选择模型", userId, "秘塔");
                 Thread.sleep(1000);
                 // 使用placeholder定位文本框（兼容继续对话页面）
                 Locator textbox = page.getByPlaceholder("请输入您的问题");
@@ -1449,61 +1454,162 @@ public class AIGCController {
                 textbox.press("Enter");
                 logInfo.sendTaskLog("指令已自动发送成功", userId, "秘塔");
             } else {
-                if (roles.contains("metaso-jssk")) {
-                    // 定位极速思考按钮
-                    Thread.sleep(1000);
-//                    page.locator("//*[@id=\"searchRoot\"]/div[1]/div[2]/div[5]/form/div[2]/div[1]/div/div").click();
-                    page.locator("//button[@class='MuiButtonBase-root MuiIconButton-root MuiIconButton-sizeMedium -ml-1! css-yav6cn']//*[name()='svg']").click();
-                    Thread.sleep(1000);
-                    page.locator("//span[contains(text(),'模型')]").click();
-                    Thread.sleep(1000);
-
-                    //点击极速思考按钮
-                    page.locator("//div[contains(text(),'快思考')]").click();
-
-                    Thread.sleep(1000);
-
-                    logInfo.sendTaskLog("已启动极速思考模式", userId, "秘塔");
-                } else if (roles.contains("metaso-jisu")) {
-                    // 定位极速按钮
-                    Thread.sleep(1000);
-//                    page.locator("//*[@id=\"searchRoot\"]/div[1]/div[2]/div[5]/form/div[2]/div[1]/div/div").click();
-                    page.locator("//button[@class='MuiButtonBase-root MuiIconButton-root MuiIconButton-sizeMedium -ml-1! css-yav6cn']//*[name()='svg']").click();
-                    Thread.sleep(1000);
-                    page.locator("//span[contains(text(),'模型')]").click();
-                    Thread.sleep(1000);
-
-                    //点击极速按钮
-                    page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("极速 快如闪电，直给答案")).click();
-
-                    Thread.sleep(1000);
-
-                    logInfo.sendTaskLog("已启动极速模式", userId, "秘塔");
-                } else if (roles.contains("metaso-csk")) {
-                    // 定位长思考按钮
-                    Thread.sleep(1000);
-//                    page.locator("//*[@id=\"searchRoot\"]/div[1]/div[2]/div[5]/form/div[2]/div[1]/div/div").click();
-                    page.locator("//button[@class='MuiButtonBase-root MuiIconButton-root MuiIconButton-sizeMedium -ml-1! css-yav6cn']//*[name()='svg']").click();
-                    Thread.sleep(1000);
-                    page.locator("//span[contains(text(),'模型')]").click();
-                    Thread.sleep(1000);
-
-                    //点击长思考按钮
-                    page.locator("//div[contains(@role,'tooltip')]//div[3]//div[1]//div[1]//div[1]").click();
-
-                    Thread.sleep(1000);
-
-                    logInfo.sendTaskLog("已启动长思考模式", userId, "秘塔");
+                // 新对话：需要选择模型
+                // 🔥 修复：秘塔新界面结构 - 根据实际DOM结构修复
+                try {
+                    // 先定位输入框 - 使用更精确的选择器
+                    Locator inputTextarea = page.locator("textarea.search-consult-textarea");
+                    if (inputTextarea.count() == 0) {
+                        // 备用选择器
+                        inputTextarea = page.locator("textarea[placeholder*='请输入']");
+                    }
+                    
+                    if (inputTextarea.count() > 0) {
+                        logInfo.sendTaskLog("✓ 找到输入框", userId, "秘塔");
+                        inputTextarea.click();
+                        Thread.sleep(1000);
+                        
+                        // 根据不同角色选择对应的模式
+                        if (roles.contains("metaso-jssk")) {
+                            logInfo.sendTaskLog("正在启动快思考模式", userId, "秘塔");
+                            // 🔥 修复：先点击设置按钮打开设置菜单
+                            Locator settingsButton = page.locator("button.css-1b1zds9:has(svg[viewBox='0 0 24 24'])").first();
+                            if (settingsButton.count() > 0) {
+                                settingsButton.click();
+                                Thread.sleep(1500);
+                                logInfo.sendTaskLog("✓ 已打开设置菜单", userId, "秘塔");
+                                
+                                // 然后点击模型选项
+                                Locator modelButton = page.locator("div.meta-setting-item:has(span:text('模型'))");
+                                if (modelButton.count() > 0) {
+                                    modelButton.click();
+                                    Thread.sleep(1500);
+                                    logInfo.sendTaskLog("✓ 已打开模型选择菜单", userId, "秘塔");
+                                    
+                                    // 选择快思考选项
+                                    Locator fastThinkOption = page.locator("div.meta-selector-v2-list-item:has-text('快思考')").first();
+                                    if (fastThinkOption.count() > 0) {
+                                        fastThinkOption.click();
+                                        Thread.sleep(1000);
+                                        logInfo.sendTaskLog("✓ 已选择快思考模式", userId, "秘塔");
+                                        
+                                        // 🔥 关键修复：点击页面其他区域关闭弹窗
+                                        inputTextarea.click();
+                                        Thread.sleep(500);
+                                        logInfo.sendTaskLog("✓ 已关闭设置弹窗", userId, "秘塔");
+                                    } else {
+                                        logInfo.sendTaskLog("⚠️ 未找到快思考选项", userId, "秘塔");
+                                    }
+                                } else {
+                                    logInfo.sendTaskLog("⚠️ 未找到模型选择按钮", userId, "秘塔");
+                                }
+                            } else {
+                                logInfo.sendTaskLog("⚠️ 未找到设置按钮", userId, "秘塔");
+                            }
+                        } else if (roles.contains("metaso-jisu")) {
+                            logInfo.sendTaskLog("正在启动极速模式", userId, "秘塔");
+                            // 🔥 修复：先点击设置按钮打开设置菜单
+                            Locator settingsButton = page.locator("button.css-1b1zds9:has(svg[viewBox='0 0 24 24'])").first();
+                            if (settingsButton.count() > 0) {
+                                settingsButton.click();
+                                Thread.sleep(1500);
+                                logInfo.sendTaskLog("✓ 已打开设置菜单", userId, "秘塔");
+                                
+                                // 然后点击模型选项
+                                Locator modelButton = page.locator("div.meta-setting-item:has(span:text('模型'))");
+                                if (modelButton.count() > 0) {
+                                    modelButton.click();
+                                    Thread.sleep(1500);
+                                    logInfo.sendTaskLog("✓ 已打开模型选择菜单", userId, "秘塔");
+                                    
+                                    // 选择极速选项
+                                    Locator speedOption = page.locator("div.meta-selector-v2-list-item:has-text('极速')").first();
+                                    if (speedOption.count() > 0) {
+                                        speedOption.click();
+                                        Thread.sleep(1000);
+                                        logInfo.sendTaskLog("✓ 已选择极速模式", userId, "秘塔");
+                                        
+                                        // 🔥 关键修复：点击页面其他区域关闭弹窗
+                                        inputTextarea.click();
+                                        Thread.sleep(500);
+                                        logInfo.sendTaskLog("✓ 已关闭设置弹窗", userId, "秘塔");
+                                    } else {
+                                        logInfo.sendTaskLog("⚠️ 未找到极速选项", userId, "秘塔");
+                                    }
+                                } else {
+                                    logInfo.sendTaskLog("⚠️ 未找到模型选择按钮", userId, "秘塔");
+                                }
+                            } else {
+                                logInfo.sendTaskLog("⚠️ 未找到设置按钮", userId, "秘塔");
+                            }
+                        } else if (roles.contains("metaso-csk")) {
+                            logInfo.sendTaskLog("正在启动长思考模式", userId, "秘塔");
+                            // 🔥 修复：先点击设置按钮打开设置菜单
+                            Locator settingsButton = page.locator("button.css-1b1zds9:has(svg[viewBox='0 0 24 24'])").first();
+                            if (settingsButton.count() > 0) {
+                                settingsButton.click();
+                                Thread.sleep(1500);
+                                logInfo.sendTaskLog("✓ 已打开设置菜单", userId, "秘塔");
+                                
+                                // 然后点击模型选项
+                                Locator modelButton = page.locator("div.meta-setting-item:has(span:text('模型'))");
+                                if (modelButton.count() > 0) {
+                                    modelButton.click();
+                                    Thread.sleep(1500);
+                                    logInfo.sendTaskLog("✓ 已打开模型选择菜单", userId, "秘塔");
+                                    
+                                    // 选择长思考选项
+                                    Locator longThinkOption = page.locator("div.meta-selector-v2-list-item:has-text('长思考')").first();
+                                    if (longThinkOption.count() > 0) {
+                                        longThinkOption.click();
+                                        Thread.sleep(1000);
+                                        logInfo.sendTaskLog("✓ 已选择长思考模式", userId, "秘塔");
+                                        
+                                        // 🔥 关键修复：点击页面其他区域关闭弹窗
+                                        inputTextarea.click();
+                                        Thread.sleep(500);
+                                        logInfo.sendTaskLog("✓ 已关闭设置弹窗", userId, "秘塔");
+                                    } else {
+                                        logInfo.sendTaskLog("⚠️ 未找到长思考选项", userId, "秘塔");
+                                    }
+                                } else {
+                                    logInfo.sendTaskLog("⚠️ 未找到模型选择按钮", userId, "秘塔");
+                                }
+                            } else {
+                                logInfo.sendTaskLog("⚠️ 未找到设置按钮", userId, "秘塔");
+                            }
+                        }
+                        
+                        // 等待模式选择完成
+                        Thread.sleep(1000);
+                        
+                        // 输入内容
+                        inputTextarea.fill(userPrompt);
+                        logInfo.sendTaskLog("用户指令已自动输入完成", userId, "秘塔");
+                        Thread.sleep(1000);
+                        
+                        // 发送消息 - 使用更精确的发送按钮选择器
+                        Locator sendButton = page.locator("button.send-arrow-button");
+                        if (sendButton.count() == 0) {
+                            // 备用选择器
+                            sendButton = page.locator("button[aria-label='点击发送问题']");
+                        }
+                        
+                        if (sendButton.count() > 0 && !sendButton.isDisabled()) {
+                            sendButton.click();
+                            logInfo.sendTaskLog("✓ 指令已通过发送按钮发送成功", userId, "秘塔");
+                        } else {
+                            // 备用方案：按Enter键发送
+                            inputTextarea.press("Enter");
+                            logInfo.sendTaskLog("✓ 指令已通过Enter键发送成功", userId, "秘塔");
+                        }
+                    } else {
+                        logInfo.sendTaskLog("❌ 未找到输入框，请检查页面是否正确加载", userId, "秘塔");
+                    }
+                } catch (Exception e) {
+                    logInfo.sendTaskLog("❌ 秘塔操作异常: " + e.getMessage(), userId, "秘塔");
+                    e.printStackTrace();
                 }
-
-                Thread.sleep(1000);
-                page.getByRole(AriaRole.TEXTBOX, new Page.GetByRoleOptions().setName("请输入，Enter键发送，Shift+Enter键换行")).click();
-                Thread.sleep(1000);
-                page.getByRole(AriaRole.TEXTBOX, new Page.GetByRoleOptions().setName("请输入，Enter键发送，Shift+Enter键换行")).fill(userPrompt);
-                logInfo.sendTaskLog("用户指令已自动输入完成", userId, "秘塔");
-                Thread.sleep(1000);
-                page.getByRole(AriaRole.TEXTBOX, new Page.GetByRoleOptions().setName("请输入，Enter键发送，Shift+Enter键换行")).press("Enter");
-                logInfo.sendTaskLog("指令已自动发送成功", userId, "秘塔");
             }
             Thread.sleep(3000);
             //关闭搜索额度用尽弹窗
@@ -1538,7 +1644,7 @@ public class AIGCController {
                 logInfo.sendTaskLog("检测到模型相关问题，直接返回标准答案", userId, "秘塔");
                 String shareUrl = page.url();
                 String sharImgUrl = "";
-                logInfo.sendResData(modelAnswer, userId, "秘塔", "RETURN_METASO_RES", shareUrl, sharImgUrl, userInfoRequest.getTaskId());
+                logInfo.sendResData(modelAnswer, userId, "mita", "RETURN_METASO_RES", shareUrl, sharImgUrl, userInfoRequest.getTaskId());
                 userInfoRequest.setDraftContent(modelAnswer);
                 userInfoRequest.setAiName("秘塔");
                 userInfoRequest.setShareUrl(shareUrl);
@@ -1639,7 +1745,7 @@ public class AIGCController {
             logInfo.sendTaskLog("执行完成", userId, "秘塔");
             // 更新WebSocket发送的正则，兼容两种格式
             logInfo.sendChatData(page, "/search(?:-v2)?/([^/?#]+)", userId, "RETURN_METASO_CHATID", 1);
-            logInfo.sendResData(finalContent, userId, "秘塔", "RETURN_METASO_RES", shareUrl, sharImgUrl, userInfoRequest.getTaskId());
+            logInfo.sendResData(finalContent, userId, "mita", "RETURN_METASO_RES", shareUrl, sharImgUrl, userInfoRequest.getTaskId());
 
             //保存数据库
             userInfoRequest.setMetasoChatId(capturedMetasoChatId); // 保存会话ID到数据库
@@ -1650,6 +1756,16 @@ public class AIGCController {
             RestUtils.post(url + "/saveDraftContent", userInfoRequest);
             return McpResult.success(finalContent, shareUrl);
         } catch (Exception e) {
+            // 🔥 修复：添加详细的异常日志输出
+            String userId = userInfoRequest.getUserId(); // 在catch块中重新获取userId
+            logInfo.sendTaskLog("❌ 秘塔执行异常: " + e.getMessage(), userId, "秘塔");
+            System.err.println("❌ [秘塔执行] 详细异常信息:");
+            System.err.println("   用户ID: " + userId);
+            System.err.println("   任务ID: " + userInfoRequest.getTaskId());
+            System.err.println("   用户指令: " + userInfoRequest.getUserPrompt());
+            System.err.println("   错误类型: " + e.getClass().getSimpleName());
+            System.err.println("   错误信息: " + e.getMessage());
+            e.printStackTrace();
             throw e;
         }
     }

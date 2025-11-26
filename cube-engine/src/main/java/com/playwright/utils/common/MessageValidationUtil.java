@@ -141,76 +141,35 @@ public class MessageValidationUtil {
                 contentPreview = plainText.length() > 20 ? plainText.substring(0, 20) + "..." : plainText;
             }
             
-            // 保存到数据库并获取真实ID
-            String logId = saveAIResultToDatabase(userId, aiName, content, shareUrl, shareImgUrl, chatId);
-            
             // 构建附加信息
             StringBuilder extraInfo = new StringBuilder();
             if (shareUrl != null && !shareUrl.isEmpty()) {
-                extraInfo.append(" | 分享链接:").append(shareUrl.length() > 30 ? shareUrl.substring(0, 30) + "..." : shareUrl);
+                extraInfo.append(" | 分享链接:").append(shareUrl);
             }
             if (shareImgUrl != null && !shareImgUrl.isEmpty()) {
                 extraInfo.append(" | 截图:").append(shareImgUrl.substring(shareImgUrl.lastIndexOf("/") + 1));
             }
             if (chatId != null && !chatId.isEmpty()) {
-                extraInfo.append(" | 会话ID:").append(chatId.length() > 10 ? chatId.substring(0, 10) + "..." : chatId);
+                extraInfo.append(" | 会话ID:").append(chatId);
             }
             
-            // 终端显示完整结果
-            System.out.println(String.format("✅ %s完成 | 用户:%s | 内容:%s%s | 已存储:数据库ID[%s]", 
+            // 终端显示完整结果（移除数据库ID显示）
+            System.out.println(String.format("✅ %s完成 | 用户:%s | 内容:%s%s", 
                 aiName != null ? aiName : "AI", 
                 userId != null ? userId : "未知",
                 contentPreview,
-                extraInfo.toString(),
-                logId != null ? logId : "保存失败"));
+                extraInfo.toString()));
                 
         } catch (Exception e) {
-            // 压缩错误日志显示，并尝试保存错误到数据库
+            // 简化错误日志显示（移除数据库ID相关）
             String errorMsg = e.getMessage();
             if (errorMsg != null && errorMsg.length() > 50) {
                 errorMsg = errorMsg.substring(0, 50) + "...";
             }
-            String errorLogId = saveErrorToDatabase(userId, "记录AI结果", e);
-            System.err.println("❌ 记录AI结果失败: " + errorMsg + " | 已存储:数据库ID[" + (errorLogId != null ? errorLogId : "保存失败") + "]");
+            System.err.println("❌ 记录AI结果失败: " + errorMsg);
         }
     }
     
-    /**
-     * 保存AI结果到数据库并返回真实的数据库ID
-     */
-    private static String saveAIResultToDatabase(String userId, String aiName, String content, 
-                                               String shareUrl, String shareImgUrl, String chatId) {
-        try {
-            // 构建详细的执行结果
-            StringBuilder result = new StringBuilder();
-            result.append(String.format("AI执行成功 | AI名称:%s | 内容:%s", aiName, content));
-            if (shareUrl != null && !shareUrl.isEmpty()) {
-                result.append(" | 分享链接:").append(shareUrl);
-            }
-            if (shareImgUrl != null && !shareImgUrl.isEmpty()) {
-                result.append(" | 截图URL:").append(shareImgUrl);
-            }
-            if (chatId != null && !chatId.isEmpty()) {
-                result.append(" | 会话ID:").append(chatId);
-            }
-            
-            // 使用UserLogUtil保存成功日志并获取ID
-            return UserLogUtil.sendAISuccessLogWithId(userId, aiName, "AI内容生成", result.toString(), System.currentTimeMillis(), "http://175.178.154.216:8080/saveLogInfo");
-        } catch (Exception e) {
-            return null;
-        }
-    }
-    
-    /**
-     * 保存错误信息到数据库并返回真实的数据库ID
-     */
-    private static String saveErrorToDatabase(String userId, String operation, Exception e) {
-        try {
-            return UserLogUtil.sendExceptionLogWithId(userId, operation, "AI结果记录", e, "http://175.178.154.216:8080/saveLogInfo");
-        } catch (Exception ex) {
-            return null;
-        }
-    }
     
     /**
      * 判断是否为重要的任务日志
