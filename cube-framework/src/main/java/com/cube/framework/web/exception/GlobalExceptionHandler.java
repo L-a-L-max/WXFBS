@@ -141,67 +141,8 @@ public class GlobalExceptionHandler
     public AjaxResult handleException(Exception e, HttpServletRequest request)
     {
         String requestURI = request.getRequestURI();
-        
-        // 简化常见的无关紧要异常日志
-        if (isMinorException(e)) {
-            log.warn("🔧 [简化日志] {} - {} | 客户端连接问题，已自动处理", requestURI, e.getClass().getSimpleName());
-            
-            // 对于连接已断开的异常，不尝试返回响应，避免二次异常
-            if (isConnectionBrokenException(e)) {
-                return null; // 返回null，让Spring知道不需要写入响应
-            }
-        } else {
-            log.error("请求地址'{}',发生系统异常.", requestURI, e);
-        }
-        
+        log.error("请求地址'{}',发生系统异常.", requestURI, e);
         return AjaxResult.error(e.getMessage());
-    }
-    
-    /**
-     * 判断是否为无关紧要的异常
-     */
-    private boolean isMinorException(Exception e) {
-        String message = e.getMessage();
-        String className = e.getClass().getSimpleName();
-        
-        // 连接重置异常
-        if (className.contains("AsyncRequestNotUsableException") || 
-            (message != null && message.contains("Connection reset by peer"))) {
-            return true;
-        }
-        
-        // HTTP消息转换异常
-        if (className.contains("HttpMessageNotWritableException")) {
-            return true;
-        }
-        
-        // 客户端中断异常
-        if (className.contains("ClientAbortException")) {
-            return true;
-        }
-        
-        return false;
-    }
-    
-    /**
-     * 判断是否为连接已断开的异常
-     */
-    private boolean isConnectionBrokenException(Exception e) {
-        String message = e.getMessage();
-        String className = e.getClass().getSimpleName();
-        
-        // 连接重置异常 - 客户端已断开连接
-        if (className.contains("AsyncRequestNotUsableException") && 
-            message != null && message.contains("Connection reset by peer")) {
-            return true;
-        }
-        
-        // 客户端中断异常
-        if (className.contains("ClientAbortException")) {
-            return true;
-        }
-        
-        return false;
     }
 
     /**

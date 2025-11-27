@@ -59,17 +59,15 @@ public class PointsSystem extends BaseController {
     @PostMapping("/updateUserPoints")
     @Log(title = "企微管理-用户设置积分")
     public ResultBody updateUserPoints(@RequestBody Points points){
-        points.setCreateId(getUserId());
-        points.setCreateName(getNickName());
-        pointsMapper.updateUserPoints(points);
-        pointsMapper.saveUserPointsRecord(points);
-        
-        // 🔥 暂时注释以太坊相关调用，避免资金不足异常
-        // points.setMainAddress("0x2edc4228a84d672affe8a594033cb84a029bcafc");
-        // points.setMainPrivateKey("f34f737203aa370f53ef0e041c1bff36bf59db8eb662cdb447f01d9634374dd");
-        // ethTranPC(points);
-        
-        System.out.println("✅ 积分更新完成 | 用户:" + points.getUserId() + " | 变更:" + points.getChangeAmount());
+
+
+           points.setCreateId(getUserId());
+           points.setCreateName(getNickName());
+           pointsMapper.updateUserPoints(points);
+           pointsMapper.saveUserPointsRecord(points);
+           points.setMainAddress("0x2edc4228a84d672affe8a594033cb84a029bcafc");
+           points.setMainPrivateKey("f34f737203aa370f53ef0e041c1bff36bf59db8eb662cdb447f01d9634374dd");
+           ethTranPC(points);
         return ResultBody.success("修改成功");
     }
 
@@ -136,19 +134,23 @@ public class PointsSystem extends BaseController {
     public void setUserPoint(String userId,String changeType,Integer changeAmount,String mainAddress,String mainPrivateKey){
         try {
             if(StringUtils.isNotEmpty(userId)){
-                Thread.sleep(1000);
-                // 修改用户积分余额
+                Thread.sleep( 1000);
+                //先修改用户积分余额
                 pointsMapper.setUserPoints(userId,changeType,changeAmount);
-                // 插入记录
+//                插入记录
                 pointsMapper.setUserPointRecord(userId,changeType,changeAmount);
-                
-                // 🔥 暂时注释以太坊相关调用，避免资金不足异常
-                // ethTranApp(userId,changeType,changeAmount,mainAddress,mainPrivateKey);
-                
-                System.out.println("✅ 积分埋点完成 | 用户:" + userId + " | 类型:" + changeType + " | 变更:" + changeAmount);
+//                调用以太坊产生交易，并通过poa机制一秒出一个块打包交易
+                ethTranApp(userId,changeType,changeAmount,mainAddress,mainPrivateKey);
             }
         } catch (Exception e) {
-            System.err.println("❌ 积分埋点失败 | 用户:" + userId + " | 错误:" + e.getMessage());
+            try {
+            Thread.sleep( 1000);
+            ethTranApp(userId,changeType,changeAmount,mainAddress,mainPrivateKey);
+            e.printStackTrace();
+            } catch (Exception e1) {
+                ethTranApp(userId,changeType,changeAmount,mainAddress,mainPrivateKey);
+                e1.printStackTrace();
+            }
         }
     }
     @Async
