@@ -97,4 +97,77 @@
         where platform_id = #{platformId}
     </update>
 
+    <!-- 查询我创建的提示词模板 -->
+    <select id="getMyCreatedCallWords" resultMap="CallWordResult">
+        <include refid="selectCallWordVo"/>
+        <where>
+            user_id = #{userId}
+            <if test="platformId != null and platformId != ''">
+                and platform_id like concat('%', #{platformId}, '%')
+            </if>
+        </where>
+        order by update_time desc
+        limit #{offset}, #{limit}
+    </select>
+
+    <!-- 统计我创建的提示词模板数量 -->
+    <select id="countMyCreatedCallWords" resultType="int">
+        select count(1) from wc_call_word
+        <where>
+            user_id = #{userId}
+            <if test="platformId != null and platformId != ''">
+                and platform_id like concat('%', #{platformId}, '%')
+            </if>
+        </where>
+    </select>
+
+    <!-- 查询市场中的提示词模板（已上架的） -->
+    <select id="getMarketCallWords" resultType="java.util.HashMap">
+        select 
+            cw.platform_id as id,
+            cw.platform_id as name,
+            cw.word_content as prompt,
+            cw.price,
+            cw.status,
+            cw.sales_count as salesCount,
+            cw.income_total as incomeTotal,
+            u.user_name as authorName
+        from wc_call_word cw
+        left join sys_user u on cw.user_id = u.user_id COLLATE utf8mb4_unicode_ci
+        <where>
+            cw.status = 1
+            and (cw.is_common = 0 or cw.is_common is null)
+            <if test="platformId != null and platformId != ''">
+                and cw.platform_id like concat('%', #{platformId}, '%')
+            </if>
+            <if test="minPrice != null">
+                and cw.price >= #{minPrice}
+            </if>
+            <if test="maxPrice != null">
+                and cw.price &lt;= #{maxPrice}
+            </if>
+        </where>
+        order by cw.sales_count desc, cw.update_time desc
+        limit #{offset}, #{limit}
+    </select>
+
+    <!-- 统计市场中的提示词模板数量 -->
+    <select id="countMarketCallWords" resultType="int">
+        select count(1)
+        from wc_call_word cw
+        <where>
+            cw.status = 1
+            and (cw.is_common = 0 or cw.is_common is null)
+            <if test="platformId != null and platformId != ''">
+                and cw.platform_id like concat('%', #{platformId}, '%')
+            </if>
+            <if test="minPrice != null">
+                and cw.price >= #{minPrice}
+            </if>
+            <if test="maxPrice != null">
+                and cw.price &lt;= #{maxPrice}
+            </if>
+        </where>
+    </select>
+
 </mapper>

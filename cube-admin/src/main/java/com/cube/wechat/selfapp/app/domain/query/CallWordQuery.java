@@ -18,4 +18,10 @@ public class CallWordQuery {
     private Integer pageSize;
 
     private String wordContent;
+    
+    private String platformId;
+    
+    private java.math.BigDecimal minPrice;
+    
+    private java.math.BigDecimal maxPrice;
 }

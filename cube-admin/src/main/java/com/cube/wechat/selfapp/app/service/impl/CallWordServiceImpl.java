@@ -2,6 +2,7 @@ package com.cube.wechat.selfapp.app.service.impl;
 
 import com.cube.common.core.domain.AjaxResult;
 import com.cube.common.utils.SecurityUtils;
+import com.cube.point.controller.PointsSystem;
 import com.cube.wechat.selfapp.app.domain.CallWord;
 import com.cube.wechat.selfapp.app.domain.query.CallWordQuery;
 import com.cube.wechat.selfapp.app.mapper.CallWordMapper;
@@ -35,6 +36,9 @@ public class CallWordServiceImpl implements CallWordService {
 
     @Autowired
     private TemplateAuthorMapper templateAuthorMapper;
+
+    @Autowired
+    private PointsSystem pointsSystem;
 
     @Override
     public CallWord getCallWord(String platformId) {
@@ -235,6 +239,20 @@ public class CallWordServiceImpl implements CallWordService {
         callWordMapper.updateCallWord(update);
         templateAuthorIdentityManager.grantAuthorRole(ownerId != null ? ownerId : operatorId);
         incrementReleaseCount(ownerId != null ? ownerId : operatorId, 1);
+        
+        // 发放模板上架奖励（首次上架时发放）
+        Long authorUserId = ownerId != null ? ownerId : operatorId;
+        if (authorUserId != null && (callWord.getStatus() == null || callWord.getStatus() == 0)) {
+            // 只有首次上架时才发放奖励，避免重复上架重复奖励
+            pointsSystem.setUserPoint(
+                authorUserId.toString(),
+                "模板上架奖励",
+                50, // 上架奖励50积分
+                null,
+                null
+            );
+        }
+        
         return AjaxResult.success("上架成功");
     }
 
