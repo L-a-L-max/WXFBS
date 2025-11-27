@@ -14,6 +14,22 @@ ruoyi:
   # 验证码类型 math 数字计算 char 字符验证
   captchaType: math
 
+# 日志优化配置
+logging:
+  optimization:
+    # 是否启用日志优化（默认启用）
+    enabled: true
+    # 是否简化HTTP解析错误
+    simplify-http-errors: true
+    # 是否简化连接重置错误
+    simplify-connection-errors: true
+    # 是否简化MCP客户端日志
+    simplify-mcp-logs: true
+    # 日志统计间隔（分钟）
+    statistics-interval: 5
+  level:
+    com.anal: debug
+    org.springframework: warn
 # 开发环境配置
 server:
   # 服务器的HTTP端口，默认为8080
@@ -32,11 +48,7 @@ server:
       # Tomcat启动初始化的线程数，默认值10
       min-spare: 100
 
-# 日志配置
-logging:
-  level:
-    com.anal: debug
-    org.springframework: warn
+
 
 # 用户配置
 user:

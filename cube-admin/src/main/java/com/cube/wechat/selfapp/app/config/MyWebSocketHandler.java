@@ -46,19 +46,30 @@ public class MyWebSocketHandler extends TextWebSocketHandler {
         // 获取客户端 ID
         String clientId = (String) session.getAttributes().get("clientId");
         if (clientId != null) {
+            // 🔥 检查是否已存在连接，如果存在则先关闭旧连接
+            WebSocketSession existingSession = sessions.get(clientId);
+            if (existingSession != null && existingSession.isOpen()) {
+                try {
+                    existingSession.close(CloseStatus.NORMAL);
+                } catch (Exception e) {
+                    // 忽略关闭异常
+                }
+            }
+            
             // 保存客户端 ID 和会话的映射
             sessions.put(clientId, session);
             JSONObject res = new JSONObject();
             res.put("message","online");
-            // 1.0
-//            sendMessageToClient(clientId,res.toJSONString(),null,null,null);
-
-            //2.0
-            sendMsgToClient(clientId,res.toJSONString(),new JSONObject());
-            System.out.println("客户端连接成功，ID: " + clientId);
+            
+            try {
+                sendMsgToClient(clientId, res.toJSONString(), new JSONObject());
+                System.out.println("✅ 客户端连接: " + clientId);
+            } catch (Exception e) {
+                System.err.println("❌ 发送连接确认失败: " + clientId);
+            }
         } else {
             session.close(CloseStatus.BAD_DATA);
-            System.out.println("客户端连接失败，未提供有效的客户端 ID");
+            System.err.println("❌ 连接失败: 无效客户端ID");
         }
     }
     @Override
@@ -67,14 +78,10 @@ public class MyWebSocketHandler extends TextWebSocketHandler {
         String clientId = (String) session.getAttributes().get("clientId");
         if (clientId != null) {
             sessions.remove(clientId);
-            System.out.println("客户端连接关闭，ID: " + clientId);
-            JSONObject res = new JSONObject();
-            res.put("message","offline");
-
-            // 1.0
-//            sendMessageToClient(clientId,res.toJSONString(),null,null,null);
-
-            sendMsgToClient(clientId,res.toJSONString(),new JSONObject());
+            System.out.println("❌ 客户端断开: " + clientId);
+            
+            // 🔥 清理相关的Future对象，防止内存泄漏
+            FUTURE_MAP.entrySet().removeIf(entry -> entry.getKey().contains(clientId));
         }
     }
 
@@ -84,34 +91,35 @@ public class MyWebSocketHandler extends TextWebSocketHandler {
         String clientId = (String) session.getAttributes().get("clientId");
         String payload = message.getPayload();
 
-        System.out.println("收到来自客户端 " + clientId + " 的消息: " + payload);
-
-        // 判断是否为心跳消息
+        // 🔥 精简日志输出，只显示关键信息
         if (payload.contains("heartbeat")) {
-            // 减少心跳日志输出，只在DEBUG模式下显示
-            // System.out.println("心跳检查：" + clientId);
-            return;
+            return; // 心跳消息静默处理
+        }
+        
+        // 只记录非心跳消息的简要信息
+        if (payload.length() > 100) {
+            System.out.println("📨 " + clientId + ": " + payload.substring(0, 50) + "...");
+        } else {
+            System.out.println("📨 " + clientId + ": " + payload);
         }
         Map map = JSONObject.parseObject(payload, Map.class);
         Object o = map.get("type");
         if(o != null && "openAI".equals(o.toString())) {
-            System.out.println("收到openAI调用结果：" + payload);
             String userId = map.get("userId").toString();
             String aiName = map.get("aiName").toString();
             String content = map.get("message").toString();
             String taskId = map.get("taskId").toString();
             saveAiResponse("openAI:" + userId + ":" + aiName + ":" + taskId, content);
-            log.info("保存openAI结果：" + payload);
+            System.out.println("✅ OpenAI结果已保存 | 用户:" + userId + " | AI:" + aiName);
             return;
         }
         if(o != null && "mcp".equals(o.toString())) {
-            System.out.println("收到mcp调用结果：" + payload);
             String userId = map.get("userId").toString();
             String aiName = map.get("aiName").toString();
             String content = map.get("message").toString();
             String taskId = map.get("taskId").toString();
             saveAiResponse("mcp:" + userId + ":" + aiName + ":" + taskId, content);
-            log.info("保存mcp结果：" + payload);
+            System.out.println("✅ MCP结果已保存 | 用户:" + userId + " | AI:" + aiName);
             return;
         }
         // 1.0
@@ -402,6 +410,25 @@ public class MyWebSocketHandler extends TextWebSocketHandler {
     public static void registerFuture(String requestId, CompletableFuture<String> future) {
         FUTURE_MAP.put(requestId, future);
     }
-
-
+    
+    /**
+     * 获取Future映射表，用于内存监控和清理
+     */
+    public static ConcurrentHashMap<String, CompletableFuture<String>> getFutureMap() {
+        return FUTURE_MAP;
+    }
+    
+    /**
+     * 获取当前连接数
+     */
+    public static int getConnectionCount() {
+        return sessions.size();
+    }
+    
+    /**
+     * 获取连接状态信息
+     */
+    public static String getConnectionStatus() {
+        return "WebSocket连接: " + sessions.size() + "个, Future对象: " + FUTURE_MAP.size() + "个";
+    }
 }
