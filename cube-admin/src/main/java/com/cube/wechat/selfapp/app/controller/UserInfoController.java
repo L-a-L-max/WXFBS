@@ -574,6 +574,19 @@ public class UserInfoController extends BaseController {
     }
 
     /**
+     * 获取我的积分概览
+     */
+    @GetMapping("/getMyPointsSummary")
+    public AjaxResult getMyPointsSummary() {
+        ResultBody result = userInfoService.getMyPointsSummary();
+        if (result.getCode() == 200) {
+            return AjaxResult.success("获取成功", result.getData());
+        } else {
+            return AjaxResult.error(result.getMessages());
+        }
+    }
+
+    /**
      * 设置文章模板为公共/私有（仅管理员）
      *
      * @param id 模板ID

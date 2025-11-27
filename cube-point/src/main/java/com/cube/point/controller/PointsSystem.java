@@ -7,6 +7,7 @@ import com.cube.common.constant.CacheConstants;
 import com.cube.common.core.controller.BaseController;
 import com.cube.common.core.domain.model.LoginUser;
 import com.cube.common.core.redis.RedisCache;
+import com.cube.common.utils.SecurityUtils;
 import com.cube.common.utils.StringUtils;
 import com.cube.point.domain.EthConstant;
 import com.cube.point.domain.Points;
@@ -361,6 +362,276 @@ public class PointsSystem extends BaseController {
     }
 
     /**
+     * 获取用户积分概览
+     */
+    @GetMapping("/getUserPointsSummary")
+    public ResultBody getUserPointsSummary(@RequestParam String userId) {
+        if (StringUtils.isEmpty(userId)) {
+            return ResultBody.error(400, "用户ID为空");
+        }
+        try {
+            Map<String, Object> summary = buildUserPointsSummary(userId);
+            return ResultBody.success(summary);
+        } catch (Exception e) {
+            return ResultBody.error(500, "获取积分概览失败：" + e.getMessage());
+        }
+    }
+
+    /**
+     * 构建用户积分概览数据
+     */
+    public Map<String, Object> buildUserPointsSummary(String userId) {
+        Map<String, Object> summary = new HashMap<>();
+        if (StringUtils.isEmpty(userId)) {
+            summary.put("balance", 0);
+            summary.put("todayGain", 0);
+            summary.put("weekGain", 0);
+            summary.put("lastChange", null);
+            return summary;
+        }
+
+        Integer balance = pointsMapper.getUserPoints(userId);
+        summary.put("balance", balance == null ? 0 : balance);
+
+        LocalDateTime todayStart = LocalDate.now().atStartOfDay();
+        summary.put("todayGain", sumPositivePointsSince(userId, todayStart));
+
+        LocalDateTime weekStart = LocalDate.now()
+                .with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
+                .atStartOfDay();
+        summary.put("weekGain", sumPositivePointsSince(userId, weekStart));
+
+        Map<String, Object> lastChange = pointsMapper.getLastPointChange(userId);
+        summary.put("lastChange", lastChange);
+
+        return summary;
+    }
+
+    /**
+     * 获取积分任务清单（包含详细信息）
+     * 返回所有可获取积分的途径，包括任务名称、积分值、限频信息等
+     * 如果用户已登录，会自动判断任务完成状态
+     */
+    @GetMapping("/getPointTaskList")
+    public ResultBody getPointTaskList(){
+        try {
+            // 尝试获取当前登录用户ID
+            String userId = null;
+            try {
+                Long currentUserId = SecurityUtils.getUserId();
+                if (currentUserId != null) {
+                    userId = currentUserId.toString();
+                }
+            } catch (Exception e) {
+                // 用户未登录，继续执行但不判断完成状态
+            }
+            
+            List<Map<String, Object>> taskList = pointsMapper.getPointTaskList();
+            // 处理每个任务，解析限频配置
+            for (Map<String, Object> task : taskList) {
+                Object remarkObj = task.get("remark");
+                JSONObject limitConfig = null;
+                if (remarkObj != null) {
+                    try {
+                        limitConfig = parseLimitConfig(remarkObj);
+                        if (limitConfig != null) {
+                            task.put("limitConfig", limitConfig);
+                            // 解析限频类型和值，转换为用户友好的描述
+                            String limitType = limitConfig.getString("limitType");
+                            Integer limitValue = limitConfig.getInteger("limitValue");
+                            if (limitType != null && limitValue != null && limitValue > 0) {
+                                String limitDesc = getLimitDescription(limitType, limitValue);
+                                task.put("limitDesc", limitDesc);
+                            }
+                        }
+                    } catch (Exception e) {
+                        System.err.println("解析任务限频配置失败: " + remarkObj);
+                    }
+                }
+                // 设置任务图标和分类
+                String taskName = (String) task.get("taskName");
+                task.put("icon", getTaskIcon(taskName));
+                task.put("category", getTaskCategory(taskName));
+                
+                // 如果用户已登录，判断任务完成状态
+                if (StringUtils.isNotEmpty(userId)) {
+                    boolean isCompleted = checkTaskCompleted(userId, taskName, limitConfig);
+                    task.put("isCompleted", isCompleted);
+                    // 计算今日完成次数和剩余次数
+                    Map<String, Object> progress = getTaskProgress(userId, taskName, limitConfig);
+                    task.put("progress", progress);
+                } else {
+                    task.put("isCompleted", false);
+                    task.put("progress", null);
+                }
+            }
+            return ResultBody.success(taskList);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResultBody.error(500, "获取积分任务清单失败：" + e.getMessage());
+        }
+    }
+
+    /**
+     * 判断任务是否完成（根据限频规则）
+     * 对于一次性任务（如"首次登录"），查询数据库记录
+     * 对于限频任务，查询Redis计数器
+     */
+    private boolean checkTaskCompleted(String userId, String taskName, JSONObject limitConfig) {
+        if (limitConfig == null) {
+            // 没有限频配置，检查数据库中是否有完成记录
+            int completedCount = pointsMapper.checkUserTaskCompleted(userId, taskName);
+            return completedCount > 0;
+        }
+        String limitType = limitConfig.getString("limitType");
+        Integer limitValue = limitConfig.getInteger("limitValue");
+        if (StringUtils.isEmpty(limitType) || limitValue == null || limitValue <= 0) {
+            // 没有有效的限频配置，检查数据库中是否有完成记录
+            int completedCount = pointsMapper.checkUserTaskCompleted(userId, taskName);
+            return completedCount > 0;
+        }
+        
+        // 对于一次性任务（TOTAL类型且limitValue=1），查询数据库记录
+        if ("TOTAL".equalsIgnoreCase(limitType) && limitValue == 1) {
+            int completedCount = pointsMapper.checkUserTaskCompleted(userId, taskName);
+            return completedCount >= limitValue;
+        }
+        
+        // 对于限频任务，查询Redis计数器
+        String limitKey = buildLimitKey(userId, taskName, limitType.toUpperCase());
+        Object currentObj = redisCli.get(limitKey);
+        long current = currentObj == null ? 0L : Long.parseLong(currentObj.toString());
+        
+        // 如果Redis中没有记录，再查询数据库作为补充
+        if (current == 0) {
+            int dbCount = pointsMapper.checkUserTaskCompleted(userId, taskName);
+            if (dbCount > 0) {
+                return dbCount >= limitValue;
+            }
+        }
+        
+        // 如果已达到限频上限，认为已完成
+        return current >= limitValue;
+    }
+
+    /**
+     * 获取任务进度信息
+     */
+    private Map<String, Object> getTaskProgress(String userId, String taskName, JSONObject limitConfig) {
+        Map<String, Object> progress = new HashMap<>();
+        if (limitConfig == null) {
+            // 没有限频配置，查询数据库记录
+            int dbCount = pointsMapper.checkUserTaskCompleted(userId, taskName);
+            progress.put("current", dbCount);
+            progress.put("max", -1); // -1表示无限制
+            progress.put("remaining", -1);
+            return progress;
+        }
+        
+        String limitType = limitConfig.getString("limitType");
+        Integer limitValue = limitConfig.getInteger("limitValue");
+        if (StringUtils.isEmpty(limitType) || limitValue == null || limitValue <= 0) {
+            int dbCount = pointsMapper.checkUserTaskCompleted(userId, taskName);
+            progress.put("current", dbCount);
+            progress.put("max", -1);
+            progress.put("remaining", -1);
+            return progress;
+        }
+        
+        // 对于一次性任务（TOTAL类型且limitValue=1），查询数据库记录
+        if ("TOTAL".equalsIgnoreCase(limitType) && limitValue == 1) {
+            int dbCount = pointsMapper.checkUserTaskCompleted(userId, taskName);
+            progress.put("current", dbCount);
+            progress.put("max", limitValue);
+            progress.put("remaining", Math.max(0, limitValue - dbCount));
+            return progress;
+        }
+        
+        // 对于限频任务，查询Redis计数器
+        String limitKey = buildLimitKey(userId, taskName, limitType.toUpperCase());
+        Object currentObj = redisCli.get(limitKey);
+        long current = currentObj == null ? 0L : Long.parseLong(currentObj.toString());
+        
+        // 如果Redis中没有记录，再查询数据库作为补充
+        if (current == 0) {
+            int dbCount = pointsMapper.checkUserTaskCompleted(userId, taskName);
+            if (dbCount > 0) {
+                current = dbCount;
+            }
+        }
+        
+        progress.put("current", current);
+        progress.put("max", limitValue);
+        progress.put("remaining", Math.max(0, limitValue - current));
+        
+        return progress;
+    }
+
+    /**
+     * 获取限频描述
+     */
+    private String getLimitDescription(String limitType, Integer limitValue) {
+        switch (limitType.toUpperCase()) {
+            case "DAILY":
+                return "每日最多" + limitValue + "次";
+            case "WEEKLY":
+                return "每周最多" + limitValue + "次";
+            case "MONTHLY":
+                return "每月最多" + limitValue + "次";
+            case "TOTAL":
+                return "总计最多" + limitValue + "次";
+            default:
+                return "限频：" + limitValue + "次";
+        }
+    }
+
+    /**
+     * 获取任务图标
+     */
+    private String getTaskIcon(String taskName) {
+        if (taskName == null) {
+            return "el-icon-star-on";
+        }
+        if (taskName.contains("登录")) {
+            return "el-icon-user";
+        } else if (taskName.contains("模板") || taskName.contains("上架")) {
+            return "el-icon-document";
+        } else if (taskName.contains("购买")) {
+            return "el-icon-shopping-cart-full";
+        } else if (taskName.contains("评分") || taskName.contains("评价")) {
+            return "el-icon-star-on";
+        } else if (taskName.contains("咨询")) {
+            return "el-icon-chat-line-round";
+        } else if (taskName.contains("记忆")) {
+            return "el-icon-collection";
+        } else if (taskName.contains("分成") || taskName.contains("销售")) {
+            return "el-icon-money";
+        } else {
+            return "el-icon-trophy";
+        }
+    }
+
+    /**
+     * 获取任务分类
+     */
+    private String getTaskCategory(String taskName) {
+        if (taskName == null) {
+            return "其他";
+        }
+        if (taskName.contains("登录")) {
+            return "每日任务";
+        } else if (taskName.contains("模板") || taskName.contains("上架") || taskName.contains("分成")) {
+            return "创作任务";
+        } else if (taskName.contains("购买")) {
+            return "消费任务";
+        } else if (taskName.contains("评分") || taskName.contains("评价") || taskName.contains("咨询")) {
+            return "互动任务";
+        } else {
+            return "其他任务";
+        }
+    }
+
+    /**
      * 解析限频配置JSON
      */
     private JSONObject parseLimitConfig(Object configObj) {
@@ -438,6 +709,17 @@ public class PointsSystem extends BaseController {
         }
         redisCli.set(key, current + actualChange);
         return true;
+    }
+
+    /**
+     * 统计自指定时间以来的正向积分
+     */
+    private int sumPositivePointsSince(String userId, LocalDateTime startTime) {
+        if (StringUtils.isEmpty(userId) || startTime == null) {
+            return 0;
+        }
+        Integer sum = pointsMapper.sumUserPointsChangeSince(userId, startTime);
+        return sum == null ? 0 : sum;
     }
 
     /**

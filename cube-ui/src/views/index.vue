@@ -732,6 +732,7 @@ export default {
             this.form.picUrl = '';
           }
         });
+
       } catch (error) {
         // 静默处理
       }
@@ -2397,6 +2398,7 @@ export default {
   opacity: 0.7;
   position: relative;
 }
+
 
 .offline-login-btn:hover {
   background: linear-gradient(135deg, #a0a0a0 0%, #808080 100%) !important;
