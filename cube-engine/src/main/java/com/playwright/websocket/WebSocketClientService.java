@@ -101,7 +101,7 @@ public class WebSocketClientService {
                     if (agentCode == null) return null;
                     
                     // agent_code -> AI名称 映射表
-                    java.util.Map<String, String> codeToNameMap = new java.util.HashMap<>();
+                    Map<String, String> codeToNameMap = new HashMap<>();
                     codeToNameMap.put("baidu-agent", "Baidu");
                     codeToNameMap.put("yb", "元宝");
                     codeToNameMap.put("zj-db", "Doubao");
@@ -179,7 +179,7 @@ public class WebSocketClientService {
                         // 处理包含"metaso"的消息 - 使用严格匹配避免误触发
                         if (message.contains("mita,")) {
                             concurrencyManager.submitBrowserTask(() -> {
-                                startAI(userInfoRequest, aiName, "秘塔", browserController, aigcController);
+                                startAI(userInfoRequest, "mita", "秘塔", browserController, aigcController);
                             }, "Metaso智能体", userInfoRequest.getUserId());
                         }
                         // 处理包含"yb-hunyuan"、"yb-deepseek"的消息 - 元宝中的模型选择
@@ -698,7 +698,7 @@ public class WebSocketClientService {
                     }
                     
                     // 保存错误到数据库并获取ID
-                    String errorLogId = com.playwright.utils.common.UserLogUtil.sendExceptionLogWithId(
+                    String errorLogId = UserLogUtil.sendExceptionLogWithId(
                         "系统", "WebSocket发送失败", "sendMessageWithRetry", e, 
                         "http://175.178.154.216:8080/saveLogInfo");
                     
@@ -839,12 +839,21 @@ public class WebSocketClientService {
             }
 
 
-            if (aiName.contains("stream")) {
+            // 🔥 修复：添加aiName空值检查
+            if (aiName != null && aiName.contains("stream")) {
                 return;
             }
             sendMessage(userInfoRequest, mcpResult, aiName);
         } catch (Exception e) {
-            sendMessage(userInfoRequest, McpResult.fail("生成失败,请稍后再试", null), aiName);
+            // 🔥 修复：添加详细的异常日志输出
+            System.err.println("❌ [WebSocket-AI执行] " + cnName + "执行失败");
+            System.err.println("   用户ID: " + userInfoRequest.getUserId());
+            System.err.println("   任务ID: " + userInfoRequest.getTaskId());
+            System.err.println("   错误信息: " + e.getMessage());
+            e.printStackTrace();
+            
+            // 发送失败消息给前端
+            sendMessage(userInfoRequest, McpResult.fail("生成失败,请稍后再试: " + e.getMessage(), null), aiName);
         }
     }
 

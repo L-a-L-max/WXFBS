@@ -137,7 +137,7 @@ public class UserLogUtil {
                 // 🔥 增强：添加详细的堆栈信息
                 StringBuilder detailedError = new StringBuilder();
                 detailedError.append(String.format("错误类型：%s | 错误信息：%s | 发生时间：%s", 
-                    e.getClass().getSimpleName(), errorMessage, java.time.LocalDateTime.now()));
+                    e.getClass().getSimpleName(), errorMessage, LocalDateTime.now()));
                 
                 // 添加堆栈跟踪信息（取前3层，避免过长）
                 StackTraceElement[] stackTrace = e.getStackTrace();
@@ -161,7 +161,7 @@ public class UserLogUtil {
             
             long executionTime = startTime != null ? System.currentTimeMillis() - startTime : 0;
             logInfo.setExecutionTimeMillis(executionTime);
-            logInfo.setExecutionTime(java.time.LocalDateTime.now());
+            logInfo.setExecutionTime(LocalDateTime.now());
             logInfo.setMethodParams("通过UserLogUtil记录");
             logInfo.setIsSuccess(isSuccess);
             
@@ -255,13 +255,12 @@ public class UserLogUtil {
                     return responseStr;
                 }
                 
-                // 🔥 调试：打印所有可用的键
+                // 调试：打印所有可用的键（仅在需要时启用）
                 // System.out.println("⚠️ [数据库ID提取] 未找到ID字段，可用键: " + responseJson.keySet());
             }
         } catch (Exception e) {
-            // 打印解析异常，不再静默处理
+            // 静默处理解析异常，避免干扰主流程
             // System.err.println("❌ [数据库ID提取] 解析异常: " + e.getMessage());
-            // e.printStackTrace();
         }
         return null;
     }

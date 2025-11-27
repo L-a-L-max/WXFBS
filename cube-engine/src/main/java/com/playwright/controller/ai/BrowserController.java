@@ -4,6 +4,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.microsoft.playwright.BrowserContext;
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
+import com.microsoft.playwright.TimeoutError;
 import com.microsoft.playwright.options.LoadState;
 import com.microsoft.playwright.options.WaitForSelectorState;
 import com.playwright.entity.UnPersisBrowserContextInfo;
@@ -662,20 +663,41 @@ public class BrowserController {
             }
 
             // 未登录，获取二维码截图URL
-            String url = deepSeekUtil.waitAndGetQRCode(page, userId, screenshotUtil);
+            System.out.println("📱 [DeepSeek] 开始获取二维码...");
+            
+            // 🔥 【速度优化】快速导航到登录页面，减少等待时间
+            try {
+                System.out.println("📱 [DeepSeek] 开始快速导航...");
+                page.navigate("https://chat.deepseek.com/sign_in");
+                page.waitForLoadState(LoadState.DOMCONTENTLOADED);
+                System.out.println("📱 [DeepSeek] 页面基本加载完成");
+                
+                // 🔥 减少等待时间，从5秒减少到2秒
+                Thread.sleep(2000);
+                System.out.println("📱 [DeepSeek] 快速等待完成，准备截图");
+                
+            } catch (Exception navError) {
+                System.err.println("❌ [DeepSeek] 导航失败: " + navError.getMessage());
+                loginSessionManager.endLoginSession(sessionKey);
+                return "false";
+            }
+            
+            // 🔥 【简化修复】直接截图，参考豆包的实现方式
+            String url = screenshotUtil.screenshotAndUpload(page, "checkDeepSeekLogin.png");
+            System.out.println("📱 [DeepSeek] 直接截图结果: " + url);
 
-            if (!"false".equals(url)) {
-                // 🔥 添加延迟确保截图完成
-                Thread.sleep(1000);
-
-                // 🔥 【重要】返回前进行身份验证
-                // 目的：确保返回的二维码属于当前用户正在操作的AI
-                // 验证失败说明用户已切换到其他AI，需要终止此登录流程
-                String result = sendQrCodeWithValidation(userId, "DeepSeek", url, "RETURN_PC_DEEPSEEK_QRURL");
-                if (result == null) {
-                    // 已清空所有登录会话，返回友好提示
-                    return "SERVICE_UNAVAILABLE";
-                }
+            if (url != null && !url.trim().isEmpty() && !"false".equals(url)) {
+                // 🔥 【简化修复】直接发送二维码，不使用会话验证，参考豆包实现
+                System.out.println("📱 [DeepSeek] 准备发送二维码到前端: " + url);
+                
+                JSONObject jsonObject = new JSONObject();
+                jsonObject.put("url", url);
+                jsonObject.put("userId", userId);
+                jsonObject.put("type", "RETURN_PC_DEEPSEEK_QRURL");
+                webSocketClientService.sendMessage(jsonObject.toJSONString());
+                
+                System.out.println("✅ [DeepSeek] 二维码已成功发送到前端");
+                logMsgUtil.sendTaskLog("DeepSeek二维码已发送到前端", userId, "DeepSeek");
 
                 // 实时监测登录状态 - 最多等待60秒
                 int maxAttempts = 30; // 30次尝试
@@ -713,11 +735,11 @@ public class BrowserController {
                             }
 
                             url = screenshotUtil.screenshotAndUpload(page, "checkDeepSeekLogin.png");
-                            JSONObject qrUpdateObject = new JSONObject();
-                            qrUpdateObject.put("url", url);
-                            qrUpdateObject.put("userId", userId);
-                            qrUpdateObject.put("type", "RETURN_PC_DEEPSEEK_QRURL");
-                            webSocketClientService.sendMessage(qrUpdateObject.toJSONString());
+                            JSONObject qrRefreshObject = new JSONObject();
+                            qrRefreshObject.put("url", url);
+                            qrRefreshObject.put("userId", userId);
+                            qrRefreshObject.put("type", "RETURN_PC_DEEPSEEK_QRURL");
+                            webSocketClientService.sendMessage(qrRefreshObject.toJSONString());
                         } catch (Exception e) {
                             UserLogUtil.sendExceptionLog(userId, "deepSeek获取二维码截图失败", "checkDeepSeekLogin", e, logUrl + "/saveLogInfo");
                         }
@@ -730,6 +752,7 @@ public class BrowserController {
             }
 
             // 获取二维码失败，清理会话
+            System.err.println("❌ [DeepSeek] 二维码获取失败，返回值: " + url);
             loginSessionManager.endLoginSession(sessionKey);
         } catch (Exception e) {
             System.err.println("❌ [DeepSeek登录] 获取登录二维码失败: " + e.getMessage());
@@ -778,6 +801,9 @@ public class BrowserController {
                 page.navigate("https://yuanbao.tencent.com/chat/naQivTmsDa/");
                 page.waitForLoadState(LoadState.LOAD);
                 Thread.sleep(3000);
+
+                // 🔥 新增：页面加载后检测账号类型选择弹窗
+                handleAccountTypeSelection(page);
 
                 Locator phone = page.locator("//p[@class='nick-info-name']");
                 if (phone.count() > 0) {
@@ -911,7 +937,35 @@ public class BrowserController {
                 return "session_terminated";
             }
 
-            // 立即获取并发送二维码
+            // 🔥 【修复】先检查用户是否已经登录，避免已登录用户收到二维码截图
+            String currentLoginStatus = "未登录";
+            try {
+                Locator phone = page.locator("//p[@class='nick-info-name']");
+                phone.waitFor(new Locator.WaitForOptions().setTimeout(3000));
+                currentLoginStatus = phone.textContent();
+            } catch (Exception e) {
+                // 如果检测失败，默认为未登录
+                currentLoginStatus = "未登录";
+            }
+            
+            // 如果用户已经登录，直接返回登录状态，不发送二维码
+            if (!currentLoginStatus.contains("未登录")) {
+                System.out.println("🎉 [元宝登录] 用户已登录，直接返回状态: " + currentLoginStatus);
+                
+                // 发送登录状态给前端
+                JSONObject statusObject = new JSONObject();
+                statusObject.put("status", currentLoginStatus);
+                statusObject.put("userId", userId);
+                statusObject.put("type", "RETURN_YB_STATUS");
+                webSocketClientService.sendMessage(statusObject.toJSONString());
+                
+                // 结束会话并返回
+                loginSessionManager.endLoginSession(sessionKey);
+                return currentLoginStatus;
+            }
+            
+            // 用户未登录，发送二维码截图
+            System.out.println("📱 [元宝登录] 用户未登录，发送二维码截图");
             String url = screenshotUtil.screenshotAndUpload(page, "checkYBLogin.png");
             JSONObject jsonObject = new JSONObject();
             jsonObject.put("url", url);
@@ -923,17 +977,9 @@ public class BrowserController {
             handleAccountTypeSelection(page);
 
             boolean isLogin = false;
-            String phoneText = "未登录";
+            String phoneText = currentLoginStatus; // 🔥 使用上面已经检测到的状态
             
-            // 🔥 关键修复：使用try-catch包装可能失败的textContent调用
-            try {
-                Locator phone = page.locator("//p[@class='nick-info-name']");
-                phone.waitFor(new Locator.WaitForOptions().setTimeout(3000));
-                phoneText = phone.textContent();
-            } catch (Exception e) {
-                // 如果元素不存在或frame已失效，使用默认值
-                phoneText = "未登录";
-            }
+            // 🔥 注意：如果程序运行到这里，说明用户是未登录状态，需要等待扫码
 
             // 🔥 优化：将检测循环从6次x10秒改为60次x1秒，确保用户登录后2秒内响应
             for (int i = 0; i < 60; i++) {
@@ -954,11 +1000,32 @@ public class BrowserController {
 
                     // 🔥 优化：每10秒刷新一次二维码（每10次循环）
                     if (i % 10 == 9) {
+                        // 🔥 【修复】刷新二维码前再次检查登录状态，避免已登录用户收到额外截图
+                        try {
+                            Locator phoneCheck = page.locator("//p[@class='nick-info-name']");
+                            phoneCheck.waitFor(new Locator.WaitForOptions().setTimeout(1000));
+                            String checkStatus = phoneCheck.textContent();
+                            if (!checkStatus.contains("未登录")) {
+                                // 用户已登录，不再刷新二维码
+                                System.out.println("📱 [元宝登录] 检测到用户已登录，停止刷新二维码");
+                                phoneText = checkStatus; // 更新状态以退出循环
+                                break;
+                            }
+                        } catch (Exception checkError) {
+                            // 检查失败，继续刷新二维码
+                        }
+                        
                         url = screenshotUtil.screenshotAndUpload(page, "checkYBLogin.png");
                         jsonObject.put("url", url);
                         webSocketClientService.sendMessage(jsonObject.toJSONString());
+                        System.out.println("🔄 [元宝登录] 已刷新二维码截图");
                         
                         // 再次尝试处理账号类型选择弹窗
+                        handleAccountTypeSelection(page);
+                    }
+                    
+                    // 🔥 新增：每5次循环检测一次账号类型选择弹窗（更频繁的检测）
+                    if (i % 5 == 0) {
                         handleAccountTypeSelection(page);
                     }
                 } else {
@@ -1051,29 +1118,124 @@ public class BrowserController {
     // 提取账号选择处理为独立方法，增强异常处理
     private void handleAccountTypeSelection(Page page) {
         try {
-            Locator accountTypeModal = page.locator(".choose-content:has-text('选择账号类型')");
-            // 使用较短的超时时间
-            accountTypeModal.waitFor(new Locator.WaitForOptions().setTimeout(3000));
+            System.out.println("🔍 [元宝登录] 开始检测账号类型选择弹窗");
+            
+            // 🔥 修复：增加多种弹窗检测方式，适应不同的页面结构
+            // 方案1：检测包含"选择账号类型"文本的弹窗
+            Locator accountTypeModal1 = page.locator(".choose-content:has-text('选择账号类型')");
+            // 方案2：检测包含"个人账号"和"团队账号"的弹窗容器
+            Locator accountTypeModal2 = page.locator("div:has-text('个人账号'):has-text('团队账号')");
+            // 方案3：检测包含账号选择按钮的容器
+            Locator accountTypeModal3 = page.locator(".ybc-login-account-list_personal").locator("xpath=ancestor::div[contains(@class,'modal') or contains(@class,'dialog') or contains(@class,'choose')]");
+            
+            boolean hasModal = false;
+            Locator activeModal = null;
+            
+            // 检测哪种弹窗存在
+            try {
+                if (accountTypeModal1.count() > 0 && accountTypeModal1.isVisible()) {
+                    hasModal = true;
+                    activeModal = accountTypeModal1;
+                    System.out.println("✅ [元宝登录] 检测到账号类型选择弹窗 (方案1)");
+                } else if (accountTypeModal2.count() > 0 && accountTypeModal2.isVisible()) {
+                    hasModal = true;
+                    activeModal = accountTypeModal2;
+                    System.out.println("✅ [元宝登录] 检测到账号类型选择弹窗 (方案2)");
+                } else if (accountTypeModal3.count() > 0 && accountTypeModal3.isVisible()) {
+                    hasModal = true;
+                    activeModal = accountTypeModal3;
+                    System.out.println("✅ [元宝登录] 检测到账号类型选择弹窗 (方案3)");
+                }
+            } catch (Exception e) {
+                System.out.println("⚠️ [元宝登录] 弹窗检测异常: " + e.getMessage());
+            }
 
-            if (accountTypeModal.count() > 0 && accountTypeModal.isVisible()) {
+            if (!hasModal) {
+                System.out.println("ℹ️ [元宝登录] 未检测到账号类型选择弹窗，可能已选择或不需要选择");
+                return;
+            }
+
+            System.out.println("🎯 [元宝登录] 开始选择个人账号");
+            
+            // 🔥 修复：增加多种个人账号按钮定位方式
+            boolean buttonClicked = false;
+            
+            // 方案1：通过class定位个人账号按钮
+            try {
                 Locator personalAccountBtn = page.locator(".ybc-login-account-list_personal");
-                if (personalAccountBtn.count() > 0 && !isElementDisabled(personalAccountBtn)) {
-                    log.info("找到个人账号按钮，准备点击");
+                if (personalAccountBtn.count() > 0 && personalAccountBtn.isVisible() && !isElementDisabled(personalAccountBtn)) {
+                    System.out.println("✅ [元宝登录] 使用class选择器点击个人账号按钮");
                     personalAccountBtn.click();
-                    log.info("点击操作完成");
-                    Thread.sleep(2000);
-                } else {
-                    log.warn("未找到个人账号按钮，尝试使用文本选择器");
+                    buttonClicked = true;
+                }
+            } catch (Exception e) {
+                System.out.println("⚠️ [元宝登录] class选择器失败: " + e.getMessage());
+            }
+            
+            // 方案2：通过文本定位个人账号按钮
+            if (!buttonClicked) {
+                try {
                     Locator textBasedBtn = page.locator("//span[contains(text(),'个人账号')]");
-                    if (textBasedBtn.count() > 0) {
+                    if (textBasedBtn.count() > 0 && textBasedBtn.isVisible()) {
+                        System.out.println("✅ [元宝登录] 使用文本选择器点击个人账号按钮");
                         textBasedBtn.click();
-                        Thread.sleep(2000);
+                        buttonClicked = true;
                     }
+                } catch (Exception e) {
+                    System.out.println("⚠️ [元宝登录] 文本选择器失败: " + e.getMessage());
                 }
             }
+            
+            // 方案3：通过更宽泛的文本匹配
+            if (!buttonClicked) {
+                try {
+                    Locator personalBtn = page.locator("*:has-text('个人账号'), *:has-text('个人'), button:has-text('个人')");
+                    if (personalBtn.count() > 0) {
+                        System.out.println("✅ [元宝登录] 使用宽泛选择器点击个人账号按钮");
+                        personalBtn.first().click();
+                        buttonClicked = true;
+                    }
+                } catch (Exception e) {
+                    System.out.println("⚠️ [元宝登录] 宽泛选择器失败: " + e.getMessage());
+                }
+            }
+            
+            // 方案4：通过按钮索引选择（通常个人账号是第一个）
+            if (!buttonClicked) {
+                try {
+                    Locator allButtons = page.locator("button, .btn, [role='button']").locator("visible=true");
+                    if (allButtons.count() >= 2) {
+                        System.out.println("✅ [元宝登录] 使用索引选择器点击第一个按钮（通常是个人账号）");
+                        allButtons.first().click();
+                        buttonClicked = true;
+                    }
+                } catch (Exception e) {
+                    System.out.println("⚠️ [元宝登录] 索引选择器失败: " + e.getMessage());
+                }
+            }
+            
+            if (buttonClicked) {
+                System.out.println("✅ [元宝登录] 个人账号选择成功，等待页面响应");
+                Thread.sleep(2000); // 等待页面响应
+                
+                // 🔥 验证弹窗是否已关闭
+                try {
+                    boolean modalStillExists = page.locator(".choose-content:has-text('选择账号类型'), div:has-text('个人账号'):has-text('团队账号')").count() > 0;
+                    if (!modalStillExists) {
+                        System.out.println("✅ [元宝登录] 账号类型选择弹窗已关闭");
+                    } else {
+                        System.out.println("⚠️ [元宝登录] 弹窗仍然存在，可能需要额外操作");
+                    }
+                } catch (Exception e) {
+                    System.out.println("⚠️ [元宝登录] 弹窗关闭验证失败: " + e.getMessage());
+                }
+            } else {
+                System.out.println("❌ [元宝登录] 未能找到可点击的个人账号按钮");
+            }
+            
         } catch (Exception e) {
             // 不抛出异常，仅记录日志
-            log.debug("账号类型选择弹窗处理失败或未出现: " + e.getMessage());
+            System.err.println("❌ [元宝登录] 账号类型选择弹窗处理失败: " + e.getMessage());
         }
     }
 
@@ -1103,28 +1265,73 @@ public class BrowserController {
         try (BrowserContext context = browserUtil.createPersistentBrowserContext(false, userId, "db")) {
             Page page = browserUtil.getOrCreatePage(context);
             page.navigate("https://www.doubao.com/chat/");
-            Thread.sleep(5000);
-            Locator locator = page.locator("[data-testid='to_login_button']");
-            if (locator.count() > 0 && locator.isVisible()) {
+            
+            // 🔥 优化：智能等待页面加载 - 等待登录按钮或头像按钮出现
+            // 这样可以适配不同性能的机器：快的机器会快速返回，慢的机器会等待足够时间
+            Locator loginButton = page.locator("[data-testid='to_login_button']");
+            Locator avatarButton = page.locator("[data-testid=\"chat_header_avatar_button\"]");
+            
+            boolean pageReady = false;
+            for (int i = 0; i < 20; i++) { // 最多等待20秒（20 x 1秒）
+                Thread.sleep(1000);
+                try {
+                    // 检查登录按钮或头像按钮是否出现
+                    if ((loginButton.count() > 0 && loginButton.isVisible()) || 
+                        (avatarButton.count() > 0 && avatarButton.isVisible())) {
+                        pageReady = true;
+                        break;
+                    }
+                } catch (Exception e) {
+                    // 页面还在加载，继续等待
+                    continue;
+                }
+            }
+            
+            if (!pageReady) {
+                // 页面加载失败
                 return "false";
-            } else {
-                Thread.sleep(500);
-                page.locator("[data-testid=\"chat_header_avatar_button\"]").click();
-                Thread.sleep(500);
+            }
+            
+            // 🔥 新增：页面加载完成后检测超能模式弹窗
+            douBaoUtil.checkAndClickSuperModeButton(page, userId, "登录状态检测");
+            
+            // 🔥 优化：检测登录状态
+            if (loginButton.count() > 0 && loginButton.isVisible()) {
+                // 未登录：直接返回
+                return "false";
+            }
+            
+            // 🔥 优化：已登录状态，获取用户信息
+            if (avatarButton.count() == 0 || !avatarButton.isVisible()) {
+                // 页面异常，返回未登录
+                return "false";
+            }
+            
+            // 🔥 新增：获取用户信息前检测超能模式弹窗
+            douBaoUtil.checkAndClickSuperModeButton(page, userId, "获取用户信息前");
+            
+            try {
+                avatarButton.click();
+                Thread.sleep(500); // 等待下拉菜单展开
                 page.locator("[data-testid=\"chat_header_setting_button\"]").click();
-//                Thread.sleep(1500);
+                Thread.sleep(500); // 等待设置页面打开
+                
                 Locator phone = page.locator(".nickName-cIcGuG");
-                phone.waitFor(new Locator.WaitForOptions().setTimeout(3000));
+                phone.waitFor(new Locator.WaitForOptions().setTimeout(5000)); // 🔥 优化：增加到5秒，适配低性能主机
                 if (phone.count() > 0) {
                     String phoneText = phone.textContent();
                     loginMap.put(key, phoneText);
                     return phoneText;
-                } else {
-                    return "false";
                 }
+            } catch (Exception e) {
+                // 🔥 优化：获取用户信息失败时直接返回false
+                return "false";
             }
+            
+            return "false";
         } catch (Exception e) {
-            throw e;
+            // 🔥 优化：异常时返回false
+            return "false";
         }
     }
 
@@ -1149,135 +1356,194 @@ public class BrowserController {
             sessionKey = loginSessionManager.startLoginSession(userId, "Doubao", context, page);
 
             page.navigate("https://www.doubao.com/chat/");
+            
+            // 🔥 优化：智能等待登录按钮出现 - 适配低性能主机
+            // 不是固定等待，而是等待元素出现或超时
             Locator locator = page.locator("[data-testid='to_login_button']");
-            Thread.sleep(2000);
-
-            if (locator.count() > 0 && locator.isVisible()) {
-                locator.click();
-                page.locator("[data-testid='qrcode_switcher']").evaluate("el => el.click()");
-
-                Thread.sleep(3000);
-                String url = screenshotUtil.screenshotAndUpload(page, "checkDBLogin.png");
-
-                // 🔥 【重要】返回前进行身份验证
-                // 目的：确保返回的二维码属于当前用户正在操作的AI
-                // 步骤：
-                //   1. validateCurrentSession检查用户是否只有Doubao这一个活跃会话
-                //   2. 如果用户已切换到其他AI，拒绝发送此二维码
-                //   3. 终止登录流程，释放资源
-                String result = sendQrCodeWithValidation(userId, "Doubao", url, "RETURN_PC_DB_QRURL");
-                if (result == null) {
-                    // 已清空所有登录会话，返回友好提示
-                    return "SERVICE_UNAVAILABLE";
-                }
-
+            boolean loginButtonFound = false;
+            
+            for (int i = 0; i < 30; i++) { // 最多等待30秒
+                Thread.sleep(1000);
                 try {
-                    // 🔥 修复：直接检测聊天页面的关键元素，而不是依赖"登录成功"文本
-                    // 检测逻辑：头像按钮出现 = 已登录并跳转到聊天页面
-                    boolean loginSuccess = false;
-                    Locator avatarButton = page.locator("[data-testid=\"chat_header_avatar_button\"]");
-                    Locator loginButton = page.locator("[data-testid='to_login_button']"); // 登录按钮（未登录时显示）
-                    
-                    for (int i = 0; i < 120; i++) { // 120次 x 500ms = 60秒
-                        // 🔥 每次循环都检查会话是否活跃
-                        if (!loginSessionManager.isSessionActive(sessionKey)) {
-                            return "session_terminated";
-                        }
-
-                        Thread.sleep(500); // 🔥 优化：500ms检测间隔，快速响应
+                    if (locator.count() > 0 && locator.isVisible()) {
+                        loginButtonFound = true;
+                        break;
+                    }
+                } catch (Exception e) {
+                    // 页面还在加载，继续等待
+                    continue;
+                }
+            }
+            
+            if (!loginButtonFound) {
+                // 🔥 优化：登录按钮未找到，可能已经登录过了，直接尝试检测头像区域
+                System.out.println("⚠️ [豆包登录] 登录按钮未找到，尝试检测是否已登录...");
+                
+                Locator avatarButton = page.locator("[data-testid=\"chat_header_avatar_button\"]");
+                try {
+                    if (avatarButton.count() > 0 && avatarButton.isVisible()) {
+                        // 已登录，直接获取用户信息
+                        System.out.println("✅ [豆包登录] 检测到已登录（头像按钮出现），直接获取用户信息");
                         
-                        // 🔥 关键检测：头像按钮出现且登录按钮消失 = 已登录
+                        // 🔥 新增：已登录状态下检测超能模式弹窗
+                        douBaoUtil.checkAndClickSuperModeButton(page, userId, "已登录状态检测");
+                        
                         try {
-                            if (avatarButton.count() > 0 && avatarButton.isVisible() && 
-                                (loginButton.count() == 0 || !loginButton.isVisible())) {
-                                loginSuccess = true;
-                                System.out.println("✅ [豆包登录] 检测到已登录（头像按钮出现）");
-                                break;
+                            avatarButton.click();
+                            Thread.sleep(800); // 等待下拉菜单展开
+                            page.locator("[data-testid=\"chat_header_setting_button\"]").click();
+                            Thread.sleep(800); // 等待设置页面打开
+                            
+                            Locator phone = page.locator(".nickName-cIcGuG");
+                            phone.waitFor(new Locator.WaitForOptions().setTimeout(8000));
+                            
+                            if (phone.count() > 0) {
+                                String phoneText = phone.textContent();
+                                JSONObject jsonObjectTwo = new JSONObject();
+                                jsonObjectTwo.put("status", phoneText);
+                                jsonObjectTwo.put("userId", userId);
+                                jsonObjectTwo.put("type", "RETURN_DB_STATUS");
+                                webSocketClientService.sendMessage(jsonObjectTwo.toJSONString());
+                                
+                                loginSessionManager.endLoginSession(sessionKey);
+                                return phoneText;
                             }
                         } catch (Exception e) {
-                            // 🔥 修复：页面导航时执行上下文被销毁，继续等待
-                            String errorMsg = e.getMessage() != null ? e.getMessage().toLowerCase() : "";
-                            if (errorMsg.contains("execution context") || errorMsg.contains("destroyed")) {
-                                // 页面正在导航，继续循环
-                                continue;
-                            }
-                            // 其他异常才抛出
-                            throw e;
+                            System.err.println("⚠️ [豆包登录] 获取用户信息失败: " + e.getMessage());
                         }
                     }
+                } catch (Exception e) {
+                    System.err.println("⚠️ [豆包登录] 检测已登录状态失败: " + e.getMessage());
+                }
+                
+                // 页面加载失败或无法获取用户信息
+                loginSessionManager.endLoginSession(sessionKey);
+                return "false";
+            }
+            
+            // 🔥 新增：扫码登录开始时检测"试一试"按钮并关闭
+            Thread.sleep(1000);
+            douBaoUtil.checkAndClickSuperModeButton(page, userId, "扫码登录开始");
 
-                    if (!loginSuccess) {
-                        System.err.println("⚠️ [豆包登录] 等待登录超时");
-                        loginSessionManager.endLoginSession(sessionKey);
-                        return "false";
+            // 🔥 点击登录按钮进入扫码页面
+            locator.click();
+            page.locator("[data-testid='qrcode_switcher']").evaluate("el => el.click()");
+
+            Thread.sleep(3000);
+            String url = screenshotUtil.screenshotAndUpload(page, "checkDBLogin.png");
+
+            // 🔥 【重要】返回前进行身份验证
+            // 目的：确保返回的二维码属于当前用户正在操作的AI
+            // 步骤：
+            //   1. validateCurrentSession检查用户是否只有Doubao这一个活跃会话
+            //   2. 如果用户已切换到其他AI，拒绝发送此二维码
+            //   3. 终止登录流程，释放资源
+            String result = sendQrCodeWithValidation(userId, "Doubao", url, "RETURN_PC_DB_QRURL");
+            if (result == null) {
+                // 已清空所有登录会话，返回友好提示
+                loginSessionManager.endLoginSession(sessionKey);
+                return "SERVICE_UNAVAILABLE";
+            }
+
+            try {
+                // 🔥 优化：智能登录检测 - 适配低性能主机
+                // 检测逻辑：头像按钮出现 = 已登录并跳转到聊天页面
+                boolean loginSuccess = false;
+                Locator avatarButton = page.locator("[data-testid=\"chat_header_avatar_button\"]");
+                Locator loginButton = page.locator("[data-testid='to_login_button']"); // 登录按钮（未登录时显示）
+                
+                // 🔥 优化：改为500ms检测间隔，总等待时间120秒（240次 x 500ms）
+                // 低性能主机可能需要更长时间加载页面
+                for (int i = 0; i < 240; i++) {
+                    // 🔥 每次循环都检查会话是否活跃
+                    if (!loginSessionManager.isSessionActive(sessionKey)) {
+                        return "session_terminated";
                     }
 
-                    // 🔥 已检测到登录，立即获取用户信息
-                    Thread.sleep(500); // 等待页面稳定
+                    Thread.sleep(500); // 🔥 优化：500ms检测间隔
                     
+                    // 🔥 新增：每10次循环检测一次超能模式弹窗（避免过于频繁）
+                    if (i % 10 == 0) {
+                        douBaoUtil.checkAndClickSuperModeButton(page, userId, "登录检测过程");
+                    }
+                    
+                    // 🔥 关键检测：头像按钮出现且登录按钮消失 = 已登录
                     try {
-                        avatarButton.click();
-                        Thread.sleep(800); // 等待下拉菜单展开
-                        page.locator("[data-testid=\"chat_header_setting_button\"]").click();
-                        Thread.sleep(800); // 等待设置页面打开
-                        
-                        Locator phone = page.locator(".nickName-cIcGuG");
-                        phone.waitFor(new Locator.WaitForOptions().setTimeout(5000)); // 等待用户名元素出现
-                        
-                        if (phone.count() > 0) {
-                            String phoneText = phone.textContent();
-                            JSONObject jsonObjectTwo = new JSONObject();
-                            jsonObjectTwo.put("status", phoneText);
-                            jsonObjectTwo.put("userId", userId);
-                            jsonObjectTwo.put("type", "RETURN_DB_STATUS");
-                            webSocketClientService.sendMessage(jsonObjectTwo.toJSONString());
-
-                            loginSessionManager.endLoginSession(sessionKey);
-                            return phoneText;
+                        if (avatarButton.count() > 0 && avatarButton.isVisible() && 
+                            (loginButton.count() == 0 || !loginButton.isVisible())) {
+                            loginSuccess = true;
+                            System.out.println("✅ [豆包登录] 检测到已登录（头像按钮出现）");
+                            break;
                         }
                     } catch (Exception e) {
-                        // 🔥 修复：获取用户信息失败时，记录但继续尝试
+                        // 🔥 优化：页面导航时执行上下文被销毁，继续等待
                         String errorMsg = e.getMessage() != null ? e.getMessage().toLowerCase() : "";
                         if (errorMsg.contains("execution context") || errorMsg.contains("destroyed")) {
-                            System.out.println("⚠️ [豆包登录] 页面导航中，等待稳定后重试");
-                            Thread.sleep(1000);
-                            // 重新尝试一次
-                            try {
-                                Locator phone = page.locator(".nickName-cIcGuG");
-                                phone.waitFor(new Locator.WaitForOptions().setTimeout(3000));
-                                if (phone.count() > 0) {
-                                    String phoneText = phone.textContent();
-                                    JSONObject jsonObjectTwo = new JSONObject();
-                                    jsonObjectTwo.put("status", phoneText);
-                                    jsonObjectTwo.put("userId", userId);
-                                    jsonObjectTwo.put("type", "RETURN_DB_STATUS");
-                                    webSocketClientService.sendMessage(jsonObjectTwo.toJSONString());
-                                    loginSessionManager.endLoginSession(sessionKey);
-                                    return phoneText;
-                                }
-                            } catch (Exception retryError) {
-                                System.err.println("❌ [豆包登录] 重试获取用户信息失败: " + retryError.getMessage());
-                            }
-                        } else {
-                            System.err.println("❌ [豆包登录] 获取用户信息异常: " + e.getMessage());
+                            // 页面正在导航，继续循环
+                            continue;
                         }
+                        // 其他异常才抛出
+                        throw e;
                     }
-                } catch (Exception loginException) {
-                    // 🔥 静默处理TargetClosedError（会话已清理，页面关闭是正常的）
-                    String errorMsg = loginException.getMessage() != null ? loginException.getMessage().toLowerCase() : "";
-                    if (!errorMsg.contains("target") || !errorMsg.contains("closed")) {
-                        // 非TargetClosedError才打印日志
-                        System.err.println("❌ [豆包登录] 登录异常: " + loginException.getMessage());
-                    }
+                }
+
+                if (!loginSuccess) {
+                    System.err.println("⚠️ [豆包登录] 等待登录超时");
                     loginSessionManager.endLoginSession(sessionKey);
                     return "false";
                 }
 
+                // 🔥 已检测到登录，获取用户信息
+                Thread.sleep(1000); // 等待页面稳定
+                
+                // 🔥 新增：登录成功后检测超能模式弹窗
+                douBaoUtil.checkAndClickSuperModeButton(page, userId, "登录成功后");
+                
+                try {
+                    avatarButton.click();
+                    Thread.sleep(800); // 等待下拉菜单展开
+                    page.locator("[data-testid=\"chat_header_setting_button\"]").click();
+                    Thread.sleep(800); // 等待设置页面打开
+                    
+                    Locator phone = page.locator(".nickName-cIcGuG");
+                    phone.waitFor(new Locator.WaitForOptions().setTimeout(8000)); // 🔥 优化：增加到8秒，适配低性能主机
+                    
+                    if (phone.count() > 0) {
+                        String phoneText = phone.textContent();
+                        JSONObject jsonObjectTwo = new JSONObject();
+                        jsonObjectTwo.put("status", phoneText);
+                        jsonObjectTwo.put("userId", userId);
+                        jsonObjectTwo.put("type", "RETURN_DB_STATUS");
+                        webSocketClientService.sendMessage(jsonObjectTwo.toJSONString());
+
+                        loginSessionManager.endLoginSession(sessionKey);
+                        return phoneText;
+                    }
+                } catch (Exception e) {
+                    // 🔥 优化：超时或异常时直接返回false
+                    if (e instanceof TimeoutError) {
+                        System.err.println("⚠️ [豆包登录] 获取用户信息超时（页面加载慢或元素不存在）");
+                    } else {
+                        String errorMsg = e.getMessage() != null ? e.getMessage().toLowerCase() : "";
+                        if (!errorMsg.contains("target") || !errorMsg.contains("closed")) {
+                            System.err.println("❌ [豆包登录] 获取用户信息异常: " + e.getMessage());
+                        }
+                    }
+                }
+            } catch (Exception loginException) {
+                // 🔥 静默处理TargetClosedError（会话已清理，页面关闭是正常的）
+                String errorMsg = loginException.getMessage() != null ? loginException.getMessage().toLowerCase() : "";
+                if (!errorMsg.contains("target") || !errorMsg.contains("closed")) {
+                    // 非TargetClosedError才打印日志
+                    System.err.println("❌ [豆包登录] 登录异常: " + loginException.getMessage());
+                }
                 loginSessionManager.endLoginSession(sessionKey);
-            } else {
-                System.err.println("❌ [豆包登录] 登录按钮未找到");
-                loginSessionManager.endLoginSession(sessionKey);
+                return "false";
             }
+
+            // 🔥 所有流程都失败，返回false
+            loginSessionManager.endLoginSession(sessionKey);
+            return "false";
         } catch (Exception e) {
             // 🔥 检查错误类型
             String errorMsg = e.getMessage() != null ? e.getMessage().toLowerCase() : "";
@@ -1305,7 +1571,6 @@ public class BrowserController {
                 loginSessionManager.endLoginSession(sessionKey);
             }
         }
-        return "false";
     }
 
     /**
