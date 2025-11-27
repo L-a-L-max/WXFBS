@@ -70,4 +70,55 @@ public interface CallWordMapper {
      * @return 影响行数
      */
     int updateCallWordCommon(@Param("platformId") String platformId, @Param("isCommon") Integer isCommon);
+
+    /**
+     * 查询我创建的提示词模板
+     *
+     * @param userId 用户ID
+     * @param platformId 平台ID（可选）
+     * @param offset 偏移量
+     * @param limit 限制数量
+     * @return 提示词列表
+     */
+    List<CallWord> getMyCreatedCallWords(@Param("userId") Long userId,
+                                         @Param("platformId") String platformId,
+                                         @Param("offset") Integer offset,
+                                         @Param("limit") Integer limit);
+
+    /**
+     * 统计我创建的提示词模板数量
+     *
+     * @param userId 用户ID
+     * @param platformId 平台ID（可选）
+     * @return 数量
+     */
+    int countMyCreatedCallWords(@Param("userId") Long userId, @Param("platformId") String platformId);
+
+    /**
+     * 查询市场中的提示词模板（已上架的）
+     *
+     * @param platformId 平台ID（可选）
+     * @param minPrice 最低价格（可选）
+     * @param maxPrice 最高价格（可选）
+     * @param offset 偏移量
+     * @param limit 限制数量
+     * @return 提示词列表
+     */
+    List<java.util.Map<String, Object>> getMarketCallWords(@Param("platformId") String platformId,
+                                                          @Param("minPrice") java.math.BigDecimal minPrice,
+                                                          @Param("maxPrice") java.math.BigDecimal maxPrice,
+                                                          @Param("offset") Integer offset,
+                                                          @Param("limit") Integer limit);
+
+    /**
+     * 统计市场中的提示词模板数量
+     *
+     * @param platformId 平台ID（可选）
+     * @param minPrice 最低价格（可选）
+     * @param maxPrice 最高价格（可选）
+     * @return 数量
+     */
+    int countMarketCallWords(@Param("platformId") String platformId,
+                            @Param("minPrice") java.math.BigDecimal minPrice,
+                            @Param("maxPrice") java.math.BigDecimal maxPrice);
 } 

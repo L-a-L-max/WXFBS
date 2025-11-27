@@ -156,6 +156,23 @@ export function setScorePromptCommon(id, isCommon) {
   })
 }
 
+// 上架评分模板
+export function publishScorePrompt(data) {
+  return request({
+    url: `/mini/publishScorePrompt`,
+    method: 'put',
+    data,
+  })
+}
+
+// 下架评分模板
+export function unpublishScorePrompt(id) {
+  return request({
+    url: `/mini/unpublishScorePrompt/${id}`,
+    method: 'put',
+  })
+}
+
 // 根据ID获取思路提示词
 export function getIdeaPrompt(id) {
   return request({

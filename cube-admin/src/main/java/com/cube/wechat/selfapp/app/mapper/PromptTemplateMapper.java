@@ -6,6 +6,7 @@ import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * ClassName: PromptTemplateMapper
@@ -74,4 +75,34 @@ public interface PromptTemplateMapper {
     public List<PromptTemplate> getAllScorePrompt(@Param("userId") Long userId);
 
     PromptTemplate getScoreWord();
+
+    /**
+     * 根据ID查询评分模板（用于上架/下架）
+     *
+     * @param id 模板ID
+     * @return 评分模板
+     */
+    PromptTemplate selectScorePromptById(@Param("id") Long id);
+
+    /**
+     * 查询我创建的模板列表
+     */
+    List<PromptTemplate> getMyCreatedTemplates(@Param("scorePromptQuery") ScorePromptQuery scorePromptQuery,
+                                               @Param("userId") Long userId);
+
+    /**
+     * 查询市场模板列表（已上架且非公共模板）
+     */
+    List<Map<String, Object>> getMarketTemplates(@Param("scorePromptQuery") ScorePromptQuery scorePromptQuery,
+                                                 @Param("minPrice") java.math.BigDecimal minPrice,
+                                                 @Param("maxPrice") java.math.BigDecimal maxPrice,
+                                                 @Param("offset") Integer offset,
+                                                 @Param("limit") Integer limit);
+
+    /**
+     * 统计市场模板数量
+     */
+    int countMarketTemplates(@Param("scorePromptQuery") ScorePromptQuery scorePromptQuery,
+                             @Param("minPrice") java.math.BigDecimal minPrice,
+                             @Param("maxPrice") java.math.BigDecimal maxPrice);
 }
