@@ -240,17 +240,21 @@ public class CallWordServiceImpl implements CallWordService {
         templateAuthorIdentityManager.grantAuthorRole(ownerId != null ? ownerId : operatorId);
         incrementReleaseCount(ownerId != null ? ownerId : operatorId, 1);
         
-        // 发放模板上架奖励（首次上架时发放）
+        // 发放模板上架奖励（遵循数据库中的限频配置）
         Long authorUserId = ownerId != null ? ownerId : operatorId;
-        if (authorUserId != null && (callWord.getStatus() == null || callWord.getStatus() == 0)) {
-            // 只有首次上架时才发放奖励，避免重复上架重复奖励
-            pointsSystem.setUserPoint(
+        if (authorUserId != null) {
+            // 调用积分系统，传入null让系统从规则配置中获取积分值和限频规则
+            // 系统会自动根据数据库中的限频配置进行校验
+            com.cube.point.util.ResultBody result = pointsSystem.setUserPoint(
                 authorUserId.toString(),
                 "模板上架奖励",
-                50, // 上架奖励50积分
+                null, // 传入null，让系统从规则配置中获取积分值
                 null,
                 null
             );
+            if (result.getCode() != 200) {
+                System.err.println("模板上架奖励发放失败：" + result.getMessages());
+            }
         }
         
         return AjaxResult.success("上架成功");

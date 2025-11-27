@@ -187,6 +187,13 @@ public interface UserInfoService {
     ResultBody getMyPoints();
 
     /**
+     * 获取我的积分概览
+     *
+     * @return 积分概览数据
+     */
+    ResultBody getMyPointsSummary();
+
+    /**
      * 查询我创建的提示词模板（模板类型：1-提示词模板）
      *
      * @param queryParams 查询参数
