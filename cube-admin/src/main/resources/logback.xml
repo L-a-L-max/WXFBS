@@ -90,24 +90,4 @@
     <logger name="sys-user" level="info">
         <appender-ref ref="sys-user"/>
     </logger>
-    
-    <!-- 简化HTTP解析错误日志 -->
-    <logger name="org.apache.coyote.http11.Http11Processor" level="WARN" additivity="false">
-        <appender-ref ref="console" />
-    </logger>
-    
-    <!-- 简化MCP客户端初始化日志 -->
-    <logger name="io.mcp.server.McpAsyncServer" level="WARN" additivity="false">
-        <appender-ref ref="console" />
-    </logger>
-    
-    <!-- 完全屏蔽异常处理器的连接重置日志 -->
-    <logger name="org.springframework.web.servlet.mvc.method.annotation.ExceptionHandlerExceptionResolver" level="ERROR" additivity="false">
-        <appender-ref ref="console" />
-    </logger>
-    
-    <!-- 完全屏蔽默认异常处理器的连接重置日志 -->
-    <logger name="org.springframework.web.servlet.mvc.support.DefaultHandlerExceptionResolver" level="ERROR" additivity="false">
-        <appender-ref ref="console" />
-    </logger>
 </configuration>
