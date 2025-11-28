@@ -806,20 +806,35 @@ public class UserInfoServiceImpl implements UserInfoService {
             
             // 给作者发放积分奖励（作者分成80%，平台抽成20%）
             Long authorId = template.getUserId();
-            if (authorId != null) {
-                int authorReward = (int) (price.intValue() * 0.8); // 作者获得80%分成
-                if (authorReward > 0) {
-                    com.cube.point.util.ResultBody rewardResult = pointsSystem.setUserPoint(
-                        authorId.toString(),
-                        "模板销售分成",
-                        authorReward,
-                        null,
-                        null
-                    );
-                    if (rewardResult.getCode() != 200) {
-                        // 如果给作者发放积分失败，记录日志但不回滚购买操作（避免影响购买者）
-                        System.err.println("给作者发放积分失败，authorId=" + authorId + ", reward=" + authorReward + ", error=" + rewardResult.getMessages());
-                    }
+            int authorRewardAmount = (int) (price.intValue() * 0.8); // 作者获得80%分成
+            int platformFeeAmount = price.intValue() - authorRewardAmount; // 平台抽成20%
+            
+            if (authorId != null && authorRewardAmount > 0) {
+                com.cube.point.util.ResultBody rewardResult = pointsSystem.setUserPoint(
+                    authorId.toString(),
+                    "模板销售分成",
+                    authorRewardAmount,
+                    null,
+                    null
+                );
+                if (rewardResult.getCode() != 200) {
+                    // 如果给作者发放积分失败，记录日志但不回滚购买操作（避免影响购买者）
+                    System.err.println("给作者发放积分失败，authorId=" + authorId + ", reward=" + authorRewardAmount + ", error=" + rewardResult.getMessages());
+                }
+            }
+            
+            // 将平台抽成存入平台账户（userid=0）
+            if (platformFeeAmount > 0) {
+                com.cube.point.util.ResultBody platformResult = pointsSystem.setUserPoint(
+                    "0",
+                    "平台抽成",
+                    platformFeeAmount,
+                    null,
+                    null
+                );
+                if (platformResult.getCode() != 200) {
+                    // 如果给平台账户发放积分失败，记录日志但不回滚购买操作
+                    System.err.println("给平台账户发放积分失败，platformFee=" + platformFeeAmount + ", error=" + platformResult.getMessages());
                 }
             }
             
@@ -835,13 +850,20 @@ public class UserInfoServiceImpl implements UserInfoService {
             promptTemplateMapper.updatePromptTemplate(update);
             
             // 记录购买记录（模板类型2：评分模板）
+            // authorRewardAmount 和 platformFeeAmount 已在上面计算
+            
             com.cube.wechat.selfapp.app.domain.TemplatePurchase purchase = 
                 new com.cube.wechat.selfapp.app.domain.TemplatePurchase();
             purchase.setTemplateType(templateType);
             purchase.setTemplateId(templateId.toString());
+            purchase.setTemplateName(template.getName());
             purchase.setUserId(userId);
+            purchase.setAuthorId(authorId);
             purchase.setPurchasePrice(price);
+            purchase.setAuthorIncome(new java.math.BigDecimal(authorRewardAmount));
+            purchase.setPlatformFee(new java.math.BigDecimal(platformFeeAmount));
             purchase.setStatus(1);
+            purchase.setRemark("购买评分模板");
             templatePurchaseMapper.insertTemplatePurchase(purchase);
             
             return ResultBody.success("购买成功");
@@ -1016,20 +1038,35 @@ public class UserInfoServiceImpl implements UserInfoService {
             
             // 给作者发放积分奖励（作者分成80%，平台抽成20%）
             Long authorId = callWord.getUserId();
-            if (authorId != null) {
-                int authorReward = (int) (price.intValue() * 0.8); // 作者获得80%分成
-                if (authorReward > 0) {
-                    com.cube.point.util.ResultBody rewardResult = pointsSystem.setUserPoint(
-                        authorId.toString(),
-                        "模板销售分成",
-                        authorReward,
-                        null,
-                        null
-                    );
-                    if (rewardResult.getCode() != 200) {
-                        // 如果给作者发放积分失败，记录日志但不回滚购买操作（避免影响购买者）
-                        System.err.println("给作者发放积分失败，authorId=" + authorId + ", reward=" + authorReward + ", error=" + rewardResult.getMessages());
-                    }
+            int authorRewardAmount = (int) (price.intValue() * 0.8); // 作者获得80%分成
+            int platformFeeAmount = price.intValue() - authorRewardAmount; // 平台抽成20%
+            
+            if (authorId != null && authorRewardAmount > 0) {
+                com.cube.point.util.ResultBody rewardResult = pointsSystem.setUserPoint(
+                    authorId.toString(),
+                    "模板销售分成",
+                    authorRewardAmount,
+                    null,
+                    null
+                );
+                if (rewardResult.getCode() != 200) {
+                    // 如果给作者发放积分失败，记录日志但不回滚购买操作（避免影响购买者）
+                    System.err.println("给作者发放积分失败，authorId=" + authorId + ", reward=" + authorRewardAmount + ", error=" + rewardResult.getMessages());
+                }
+            }
+            
+            // 将平台抽成存入平台账户（userid=0）
+            if (platformFeeAmount > 0) {
+                com.cube.point.util.ResultBody platformResult = pointsSystem.setUserPoint(
+                    "0",
+                    "平台抽成",
+                    platformFeeAmount,
+                    null,
+                    null
+                );
+                if (platformResult.getCode() != 200) {
+                    // 如果给平台账户发放积分失败，记录日志但不回滚购买操作
+                    System.err.println("给平台账户发放积分失败，platformFee=" + platformFeeAmount + ", error=" + platformResult.getMessages());
                 }
             }
             
@@ -1045,13 +1082,20 @@ public class UserInfoServiceImpl implements UserInfoService {
             callWordMapper.updateCallWord(update);
             
             // 记录购买记录（模板类型1：提示词模板）
+            // authorRewardAmount 和 platformFeeAmount 已在上面计算
+            
             com.cube.wechat.selfapp.app.domain.TemplatePurchase purchase = 
                 new com.cube.wechat.selfapp.app.domain.TemplatePurchase();
             purchase.setTemplateType(templateType);
             purchase.setTemplateId(platformId);
+            purchase.setTemplateName(platformId);
             purchase.setUserId(userId);
+            purchase.setAuthorId(authorId);
             purchase.setPurchasePrice(price);
+            purchase.setAuthorIncome(new java.math.BigDecimal(authorRewardAmount));
+            purchase.setPlatformFee(new java.math.BigDecimal(platformFeeAmount));
             purchase.setStatus(1);
+            purchase.setRemark("购买提示词模板");
             templatePurchaseMapper.insertTemplatePurchase(purchase);
             
             return ResultBody.success("购买成功");
