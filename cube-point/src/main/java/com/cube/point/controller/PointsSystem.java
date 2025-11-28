@@ -88,9 +88,9 @@ public class PointsSystem extends BaseController {
            points.setCreateName(getNickName());
            pointsMapper.updateUserPoints(points);
            pointsMapper.saveUserPointsRecord(points);
-           points.setMainAddress("0x2edc4228a84d672affe8a594033cb84a029bcafc");
-           points.setMainPrivateKey("f34f737203aa370f53ef0e041c1bff36bf59db8eb662cdb447f01d9634374dd");
-           ethTranPC(points);
+          // points.setMainAddress("0x2edc4228a84d672affe8a594033cb84a029bcafc");
+          // points.setMainPrivateKey("f34f737203aa370f53ef0e041c1bff36bf59db8eb662cdb447f01d9634374dd");
+          // ethTranPC(points);
         return ResultBody.success("修改成功");
     }
 
@@ -207,7 +207,7 @@ public class PointsSystem extends BaseController {
                 setPointsUpdateFlag(userId, 30);
                 
 //                调用以太坊产生交易，并通过poa机制一秒出一个块打包交易
-                ethTranApp(userId,changeType,actualChange,mainAddress,mainPrivateKey);
+ //               ethTranApp(userId,changeType,actualChange,mainAddress,mainPrivateKey);
                 return ResultBody.success("积分发放成功");
             }
             return ResultBody.error(400,"用户ID为空");
