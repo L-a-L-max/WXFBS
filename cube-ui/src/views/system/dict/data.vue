@@ -108,8 +108,7 @@
       </el-table-column>
       <el-table-column label="备注" align="center" prop="remark" :show-overflow-tooltip="true">
         <template #default="scope">
-          <span v-if="isPointRuleDict(scope.row.dictType)">{{ formatRuleConfig(scope.row.remark) }}</span>
-          <span v-else>{{ scope.row.remark }}</span>
+          <span>{{ scope.row.remark }}</span>
         </template>
       </el-table-column>
       <el-table-column label="创建时间" align="center" prop="createTime" width="180">
@@ -183,21 +182,7 @@
             >{{dict.label}}</el-radio>
           </el-radio-group>
         </el-form-item>
-        <template v-if="isPointRuleDict(form.dictType)">
-          <el-divider content-position="left">积分规则限频配置</el-divider>
-          <el-form-item label="限频类型">
-            <el-select v-model="ruleConfig.limitType" placeholder="请选择限频类型">
-              <el-option v-for="item in limitTypeOptions" :key="item.value" :label="item.label" :value="item.value" />
-            </el-select>
-          </el-form-item>
-          <el-form-item label="限频值" v-if="ruleConfig.limitType !== 'NONE'">
-            <el-input-number v-model="ruleConfig.limitValue" :min="1" placeholder="例如：每日限制次数" controls-position="right" />
-          </el-form-item>
-          <el-form-item label="累计上限">
-            <el-input-number v-model="ruleConfig.maxAmount" placeholder="不限制可留空" controls-position="right" :min="1" />
-          </el-form-item>
-        </template>
-        <el-form-item label="备注" prop="remark" v-if="!isPointRuleDict(form.dictType)">
+        <el-form-item label="备注" prop="remark">
           <el-input v-model="form.remark" type="textarea" placeholder="请输入内容"></el-input>
         </el-form-item>
       </el-form>
@@ -279,16 +264,6 @@ export default {
       },
       // 表单参数
       form: {},
-      // 积分规则限频配置
-      ruleConfig: {},
-      pointRuleDictType: 'sys_point_rule',
-      limitTypeOptions: [
-        { label: '不限', value: 'NONE' },
-        { label: '每日', value: 'DAILY' },
-        { label: '每周', value: 'WEEKLY' },
-        { label: '每月', value: 'MONTHLY' },
-        { label: '累计', value: 'TOTAL' }
-      ],
       // 表单校验
       rules: {
         dictLabel: [
@@ -349,7 +324,6 @@ export default {
         status: "0",
         remark: undefined
       };
-      this.ruleConfig = this.getDefaultRuleConfig();
       this.resetForm("form");
     },
     /** 搜索按钮操作 */
@@ -374,9 +348,6 @@ export default {
       this.open = true;
       this.title = "添加字典数据";
       this.form.dictType = this.queryParams.dictType;
-      if (this.isPointRuleDict(this.form.dictType)) {
-        this.ruleConfig = this.getDefaultRuleConfig();
-      }
     },
     // 多选框选中数据
     handleSelectionChange(selection) {
@@ -390,9 +361,6 @@ export default {
       const dictCode = row.dictCode || this.ids
       getData(dictCode).then(response => {
         this.form = response.data;
-        if (this.isPointRuleDict(this.form.dictType)) {
-          this.ruleConfig = this.parseRuleConfig(this.form.remark);
-        }
         this.open = true;
         this.title = "修改字典数据";
       });
@@ -402,9 +370,6 @@ export default {
       this.$refs["form"].validate(valid => {
         if (valid) {
           if (this.form.dictCode != undefined) {
-            if (this.isPointRuleDict(this.form.dictType)) {
-              this.form.remark = this.serializeRuleConfig(this.ruleConfig);
-            }
             updateData(this.form).then(response => {
               this.$store.dispatch('dict/removeDict', this.queryParams.dictType);
               this.$modal.msgSuccess("修改成功");
@@ -412,9 +377,6 @@ export default {
               this.getList();
             });
           } else {
-            if (this.isPointRuleDict(this.form.dictType)) {
-              this.form.remark = this.serializeRuleConfig(this.ruleConfig);
-            }
             addData(this.form).then(response => {
               this.$store.dispatch('dict/removeDict', this.queryParams.dictType);
               this.$modal.msgSuccess("新增成功");
@@ -441,82 +403,6 @@ export default {
       this.download('system/dict/data/export', {
         ...this.queryParams
       }, `data_${new Date().getTime()}.xlsx`)
-    },
-    isPointRuleDict(dictType) {
-      return dictType === this.pointRuleDictType;
-    },
-    getDefaultRuleConfig() {
-      return {
-        limitType: 'NONE',
-        limitValue: null,
-        maxAmount: null
-      };
-    },
-    parseRuleConfig(remark) {
-      let config = this.getDefaultRuleConfig();
-      if (!remark) {
-        return { ...config };
-      }
-      try {
-        const parsed = JSON.parse(remark);
-        return Object.assign({}, config, parsed || {});
-      } catch (e) {
-        console.warn('积分规则 remark 不是合法 JSON：', remark);
-        return { ...config };
-      }
-    },
-    serializeRuleConfig(config) {
-      const data = Object.assign({}, this.getDefaultRuleConfig(), config || {});
-      if (!data.limitType) {
-        data.limitType = 'NONE';
-      }
-      if (data.limitType === 'NONE') {
-        data.limitValue = null;
-      }
-      // 清理空值
-      if (data.maxAmount === null || data.maxAmount === undefined || data.maxAmount === '') {
-        delete data.maxAmount;
-      }
-      if (data.limitValue === null || data.limitValue === undefined || data.limitValue === '') {
-        delete data.limitValue;
-      }
-      return JSON.stringify(data);
-    },
-    formatRuleConfig(remark) {
-      if (!remark) {
-        return '未配置';
-      }
-      try {
-        const config = JSON.parse(remark);
-        const parts = [];
-        
-        // 限频类型和限频值
-        if (config.limitType && config.limitType !== 'NONE') {
-          const limitTypeMap = {
-            'DAILY': '每日',
-            'WEEKLY': '每周',
-            'MONTHLY': '每月',
-            'TOTAL': '累计'
-          };
-          const limitTypeText = limitTypeMap[config.limitType] || config.limitType;
-          if (config.limitValue) {
-            parts.push(`${limitTypeText}限${config.limitValue}次`);
-          } else {
-            parts.push(`${limitTypeText}限频`);
-          }
-        } else {
-          parts.push('不限频');
-        }
-        
-        // 累计上限
-        if (config.maxAmount) {
-          parts.push(`累计上限${config.maxAmount}`);
-        }
-        
-        return parts.length > 0 ? parts.join('，') : '未配置';
-      } catch (e) {
-        return remark;
-      }
     }
   }
 };
