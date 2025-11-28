@@ -39,6 +39,14 @@
         select dict_value pointVal from  sys_dict_data where dict_label = #{changeType}
     </select>
 
+    <select id="getPointRuleConfig" parameterType="java.lang.String" resultType="java.util.Map">
+        SELECT dict_value AS pointsValue, remark AS limitConfig
+        FROM sys_dict_data
+        WHERE dict_type = 'sys_point_rule'
+          AND dict_label = #{changeType}
+        LIMIT 1
+    </select>
+
     <update id="setUserPoints" parameterType="java.lang.String">
         update sys_user set points =
             <if test="changeAmount !=null">
@@ -80,6 +88,49 @@
 
     <select id="getPointTask" parameterType="java.lang.String" resultType="java.util.Map">
         select dict_label taskName,dict_value taskPoint from sys_dict_data where dict_type = 'sys_point_rule' and status = 0 and dict_value > 0
+    </select>
+
+    <select id="getPointTaskList" resultType="java.util.Map">
+        SELECT 
+            dict_label AS taskName,
+            dict_value AS taskPoint,
+            remark AS remark,
+            dict_sort AS sortOrder,
+            css_class AS cssClass,
+            list_class AS listClass
+        FROM sys_dict_data 
+        WHERE dict_type = 'sys_point_rule' 
+          AND status = '0' 
+          AND dict_value > 0
+        ORDER BY dict_sort ASC, dict_code ASC
+    </select>
+
+    <select id="checkUserTaskCompleted" resultType="int">
+        SELECT COUNT(1)
+        FROM wc_points_record
+        WHERE user_id = #{userId}
+          AND change_type = #{changeType}
+          AND change_amount > 0
+    </select>
+
+    <select id="sumUserPointsChangeSince" resultType="java.lang.Integer">
+        SELECT COALESCE(SUM(change_amount), 0)
+        FROM wc_points_record
+        WHERE user_id = #{userId}
+          AND change_amount > 0
+          AND create_time >= #{startTime}
+    </select>
+
+    <select id="getLastPointChange" resultType="java.util.Map">
+        SELECT
+            change_amount AS changeAmount,
+            change_type AS changeType,
+            DATE_FORMAT(create_time, '%Y-%m-%d %H:%i:%s') AS createTime,
+            remark
+        FROM wc_points_record
+        WHERE user_id = #{userId}
+        ORDER BY create_time DESC
+        LIMIT 1
     </select>
 
     <insert id="saveUserGethAccount" parameterType="java.util.Map">

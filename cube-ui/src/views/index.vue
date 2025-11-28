@@ -436,7 +436,7 @@ import userInfo from "@/views/system/user/profile/userInfo";
 import resetPwd from "@/views/system/user/profile/resetPwd";
 import { getInfo } from "@/api/login";
 import { parseTime } from "@/utils/ruoyi";
-import { getUserProfile, getOfficeAccount } from "@/api/system/user";
+import { getUserProfile, getOfficeAccount, bindWcOfficeAccount } from "@/api/system/user";
 import { getUserPointsRecord } from "@/api/wechat/company";
 import { listUserAvailableAiagent } from "@/api/system/aiagent";
 import websocketClient from "@/utils/websocket";
@@ -732,6 +732,7 @@ export default {
             this.form.picUrl = '';
           }
         });
+
       } catch (error) {
         // 静默处理
       }
@@ -754,7 +755,24 @@ export default {
         if (valid) {
           // 表单验证通过，继续提交
           bindWcOfficeAccount(this.form).then((response) => {
-            this.dialogFormVisible = false;
+            if (response.code === 200) {
+              this.$message.success("绑定成功！");
+              this.dialogFormVisible = false;
+              // 刷新公众号信息，更新按钮状态
+              getOfficeAccount().then((res) => {
+                if (res.data != null) {
+                  this.form.appId = res.data.appId;
+                  this.form.appSecret = res.data.appSecret;
+                  this.form.officeAccountName = res.data.officeAccountName;
+                  this.form.picUrl = res.data.picUrl;
+                }
+              });
+            } else {
+              this.$message.error(response.msg || "绑定失败，请重试");
+            }
+          }).catch((error) => {
+            console.error("绑定公众号失败:", error);
+            this.$message.error(error.msg || "绑定失败，请重试");
           });
         } else {
           // 表单验证失败
@@ -2380,6 +2398,7 @@ export default {
   opacity: 0.7;
   position: relative;
 }
+
 
 .offline-login-btn:hover {
   background: linear-gradient(135deg, #a0a0a0 0%, #808080 100%) !important;

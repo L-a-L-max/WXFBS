@@ -4,6 +4,7 @@ import com.cube.point.domain.Points;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -31,9 +32,14 @@ public interface PointsMapper {
     Integer getUserPoints(String userId);
 
     /**
-    * 获取积分规则
-    * */
+     * 获取积分规则
+     * */
     Integer getPointRuleVal(String changeType);
+
+    /**
+     * 获取积分规则配置（包括remark字段）
+     * */
+    Map<String, Object> getPointRuleConfig(String changeType);
 
     /**
      * 设置用户积分
@@ -60,6 +66,29 @@ public interface PointsMapper {
      * 获取积分任务
      * */
     List<Map> getPointTask();
+
+    /**
+     * 获取积分任务清单（包含详细信息）
+     * */
+    List<Map<String, Object>> getPointTaskList();
+
+    /**
+     * 检查用户是否完成过某个任务（查询积分记录表）
+     * @param userId 用户ID
+     * @param changeType 任务类型
+     * @return 完成次数
+     */
+    int checkUserTaskCompleted(@Param("userId") String userId, @Param("changeType") String changeType);
+
+    /**
+     * 统计从指定时间开始的积分获取总额（仅统计正向积分）
+     */
+    Integer sumUserPointsChangeSince(@Param("userId") String userId, @Param("startTime") LocalDateTime startTime);
+
+    /**
+     * 获取最近一次积分变动记录
+     */
+    Map<String, Object> getLastPointChange(@Param("userId") String userId);
 
     /**
      * 保存用户账号上链
