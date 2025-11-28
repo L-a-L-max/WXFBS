@@ -160,8 +160,8 @@ office:
 
 # 小程序配置
 mini:
-  appId: wx23218f0f9c5f3954
-  appSecret: cb154caeba8344fe3609846b608c8f43
+  appId:
+  appSecret:
 
 upload:
   # 上传文件路径
