@@ -112,6 +112,24 @@ INSERT INTO `sys_role_menu` VALUES (1, 2071);
 INSERT INTO `sys_role_menu` VALUES (1, 2072);
 INSERT INTO `sys_role_menu` VALUES (1, 2073);
 INSERT INTO `sys_role_menu` VALUES (1, 2074);
+INSERT  INTO `sys_role_menu` VALUES (1, 2100);
+INSERT  INTO `sys_role_menu` VALUES (1, 2101);
+INSERT INTO `sys_role_menu` VALUES (1, 2102);
+INSERT  INTO `sys_role_menu` VALUES (1, 2103);
+INSERT  INTO `sys_role_menu` VALUES (1, 2104);
+INSERT  INTO `sys_role_menu` VALUES (1, 2105);
+INSERT  INTO `sys_role_menu` VALUES (1, 2106);
+INSERT  INTO `sys_role_menu` VALUES (1, 2107);
+INSERT  INTO `sys_role_menu` VALUES (1, 2108);
+INSERT INTO `sys_role_menu` VALUES (1, 2109);
+INSERT INTO `sys_role_menu` VALUES (1, 2110);
+INSERT  INTO `sys_role_menu` VALUES (1, 2111);
+INSERT  INTO `sys_role_menu` VALUES (1, 2112);
+INSERT  INTO `sys_role_menu` VALUES (1, 2113);
+INSERT  INTO `sys_role_menu` VALUES (1, 2114);
+INSERT  INTO `sys_role_menu` VALUES (1, 2115);
+INSERT  INTO `sys_role_menu` VALUES (1, 2116);
+INSERT  INTO `sys_role_menu` VALUES (1, 2117);
 INSERT INTO `sys_role_menu` VALUES (2, 1);
 INSERT INTO `sys_role_menu` VALUES (2, 2);
 INSERT INTO `sys_role_menu` VALUES (2, 3);
@@ -436,6 +454,7 @@ INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`
 INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (2117, '积分规则导出', 2112, 5, '#', NULL, '', '', 1, 0, 'F', '0', '0', 'system:dict:export', '#', 'admin', '2025-11-28 00:46:51', '', NULL, '');
 COMMIT;
 -- auto-generated definition
+DROP TABLE IF EXISTS `sys_dict_data`;
 create table sys_dict_data
 (
     dict_code   bigint auto_increment comment '字典编码'
@@ -702,7 +721,7 @@ CREATE TABLE `sys_user_role` (
 -- Records of sys_user_role
 -- ----------------------------
 BEGIN;
-INSERT INTO `sys_user_role` (`user_id`, `role_id`) VALUES (22, 2);
+INSERT INTO `sys_user_role` (`user_id`, `role_id`) VALUES (22, 1);
 INSERT INTO `sys_user_role` (`user_id`, `role_id`) VALUES (22, 101);
 COMMIT;
 
@@ -959,7 +978,7 @@ INSERT INTO `sys_user` VALUES (22, NULL, NULL, NULL, 1, 'admin', 'admin', '00', 
 -- 平台公共账户（userid=0），用于存储积分抽成
 -- 注意：由于user_id是AUTO_INCREMENT，需要先插入0值，如果已存在则更新
 INSERT INTO `sys_user` (`user_id`, `open_id`, `union_id`, `qw_id`, `dept_id`, `user_name`, `nick_name`, `user_type`, `email`, `phonenumber`, `sex`, `avatar`, `password`, `status`, `del_flag`, `login_ip`, `login_date`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`, `corp_id`, `points`, `agent_id`, `agent_token`, `space_id`, `space_name`) 
-VALUES (0, NULL, NULL, NULL, NULL, 'platform', '平台账户', '00', '', '', '0', '', '', '0', '0', '', NULL, 'admin', sysdate(), 'admin', sysdate(), '平台公共账户，用于存储积分抽成', NULL, 0, '', '', '', '')
+VALUES (1, NULL, NULL, NULL, NULL, 'platform', '平台账户', '00', '', '', '0', '', '', '0', '0', '', NULL, 'admin', sysdate(), 'admin', sysdate(), '平台公共账户，用于存储积分抽成', NULL, 0, '', '', '', '')
 ON DUPLICATE KEY UPDATE 
   `nick_name` = '平台账户',
   `remark` = '平台公共账户，用于存储积分抽成',
@@ -2845,6 +2864,11 @@ INSERT IGNORE INTO `sys_role_menu` VALUES (1, 2083);
 INSERT IGNORE INTO `sys_role_menu` VALUES (1, 2084);
 INSERT IGNORE INTO `sys_role_menu` VALUES (1, 2085);
 INSERT IGNORE INTO `sys_role_menu` VALUES (1, 2086);
+INSERT IGNORE INTO `sys_role_menu` VALUES (1, 2050);
+INSERT IGNORE INTO `sys_role_menu` VALUES (1, 2051);
+
+
+
 
 -- 为普通角色分配权限（如果存在角色2）
 INSERT IGNORE INTO `sys_role_menu` VALUES (2, 2080);
@@ -3044,6 +3068,8 @@ AND NOT EXISTS (
     AND `parent_id` = @rule_menu_id
 );
 -- auto-generated definition
+
+DROP TABLE IF EXISTS `wc_template_author`;
 create table wc_template_author
 (
     user_id                int     not null comment '用户id',
