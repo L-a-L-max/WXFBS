@@ -69,7 +69,7 @@ spring:
   # redis 配置
   data:
     redis:
-      host: 127.0.0.1
+      host:
       port: 6379
       database: 2
       password:
@@ -148,8 +148,8 @@ office:
 
 # 小程序配置
 mini:
-  appId:
-  appSecret:
+  appId: wx23218f0f9c5f3954
+  appSecret: cb154caeba8344fe3609846b608c8f43
 
 upload:
   # 上传文件路径
