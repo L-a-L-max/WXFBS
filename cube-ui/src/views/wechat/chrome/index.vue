@@ -1246,11 +1246,104 @@ import { ChatDotSquare, Document, Link, Loading, Plus, Promotion } from '@elemen
       },
 
       message(data) {
-        message(data).then((res) => {
-          if(res.code == 201) {
-            this.$message.error(res.messages || '操作失败');
+        message(data)
+          .then(() => {
+            // 调用成功时无需额外处理，结果通过 WebSocket 返回
+          })
+          .catch((error) => {
+            console.error('调用 message API 失败:', error);
+            
+            const responseData = error?.response?.data || {};
+            const businessCode = responseData.code ?? error?.code;
+            let errorMsg = responseData.messages || responseData.msg || error?.message || '网络异常，请检查网络连接后重试';
+            let errorType = 'error';
+
+            if(businessCode === 400) {
+              if(errorMsg.includes('积分余额不足') || errorMsg.includes('余额不足')) {
+                errorMsg = '⚠️ 积分余额不足，无法执行此操作。请充值后再试。';
+              } else if(errorMsg.includes('规则未配置')) {
+                errorMsg = '⚠️ 积分规则未配置，请联系管理员。';
+              } else {
+                errorMsg = `⚠️ ${errorMsg}`;
+              }
+              errorType = 'warning';
+            } else if(businessCode === 429) {
+              if(errorMsg.includes('领取上限') || errorMsg.includes('限频')) {
+                errorMsg = `⏰ ${errorMsg}，请稍后再试。`;
+              } else if(errorMsg.includes('累计上限')) {
+                errorMsg = `📊 ${errorMsg}，无法继续发放。`;
+              } else {
+                errorMsg = `⏰ ${errorMsg}`;
+              }
+              errorType = 'warning';
+            } else if(businessCode === 500) {
+              errorMsg = `❌ 服务器错误：${errorMsg}`;
+            } else if(businessCode === 201) {
+              errorMsg = errorMsg || '操作失败';
+              errorType = 'warning';
+            } else if(!businessCode) {
+              if(error?.message?.includes('Network')) {
+                errorMsg = '网络连接异常，请检查网络';
+              } else if(error?.message?.includes('timeout')) {
+                errorMsg = '请求超时，请稍后重试';
+              } else if(error?.response && error.response.status) {
+                const status = error.response.status;
+                if(status === 400) {
+                  errorMsg = '请求参数错误，请检查后重试';
+                } else if(status === 401) {
+                  errorMsg = '未授权，请重新登录';
+                } else if(status === 403) {
+                  errorMsg = '无权限执行此操作';
+                } else if(status === 404) {
+                  errorMsg = '接口不存在';
+                } else if(status >= 500) {
+                  errorMsg = '服务器错误，请稍后重试';
+                }
+              }
+            } else {
+              errorMsg = errorMsg || '操作失败';
+              if(!errorMsg.startsWith('❌') && !errorMsg.startsWith('⚠️') && !errorMsg.startsWith('⏰') && !errorMsg.startsWith('📊')) {
+                errorMsg = `❌ ${errorMsg}`;
+              }
+            }
+
+            this.$message({
+              message: errorMsg,
+              type: errorType,
+              duration: errorType === 'warning' ? 5000 : 3000,
+              showClose: true
+            });
+
+            const taskName = this.resolveTaskNameByMethod(data?.method);
+            this.markTaskFailed(taskName, errorMsg);
+          });
+      },
+      resolveTaskNameByMethod(method) {
+        if(!method) {
+          return '';
+        }
+        if(method === 'AI排版' || method === '智能排版') {
+          return '智能排版';
+        }
+        if(method === 'AI评分' || method === '智能评分') {
+          return '智能评分';
+        }
+        return '';
+      },
+      markTaskFailed(taskName, errorMsg) {
+        if(!taskName) {
+          return;
+        }
+        const targetAI = this.enabledAIs.find(ai => ai.name === taskName);
+        if(targetAI && targetAI.status === 'running') {
+          targetAI.status = 'failed';
+          if(targetAI.progressLogs.length > 0) {
+            const lastLog = targetAI.progressLogs[0];
+            lastLog.isCompleted = true;
+            lastLog.content = `❌ 任务失败：${errorMsg}`;
           }
-        });
+          this.$forceUpdate();
+        }
       },
       // 🔥 移除硬编码的辅助方法，这些方法已不再使用
       getCapabilityType(ai, value) {
@@ -2345,11 +2438,25 @@ import { ChatDotSquare, Document, Link, Loading, Plus, Promotion } from '@elemen
         };
 
         let ai = this.aiList.filter(ai => ai.name === this.layoutAI)[0];
+        
+        // 检查AI是否存在
+        if (!ai) {
+          this.$message.error(`未找到选中的排版AI: ${this.layoutAI}，请重新选择`);
+          return;
+        }
+        
+        // 确保 selectedCapabilities 是数组
+        if (!ai.selectedCapabilities) {
+          ai.selectedCapabilities = [];
+        }
+        if (!Array.isArray(ai.selectedCapabilities)) {
+          ai.selectedCapabilities = [];
+        }
 
         {
           if(ai.name === "豆包") {
             layoutRequest.params.roles = layoutRequest.params.roles + "zj-db,";
-            if(ai.selectedCapabilities.includes("deep_thinking")) {
+            if(ai.selectedCapabilities && ai.selectedCapabilities.includes("deep_thinking")) {
               layoutRequest.params.roles = layoutRequest.params.roles + "zj-db-sdsk,";
             }
           }
@@ -2367,36 +2474,36 @@ import { ChatDotSquare, Document, Link, Loading, Plus, Promotion } from '@elemen
             // 根据选择的模型设置角色
             if(ai.selectedModel === 'hunyuan') {
               layoutRequest.params.roles = layoutRequest.params.roles + 'yb-hunyuan-pt,';
-              if(ai.selectedCapabilities.includes("deep_thinking")) {
+              if(ai.selectedCapabilities && ai.selectedCapabilities.includes("deep_thinking")) {
                 layoutRequest.params.roles = layoutRequest.params.roles + 'yb-hunyuan-sdsk,';
               }
-              if(ai.selectedCapabilities.includes("web_search")) {
+              if(ai.selectedCapabilities && ai.selectedCapabilities.includes("web_search")) {
                 layoutRequest.params.roles = layoutRequest.params.roles + 'yb-hunyuan-lwss,';
               }
             } else if(ai.selectedModel === 'deepseek') {
               layoutRequest.params.roles = layoutRequest.params.roles + 'yb-deepseek-pt,';
-              if(ai.selectedCapabilities.includes("deep_thinking")) {
+              if(ai.selectedCapabilities && ai.selectedCapabilities.includes("deep_thinking")) {
                 layoutRequest.params.roles = layoutRequest.params.roles + 'yb-deepseek-sdsk,';
               }
-              if(ai.selectedCapabilities.includes("web_search")) {
+              if(ai.selectedCapabilities && ai.selectedCapabilities.includes("web_search")) {
                 layoutRequest.params.roles = layoutRequest.params.roles + 'yb-deepseek-lwss,';
               }
             }
           }
           if(ai.name === '百度AI') {
             layoutRequest.params.roles = layoutRequest.params.roles + 'baidu-agent,';
-            if(ai.selectedCapabilities.includes("deep_search")) {
+            if(ai.selectedCapabilities && ai.selectedCapabilities.includes("deep_search")) {
               layoutRequest.params.roles = layoutRequest.params.roles + 'baidu-sdss,';
             } else if(ai.isModel) {
               if(ai.isWeb) {
                 layoutRequest.params.roles = layoutRequest.params.roles + 'baidu-web,';
               }
 
-              if(ai.selectedModel.includes("dsr1")) {
+              if(ai.selectedModel && ai.selectedModel.includes("dsr1")) {
                 layoutRequest.params.roles = layoutRequest.params.roles + 'baidu-dsr1,';
-              } else if(ai.selectedModel.includes("dsv3")) {
+              } else if(ai.selectedModel && ai.selectedModel.includes("dsv3")) {
                 layoutRequest.params.roles = layoutRequest.params.roles + 'baidu-dsv3,';
-              } else if(ai.selectedModel.includes("wenxin")) {
+              } else if(ai.selectedModel && ai.selectedModel.includes("wenxin")) {
                 layoutRequest.params.roles = layoutRequest.params.roles + 'baidu-wenxin,';
               }
             }
@@ -2405,10 +2512,10 @@ import { ChatDotSquare, Document, Link, Loading, Plus, Promotion } from '@elemen
 
           if(ai.name === "DeepSeek") {
             layoutRequest.params.roles = layoutRequest.params.roles + "deepseek,";
-            if(ai.selectedCapabilities.includes("deep_thinking")) {
+            if(ai.selectedCapabilities && ai.selectedCapabilities.includes("deep_thinking")) {
               layoutRequest.params.roles = layoutRequest.params.roles + "ds-sdsk,";
             }
-            if(ai.selectedCapabilities.includes("web_search")) {
+            if(ai.selectedCapabilities && ai.selectedCapabilities.includes("web_search")) {
               layoutRequest.params.roles = layoutRequest.params.roles + "ds-lwss,";
             }
           }
@@ -2428,19 +2535,19 @@ import { ChatDotSquare, Document, Link, Loading, Plus, Promotion } from '@elemen
 
           if(ai.name === "知乎直答") {
             layoutRequest.params.roles = layoutRequest.params.roles + "zhzd-chat,";
-            if(ai.selectedCapabilities.includes("deep_thinking")) {
+            if(ai.selectedCapabilities && ai.selectedCapabilities.includes("deep_thinking")) {
               layoutRequest.params.roles = layoutRequest.params.roles + "zhzd-sdsk,";
             }
-            if(ai.selectedCapabilities.includes("all_web_search")) {
+            if(ai.selectedCapabilities && ai.selectedCapabilities.includes("all_web_search")) {
               layoutRequest.params.roles = layoutRequest.params.roles + "zhzd-qw,";
             }
-            if(ai.selectedCapabilities.includes("zhihu_search")) {
+            if(ai.selectedCapabilities && ai.selectedCapabilities.includes("zhihu_search")) {
               layoutRequest.params.roles = layoutRequest.params.roles + "zhzd-zh,";
             }
-            if(ai.selectedCapabilities.includes("academic_search")) {
+            if(ai.selectedCapabilities && ai.selectedCapabilities.includes("academic_search")) {
               layoutRequest.params.roles = layoutRequest.params.roles + "zhzd-xs,";
             }
-            if(ai.selectedCapabilities.includes("personal_knowledge")) {
+            if(ai.selectedCapabilities && ai.selectedCapabilities.includes("personal_knowledge")) {
               layoutRequest.params.roles = layoutRequest.params.roles + "zhzd-wdzsk,";
             }
           }

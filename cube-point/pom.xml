@@ -72,7 +72,11 @@
             <artifactId>BIP44</artifactId>
             <version>0.0.3</version>
         </dependency>
-
+        <dependency>
+            <groupId>com.alibaba</groupId>
+            <artifactId>fastjson</artifactId>
+            <version>1.2.83</version> <!-- 建议使用较新的稳定版本 -->
+        </dependency>
         <!-- https://mvnrepository.com/artifact/io.github.novacrypto/SHA256 -->
         <dependency>
             <groupId>io.github.novacrypto</groupId>

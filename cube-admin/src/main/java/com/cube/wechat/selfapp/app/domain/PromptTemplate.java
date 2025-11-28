@@ -30,6 +30,18 @@ public class PromptTemplate {
     /** 是否为公共模板(0:个人 1:公共) */
     private Integer isCommon;
 
+    /** 上架状态：0-草稿 1-已上架 */
+    private Integer status;
+
+    /** 模板价格 */
+    private java.math.BigDecimal price;
+
+    /** 销量 */
+    private Integer salesCount;
+
+    /** 累计收益 */
+    private java.math.BigDecimal incomeTotal;
+
     public void setId(Long id)
     {
         this.id = id;
@@ -93,6 +105,38 @@ public class PromptTemplate {
         this.isCommon = isCommon;
     }
 
+    public Integer getStatus() {
+        return status;
+    }
+
+    public void setStatus(Integer status) {
+        this.status = status;
+    }
+
+    public java.math.BigDecimal getPrice() {
+        return price;
+    }
+
+    public void setPrice(java.math.BigDecimal price) {
+        this.price = price;
+    }
+
+    public Integer getSalesCount() {
+        return salesCount;
+    }
+
+    public void setSalesCount(Integer salesCount) {
+        this.salesCount = salesCount;
+    }
+
+    public java.math.BigDecimal getIncomeTotal() {
+        return incomeTotal;
+    }
+
+    public void setIncomeTotal(java.math.BigDecimal incomeTotal) {
+        this.incomeTotal = incomeTotal;
+    }
+
     @Override
     public String toString() {
         return new ToStringBuilder(this, ToStringStyle.MULTI_LINE_STYLE)
@@ -103,6 +147,10 @@ public class PromptTemplate {
                 .append("userId", getUserId())
                 .append("isdel", getIsdel())
                 .append("isCommon", getIsCommon())
+                .append("status", getStatus())
+                .append("price", getPrice())
+                .append("salesCount", getSalesCount())
+                .append("incomeTotal", getIncomeTotal())
                 .toString();
     }
 }
