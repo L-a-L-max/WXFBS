@@ -419,7 +419,7 @@ export default {
         return deleteScorePrompt([this.form.id])
       }).then(() => {
         this.$modal.msgSuccess("删除成功")
-        this.$router.push('/wechat/templateBox')
+        this.$router.push('/prompt-template/templateBox')
       }).catch(() => {})
     },
     handleCallWordDelete() {
@@ -428,7 +428,7 @@ export default {
         return deleteMediaCallWord([this.callWordForm.platformId])
       }).then(() => {
         this.$modal.msgSuccess("删除成功")
-        this.$router.push('/wechat/templateBox')
+        this.$router.push('/prompt-template/templateBox')
       }).catch(() => {})
     }
   }

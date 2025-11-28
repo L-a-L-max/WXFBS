@@ -686,7 +686,7 @@ INSERT INTO `sys_menu` VALUES (1059, '预览代码', 116, 5, '#', '', '', '', 1,
 INSERT INTO `sys_menu` VALUES (1060, '生成代码', 116, 6, '#', '', '', '', 1, 0, 'F', '0', '0', 'tool:gen:code', '#', 'admin', '2024-08-08 14:05:53', '', NULL, '');
 INSERT INTO `sys_menu` VALUES (2000, '内容管理', 0, 0, 'wechat', NULL, NULL, '', 1, 0, 'M', '0', '0', '', 'education', 'admin', '2024-08-08 14:14:32', 'YangHangHang', '2024-11-12 10:59:05', '');
 INSERT INTO `sys_menu` VALUES (2001, '用户列表', 2051, 1, 'user-list', 'wechat/company/index', NULL, '', 1, 0, 'C', '0', '0', 'wechat:company:list', 'tree-table', 'admin', '2024-08-08 14:17:40', 'admin', '2025-05-13 09:48:53', '');
-INSERT INTO `sys_menu` VALUES (2007, '积分设置', 2051, 2, 'points', 'wechat/company/index', NULL, '', 1, 0, 'C', '0', '0', 'wechat:points:list', 'money', 'DuHongChao-YuanTouShe', '2024-09-13 14:35:36', '', NULL, '');
+-- INSERT INTO `sys_menu` VALUES (2007, '积分设置', 2051, 2, 'points', 'wechat/company/index', NULL, '', 1, 0, 'C', '0', '0', 'wechat:points:list', 'money', 'DuHongChao-YuanTouShe', '2024-09-13 14:35:36', '', NULL, '');
 INSERT INTO `sys_menu` VALUES (2017, 'AI精选一站通', 2000, 0, 'chrome', 'wechat/chrome/index', NULL, '', 1, 0, 'C', '0', '0', 'wechat:chrome:list', 'international', 'YangHangHang', '2024-11-22 09:59:55', 'admin', '2025-10-29 12:00:00', '');
 INSERT INTO `sys_menu` VALUES (2021, '稿库', 2000, 1, 'drafts', 'wechat/drafts/index', NULL, '', 1, 0, 'C', '0', '0', '', 'log', 'o3lds60Lfe6_MaGyB-COxgGcItnM', '2025-01-06 17:23:00', 'admin', '2025-06-06 08:46:16', '');
 INSERT INTO `sys_menu` VALUES (2022, '用户日志', 108, 1, 'userLog', 'monitor/userLog/index', NULL, '', 1, 0, 'C', '0', '0', 'monitor:userLog:list', '#', 'admin', '2025-10-15 17:05:34', '', NULL, '用户日志菜单');
@@ -728,7 +728,7 @@ INSERT INTO `sys_menu` VALUES (2108, '模板工作坊修改', 2102, 3, '#', NULL
 INSERT INTO `sys_menu` VALUES (2109, '模板工作坊删除', 2102, 4, '#', NULL, '', '', 1, 0, 'F', '0', '0', 'wechat:templateWorkshop:remove', '#', 'admin', '2025-11-28 09:39:23', '', NULL, '');
 INSERT INTO `sys_menu` VALUES (2110, '积分管理', 0, 10, 'points', NULL, '', '', 1, 0, 'M', '0', '0', '', 'star', 'admin', '2025-11-27 06:49:52', '', NULL, '积分管理目录');
 INSERT INTO `sys_menu` VALUES (2111, '我的积分总览', 2110, 1, 'overview', 'points/overview/index', '', '', 1, 0, 'C', '0', '0', '', 'guide', 'admin', '2025-11-27 06:52:10', '', NULL, '我的积分总览页面');
-INSERT INTO `sys_menu` VALUES (2112, '积分规则配置', 2110, 5, 'points/rule', 'points/rule/index', '', '', 1, 0, 'C', '0', '0', '', '#', 'admin', '2025-11-28 00:43:16', '', NULL, '');
+INSERT INTO `sys_menu` VALUES (2112, '积分规则配置', 2051, 5, 'points/rule', 'points/rule/index', '', '', 1, 0, 'C', '0', '0', '', '#', 'admin', '2025-11-28 00:43:16', '', NULL, '');
 INSERT INTO `sys_menu` VALUES (2113, '积分规则查询', 2112, 1, '#', NULL, '', '', 1, 0, 'F', '0', '0', 'system:dict:query', '#', 'admin', '2025-11-28 00:46:51', '', NULL, '');
 INSERT INTO `sys_menu` VALUES (2114, '积分规则新增', 2112, 2, '#', NULL, '', '', 1, 0, 'F', '0', '0', 'system:dict:add', '#', 'admin', '2025-11-28 00:46:51', '', NULL, '');
 INSERT INTO `sys_menu` VALUES (2115, '积分规则修改', 2112, 3, '#', NULL, '', '', 1, 0, 'F', '0', '0', 'system:dict:edit', '#', 'admin', '2025-11-28 00:46:51', '', NULL, '');
@@ -995,24 +995,24 @@ INSERT INTO `sys_role_menu` VALUES (1, 2071);
 INSERT INTO `sys_role_menu` VALUES (1, 2072);
 INSERT INTO `sys_role_menu` VALUES (1, 2073);
 INSERT INTO `sys_role_menu` VALUES (1, 2074);
-INSERT  INTO `sys_role_menu` VALUES (1, 2100);
-INSERT  INTO `sys_role_menu` VALUES (1, 2101);
+INSERT INTO `sys_role_menu` VALUES (1, 2100);
+INSERT INTO `sys_role_menu` VALUES (1, 2101);
 INSERT INTO `sys_role_menu` VALUES (1, 2102);
-INSERT  INTO `sys_role_menu` VALUES (1, 2103);
-INSERT  INTO `sys_role_menu` VALUES (1, 2104);
-INSERT  INTO `sys_role_menu` VALUES (1, 2105);
-INSERT  INTO `sys_role_menu` VALUES (1, 2106);
-INSERT  INTO `sys_role_menu` VALUES (1, 2107);
-INSERT  INTO `sys_role_menu` VALUES (1, 2108);
+INSERT INTO `sys_role_menu` VALUES (1, 2103);
+INSERT INTO `sys_role_menu` VALUES (1, 2104);
+INSERT INTO `sys_role_menu` VALUES (1, 2105);
+INSERT INTO `sys_role_menu` VALUES (1, 2106);
+INSERT INTO `sys_role_menu` VALUES (1, 2107);
+INSERT INTO `sys_role_menu` VALUES (1, 2108);
 INSERT INTO `sys_role_menu` VALUES (1, 2109);
 INSERT INTO `sys_role_menu` VALUES (1, 2110);
-INSERT  INTO `sys_role_menu` VALUES (1, 2111);
-INSERT  INTO `sys_role_menu` VALUES (1, 2112);
-INSERT  INTO `sys_role_menu` VALUES (1, 2113);
-INSERT  INTO `sys_role_menu` VALUES (1, 2114);
-INSERT  INTO `sys_role_menu` VALUES (1, 2115);
-INSERT  INTO `sys_role_menu` VALUES (1, 2116);
-INSERT  INTO `sys_role_menu` VALUES (1, 2117);
+INSERT INTO `sys_role_menu` VALUES (1, 2111);
+INSERT INTO `sys_role_menu` VALUES (1, 2112);
+INSERT INTO `sys_role_menu` VALUES (1, 2113);
+INSERT INTO `sys_role_menu` VALUES (1, 2114);
+INSERT INTO `sys_role_menu` VALUES (1, 2115);
+INSERT INTO `sys_role_menu` VALUES (1, 2116);
+INSERT INTO `sys_role_menu` VALUES (1, 2117);
 INSERT INTO `sys_role_menu` VALUES (2, 1);
 INSERT INTO `sys_role_menu` VALUES (2, 2);
 INSERT INTO `sys_role_menu` VALUES (2, 3);
@@ -1187,7 +1187,7 @@ CREATE TABLE `sys_user`  (
 -- ----------------------------
 -- Records of sys_user
 -- ----------------------------
-INSERT INTO `sys_user` VALUES (22, NULL, NULL, NULL, 1, 'admin', 'admin', '00', '', '', '0', '', '$2a$10$7JB720yubVSZvUI0rEqK/.VqGOZTH.ulu33dHOiBE8ByOhJIrdAu2', '0', '0', '127.0.0.1', '2025-10-27 17:29:56', 'admin', '2025-10-27 17:29:56', 'admin', '2025-10-27 17:29:56', NULL, 'office01', 0, '', '', '', '');
+INSERT INTO `sys_user` VALUES (22, NULL, NULL, NULL, 1, 'admin', 'admin', '00', '', '', '0', '', '$2a$10$7JB720yubVSZvUI0rEqK/.VqGOZTH.ulu33dHOiBE8ByOhJIrdAu2', '0', '0', '127.0.0.1', '2025-10-27 17:29:56', 'admin', '2025-10-27 17:29:56', 'admin', '2025-10-27 17:29:56', NULL, 'office01', 9820, '', '', '', '');
 INSERT INTO `sys_user` (`user_id`, `open_id`, `union_id`, `qw_id`, `dept_id`, `user_name`, `nick_name`, `user_type`, `email`, `phonenumber`, `sex`, `avatar`, `password`, `status`, `del_flag`, `login_ip`, `login_date`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`, `corp_id`, `points`, `agent_id`, `agent_token`, `space_id`, `space_name`)
 VALUES (1, NULL, NULL, NULL, NULL, 'platform', '平台账户', '00', '', '', '0', '', '', '0', '0', '', NULL, 'admin', sysdate(), 'admin', sysdate(), '平台公共账户，用于存储积分抽成', NULL, 0, '', '', '', '')
 ON DUPLICATE KEY UPDATE
@@ -2417,7 +2417,7 @@ CREATE TABLE IF NOT EXISTS `wc_template_purchase` (
 -- -- =============================================
 -- 6. 添加积分配置菜单
 -- =============================================
-SET @points_menu_id = (SELECT menu_id FROM sys_menu WHERE menu_name = '积分管理' AND parent_id = 0 LIMIT 1);
+SET @points_menu_id = (SELECT menu_id FROM sys_menu WHERE menu_name = '粉丝管理' AND parent_id = 0 LIMIT 1);
 
 -- 如果积分管理菜单存在，则插入积分规则配置菜单
 INSERT INTO `sys_menu`(

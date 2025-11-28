@@ -148,12 +148,12 @@ export default {
       // 查看模板详情
       if (this.templateType === 'score') {
         this.$router.push({
-          path: '/wechat/templateWorkshop',
+          path: '/prompt-template/templateWorkshop',
           query: { id: row.templateId, mode: 'view', type: 'score' }
         })
       } else {
         this.$router.push({
-          path: '/wechat/templateWorkshop',
+          path: '/prompt-template/templateWorkshop',
           query: { platformId: row.templateId, mode: 'view', type: 'callword' }
         })
       }

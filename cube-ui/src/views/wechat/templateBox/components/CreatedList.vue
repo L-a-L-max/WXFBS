@@ -198,13 +198,13 @@ export default {
       if (this.templateType === 'score') {
         // 跳转到模板工作坊编辑评分模板
         this.$router.push({
-          path: '/wechat/templateWorkshop',
+          path: '/prompt-template/templateWorkshop',
           query: { id: row.id, mode: 'edit', type: 'score' }
         })
       } else {
         // 在模板工作坊编辑提示词模板
         this.$router.push({
-          path: '/wechat/templateWorkshop',
+          path: '/prompt-template/templateWorkshop',
           query: { platformId: row.platformId, mode: 'edit', type: 'callword' }
         })
       }
