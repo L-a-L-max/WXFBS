@@ -12,10 +12,14 @@
         <result property="userId"    column="user_id"    />
         <result property="isdel"    column="isdel"    />
         <result property="isCommon"    column="is_common"    />
+        <result property="status"    column="status"    />
+        <result property="price"    column="price"    />
+        <result property="salesCount"    column="sales_count"    />
+        <result property="incomeTotal"    column="income_total"    />
     </resultMap>
 
     <sql id="selectPromptTemplateVo">
-        select id, name, prompt, type, user_id, isdel, is_common from wc_prompt_template
+        select id, name, prompt, type, user_id, isdel, is_common, status, price, sales_count, income_total from wc_prompt_template
     </sql>
 
     <select id="getPromptTemplateList" parameterType="com.cube.wechat.selfapp.app.domain.query.ScorePromptQuery" resultMap="PromptTemplateResult">
@@ -71,6 +75,10 @@
             <if test="userId != null">user_id,</if>
             <if test="isdel != null">isdel,</if>
             <if test="isCommon != null">is_common,</if>
+            <if test="status != null">status,</if>
+            <if test="price != null">price,</if>
+            <if test="salesCount != null">sales_count,</if>
+            <if test="incomeTotal != null">income_total,</if>
         </trim>
         <trim prefix="values (" suffix=")" suffixOverrides=",">
             <if test="name != null and name != ''">#{name},</if>
@@ -79,6 +87,10 @@
             <if test="userId != null">#{userId},</if>
             <if test="isdel != null">#{isdel},</if>
             <if test="isCommon != null">#{isCommon},</if>
+            <if test="status != null">#{status},</if>
+            <if test="price != null">#{price},</if>
+            <if test="salesCount != null">#{salesCount},</if>
+            <if test="incomeTotal != null">#{incomeTotal},</if>
         </trim>
     </insert>
 
@@ -91,6 +103,10 @@
             <if test="userId != null">user_id = #{userId},</if>
             <if test="isdel != null">isdel = #{isdel},</if>
             <if test="isCommon != null">is_common = #{isCommon},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="price != null">price = #{price},</if>
+            <if test="salesCount != null">sales_count = #{salesCount},</if>
+            <if test="incomeTotal != null">income_total = #{incomeTotal},</if>
         </trim>
         where id = #{id}
     </update>
@@ -105,4 +121,73 @@
             #{id}
         </foreach>
     </update>
+
+    <select id="selectScorePromptById" parameterType="Long" resultMap="PromptTemplateResult">
+        <include refid="selectPromptTemplateVo"/>
+        where id = #{id} and type = 3 and isdel = 0
+    </select>
+
+    <select id="getMyCreatedTemplates" resultMap="PromptTemplateResult">
+        <include refid="selectPromptTemplateVo"/>
+        <where>
+            and type = 3
+            and user_id = #{userId}
+            <if test="scorePromptQuery.name != null and scorePromptQuery.name != ''"> 
+                and name like concat('%', #{scorePromptQuery.name}, '%')
+            </if>
+            and isdel = 0
+        </where>
+        order by id desc
+    </select>
+
+    <select id="getMarketTemplates" resultType="java.util.HashMap">
+        select 
+            pt.id,
+            pt.name,
+            pt.prompt,
+            pt.price,
+            pt.sales_count as salesCount,
+            pt.status,
+            pt.user_id as userId,
+            u.user_name as authorName
+        from wc_prompt_template pt
+        left join sys_user u on pt.user_id = u.user_id COLLATE utf8mb4_unicode_ci
+        <where>
+            pt.type = 3
+            and pt.isdel = 0
+            and pt.status = 1
+            and (pt.is_common = 0 or pt.is_common is null)
+            <if test="scorePromptQuery.name != null and scorePromptQuery.name != ''"> 
+                and pt.name like concat('%', #{scorePromptQuery.name}, '%')
+            </if>
+            <if test="minPrice != null"> 
+                and pt.price &gt;= #{minPrice}
+            </if>
+            <if test="maxPrice != null"> 
+                and pt.price &lt;= #{maxPrice}
+            </if>
+        </where>
+        order by pt.sales_count desc, pt.id desc
+        limit #{offset}, #{limit}
+    </select>
+
+    <select id="countMarketTemplates" resultType="int">
+        select count(1)
+        from wc_prompt_template pt
+        <where>
+            pt.type = 3
+            and pt.isdel = 0
+            and pt.status = 1
+            and (pt.is_common = 0 or pt.is_common is null)
+            <if test="scorePromptQuery.name != null and scorePromptQuery.name != ''"> 
+                and pt.name like concat('%', #{scorePromptQuery.name}, '%')
+            </if>
+            <if test="minPrice != null"> 
+                and pt.price &gt;= #{minPrice}
+            </if>
+            <if test="maxPrice != null"> 
+                and pt.price &lt;= #{maxPrice}
+            </if>
+        </where>
+    </select>
 </mapper>

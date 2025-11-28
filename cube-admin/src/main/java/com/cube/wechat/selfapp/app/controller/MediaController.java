@@ -7,9 +7,9 @@ import com.cube.common.core.page.TableDataInfo;
 import com.cube.common.enums.BusinessType;
 import com.cube.wechat.selfapp.app.domain.CallWord;
 import com.cube.wechat.selfapp.app.domain.PromptTemplate;
+import com.cube.wechat.selfapp.app.domain.request.CallWordPublishRequest;
 import com.cube.wechat.selfapp.app.domain.query.CallWordQuery;
 import com.cube.wechat.selfapp.app.mapper.PromptTemplateMapper;
-import com.cube.wechat.selfapp.app.mapper.CallWordMapper;
 import com.cube.wechat.selfapp.app.service.CallWordService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -33,8 +33,6 @@ public class MediaController extends BaseController {
     private CallWordService callWordService;
     @Autowired
     private PromptTemplateMapper promptTemplateMapper;
-    @Autowired
-    private CallWordMapper callWordMapper;
 
     /**
      * 获取指定媒体平台的提示词
@@ -136,17 +134,32 @@ public class MediaController extends BaseController {
                 return AjaxResult.error("您没有权限执行此操作");
             }
             
-            CallWord callWord = callWordMapper.selectByPlatformId(platformId);
-            if (callWord == null) {
-                return AjaxResult.error("提示词不存在");
-            }
-            callWord.setIsCommon(isCommon);
-            int result = callWordMapper.updateCallWord(callWord);
-            return result > 0 ? AjaxResult.success("设置成功") : AjaxResult.error("设置失败");
+            return callWordService.setCallWordCommon(platformId, isCommon);
         } catch (Exception e) {
             logger.error("设置公共提示词失败", e);
             return AjaxResult.error("设置失败：" + e.getMessage());
         }
+    }
+
+    /**
+     * 模板上架市场
+     */
+    @Log(title = "模板上架", businessType = BusinessType.UPDATE)
+    @PutMapping("/publishCallWord")
+    public AjaxResult publishCallWord(@RequestBody CallWordPublishRequest request) {
+        if (request == null || request.getPlatformId() == null) {
+            return AjaxResult.error("模板标识不能为空");
+        }
+        return callWordService.publishCallWord(request.getPlatformId(), request.getPrice());
+    }
+
+    /**
+     * 模板下架
+     */
+    @Log(title = "模板下架", businessType = BusinessType.UPDATE)
+    @PutMapping("/unpublishCallWord/{platformId}")
+    public AjaxResult unpublishCallWord(@PathVariable String platformId) {
+        return callWordService.unpublishCallWord(platformId);
     }
 
 } 

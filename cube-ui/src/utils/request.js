@@ -77,6 +77,16 @@ service.interceptors.response.use(res => {
     const code = res.data.code || 200;
     // 获取错误信息
     const msg = errorCode[code] || res.data.msg || errorCode['default']
+    const buildBusinessError = () => {
+      const businessError = new Error(msg);
+      businessError.code = code;
+      businessError.response = {
+        data: res.data,
+        status: res.status,
+        headers: res.headers,
+      };
+      return businessError;
+    };
     // 二进制数据则直接返回
     if (res.request.responseType ===  'blob' || res.request.responseType ===  'arraybuffer') {
       return res.data
@@ -99,7 +109,7 @@ service.interceptors.response.use(res => {
       }
       return Promise.reject('无效的会话，或者会话已过期，请重新登录。')
     }else if (code === 218) {
-      return Promise.reject(new Error(msg))
+      return Promise.reject(buildBusinessError())
     } else if (code === 500) {
       // 服务器错误，使用友好提示
       const friendlyMsg = msg.includes('服务暂时繁忙') || msg.includes('服务暂时不可用') 
@@ -112,7 +122,7 @@ service.interceptors.response.use(res => {
         duration: 5000,
         position: 'top-right'
       })
-      return Promise.reject(new Error(msg))
+      return Promise.reject(buildBusinessError())
     } else if (code === 601) {
       ElNotification({
         title: '警告',
@@ -121,7 +131,7 @@ service.interceptors.response.use(res => {
         duration: 5000,
         position: 'top-right'
       })
-      return Promise.reject('error')
+      return Promise.reject(buildBusinessError())
     } else if (code === 1001) {
       // 企业微信登录需要显示客服二维码的特殊错误，不显示消息，直接传递到前端处理
       return Promise.reject({ response: { data: res.data } })
@@ -133,7 +143,7 @@ service.interceptors.response.use(res => {
         duration: 5000,
         position: 'top-right'
       })
-      return Promise.reject('error')
+      return Promise.reject(buildBusinessError())
     } else {
       return res.data
     }
