@@ -452,28 +452,27 @@ INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`
 INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (2115, '积分规则修改', 2112, 3, '#', NULL, '', '', 1, 0, 'F', '0', '0', 'system:dict:edit', '#', 'admin', '2025-11-28 00:46:51', '', NULL, '');
 INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (2116, '积分规则删除', 2112, 4, '#', NULL, '', '', 1, 0, 'F', '0', '0', 'system:dict:remove', '#', 'admin', '2025-11-28 00:46:51', '', NULL, '');
 INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (2117, '积分规则导出', 2112, 5, '#', NULL, '', '', 1, 0, 'F', '0', '0', 'system:dict:export', '#', 'admin', '2025-11-28 00:46:51', '', NULL, '');
-COMMIT;
--- auto-generated definition
+COMMIT;-- ----------------------------
+-- Table structure for sys_dict_data
+-- ----------------------------
 DROP TABLE IF EXISTS `sys_dict_data`;
-create table sys_dict_data
-(
-    dict_code   bigint auto_increment comment '字典编码'
-        primary key,
-    dict_sort   int          default 0   null comment '字典排序',
-    dict_label  varchar(100) default ''  null comment '字典标签',
-    dict_value  varchar(100) default ''  null comment '字典键值',
-    dict_type   varchar(100) default ''  null comment '字典类型',
-    css_class   varchar(100)             null comment '样式属性（其他样式扩展）',
-    list_class  varchar(100)             null comment '表格回显样式',
-    is_default  char         default 'N' null comment '是否默认（Y是 N否）',
-    status      char         default '0' null comment '状态（0正常 1停用）',
-    create_by   varchar(64)  default ''  null comment '创建者',
-    create_time datetime                 null comment '创建时间',
-    update_by   varchar(64)  default ''  null comment '更新者',
-    update_time datetime                 null comment '更新时间',
-    remark      varchar(500)             null comment '备注'
-)
-    comment '字典数据表' row_format = DYNAMIC;
+CREATE TABLE `sys_dict_data` (
+  `dict_code` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '字典编码',
+  `dict_sort` int(4) DEFAULT '0' COMMENT '字典排序',
+  `dict_label` varchar(100) DEFAULT '' COMMENT '字典标签',
+  `dict_value` varchar(100) DEFAULT '' COMMENT '字典键值',
+  `dict_type` varchar(100) DEFAULT '' COMMENT '字典类型',
+  `css_class` varchar(100) DEFAULT NULL COMMENT '样式属性（其他样式扩展）',
+  `list_class` varchar(100) DEFAULT NULL COMMENT '表格回显样式',
+  `is_default` char(1) DEFAULT 'N' COMMENT '是否默认（Y是 N否）',
+  `status` char(1) DEFAULT '0' COMMENT '状态（0正常 1停用）',
+  `create_by` varchar(64) DEFAULT '' COMMENT '创建者',
+  `create_time` datetime DEFAULT NULL COMMENT '创建时间',
+  `update_by` varchar(64) DEFAULT '' COMMENT '更新者',
+  `update_time` datetime DEFAULT NULL COMMENT '更新时间',
+  `remark` varchar(500) DEFAULT NULL COMMENT '备注',
+  PRIMARY KEY (`dict_code`)
+) ENGINE=InnoDB AUTO_INCREMENT=145 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='字典数据表';
 
 
 -- Records of sys_dict_data
@@ -553,6 +552,8 @@ INSERT INTO `sys_dict_data` (`dict_code`, `dict_sort`, `dict_label`, `dict_value
 INSERT INTO `sys_dict_data` (`dict_code`, `dict_sort`, `dict_label`, `dict_value`, `dict_type`, `css_class`, `list_class`, `is_default`, `status`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (142, 20, '记忆修改', '-1', 'sys_point_rule', NULL, 'default', 'N', '0', 'o3lds67b1zyFvifHTC_32epnmzqM', '2025-03-26 15:55:19', 'admin', '2025-03-27 15:17:00', '记忆描述配置');
 INSERT INTO `sys_dict_data` (`dict_code`, `dict_sort`, `dict_label`, `dict_value`, `dict_type`, `css_class`, `list_class`, `is_default`, `status`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (143, 21, '使用F8S', '-1', 'sys_point_rule', NULL, 'default', 'N', '0', 'o3lds67b1zyFvifHTC_32epnmzqM', '2025-03-26 15:55:34', 'admin', '2025-03-27 15:09:21', '');
 INSERT INTO `sys_dict_data` (`dict_code`, `dict_sort`, `dict_label`, `dict_value`, `dict_type`, `css_class`, `list_class`, `is_default`, `status`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (144, 22, 'AI评分', '-1', 'sys_point_rule', NULL, 'default', 'N', '0', 'admin', '2025-05-15 09:23:28', '', NULL, NULL);
+INSERT INTO `sys_dict_data` (`dict_code`, `dict_sort`, `dict_label`, `dict_value`, `dict_type`, `css_class`, `list_class`, `is_default`, `status`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (145, 22, 'AI排版', '-1', 'sys_point_rule', NULL, 'default', 'N', '0', 'admin', '2025-05-15 09:23:28', '', NULL, NULL);
+INSERT INTO `sys_dict_data` (`dict_code`, `dict_sort`, `dict_label`, `dict_value`, `dict_type`, `css_class`, `list_class`, `is_default`, `status`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (144, 22, '模板上架奖励', '-1', 'sys_point_rule', NULL, 'default', 'N', '0', 'admin', '2025-05-15 09:23:28', '', NULL, '{"limitType":"DAILY","limitValue":3}');
 COMMIT;
 
 -- ----------------------------
@@ -2545,6 +2546,18 @@ CREATE TABLE `wechat_office_account` (
 -- ----------------------------
 -- Records of wechat_office_account
 -- ----------------------------
+
+DROP TABLE IF EXISTS `wc_call_word`;
+CREATE TABLE `wc_call_word`  (
+                                `platform_id` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '平台标识 wechat_layout-公众号排版 zhihu_layout-知乎排版',
+                                `word_content` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '提示词内容',
+                                `is_common` tinyint(1) NULL DEFAULT 0 COMMENT '是否为公共模板(0:个人 1:公共)',
+                                `user_id` bigint(20) NULL DEFAULT NULL COMMENT '创建用户ID',
+                                `update_time` datetime NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+                                PRIMARY KEY (`platform_id`) USING BTREE,
+                                INDEX `idx_is_common`(`is_common`) USING BTREE,
+                                INDEX `idx_user_id`(`user_id`) USING BTREE
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '平台提示词配置表' ROW_FORMAT = Dynamic;
 
 DROP TABLE IF EXISTS `wc_call_word`;
 -- auto-generated definition
