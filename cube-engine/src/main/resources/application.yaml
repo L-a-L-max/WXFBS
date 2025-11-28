@@ -5,7 +5,7 @@
 custom:
   server:
     # 服务器IP和端口 (例如: 192.168.0.1:8081)
-    address: "127.0.0.1:8081"
+    address: ""
     # 主机ID (例如: office01)
     hostId: "office01"
     # 是否启用SSL (true=https/wss, false=http/ws)

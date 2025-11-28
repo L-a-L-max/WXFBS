@@ -69,10 +69,10 @@ spring:
   # redis 配置
   data:
     redis:
-      host: 192.168.6.100
+      host:
       port: 6379
       database: 2
-      password: 123321
+      password:
       timeout: 10s
       lettuce:
         pool:
