@@ -2338,7 +2338,7 @@ INSERT INTO `ai_agent` (`agent_name`, `agent_code`, `agent_icon`, `backend_inter
       "conflicts": []
     }
   ]
-}', '知乎直答AI助手，支持多种思考模式');
+}', '知乎直答AI助手，支持多种思考模式'),
 
 
 -- =============================================
