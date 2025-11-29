@@ -356,7 +356,7 @@ CREATE TABLE `sys_dict_data`  (
   `update_time` datetime(0) NULL DEFAULT NULL COMMENT '更新时间',
   `remark` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '备注',
   PRIMARY KEY (`dict_code`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 145 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '字典数据表' ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 147 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '字典数据表' ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Records of sys_dict_data
@@ -423,20 +423,20 @@ INSERT INTO `sys_dict_data` VALUES (129, 9, '邀请新用户', '10', 'sys_point_
 INSERT INTO `sys_dict_data` VALUES (130, 10, '积分99充值卡', '99', 'sys_point_rule', NULL, 'default', 'N', '0', 'o3lds67b1zyFvifHTC_32epnmzqM', '2024-12-31 14:43:33', '', NULL, NULL);
 INSERT INTO `sys_dict_data` VALUES (131, 11, '解绑能力使用', '-1', 'sys_point_rule', NULL, 'default', 'N', '0', 'o3lds67b1zyFvifHTC_32epnmzqM', '2024-12-31 14:44:35', 'o3lds67b1zyFvifHTC_32epnmzqM', '2024-12-31 14:47:08', NULL);
 INSERT INTO `sys_dict_data` VALUES (132, 12, '收录公众号', '-1', 'sys_point_rule', NULL, 'default', 'N', '0', 'o3lds67b1zyFvifHTC_32epnmzqM', '2024-12-31 14:45:22', '', NULL, NULL);
-INSERT INTO `sys_dict_data` VALUES (133, 12, '工作站自动化使用', '-1', 'sys_point_rule', NULL, 'default', 'N', '0', 'o3lds67b1zyFvifHTC_32epnmzqM', '2024-12-31 14:47:30', '', NULL, NULL);
-INSERT INTO `sys_dict_data` VALUES (134, 13, '每日打卡', '1', 'sys_point_rule', NULL, 'default', 'N', '0', 'o3lds67b1zyFvifHTC_32epnmzqM', '2024-12-31 14:47:44', '', NULL, NULL);
-INSERT INTO `sys_dict_data` VALUES (135, 14, '学习课程视频', '1', 'sys_point_rule', NULL, 'default', 'N', '0', 'o3lds67b1zyFvifHTC_32epnmzqM', '2024-12-31 14:49:40', '', NULL, NULL);
-INSERT INTO `sys_dict_data` VALUES (136, 15, '公众号修改', '-1', 'sys_point_rule', NULL, 'default', 'N', '0', 'o3lds67b1zyFvifHTC_32epnmzqM', '2024-12-31 14:54:58', '', NULL, NULL);
-INSERT INTO `sys_dict_data` VALUES (137, 16, '社群分享内容', '1', 'sys_point_rule', NULL, 'default', 'N', '0', 'o3lds67b1zyFvifHTC_32epnmzqM', '2024-12-31 14:59:48', '', NULL, NULL);
+INSERT INTO `sys_dict_data` VALUES (133, 13, '工作站自动化使用', '-1', 'sys_point_rule', NULL, 'default', 'N', '0', 'o3lds67b1zyFvifHTC_32epnmzqM', '2024-12-31 14:47:30', '', NULL, NULL);
+INSERT INTO `sys_dict_data` VALUES (134, 14, '每日打卡', '1', 'sys_point_rule', NULL, 'default', 'N', '0', 'o3lds67b1zyFvifHTC_32epnmzqM', '2024-12-31 14:47:44', '', NULL, NULL);
+INSERT INTO `sys_dict_data` VALUES (135, 15, '学习课程视频', '1', 'sys_point_rule', NULL, 'default', 'N', '0', 'o3lds67b1zyFvifHTC_32epnmzqM', '2024-12-31 14:49:40', '', NULL, NULL);
+INSERT INTO `sys_dict_data` VALUES (136, 16, '公众号修改', '-1', 'sys_point_rule', NULL, 'default', 'N', '0', 'o3lds67b1zyFvifHTC_32epnmzqM', '2024-12-31 14:54:58', '', NULL, NULL);
+INSERT INTO `sys_dict_data` VALUES (137, 17, '社群分享内容', '1', 'sys_point_rule', NULL, 'default', 'N', '0', 'o3lds67b1zyFvifHTC_32epnmzqM', '2024-12-31 14:59:48', '', NULL, NULL);
 INSERT INTO `sys_dict_data` VALUES (138, 9, '12D学习卡', '12', 'sys_point_rule', NULL, 'default', 'N', '0', 'o3lds67b1zyFvifHTC_32epnmzqM', '2024-12-31 15:00:10', '', NULL, NULL);
-INSERT INTO `sys_dict_data` VALUES (139, 17, '调用公众号智能体API', '-1', 'sys_point_rule', NULL, 'default', 'N', '0', 'o3lds67b1zyFvifHTC_32epnmzqM', '2025-03-21 13:57:24', 'o3lds67b1zyFvifHTC_32epnmzqM', '2025-03-21 13:57:38', NULL);
-INSERT INTO `sys_dict_data` VALUES (140, 18, '首次绑定元宝账号', '5', 'sys_point_rule', NULL, 'default', 'N', '0', 'o3lds67b1zyFvifHTC_32epnmzqM', '2025-03-26 15:54:46', 'admin', '2025-03-27 15:08:57', '');
-INSERT INTO `sys_dict_data` VALUES (141, 19, '模板配置', '-1', 'sys_point_rule', NULL, 'default', 'N', '0', 'o3lds67b1zyFvifHTC_32epnmzqM', '2025-03-26 15:55:02', 'admin', '2025-03-27 15:16:53', '附加提示词配置');
-INSERT INTO `sys_dict_data` VALUES (142, 20, '记忆修改', '-1', 'sys_point_rule', NULL, 'default', 'N', '0', 'o3lds67b1zyFvifHTC_32epnmzqM', '2025-03-26 15:55:19', 'admin', '2025-03-27 15:17:00', '记忆描述配置');
-INSERT INTO `sys_dict_data` VALUES (143, 21, 'AI智能对话', '-1', 'sys_point_rule', NULL, 'default', 'N', '0', 'o3lds67b1zyFvifHTC_32epnmzqM', '2025-03-26 15:55:34', 'admin', '2025-03-27 15:09:21', '');
-INSERT INTO `sys_dict_data` VALUES (144, 22, 'AI评分', '-1', 'sys_point_rule', NULL, 'default', 'N', '0', 'admin', '2025-05-15 09:23:28', '', NULL, NULL);
-INSERT INTO `sys_dict_data` VALUES (145, 23, 'AI排版', '-1', 'sys_point_rule', NULL, 'default', 'N', '0', 'admin', '2025-05-15 09:23:28', '', NULL, NULL);
-INSERT INTO `sys_dict_data` VALUES (145, 23, '模板上架奖励', '30', 'sys_point_rule', NULL, 'default', 'N', '0', 'admin', '2025-05-15 09:23:28', '', NULL,'{"limitType":"DAILY","limitValue":3}' );
+INSERT INTO `sys_dict_data` VALUES (139, 18, '调用公众号智能体API', '-1', 'sys_point_rule', NULL, 'default', 'N', '0', 'o3lds67b1zyFvifHTC_32epnmzqM', '2025-03-21 13:57:24', 'o3lds67b1zyFvifHTC_32epnmzqM', '2025-03-21 13:57:38', NULL);
+INSERT INTO `sys_dict_data` VALUES (140, 19, '首次绑定元宝账号', '5', 'sys_point_rule', NULL, 'default', 'N', '0', 'o3lds67b1zyFvifHTC_32epnmzqM', '2025-03-26 15:54:46', 'admin', '2025-03-27 15:08:57', '');
+INSERT INTO `sys_dict_data` VALUES (141, 20, '模板配置', '-1', 'sys_point_rule', NULL, 'default', 'N', '0', 'o3lds67b1zyFvifHTC_32epnmzqM', '2025-03-26 15:55:02', 'admin', '2025-03-27 15:16:53', '附加提示词配置');
+INSERT INTO `sys_dict_data` VALUES (142, 21, '记忆修改', '-1', 'sys_point_rule', NULL, 'default', 'N', '0', 'o3lds67b1zyFvifHTC_32epnmzqM', '2025-03-26 15:55:19', 'admin', '2025-03-27 15:17:00', '记忆描述配置');
+INSERT INTO `sys_dict_data` VALUES (143, 22, 'AI智能对话', '-1', 'sys_point_rule', NULL, 'default', 'N', '0', 'o3lds67b1zyFvifHTC_32epnmzqM', '2025-03-26 15:55:34', 'admin', '2025-03-27 15:09:21', '');
+INSERT INTO `sys_dict_data` VALUES (144, 23, 'AI评分', '-1', 'sys_point_rule', NULL, 'default', 'N', '0', 'admin', '2025-05-15 09:23:28', '', NULL, NULL);
+INSERT INTO `sys_dict_data` VALUES (145, 24, 'AI排版', '-1', 'sys_point_rule', NULL, 'default', 'N', '0', 'admin', '2025-05-15 09:23:28', '', NULL, NULL);
+INSERT INTO `sys_dict_data` VALUES (146, 25, '模板上架奖励', '30', 'sys_point_rule', NULL, 'default', 'N', '0', 'admin', '2025-05-15 09:23:28', '', NULL,'{"limitType":"DAILY","limitValue":3}' );
 
 
 -- ----------------------------
