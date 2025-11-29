@@ -156,8 +156,8 @@ public class WebSocketClientService {
                             aiLayoutPrompt(userInfoRequest);
                         }
 
-                    // 处理包含"使用F8S"的消息
-                    if (message.contains("使用F8S") || message.contains("AI评分") || message.contains("AI排版")) {
+                    // 处理包含"AI智能对话"的消息
+                    if (message.contains("AI智能对话") || message.contains("AI评分") || message.contains("AI排版")) {
                         // 豆包生成图片 - 使用严格匹配避免误触发
                         if (message.contains("db-img,")) {
                             concurrencyManager.submitBrowserTaskWithDeduplication(() -> {

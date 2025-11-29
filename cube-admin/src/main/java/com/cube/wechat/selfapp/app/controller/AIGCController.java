@@ -155,10 +155,31 @@ public class AIGCController extends BaseController {
 
             jsonObject.put("type",jsonRpcRequest.getMethod());
 
+            // 先扣减积分，失败时直接返回
+            // changeType 为 jsonRpcRequest.getMethod()，如："AI评分"、"AI排版" 等
+            com.cube.point.util.ResultBody pointResult = pointsSystem.setUserPoint(
+                    jsonObject.get("userId") + "",
+                    jsonRpcRequest.getMethod(),
+                    null,
+                    "0x2edc4228a84d672affe8a594033cb84a029bcafc",
+                    "f34f737203aa370f53ef0e041c1bff36bf59db8eb662cdb447f01d9634374dd");
+            if (pointResult == null || pointResult.getCode() != 200) {
+                // 根据不同的错误码返回更详细的错误信息
+                String errorMsg = "积分操作失败";
+                if (pointResult != null) {
+                    long code = pointResult.getCode();
+                    if (code == 400) {
+                        errorMsg = pointResult.getMessages() != null ? pointResult.getMessages() : "积分余额不足或规则未配置";
+                    } else if (code == 429) {
+                        errorMsg = pointResult.getMessages() != null ? pointResult.getMessages() : "积分规则达到上限，请稍后再试";
+                    } else {
+                        errorMsg = pointResult.getMessages() != null ? pointResult.getMessages() : "积分操作失败";
+                    }
+                }
+                return ResultBody.error(pointResult != null ? (int) pointResult.getCode() : 500, errorMsg);
+            }
+
             myWebSocketHandler.sendMsgToClient("mini-"+jsonObject.get("userId"),jsonObject.toJSONString(),jsonObject);
-
-            pointsSystem.setUserPoint(jsonObject.get("userId")+"",jsonRpcRequest.getMethod(),null,"0x2edc4228a84d672affe8a594033cb84a029bcafc","f34f737203aa370f53ef0e041c1bff36bf59db8eb662cdb447f01d9634374dd");
-
 
             return ResultBody.success("发送成功");
 

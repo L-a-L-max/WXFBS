@@ -66,4 +66,30 @@ public interface CallWordService {
      * @return 操作结果
      */
     List<CallWord> getCallWordList(CallWordQuery callWordQuery);
+
+    /**
+     * 设置提示词公共状态
+     *
+     * @param platformId 平台标识
+     * @param isCommon 是否公共：1-公共 0-私有
+     * @return 操作结果
+     */
+    AjaxResult setCallWordCommon(String platformId, Integer isCommon);
+
+    /**
+     * 上架模板并定价
+     *
+     * @param platformId 平台标识
+     * @param price 定价
+     * @return 操作结果
+     */
+    AjaxResult publishCallWord(String platformId, java.math.BigDecimal price);
+
+    /**
+     * 下架模板
+     *
+     * @param platformId 平台标识
+     * @return 操作结果
+     */
+    AjaxResult unpublishCallWord(String platformId);
 }

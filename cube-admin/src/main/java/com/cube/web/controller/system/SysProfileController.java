@@ -22,6 +22,7 @@ import com.cube.common.utils.SecurityUtils;
 import com.cube.common.utils.StringUtils;
 import com.cube.common.utils.file.FileUploadUtils;
 import com.cube.common.utils.file.MimeTypeUtils;
+import com.cube.common.core.redis.RedisCache;
 import com.cube.framework.web.service.TokenService;
 import com.cube.system.service.ISysUserService;
 
@@ -43,6 +44,11 @@ public class SysProfileController extends BaseController
     @Autowired
     private PointsSystem pointsSystem;
     
+    @Autowired(required = false)
+    private RedisCache redisCache;
+    
+    private static final String POINTS_UPDATE_FLAG_PREFIX = "points:update:";
+    
     /**
      * 从配置文件中读取上传文件访问URL
      */
@@ -56,11 +62,56 @@ public class SysProfileController extends BaseController
     public AjaxResult profile()
     {
         LoginUser loginUser = getLoginUser();
+        Long userId = loginUser.getUser() != null ? loginUser.getUser().getUserId() : null;
+        
+        // 检查是否有积分更新标记，如果有则从数据库刷新积分
+        if (userId != null && hasPointsUpdateFlag(userId.toString())) {
+            SysUser latestUser = userService.selectUserById(userId);
+            if (latestUser != null) {
+                // 更新缓存中的用户信息（特别是积分）
+                loginUser.setUser(latestUser);
+                tokenService.setLoginUser(loginUser);
+                // 清除积分更新标记
+                clearPointsUpdateFlag(userId.toString());
+            }
+        }
+        
         SysUser user = loginUser.getUser();
         AjaxResult ajax = AjaxResult.success(user);
         ajax.put("roleGroup", userService.selectUserRoleGroup(loginUser.getUsername()));
         ajax.put("postGroup", userService.selectUserPostGroup(loginUser.getUsername()));
         return ajax;
+    }
+    
+    /**
+     * 检查是否有积分更新标记
+     */
+    private boolean hasPointsUpdateFlag(String userId) {
+        if (redisCache == null || userId == null) {
+            return false;
+        }
+        try {
+            String flagKey = POINTS_UPDATE_FLAG_PREFIX + userId;
+            Object flag = redisCache.getCacheObject(flagKey);
+            return flag != null;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+    
+    /**
+     * 清除积分更新标记
+     */
+    private void clearPointsUpdateFlag(String userId) {
+        if (redisCache == null || userId == null) {
+            return;
+        }
+        try {
+            String flagKey = POINTS_UPDATE_FLAG_PREFIX + userId;
+            redisCache.deleteObject(flagKey);
+        } catch (Exception e) {
+            // 忽略清除失败
+        }
     }
 
     /**

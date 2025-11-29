@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cube.wechat.selfapp.app.mapper.TemplateAuthorMapper">
+
+    <resultMap id="TemplateAuthorResult" type="com.cube.wechat.selfapp.app.domain.TemplateAuthor">
+        <id property="userId" column="user_id"/>
+        <result property="incomeTotal" column="income_total"/>
+        <result property="releaseTemplateCount" column="release_template_count"/>
+        <result property="level" column="level"/>
+    </resultMap>
+
+    <select id="selectByUserId" parameterType="Long" resultMap="TemplateAuthorResult">
+        select user_id, income_total, release_template_count, level
+        from wc_template_author
+        where user_id = #{userId}
+        limit 1
+    </select>
+
+    <insert id="insertTemplateAuthor" parameterType="com.cube.wechat.selfapp.app.domain.TemplateAuthor">
+        insert into wc_template_author (user_id, income_total, release_template_count, level)
+        values (#{userId}, #{incomeTotal}, #{releaseTemplateCount}, #{level})
+    </insert>
+
+    <update id="increaseReleaseTemplateCount">
+        update wc_template_author
+        set release_template_count = GREATEST(0, IFNULL(release_template_count, 0) + #{delta})
+        where user_id = #{userId}
+    </update>
+
+</mapper>
+
