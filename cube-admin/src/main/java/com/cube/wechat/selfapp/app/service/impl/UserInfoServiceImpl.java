@@ -823,10 +823,10 @@ public class UserInfoServiceImpl implements UserInfoService {
                 }
             }
             
-            // 将平台抽成存入平台账户（userid=0）
+            // 将平台抽成存入平台账户（userid=1）
             if (platformFeeAmount > 0) {
                 com.cube.point.util.ResultBody platformResult = pointsSystem.setUserPoint(
-                    "0",
+                    "1",
                     "平台抽成",
                     platformFeeAmount,
                     null,
@@ -1055,10 +1055,10 @@ public class UserInfoServiceImpl implements UserInfoService {
                 }
             }
             
-            // 将平台抽成存入平台账户（userid=0）
+            // 将平台抽成存入平台账户（userid=1）
             if (platformFeeAmount > 0) {
                 com.cube.point.util.ResultBody platformResult = pointsSystem.setUserPoint(
-                    "0",
+                    "1",
                     "平台抽成",
                     platformFeeAmount,
                     null,
