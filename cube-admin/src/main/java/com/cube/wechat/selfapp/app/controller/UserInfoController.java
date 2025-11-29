@@ -425,16 +425,164 @@ public class UserInfoController extends BaseController {
                 return AjaxResult.error("您没有权限执行此操作");
             }
             
-            PromptTemplate promptTemplate = promptTemplateMapper.getScorePromptById(id);
-            if (promptTemplate == null) {
-                return AjaxResult.error("模板不存在");
+            ResultBody result = userInfoService.setScorePromptCommon(id, isCommon);
+            if (result.getCode() == 200) {
+                return AjaxResult.success(result.getMessages());
+            } else {
+                return AjaxResult.error(result.getMessages());
             }
-            promptTemplate.setIsCommon(isCommon);
-            int result = promptTemplateMapper.updatePromptTemplate(promptTemplate);
-            return result > 0 ? AjaxResult.success("设置成功") : AjaxResult.error("设置失败");
         } catch (Exception e) {
             logger.error("设置公共评分模板失败", e);
             return AjaxResult.error("设置失败：" + e.getMessage());
+        }
+    }
+
+    /**
+     * 上架评分模板并定价
+     *
+     * @param request 上架请求
+     * @return 操作结果
+     */
+    @Log(title = "上架评分模板", businessType = BusinessType.UPDATE)
+    @PutMapping("/publishScorePrompt")
+    public AjaxResult publishScorePrompt(@RequestBody com.cube.wechat.selfapp.app.domain.request.ScorePromptPublishRequest request) {
+        if (request == null || request.getId() == null) {
+            return AjaxResult.error("模板ID不能为空");
+        }
+        ResultBody result = userInfoService.publishScorePrompt(request.getId(), request.getPrice());
+        if (result.getCode() == 200) {
+            return AjaxResult.success(result.getMessages());
+        } else {
+            return AjaxResult.error(result.getMessages());
+        }
+    }
+
+    /**
+     * 下架评分模板
+     *
+     * @param id 模板ID
+     * @return 操作结果
+     */
+    @Log(title = "下架评分模板", businessType = BusinessType.UPDATE)
+    @PutMapping("/unpublishScorePrompt/{id}")
+    public AjaxResult unpublishScorePrompt(@PathVariable Long id) {
+        ResultBody result = userInfoService.unpublishScorePrompt(id);
+        if (result.getCode() == 200) {
+            return AjaxResult.success(result.getMessages());
+        } else {
+            return AjaxResult.error(result.getMessages());
+        }
+    }
+
+    /**
+     * 查询我创建的评分模板（模板类型：2-评分模板）
+     * 注意：此接口仅查询评分模板，不包含提示词模板
+     */
+    @GetMapping("/getMyCreatedTemplates")
+    public TableDataInfo getMyCreatedTemplates(ScorePromptQuery queryParams) {
+        com.cube.common.core.page.TableDataInfo dataTable = userInfoService.getMyCreatedTemplates(queryParams);
+        return dataTable;
+    }
+
+    /**
+     * 查询我购买的评分模板（模板类型：2-评分模板）
+     * 注意：此接口仅查询评分模板的购买记录，不包含提示词模板
+     */
+    @GetMapping("/getMyPurchasedTemplates")
+    public TableDataInfo getMyPurchasedTemplates(ScorePromptQuery queryParams) {
+        com.cube.common.core.page.TableDataInfo dataTable = userInfoService.getMyPurchasedTemplates(queryParams);
+        return dataTable;
+    }
+
+    /**
+     * 查询市场中的评分模板（已上架的评分模板，模板类型：2-评分模板）
+     * 注意：此接口仅查询评分模板，不包含提示词模板
+     */
+    @GetMapping("/getMarketTemplates")
+    public TableDataInfo getMarketTemplates(ScorePromptQuery queryParams) {
+        com.cube.common.core.page.TableDataInfo dataTable = userInfoService.getMarketTemplates(queryParams);
+        return dataTable;
+    }
+
+    /**
+     * 购买评分模板（模板类型：2-评分模板）
+     * 注意：此接口仅用于购买评分模板，提示词模板的购买需要使用其他接口
+     */
+    @Log(title = "购买评分模板", businessType = BusinessType.INSERT)
+    @PostMapping("/purchaseTemplate/{templateId}")
+    public AjaxResult purchaseTemplate(@PathVariable Long templateId) {
+        ResultBody result = userInfoService.purchaseTemplate(templateId);
+        if (result.getCode() == 200) {
+            return AjaxResult.success(result.getMessages());
+        } else {
+            return AjaxResult.error(result.getMessages());
+        }
+    }
+
+    /**
+     * 查询我创建的提示词模板（模板类型：1-提示词模板）
+     */
+    @GetMapping("/getMyCreatedCallWords")
+    public TableDataInfo getMyCreatedCallWords(com.cube.wechat.selfapp.app.domain.query.CallWordQuery queryParams) {
+        com.cube.common.core.page.TableDataInfo dataTable = userInfoService.getMyCreatedCallWords(queryParams);
+        return dataTable;
+    }
+
+    /**
+     * 查询我购买的提示词模板（模板类型：1-提示词模板）
+     */
+    @GetMapping("/getMyPurchasedCallWords")
+    public TableDataInfo getMyPurchasedCallWords(com.cube.wechat.selfapp.app.domain.query.CallWordQuery queryParams) {
+        com.cube.common.core.page.TableDataInfo dataTable = userInfoService.getMyPurchasedCallWords(queryParams);
+        return dataTable;
+    }
+
+    /**
+     * 查询市场中的提示词模板（已上架的提示词模板，模板类型：1-提示词模板）
+     */
+    @GetMapping("/getMarketCallWords")
+    public TableDataInfo getMarketCallWords(com.cube.wechat.selfapp.app.domain.query.CallWordQuery queryParams) {
+        com.cube.common.core.page.TableDataInfo dataTable = userInfoService.getMarketCallWords(queryParams);
+        return dataTable;
+    }
+
+    /**
+     * 购买提示词模板（模板类型：1-提示词模板）
+     */
+    @Log(title = "购买提示词模板", businessType = BusinessType.INSERT)
+    @PostMapping("/purchaseCallWord/{platformId}")
+    public AjaxResult purchaseCallWord(@PathVariable String platformId) {
+        ResultBody result = userInfoService.purchaseCallWord(platformId);
+        if (result.getCode() == 200) {
+            return AjaxResult.success(result.getMessages());
+        } else {
+            return AjaxResult.error(result.getMessages());
+        }
+    }
+
+    /**
+     * 获取我的积分
+     */
+    @GetMapping("/getMyPoints")
+    public AjaxResult getMyPoints() {
+        ResultBody result = userInfoService.getMyPoints();
+        if (result.getCode() == 200) {
+            return AjaxResult.success("获取成功", result.getData());
+        } else {
+            return AjaxResult.error(result.getMessages());
+        }
+    }
+
+    /**
+     * 获取我的积分概览
+     */
+    @GetMapping("/getMyPointsSummary")
+    public AjaxResult getMyPointsSummary() {
+        ResultBody result = userInfoService.getMyPointsSummary();
+        if (result.getCode() == 200) {
+            return AjaxResult.success("获取成功", result.getData());
+        } else {
+            return AjaxResult.error(result.getMessages());
         }
     }
 

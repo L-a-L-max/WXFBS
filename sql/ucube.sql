@@ -107,11 +107,32 @@ INSERT INTO `sys_role_menu` VALUES (1, 1057);
 INSERT INTO `sys_role_menu` VALUES (1, 1058);
 INSERT INTO `sys_role_menu` VALUES (1, 1059);
 INSERT INTO `sys_role_menu` VALUES (1, 1060);
+INSERT INTO `sys_role_menu` VALUES (1, 2001);
+INSERT INTO `sys_role_menu` VALUES (1, 2050);
+INSERT INTO `sys_role_menu` VALUES (1, 2051);
 INSERT INTO `sys_role_menu` VALUES (1, 2070);
 INSERT INTO `sys_role_menu` VALUES (1, 2071);
 INSERT INTO `sys_role_menu` VALUES (1, 2072);
 INSERT INTO `sys_role_menu` VALUES (1, 2073);
 INSERT INTO `sys_role_menu` VALUES (1, 2074);
+INSERT  INTO `sys_role_menu` VALUES (1, 2100);
+INSERT  INTO `sys_role_menu` VALUES (1, 2101);
+INSERT INTO `sys_role_menu` VALUES (1, 2102);
+INSERT  INTO `sys_role_menu` VALUES (1, 2103);
+INSERT  INTO `sys_role_menu` VALUES (1, 2104);
+INSERT  INTO `sys_role_menu` VALUES (1, 2105);
+INSERT  INTO `sys_role_menu` VALUES (1, 2106);
+INSERT  INTO `sys_role_menu` VALUES (1, 2107);
+INSERT  INTO `sys_role_menu` VALUES (1, 2108);
+INSERT INTO `sys_role_menu` VALUES (1, 2109);
+INSERT INTO `sys_role_menu` VALUES (1, 2110);
+INSERT  INTO `sys_role_menu` VALUES (1, 2111);
+INSERT  INTO `sys_role_menu` VALUES (1, 2112);
+INSERT  INTO `sys_role_menu` VALUES (1, 2113);
+INSERT  INTO `sys_role_menu` VALUES (1, 2114);
+INSERT  INTO `sys_role_menu` VALUES (1, 2115);
+INSERT  INTO `sys_role_menu` VALUES (1, 2116);
+INSERT  INTO `sys_role_menu` VALUES (1, 2117);
 INSERT INTO `sys_role_menu` VALUES (2, 1);
 INSERT INTO `sys_role_menu` VALUES (2, 2);
 INSERT INTO `sys_role_menu` VALUES (2, 3);
@@ -221,11 +242,31 @@ INSERT INTO `sys_role_menu` VALUES (2, 2038);
 INSERT INTO `sys_role_menu` VALUES (2, 2046);
 INSERT INTO `sys_role_menu` VALUES (2, 2047);
 INSERT INTO `sys_role_menu` VALUES (2, 2048);
+INSERT INTO `sys_role_menu` VALUES (2, 2050);
+INSERT INTO `sys_role_menu` VALUES (2, 2051);
 INSERT INTO `sys_role_menu` VALUES (2, 2070);
 INSERT INTO `sys_role_menu` VALUES (2, 2071);
 INSERT INTO `sys_role_menu` VALUES (2, 2072);
 INSERT INTO `sys_role_menu` VALUES (2, 2073);
 INSERT INTO `sys_role_menu` VALUES (2, 2074);
+INSERT  INTO `sys_role_menu` VALUES (2, 2100);
+INSERT  INTO `sys_role_menu` VALUES (2, 2101);
+INSERT INTO `sys_role_menu` VALUES (2, 2102);
+INSERT  INTO `sys_role_menu` VALUES (2, 2103);
+INSERT  INTO `sys_role_menu` VALUES (2, 2104);
+INSERT  INTO `sys_role_menu` VALUES (2, 2105);
+INSERT  INTO `sys_role_menu` VALUES (2, 2106);
+INSERT  INTO `sys_role_menu` VALUES (2, 2107);
+INSERT  INTO `sys_role_menu` VALUES (2, 2108);
+INSERT INTO `sys_role_menu` VALUES (2, 2109);
+INSERT INTO `sys_role_menu` VALUES (2, 2110);
+INSERT  INTO `sys_role_menu` VALUES (2, 2111);
+INSERT  INTO `sys_role_menu` VALUES (2, 2112);
+INSERT  INTO `sys_role_menu` VALUES (2, 2113);
+INSERT  INTO `sys_role_menu` VALUES (2, 2114);
+INSERT  INTO `sys_role_menu` VALUES (2, 2115);
+INSERT  INTO `sys_role_menu` VALUES (2, 2116);
+INSERT  INTO `sys_role_menu` VALUES (2, 2117);
 INSERT INTO `sys_role_menu` VALUES (101, 2000);
 INSERT INTO `sys_role_menu` VALUES (101, 2017);
 INSERT INTO `sys_role_menu` VALUES (101, 2021);
@@ -304,7 +345,7 @@ INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`
 INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (105, '字典管理', 1, 6, 'dict', 'system/dict/index', '', '', 1, 0, 'C', '0', '0', 'system:dict:list', 'dict', 'admin', '2024-08-08 14:05:51', '', NULL, '字典管理菜单');
 INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (106, '参数设置', 1, 7, 'config', 'system/config/index', '', '', 1, 0, 'C', '0', '0', 'system:config:list', 'edit', 'admin', '2024-08-08 14:05:51', '', NULL, '参数设置菜单');
 INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (107, '通知公告', 1, 8, 'notice', 'system/notice/index', '', '', 1, 0, 'C', '0', '0', 'system:notice:list', 'message', 'admin', '2024-08-08 14:05:51', '', NULL, '通知公告菜单');
-INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (108, 'old日志管理', 1, 9, 'log', '', '', '', 1, 0, 'M', '1', '0', '', 'log', 'admin', '2024-08-08 14:05:51', '', NULL, '日志管理菜单');
+INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (108, 'old日志管理', 1, 9, 'log', NULL, '', '', 1, 0, 'M', '1', '0', '', 'log', 'admin', '2024-08-08 14:05:51', '', NULL, '日志管理菜单');
 INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (109, '在线用户', 2, 1, 'online', 'monitor/online/index', '', '', 1, 0, 'C', '0', '0', 'monitor:online:list', 'online', 'admin', '2024-08-08 14:05:51', '', NULL, '在线用户菜单');
 INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (110, '定时任务', 2, 2, 'job', 'monitor/job/index', '', '', 1, 0, 'C', '0', '0', 'monitor:job:list', 'job', 'admin', '2024-08-08 14:05:51', '', NULL, '定时任务菜单');
 INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (111, '数据监控', 2, 3, 'druid', 'monitor/druid/index', '', '', 1, 0, 'C', '0', '1', 'monitor:druid:list', 'druid', 'admin', '2024-08-08 14:05:51', '', NULL, '数据监控菜单');
@@ -316,108 +357,125 @@ INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`
 INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (117, '系统接口', 3, 3, 'swagger', 'tool/swagger/index', '', '', 1, 0, 'C', '0', '0', 'tool:swagger:list', 'swagger', 'admin', '2024-08-08 14:05:52', '', NULL, '系统接口菜单');
 INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (500, '操作日志', 108, 1, 'operlog', 'monitor/operlog/index', '', '', 1, 0, 'C', '0', '0', 'monitor:operlog:list', 'form', 'admin', '2024-08-08 14:05:52', '', NULL, '操作日志菜单');
 INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (501, '登录日志', 108, 2, 'logininfor', 'monitor/logininfor/index', '', '', 1, 0, 'C', '0', '0', 'monitor:logininfor:list', 'logininfor', 'admin', '2024-08-08 14:05:52', '', NULL, '登录日志菜单');
-INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (1000, '用户查询', 100, 1, '', '', '', '', 1, 0, 'F', '0', '0', 'system:user:query', '#', 'admin', '2024-08-08 14:05:52', '', NULL, '');
-INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (1001, '用户新增', 100, 2, '', '', '', '', 1, 0, 'F', '0', '0', 'system:user:add', '#', 'admin', '2024-08-08 14:05:52', '', NULL, '');
-INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (1002, '用户修改', 100, 3, '', '', '', '', 1, 0, 'F', '0', '0', 'system:user:edit', '#', 'admin', '2024-08-08 14:05:52', '', NULL, '');
-INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (1003, '用户删除', 100, 4, '', '', '', '', 1, 0, 'F', '0', '0', 'system:user:remove', '#', 'admin', '2024-08-08 14:05:52', '', NULL, '');
-INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (1004, '用户导出', 100, 5, '', '', '', '', 1, 0, 'F', '0', '0', 'system:user:export', '#', 'admin', '2024-08-08 14:05:52', '', NULL, '');
-INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (1005, '用户导入', 100, 6, '', '', '', '', 1, 0, 'F', '0', '0', 'system:user:import', '#', 'admin', '2024-08-08 14:05:52', '', NULL, '');
-INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (1006, '重置密码', 100, 7, '', '', '', '', 1, 0, 'F', '0', '0', 'system:user:resetPwd', '#', 'admin', '2024-08-08 14:05:52', '', NULL, '');
-INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (1007, '角色查询', 101, 1, '', '', '', '', 1, 0, 'F', '0', '0', 'system:role:query', '#', 'admin', '2024-08-08 14:05:52', '', NULL, '');
-INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (1008, '角色新增', 101, 2, '', '', '', '', 1, 0, 'F', '0', '0', 'system:role:add', '#', 'admin', '2024-08-08 14:05:52', '', NULL, '');
-INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (1009, '角色修改', 101, 3, '', '', '', '', 1, 0, 'F', '0', '0', 'system:role:edit', '#', 'admin', '2024-08-08 14:05:52', '', NULL, '');
-INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (1010, '角色删除', 101, 4, '', '', '', '', 1, 0, 'F', '0', '0', 'system:role:remove', '#', 'admin', '2024-08-08 14:05:52', '', NULL, '');
-INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (1011, '角色导出', 101, 5, '', '', '', '', 1, 0, 'F', '0', '0', 'system:role:export', '#', 'admin', '2024-08-08 14:05:52', '', NULL, '');
-INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (1012, '菜单查询', 102, 1, '', '', '', '', 1, 0, 'F', '0', '0', 'system:menu:query', '#', 'admin', '2024-08-08 14:05:52', '', NULL, '');
-INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (1013, '菜单新增', 102, 2, '', '', '', '', 1, 0, 'F', '0', '0', 'system:menu:add', '#', 'admin', '2024-08-08 14:05:52', '', NULL, '');
-INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (1014, '菜单修改', 102, 3, '', '', '', '', 1, 0, 'F', '0', '0', 'system:menu:edit', '#', 'admin', '2024-08-08 14:05:52', '', NULL, '');
-INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (1015, '菜单删除', 102, 4, '', '', '', '', 1, 0, 'F', '0', '0', 'system:menu:remove', '#', 'admin', '2024-08-08 14:05:52', '', NULL, '');
-INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (1016, '部门查询', 103, 1, '', '', '', '', 1, 0, 'F', '0', '0', 'system:dept:query', '#', 'admin', '2024-08-08 14:05:52', '', NULL, '');
-INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (1017, '部门新增', 103, 2, '', '', '', '', 1, 0, 'F', '0', '0', 'system:dept:add', '#', 'admin', '2024-08-08 14:05:52', '', NULL, '');
-INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (1018, '部门修改', 103, 3, '', '', '', '', 1, 0, 'F', '0', '0', 'system:dept:edit', '#', 'admin', '2024-08-08 14:05:52', '', NULL, '');
-INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (1019, '部门删除', 103, 4, '', '', '', '', 1, 0, 'F', '0', '0', 'system:dept:remove', '#', 'admin', '2024-08-08 14:05:52', '', NULL, '');
-INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (1020, '岗位查询', 104, 1, '', '', '', '', 1, 0, 'F', '0', '0', 'system:post:query', '#', 'admin', '2024-08-08 14:05:52', '', NULL, '');
-INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (1021, '岗位新增', 104, 2, '', '', '', '', 1, 0, 'F', '0', '0', 'system:post:add', '#', 'admin', '2024-08-08 14:05:52', '', NULL, '');
-INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (1022, '岗位修改', 104, 3, '', '', '', '', 1, 0, 'F', '0', '0', 'system:post:edit', '#', 'admin', '2024-08-08 14:05:52', '', NULL, '');
-INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (1023, '岗位删除', 104, 4, '', '', '', '', 1, 0, 'F', '0', '0', 'system:post:remove', '#', 'admin', '2024-08-08 14:05:52', '', NULL, '');
-INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (1024, '岗位导出', 104, 5, '', '', '', '', 1, 0, 'F', '0', '0', 'system:post:export', '#', 'admin', '2024-08-08 14:05:52', '', NULL, '');
-INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (1025, '字典查询', 105, 1, '#', '', '', '', 1, 0, 'F', '0', '0', 'system:dict:query', '#', 'admin', '2024-08-08 14:05:52', '', NULL, '');
-INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (1026, '字典新增', 105, 2, '#', '', '', '', 1, 0, 'F', '0', '0', 'system:dict:add', '#', 'admin', '2024-08-08 14:05:52', '', NULL, '');
-INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (1027, '字典修改', 105, 3, '#', '', '', '', 1, 0, 'F', '0', '0', 'system:dict:edit', '#', 'admin', '2024-08-08 14:05:52', '', NULL, '');
-INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (1028, '字典删除', 105, 4, '#', '', '', '', 1, 0, 'F', '0', '0', 'system:dict:remove', '#', 'admin', '2024-08-08 14:05:52', '', NULL, '');
-INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (1029, '字典导出', 105, 5, '#', '', '', '', 1, 0, 'F', '0', '0', 'system:dict:export', '#', 'admin', '2024-08-08 14:05:52', '', NULL, '');
-INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (1030, '参数查询', 106, 1, '#', '', '', '', 1, 0, 'F', '0', '0', 'system:config:query', '#', 'admin', '2024-08-08 14:05:52', '', NULL, '');
-INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (1031, '参数新增', 106, 2, '#', '', '', '', 1, 0, 'F', '0', '0', 'system:config:add', '#', 'admin', '2024-08-08 14:05:53', '', NULL, '');
-INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (1032, '参数修改', 106, 3, '#', '', '', '', 1, 0, 'F', '0', '0', 'system:config:edit', '#', 'admin', '2024-08-08 14:05:53', '', NULL, '');
-INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (1033, '参数删除', 106, 4, '#', '', '', '', 1, 0, 'F', '0', '0', 'system:config:remove', '#', 'admin', '2024-08-08 14:05:53', '', NULL, '');
-INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (1034, '参数导出', 106, 5, '#', '', '', '', 1, 0, 'F', '0', '0', 'system:config:export', '#', 'admin', '2024-08-08 14:05:53', '', NULL, '');
-INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (1035, '公告查询', 107, 1, '#', '', '', '', 1, 0, 'F', '0', '0', 'system:notice:query', '#', 'admin', '2024-08-08 14:05:53', '', NULL, '');
-INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (1036, '公告新增', 107, 2, '#', '', '', '', 1, 0, 'F', '0', '0', 'system:notice:add', '#', 'admin', '2024-08-08 14:05:53', '', NULL, '');
-INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (1037, '公告修改', 107, 3, '#', '', '', '', 1, 0, 'F', '0', '0', 'system:notice:edit', '#', 'admin', '2024-08-08 14:05:53', '', NULL, '');
-INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (1038, '公告删除', 107, 4, '#', '', '', '', 1, 0, 'F', '0', '0', 'system:notice:remove', '#', 'admin', '2024-08-08 14:05:53', '', NULL, '');
-INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (1039, '操作查询', 500, 1, '#', '', '', '', 1, 0, 'F', '0', '0', 'monitor:operlog:query', '#', 'admin', '2024-08-08 14:05:53', '', NULL, '');
-INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (1040, '操作删除', 500, 2, '#', '', '', '', 1, 0, 'F', '0', '0', 'monitor:operlog:remove', '#', 'admin', '2024-08-08 14:05:53', '', NULL, '');
-INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (1041, '日志导出', 500, 3, '#', '', '', '', 1, 0, 'F', '0', '0', 'monitor:operlog:export', '#', 'admin', '2024-08-08 14:05:53', '', NULL, '');
-INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (1042, '登录查询', 501, 1, '#', '', '', '', 1, 0, 'F', '0', '0', 'monitor:logininfor:query', '#', 'admin', '2024-08-08 14:05:53', '', NULL, '');
-INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (1043, '登录删除', 501, 2, '#', '', '', '', 1, 0, 'F', '0', '0', 'monitor:logininfor:remove', '#', 'admin', '2024-08-08 14:05:53', '', NULL, '');
-INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (1044, '日志导出', 501, 3, '#', '', '', '', 1, 0, 'F', '0', '0', 'monitor:logininfor:export', '#', 'admin', '2024-08-08 14:05:53', '', NULL, '');
-INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (1045, '账户解锁', 501, 4, '#', '', '', '', 1, 0, 'F', '0', '0', 'monitor:logininfor:unlock', '#', 'admin', '2024-08-08 14:05:53', '', NULL, '');
-INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (1046, '在线查询', 109, 1, '#', '', '', '', 1, 0, 'F', '0', '0', 'monitor:online:query', '#', 'admin', '2024-08-08 14:05:53', '', NULL, '');
-INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (1047, '批量强退', 109, 2, '#', '', '', '', 1, 0, 'F', '0', '0', 'monitor:online:batchLogout', '#', 'admin', '2024-08-08 14:05:53', '', NULL, '');
-INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (1048, '单条强退', 109, 3, '#', '', '', '', 1, 0, 'F', '0', '0', 'monitor:online:forceLogout', '#', 'admin', '2024-08-08 14:05:53', '', NULL, '');
-INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (1049, '任务查询', 110, 1, '#', '', '', '', 1, 0, 'F', '0', '0', 'monitor:job:query', '#', 'admin', '2024-08-08 14:05:53', '', NULL, '');
-INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (1050, '任务新增', 110, 2, '#', '', '', '', 1, 0, 'F', '0', '0', 'monitor:job:add', '#', 'admin', '2024-08-08 14:05:53', '', NULL, '');
-INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (1051, '任务修改', 110, 3, '#', '', '', '', 1, 0, 'F', '0', '0', 'monitor:job:edit', '#', 'admin', '2024-08-08 14:05:53', '', NULL, '');
-INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (1052, '任务删除', 110, 4, '#', '', '', '', 1, 0, 'F', '0', '0', 'monitor:job:remove', '#', 'admin', '2024-08-08 14:05:53', '', NULL, '');
-INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (1053, '状态修改', 110, 5, '#', '', '', '', 1, 0, 'F', '0', '0', 'monitor:job:changeStatus', '#', 'admin', '2024-08-08 14:05:53', '', NULL, '');
-INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (1054, '任务导出', 110, 6, '#', '', '', '', 1, 0, 'F', '0', '0', 'monitor:job:export', '#', 'admin', '2024-08-08 14:05:53', '', NULL, '');
-INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (1055, '生成查询', 116, 1, '#', '', '', '', 1, 0, 'F', '0', '0', 'tool:gen:query', '#', 'admin', '2024-08-08 14:05:53', '', NULL, '');
-INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (1056, '生成修改', 116, 2, '#', '', '', '', 1, 0, 'F', '0', '0', 'tool:gen:edit', '#', 'admin', '2024-08-08 14:05:53', '', NULL, '');
-INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (1057, '生成删除', 116, 3, '#', '', '', '', 1, 0, 'F', '0', '0', 'tool:gen:remove', '#', 'admin', '2024-08-08 14:05:53', '', NULL, '');
-INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (1058, '导入代码', 116, 4, '#', '', '', '', 1, 0, 'F', '0', '0', 'tool:gen:import', '#', 'admin', '2024-08-08 14:05:53', '', NULL, '');
-INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (1059, '预览代码', 116, 5, '#', '', '', '', 1, 0, 'F', '0', '0', 'tool:gen:preview', '#', 'admin', '2024-08-08 14:05:53', '', NULL, '');
-INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (1060, '生成代码', 116, 6, '#', '', '', '', 1, 0, 'F', '0', '0', 'tool:gen:code', '#', 'admin', '2024-08-08 14:05:53', '', NULL, '');
-INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (2000, '内容管理', 0, 0, 'wechat', NULL, NULL, '', 1, 0, 'M', '0', '0', '', 'education', 'admin', '2024-08-08 14:14:32', 'YangHangHang', '2024-11-12 10:59:05', '');
-INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (2001, '粉丝管理', 2000, 1, 'company', 'wechat/company/index', NULL, '', 1, 0, 'C', '0', '0', 'wechat:company:list', 'tree-table', 'admin', '2024-08-08 14:17:40', 'admin', '2025-05-13 09:48:53', '');
-INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (2007, '积分设置', 2001, 1, '', NULL, NULL, '', 1, 0, 'F', '0', '0', 'wechat:points:edit', '#', 'DuHongChao-YuanTouShe', '2024-09-13 14:35:36', '', NULL, '');
-INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (2017, 'AI精选一站通', 2000, 0, 'chrome', 'wechat/chrome/index', NULL, '', 1, 0, 'C', '0', '0', 'wechat:chrome:list', 'international', 'YangHangHang', '2024-11-22 09:59:55', 'admin', '2025-10-29 12:00:00', '');
--- 已删除节点日志菜单(menu_id=2019)
-INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (2021, '稿库', 2000, 1, 'drafts', 'wechat/drafts/index', NULL, '', 1, 0, 'C', '0', '0', '', 'log', 'o3lds60Lfe6_MaGyB-COxgGcItnM', '2025-01-06 17:23:00', 'admin', '2025-06-06 08:46:16', '');
-INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`)
-VALUES (2022, '用户日志', 108, 1, 'userLog', 'monitor/userLog/index', NULL, '', 1, 0, 'C', '0', '0', 'monitor:userLog:list', '#', 'admin', sysdate(), '', NULL, '用户日志菜单');
-INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`)
-VALUES (2023, '用户日志查询', 2022, 1, '#', '', NULL, '', 1, 0, 'F', '0', '0', 'monitor:userLog:query', '#', 'admin', sysdate(), '', NULL, '');
-INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`)
-VALUES (2024, '用户日志新增', 2022, 2, '#', '', NULL, '', 1, 0, 'F', '0', '0', 'monitor:userLog:add', '#', 'admin', sysdate(), '', NULL, '');
-INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`)
-VALUES (2025, '用户日志修改', 2022, 3, '#', '', NULL, '', 1, 0, 'F', '0', '0', 'monitor:userLog:edit', '#', 'admin', sysdate(), '', NULL, '');
-INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`)
-VALUES (2026, '用户日志删除', 2022, 4, '#', '', NULL, '', 1, 0, 'F', '0', '0', 'monitor:userLog:remove', '#', 'admin', sysdate(), '', NULL, '');
-INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`)
-VALUES (2027, '用户日志导出', 2022, 5, '#', '', NULL, '', 1, 0, 'F', '0', '0', 'monitor:userLog:export', '#', 'admin', sysdate(), '', NULL, '');
-
-INSERT INTO `sys_menu`(`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (2028, '平台提示词配置', 2000, 1, 'callWord', 'wechat/callWord/index', NULL, '', 1, 0, 'C', '0', '0', 'wechat:callWord:list', 'guide', 'admin', sysdate(), '', NULL, '平台提示词配置菜单');
-INSERT INTO `sys_menu`(`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (2029, '平台提示词配置新增', 2028, 2, '#', '', NULL, '', 1, 0, 'F', '0', '0', 'wechat:callWord:add', '#', 'admin', sysdate(), '', NULL, '');
-INSERT INTO `sys_menu`(`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (2030, '平台提示词配置修改', 2028, 3, '#', '', NULL, '', 1, 0, 'F', '0', '0', 'wechat:callWord:edit', '#', 'admin', sysdate(), '', NULL, '');
-INSERT INTO `sys_menu`(`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (2031, '平台提示词配置删除', 2028, 4, '#', '', NULL, '', 1, 0, 'F', '0', '0', 'wechat:callWord:remove', '#', 'admin', sysdate(), '', NULL, '');
-INSERT INTO `sys_menu`(`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (2032, '平台提示词配置导出', 2028, 5, '#', '', NULL, '', 1, 0, 'F', '0', '0', 'wechat:callWord:export', '#', 'admin', sysdate(), '', NULL, '');
-INSERT INTO `sys_menu`(`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (2033, '评分模板配置', 2000, 1, 'prompt', 'wechat/prompt/index', NULL, '', 1, 0, 'C', '0', '0', 'wechat:prompt:list', 'star', 'admin', sysdate(), '', NULL, '评分模板配置菜单');
-INSERT INTO `sys_menu`(`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (2034, '评分模板配置查询', 2033, 1, '#', '', NULL, '', 1, 0, 'F', '0', '0', 'wechat:prompt:query', '#', 'admin', sysdate(), '', NULL, '');
-INSERT INTO `sys_menu`(`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (2035, '评分模板配置新增', 2033, 2, '#', '', NULL, '', 1, 0, 'F', '0', '0', 'wechat:prompt:add', '#', 'admin', sysdate(), '', NULL, '');
-INSERT INTO `sys_menu`(`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (2036, '评分模板配置修改', 2033, 3, '#', '', NULL, '', 1, 0, 'F', '0', '0', 'wechat:prompt:edit', '#', 'admin', sysdate(), '', NULL, '');
-INSERT INTO `sys_menu`(`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (2037, '评分模板配置删除', 2033, 4, '#', '', NULL, '', 1, 0, 'F', '0', '0', 'wechat:prompt:remove', '#', 'admin', sysdate(), '', NULL, '');
-INSERT INTO `sys_menu`(`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (2038, '评分模板配置导出', 2033, 5, '#', '', NULL, '', 1, 0, 'F', '0', '0', 'wechat:prompt:export', '#', 'admin', sysdate(), '', NULL, '');
-INSERT INTO `sys_menu`(`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (2070, '日志管理', 1, 10, 'unifiedLog', 'monitor/unifiedLog/index', NULL, '', 1, 0, 'C', '0', '0', 'monitor:unifiedLog:list', 'documentation', 'admin', sysdate(), '', NULL, '日志管理菜单');
-INSERT INTO `sys_menu`(`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (2071, '日志查询', 2070, 1, '#', '', NULL, '', 1, 0, 'F', '0', '0', 'monitor:unifiedLog:query', '#', 'admin', sysdate(), '', NULL, '');
-INSERT INTO `sys_menu`(`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (2072, '日志删除', 2070, 2, '#', '', NULL, '', 1, 0, 'F', '0', '0', 'monitor:unifiedLog:remove', '#', 'admin', sysdate(), '', NULL, '');
-INSERT INTO `sys_menu`(`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (2073, '日志导出', 2070, 3, '#', '', NULL, '', 1, 0, 'F', '0', '0', 'monitor:unifiedLog:export', '#', 'admin', sysdate(), '', NULL, '');
-INSERT INTO `sys_menu`(`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (2074, '日志详细', 2070, 4, '#', '', NULL, '', 1, 0, 'F', '0', '0', 'monitor:unifiedLog:detail', '#', 'admin', sysdate(), '', NULL, '');
-COMMIT;
-INSERT INTO `sys_menu` VALUES (2046, '内容自动化（内测）', 2000, 0, 'chrome2', 'wechat/chrome2/index', NULL, '', 1, 0, 'C', '1', '0', 'wechat:chrome:list', 'redis-list', 'admin', '2025-10-21 13:36:21', 'admin', '2025-10-29 12:00:00', '');
-INSERT INTO `sys_menu` VALUES (2047, '思路模板', 2000, 3, 'idea', 'wechat/idea/index', NULL, '', 1, 0, 'C', '1', '0', '', 'clipboard', 'admin', '2025-10-24 15:59:41', 'admin', '2025-10-27 17:35:02', '');
-INSERT INTO `sys_menu` VALUES (2048, '文章模板', 2000, 3, 'art', 'wechat/art/index', NULL, '', 1, 0, 'C', '1', '0', '', 'documentation', 'admin', '2025-10-24 16:00:31', 'admin', '2025-10-27 17:34:54', '');
-
--- ----------------------------
+INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (1000, '用户查询', 100, 1, '', NULL, '', '', 1, 0, 'F', '0', '0', 'system:user:query', '#', 'admin', '2024-08-08 14:05:52', '', NULL, '');
+INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (1001, '用户新增', 100, 2, '', NULL, '', '', 1, 0, 'F', '0', '0', 'system:user:add', '#', 'admin', '2024-08-08 14:05:52', '', NULL, '');
+INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (1002, '用户修改', 100, 3, '', NULL, '', '', 1, 0, 'F', '0', '0', 'system:user:edit', '#', 'admin', '2024-08-08 14:05:52', '', NULL, '');
+INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (1003, '用户删除', 100, 4, '', NULL, '', '', 1, 0, 'F', '0', '0', 'system:user:remove', '#', 'admin', '2024-08-08 14:05:52', '', NULL, '');
+INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (1004, '用户导出', 100, 5, '', NULL, '', '', 1, 0, 'F', '0', '0', 'system:user:export', '#', 'admin', '2024-08-08 14:05:52', '', NULL, '');
+INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (1005, '用户导入', 100, 6, '', NULL, '', '', 1, 0, 'F', '0', '0', 'system:user:import', '#', 'admin', '2024-08-08 14:05:52', '', NULL, '');
+INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (1006, '重置密码', 100, 7, '', NULL, '', '', 1, 0, 'F', '0', '0', 'system:user:resetPwd', '#', 'admin', '2024-08-08 14:05:52', '', NULL, '');
+INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (1007, '角色查询', 101, 1, '', NULL, '', '', 1, 0, 'F', '0', '0', 'system:role:query', '#', 'admin', '2024-08-08 14:05:52', '', NULL, '');
+INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (1008, '角色新增', 101, 2, '', NULL, '', '', 1, 0, 'F', '0', '0', 'system:role:add', '#', 'admin', '2024-08-08 14:05:52', '', NULL, '');
+INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (1009, '角色修改', 101, 3, '', NULL, '', '', 1, 0, 'F', '0', '0', 'system:role:edit', '#', 'admin', '2024-08-08 14:05:52', '', NULL, '');
+INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (1010, '角色删除', 101, 4, '', NULL, '', '', 1, 0, 'F', '0', '0', 'system:role:remove', '#', 'admin', '2024-08-08 14:05:52', '', NULL, '');
+INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (1011, '角色导出', 101, 5, '', NULL, '', '', 1, 0, 'F', '0', '0', 'system:role:export', '#', 'admin', '2024-08-08 14:05:52', '', NULL, '');
+INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (1012, '菜单查询', 102, 1, '', NULL, '', '', 1, 0, 'F', '0', '0', 'system:menu:query', '#', 'admin', '2024-08-08 14:05:52', '', NULL, '');
+INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (1013, '菜单新增', 102, 2, '', NULL, '', '', 1, 0, 'F', '0', '0', 'system:menu:add', '#', 'admin', '2024-08-08 14:05:52', '', NULL, '');
+INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (1014, '菜单修改', 102, 3, '', NULL, '', '', 1, 0, 'F', '0', '0', 'system:menu:edit', '#', 'admin', '2024-08-08 14:05:52', '', NULL, '');
+INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (1015, '菜单删除', 102, 4, '', NULL, '', '', 1, 0, 'F', '0', '0', 'system:menu:remove', '#', 'admin', '2024-08-08 14:05:52', '', NULL, '');
+INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (1016, '部门查询', 103, 1, '', NULL, '', '', 1, 0, 'F', '0', '0', 'system:dept:query', '#', 'admin', '2024-08-08 14:05:52', '', NULL, '');
+INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (1017, '部门新增', 103, 2, '', NULL, '', '', 1, 0, 'F', '0', '0', 'system:dept:add', '#', 'admin', '2024-08-08 14:05:52', '', NULL, '');
+INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (1018, '部门修改', 103, 3, '', NULL, '', '', 1, 0, 'F', '0', '0', 'system:dept:edit', '#', 'admin', '2024-08-08 14:05:52', '', NULL, '');
+INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (1019, '部门删除', 103, 4, '', NULL, '', '', 1, 0, 'F', '0', '0', 'system:dept:remove', '#', 'admin', '2024-08-08 14:05:52', '', NULL, '');
+INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (1020, '岗位查询', 104, 1, '', NULL, '', '', 1, 0, 'F', '0', '0', 'system:post:query', '#', 'admin', '2024-08-08 14:05:52', '', NULL, '');
+INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (1021, '岗位新增', 104, 2, '', NULL, '', '', 1, 0, 'F', '0', '0', 'system:post:add', '#', 'admin', '2024-08-08 14:05:52', '', NULL, '');
+INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (1022, '岗位修改', 104, 3, '', NULL, '', '', 1, 0, 'F', '0', '0', 'system:post:edit', '#', 'admin', '2024-08-08 14:05:52', '', NULL, '');
+INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (1023, '岗位删除', 104, 4, '', NULL, '', '', 1, 0, 'F', '0', '0', 'system:post:remove', '#', 'admin', '2024-08-08 14:05:52', '', NULL, '');
+INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (1024, '岗位导出', 104, 5, '', NULL, '', '', 1, 0, 'F', '0', '0', 'system:post:export', '#', 'admin', '2024-08-08 14:05:52', '', NULL, '');
+INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (1025, '字典查询', 105, 1, '#', NULL, '', '', 1, 0, 'F', '0', '0', 'system:dict:query', '#', 'admin', '2024-08-08 14:05:52', '', NULL, '');
+INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (1026, '字典新增', 105, 2, '#', NULL, '', '', 1, 0, 'F', '0', '0', 'system:dict:add', '#', 'admin', '2024-08-08 14:05:52', '', NULL, '');
+INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (1027, '字典修改', 105, 3, '#', NULL, '', '', 1, 0, 'F', '0', '0', 'system:dict:edit', '#', 'admin', '2024-08-08 14:05:52', '', NULL, '');
+INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (1028, '字典删除', 105, 4, '#', NULL, '', '', 1, 0, 'F', '0', '0', 'system:dict:remove', '#', 'admin', '2024-08-08 14:05:52', '', NULL, '');
+INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (1029, '字典导出', 105, 5, '#', NULL, '', '', 1, 0, 'F', '0', '0', 'system:dict:export', '#', 'admin', '2024-08-08 14:05:52', '', NULL, '');
+INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (1030, '参数查询', 106, 1, '#', NULL, '', '', 1, 0, 'F', '0', '0', 'system:config:query', '#', 'admin', '2024-08-08 14:05:52', '', NULL, '');
+INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (1031, '参数新增', 106, 2, '#', NULL, '', '', 1, 0, 'F', '0', '0', 'system:config:add', '#', 'admin', '2024-08-08 14:05:53', '', NULL, '');
+INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (1032, '参数修改', 106, 3, '#', NULL, '', '', 1, 0, 'F', '0', '0', 'system:config:edit', '#', 'admin', '2024-08-08 14:05:53', '', NULL, '');
+INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (1033, '参数删除', 106, 4, '#', NULL, '', '', 1, 0, 'F', '0', '0', 'system:config:remove', '#', 'admin', '2024-08-08 14:05:53', '', NULL, '');
+INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (1034, '参数导出', 106, 5, '#', NULL, '', '', 1, 0, 'F', '0', '0', 'system:config:export', '#', 'admin', '2024-08-08 14:05:53', '', NULL, '');
+INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (1035, '公告查询', 107, 1, '#', NULL, '', '', 1, 0, 'F', '0', '0', 'system:notice:query', '#', 'admin', '2024-08-08 14:05:53', '', NULL, '');
+INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (1036, '公告新增', 107, 2, '#', NULL, '', '', 1, 0, 'F', '0', '0', 'system:notice:add', '#', 'admin', '2024-08-08 14:05:53', '', NULL, '');
+INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (1037, '公告修改', 107, 3, '#', NULL, '', '', 1, 0, 'F', '0', '0', 'system:notice:edit', '#', 'admin', '2024-08-08 14:05:53', '', NULL, '');
+INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (1038, '公告删除', 107, 4, '#', NULL, '', '', 1, 0, 'F', '0', '0', 'system:notice:remove', '#', 'admin', '2024-08-08 14:05:53', '', NULL, '');
+INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (1039, '操作查询', 500, 1, '#', NULL, '', '', 1, 0, 'F', '0', '0', 'monitor:operlog:query', '#', 'admin', '2024-08-08 14:05:53', '', NULL, '');
+INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (1040, '操作删除', 500, 2, '#', NULL, '', '', 1, 0, 'F', '0', '0', 'monitor:operlog:remove', '#', 'admin', '2024-08-08 14:05:53', '', NULL, '');
+INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (1041, '日志导出', 500, 3, '#', NULL, '', '', 1, 0, 'F', '0', '0', 'monitor:operlog:export', '#', 'admin', '2024-08-08 14:05:53', '', NULL, '');
+INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (1042, '登录查询', 501, 1, '#', NULL, '', '', 1, 0, 'F', '0', '0', 'monitor:logininfor:query', '#', 'admin', '2024-08-08 14:05:53', '', NULL, '');
+INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (1043, '登录删除', 501, 2, '#', NULL, '', '', 1, 0, 'F', '0', '0', 'monitor:logininfor:remove', '#', 'admin', '2024-08-08 14:05:53', '', NULL, '');
+INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (1044, '日志导出', 501, 3, '#', NULL, '', '', 1, 0, 'F', '0', '0', 'monitor:logininfor:export', '#', 'admin', '2024-08-08 14:05:53', '', NULL, '');
+INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (1045, '账户解锁', 501, 4, '#', NULL, '', '', 1, 0, 'F', '0', '0', 'monitor:logininfor:unlock', '#', 'admin', '2024-08-08 14:05:53', '', NULL, '');
+INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (1046, '在线查询', 109, 1, '#', NULL, '', '', 1, 0, 'F', '0', '0', 'monitor:online:query', '#', 'admin', '2024-08-08 14:05:53', '', NULL, '');
+INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (1047, '批量强退', 109, 2, '#', NULL, '', '', 1, 0, 'F', '0', '0', 'monitor:online:batchLogout', '#', 'admin', '2024-08-08 14:05:53', '', NULL, '');
+INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (1048, '单条强退', 109, 3, '#', NULL, '', '', 1, 0, 'F', '0', '0', 'monitor:online:forceLogout', '#', 'admin', '2024-08-08 14:05:53', '', NULL, '');
+INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (1049, '任务查询', 110, 1, '#', NULL, '', '', 1, 0, 'F', '0', '0', 'monitor:job:query', '#', 'admin', '2024-08-08 14:05:53', '', NULL, '');
+INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (1050, '任务新增', 110, 2, '#', NULL, '', '', 1, 0, 'F', '0', '0', 'monitor:job:add', '#', 'admin', '2024-08-08 14:05:53', '', NULL, '');
+INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (1051, '任务修改', 110, 3, '#', NULL, '', '', 1, 0, 'F', '0', '0', 'monitor:job:edit', '#', 'admin', '2024-08-08 14:05:53', '', NULL, '');
+INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (1052, '任务删除', 110, 4, '#', NULL, '', '', 1, 0, 'F', '0', '0', 'monitor:job:remove', '#', 'admin', '2024-08-08 14:05:53', '', NULL, '');
+INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (1053, '状态修改', 110, 5, '#', NULL, '', '', 1, 0, 'F', '0', '0', 'monitor:job:changeStatus', '#', 'admin', '2024-08-08 14:05:53', '', NULL, '');
+INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (1054, '任务导出', 110, 6, '#', NULL, '', '', 1, 0, 'F', '0', '0', 'monitor:job:export', '#', 'admin', '2024-08-08 14:05:53', '', NULL, '');
+INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (1055, '生成查询', 116, 1, '#', NULL, '', '', 1, 0, 'F', '0', '0', 'tool:gen:query', '#', 'admin', '2024-08-08 14:05:53', '', NULL, '');
+INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (1056, '生成修改', 116, 2, '#', NULL, '', '', 1, 0, 'F', '0', '0', 'tool:gen:edit', '#', 'admin', '2024-08-08 14:05:53', '', NULL, '');
+INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (1057, '生成删除', 116, 3, '#', NULL, '', '', 1, 0, 'F', '0', '0', 'tool:gen:remove', '#', 'admin', '2024-08-08 14:05:53', '', NULL, '');
+INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (1058, '导入代码', 116, 4, '#', NULL, '', '', 1, 0, 'F', '0', '0', 'tool:gen:import', '#', 'admin', '2024-08-08 14:05:53', '', NULL, '');
+INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (1059, '预览代码', 116, 5, '#', NULL, '', '', 1, 0, 'F', '0', '0', 'tool:gen:preview', '#', 'admin', '2024-08-08 14:05:53', '', NULL, '');
+INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (1060, '生成代码', 116, 6, '#', NULL, '', '', 1, 0, 'F', '0', '0', 'tool:gen:code', '#', 'admin', '2024-08-08 14:05:53', '', NULL, '');
+INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (2000, '内容管理', 0, 0, 'wechat', NULL, '', '', 1, 0, 'M', '0', '0', '', 'education', 'admin', '2024-08-08 14:14:32', 'YangHangHang', '2024-11-12 10:59:05', '');
+INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (2001, '用户列表', 2051, 1, 'company', 'wechat/company/index', '', '', 1, 0, 'C', '0', '0', 'wechat:company:list', 'tree-table', 'admin', '2024-08-08 14:17:40', 'admin', '2025-05-13 09:48:53', '');
+-- INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (2007, '积分设置', 2001, 1, '', NULL, '', '', 1, 0, 'F', '0', '0', 'wechat:points:edit', '#', 'DuHongChao-YuanTouShe', '2024-09-13 14:35:36', '', NULL, '');
+INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (2017, 'AI精选一站通', 2000, 0, 'chrome', 'wechat/chrome/index', '', '', 1, 0, 'C', '0', '0', 'wechat:chrome:list', 'international', 'YangHangHang', '2024-11-22 09:59:55', 'admin', '2025-10-29 12:00:00', '');
+INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (2021, '稿库', 2000, 1, 'drafts', 'wechat/drafts/index', '', '', 1, 0, 'C', '0', '0', '', 'log', 'o3lds60Lfe6_MaGyB-COxgGcItnM', '2025-01-06 17:23:00', 'admin', '2025-06-06 08:46:16', '');
+INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (2022, '用户日志', 108, 1, 'userLog', 'monitor/userLog/index', '', '', 1, 0, 'C', '0', '0', 'monitor:userLog:list', '#', 'admin', '2025-11-28 09:39:22', '', NULL, '用户日志菜单');
+INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (2023, '用户日志查询', 2022, 1, '#', NULL, '', '', 1, 0, 'F', '0', '0', 'monitor:userLog:query', '#', 'admin', '2025-11-28 09:39:22', '', NULL, '');
+INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (2024, '用户日志新增', 2022, 2, '#', NULL, '', '', 1, 0, 'F', '0', '0', 'monitor:userLog:add', '#', 'admin', '2025-11-28 09:39:22', '', NULL, '');
+INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (2025, '用户日志修改', 2022, 3, '#', NULL, '', '', 1, 0, 'F', '0', '0', 'monitor:userLog:edit', '#', 'admin', '2025-11-28 09:39:22', '', NULL, '');
+INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (2026, '用户日志删除', 2022, 4, '#', NULL, '', '', 1, 0, 'F', '0', '0', 'monitor:userLog:remove', '#', 'admin', '2025-11-28 09:39:22', '', NULL, '');
+INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (2027, '用户日志导出', 2022, 5, '#', NULL, '', '', 1, 0, 'F', '0', '0', 'monitor:userLog:export', '#', 'admin', '2025-11-28 09:39:22', '', NULL, '');
+INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (2028, '平台提示词配置', 2050, 1, 'callWord', 'wechat/callWord/index', '', '', 1, 0, 'C', '0', '0', 'wechat:callWord:list', 'guide', 'admin', '2025-11-28 09:39:22', '', NULL, '平台提示词配置菜单');
+INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (2029, '平台提示词配置新增', 2028, 2, '#', NULL, '', '', 1, 0, 'F', '0', '0', 'wechat:callWord:add', '#', 'admin', '2025-11-28 09:39:22', '', NULL, '');
+INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (2030, '平台提示词配置修改', 2028, 3, '#', NULL, '', '', 1, 0, 'F', '0', '0', 'wechat:callWord:edit', '#', 'admin', '2025-11-28 09:39:22', '', NULL, '');
+INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (2031, '平台提示词配置删除', 2028, 4, '#', NULL, '', '', 1, 0, 'F', '0', '0', 'wechat:callWord:remove', '#', 'admin', '2025-11-28 09:39:22', '', NULL, '');
+INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (2032, '平台提示词配置导出', 2028, 5, '#', NULL, '', '', 1, 0, 'F', '0', '0', 'wechat:callWord:export', '#', 'admin', '2025-11-28 09:39:22', '', NULL, '');
+INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (2033, '评分模板配置', 2050, 1, 'prompt', 'wechat/prompt/index', '', '', 1, 0, 'C', '0', '0', 'wechat:prompt:list', 'star', 'admin', '2025-11-28 09:39:22', '', NULL, '评分模板配置菜单');
+INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (2034, '评分模板配置查询', 2033, 1, '#', NULL, '', '', 1, 0, 'F', '0', '0', 'wechat:prompt:query', '#', 'admin', '2025-11-28 09:39:22', '', NULL, '');
+INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (2035, '评分模板配置新增', 2033, 2, '#', NULL, '', '', 1, 0, 'F', '0', '0', 'wechat:prompt:add', '#', 'admin', '2025-11-28 09:39:22', '', NULL, '');
+INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (2036, '评分模板配置修改', 2033, 3, '#', NULL, '', '', 1, 0, 'F', '0', '0', 'wechat:prompt:edit', '#', 'admin', '2025-11-28 09:39:22', '', NULL, '');
+INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (2037, '评分模板配置删除', 2033, 4, '#', NULL, '', '', 1, 0, 'F', '0', '0', 'wechat:prompt:remove', '#', 'admin', '2025-11-28 09:39:22', '', NULL, '');
+INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (2038, '评分模板配置导出', 2033, 5, '#', NULL, '', '', 1, 0, 'F', '0', '0', 'wechat:prompt:export', '#', 'admin', '2025-11-28 09:39:22', '', NULL, '');
+INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (2046, '内容自动化（内测）', 2000, 0, 'chrome2', 'wechat/chrome2/index', '', '', 1, 0, 'C', '1', '0', 'wechat:chrome:list', 'redis-list', 'admin', '2025-10-21 13:36:21', 'admin', '2025-10-29 12:00:00', '');
+INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (2047, '思路模板', 2000, 3, 'idea', 'wechat/idea/index', '', '', 1, 0, 'C', '1', '0', '', 'clipboard', 'admin', '2025-10-24 15:59:41', 'admin', '2025-10-27 17:35:02', '');
+INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (2048, '文章模板', 2000, 3, 'art', 'wechat/art/index', '', '', 1, 0, 'C', '1', '0', '', 'documentation', 'admin', '2025-10-24 16:00:31', 'admin', '2025-10-27 17:34:54', '');
+INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (2050, '提示词模板', 0, 1, 'prompt-template', NULL, '', '', 1, 0, 'M', '0', '0', '', 'skill', 'admin', '2025-10-28 00:00:00', '', NULL, '提示词模板管理目录');
+INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (2051, '粉丝管理', 0, 2, 'fans-manage', NULL, '', '', 1, 0, 'M', '0', '0', '', 'peoples', 'admin', '2025-10-28 00:00:00', 'admin', '2025-11-28 01:26:03', '粉丝管理目录');
+INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (2070, '日志管理', 1, 10, 'unifiedLog', 'monitor/unifiedLog/index', '', '', 1, 0, 'C', '0', '0', 'monitor:unifiedLog:list', 'documentation', 'admin', '2025-11-28 09:39:22', '', NULL, '日志管理菜单');
+INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (2071, '日志查询', 2070, 1, '#', NULL, '', '', 1, 0, 'F', '0', '0', 'monitor:unifiedLog:query', '#', 'admin', '2025-11-28 09:39:22', '', NULL, '');
+INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (2072, '日志删除', 2070, 2, '#', NULL, '', '', 1, 0, 'F', '0', '0', 'monitor:unifiedLog:remove', '#', 'admin', '2025-11-28 09:39:22', '', NULL, '');
+INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (2073, '日志导出', 2070, 3, '#', NULL, '', '', 1, 0, 'F', '0', '0', 'monitor:unifiedLog:export', '#', 'admin', '2025-11-28 09:39:22', '', NULL, '');
+INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (2074, '日志详细', 2070, 4, '#', NULL, '', '', 1, 0, 'F', '0', '0', 'monitor:unifiedLog:detail', '#', 'admin', '2025-11-28 09:39:22', '', NULL, '');
+INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (2080, 'AI管理器', 1, 11, 'aiagent', 'system/aiagent/index', '', '', 1, 0, 'C', '0', '0', 'system:aiagent:list', 'link', 'admin', '2025-11-24 07:50:19', '', NULL, 'AI智能体管理菜单');
+INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (2081, 'AI智能体查询', 2080, 1, '', NULL, '', '', 1, 0, 'F', '0', '0', 'system:aiagent:query', '#', 'admin', '2025-11-28 09:40:08', '', NULL, '');
+INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (2082, 'AI智能体列表', 2080, 2, '', NULL, '', '', 1, 0, 'F', '0', '0', 'system:aiagent:list', '#', 'admin', '2025-11-28 09:40:08', '', NULL, '');
+INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (2083, 'AI智能体新增', 2080, 3, '', NULL, '', '', 1, 0, 'F', '0', '0', 'system:aiagent:add', '#', 'admin', '2025-11-28 09:40:08', '', NULL, '');
+INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (2084, 'AI智能体修改', 2080, 4, '', NULL, '', '', 1, 0, 'F', '0', '0', 'system:aiagent:edit', '#', 'admin', '2025-11-28 09:40:08', '', NULL, '');
+INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (2085, 'AI智能体删除', 2080, 5, '', NULL, '', '', 1, 0, 'F', '0', '0', 'system:aiagent:remove', '#', 'admin', '2025-11-28 09:40:08', '', NULL, '');
+INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (2086, 'AI智能体导出', 2080, 6, '', NULL, '', '', 1, 0, 'F', '0', '0', 'system:aiagent:export', '#', 'admin', '2025-11-28 09:40:08', '', NULL, '');
+INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (2100, '我的模板箱', 2050, 10, 'templateBox', 'wechat/templateBox/index', '', '', 1, 0, 'C', '0', '0', 'wechat:templateBox:list', 'box', 'admin', '2025-11-28 09:39:22', '', NULL, '我的模板箱菜单');
+INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (2101, '模板市场', 2050, 11, 'templateMarket', 'wechat/templateMarket/index', '', '', 1, 0, 'C', '0', '0', 'wechat:templateMarket:list', 'shopping', 'admin', '2025-11-28 09:39:23', '', NULL, '模板市场菜单');
+INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (2102, '模板工作坊', 2050, 12, 'templateWorkshop', 'wechat/templateWorkshop/index', '', '', 1, 0, 'C', '0', '0', 'wechat:templateWorkshop:list', 'edit', 'admin', '2025-11-28 09:39:23', '', NULL, '模板工作坊菜单');
+INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (2103, '我的模板箱查询', 2100, 1, '#', NULL, '', '', 1, 0, 'F', '0', '0', 'wechat:templateBox:query', '#', 'admin', '2025-11-28 09:39:23', '', NULL, '');
+INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (2104, '模板市场查询', 2101, 1, '#', NULL, '', '', 1, 0, 'F', '0', '0', 'wechat:templateMarket:query', '#', 'admin', '2025-11-28 09:39:23', '', NULL, '');
+INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (2105, '模板购买', 2101, 2, '#', NULL, '', '', 1, 0, 'F', '0', '0', 'wechat:templateMarket:purchase', '#', 'admin', '2025-11-28 09:39:23', '', NULL, '');
+INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (2106, '模板工作坊查询', 2102, 1, '#', NULL, '', '', 1, 0, 'F', '0', '0', 'wechat:templateWorkshop:query', '#', 'admin', '2025-11-28 09:39:23', '', NULL, '');
+INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (2107, '模板工作坊新增', 2102, 2, '#', NULL, '', '', 1, 0, 'F', '0', '0', 'wechat:templateWorkshop:add', '#', 'admin', '2025-11-28 09:39:23', '', NULL, '');
+INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (2108, '模板工作坊修改', 2102, 3, '#', NULL, '', '', 1, 0, 'F', '0', '0', 'wechat:templateWorkshop:edit', '#', 'admin', '2025-11-28 09:39:23', '', NULL, '');
+INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (2109, '模板工作坊删除', 2102, 4, '#', NULL, '', '', 1, 0, 'F', '0', '0', 'wechat:templateWorkshop:remove', '#', 'admin', '2025-11-28 09:39:23', '', NULL, '');
+INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (2110, '积分管理', 0, 10, 'points', NULL, '', '', 1, 0, 'M', '0', '0', '', 'star', 'admin', '2025-11-27 06:49:52', '', NULL, '积分管理目录');
+INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (2111, '我的积分总览', 2110, 1, 'overview', 'points/overview/index', '', '', 1, 0, 'C', '0', '0', '', 'guide', 'admin', '2025-11-27 06:52:10', '', NULL, '我的积分总览页面');
+INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (2112, '积分规则配置', 2051, 5, 'points/rule', 'points/rule/index', '', '', 1, 0, 'C', '0', '0', '', '#', 'admin', '2025-11-28 00:43:16', '', NULL, '');
+INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (2113, '积分规则查询', 2112, 1, '#', NULL, '', '', 1, 0, 'F', '0', '0', 'system:dict:query', '#', 'admin', '2025-11-28 00:46:51', '', NULL, '');
+INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (2114, '积分规则新增', 2112, 2, '#', NULL, '', '', 1, 0, 'F', '0', '0', 'system:dict:add', '#', 'admin', '2025-11-28 00:46:51', '', NULL, '');
+INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (2115, '积分规则修改', 2112, 3, '#', NULL, '', '', 1, 0, 'F', '0', '0', 'system:dict:edit', '#', 'admin', '2025-11-28 00:46:51', '', NULL, '');
+INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (2116, '积分规则删除', 2112, 4, '#', NULL, '', '', 1, 0, 'F', '0', '0', 'system:dict:remove', '#', 'admin', '2025-11-28 00:46:51', '', NULL, '');
+INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (2117, '积分规则导出', 2112, 5, '#', NULL, '', '', 1, 0, 'F', '0', '0', 'system:dict:export', '#', 'admin', '2025-11-28 00:46:51', '', NULL, '');
+COMMIT;-- ----------------------------
 -- Table structure for sys_dict_data
 -- ----------------------------
 DROP TABLE IF EXISTS `sys_dict_data`;
@@ -439,7 +497,7 @@ CREATE TABLE `sys_dict_data` (
   PRIMARY KEY (`dict_code`)
 ) ENGINE=InnoDB AUTO_INCREMENT=145 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='字典数据表';
 
--- ----------------------------
+
 -- Records of sys_dict_data
 -- ----------------------------
 BEGIN;
@@ -515,8 +573,10 @@ INSERT INTO `sys_dict_data` (`dict_code`, `dict_sort`, `dict_label`, `dict_value
 INSERT INTO `sys_dict_data` (`dict_code`, `dict_sort`, `dict_label`, `dict_value`, `dict_type`, `css_class`, `list_class`, `is_default`, `status`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (140, 18, '首次绑定元宝账号', '5', 'sys_point_rule', NULL, 'default', 'N', '0', 'o3lds67b1zyFvifHTC_32epnmzqM', '2025-03-26 15:54:46', 'admin', '2025-03-27 15:08:57', '');
 INSERT INTO `sys_dict_data` (`dict_code`, `dict_sort`, `dict_label`, `dict_value`, `dict_type`, `css_class`, `list_class`, `is_default`, `status`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (141, 19, '模板配置', '-1', 'sys_point_rule', NULL, 'default', 'N', '0', 'o3lds67b1zyFvifHTC_32epnmzqM', '2025-03-26 15:55:02', 'admin', '2025-03-27 15:16:53', '附加提示词配置');
 INSERT INTO `sys_dict_data` (`dict_code`, `dict_sort`, `dict_label`, `dict_value`, `dict_type`, `css_class`, `list_class`, `is_default`, `status`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (142, 20, '记忆修改', '-1', 'sys_point_rule', NULL, 'default', 'N', '0', 'o3lds67b1zyFvifHTC_32epnmzqM', '2025-03-26 15:55:19', 'admin', '2025-03-27 15:17:00', '记忆描述配置');
-INSERT INTO `sys_dict_data` (`dict_code`, `dict_sort`, `dict_label`, `dict_value`, `dict_type`, `css_class`, `list_class`, `is_default`, `status`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (143, 21, '使用F8S', '-1', 'sys_point_rule', NULL, 'default', 'N', '0', 'o3lds67b1zyFvifHTC_32epnmzqM', '2025-03-26 15:55:34', 'admin', '2025-03-27 15:09:21', '');
+INSERT INTO `sys_dict_data` (`dict_code`, `dict_sort`, `dict_label`, `dict_value`, `dict_type`, `css_class`, `list_class`, `is_default`, `status`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (143, 21, 'AI智能对话', '-1', 'sys_point_rule', NULL, 'default', 'N', '0', 'o3lds67b1zyFvifHTC_32epnmzqM', '2025-03-26 15:55:34', 'admin', '2025-03-27 15:09:21', '');
 INSERT INTO `sys_dict_data` (`dict_code`, `dict_sort`, `dict_label`, `dict_value`, `dict_type`, `css_class`, `list_class`, `is_default`, `status`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (144, 22, 'AI评分', '-1', 'sys_point_rule', NULL, 'default', 'N', '0', 'admin', '2025-05-15 09:23:28', '', NULL, NULL);
+INSERT INTO `sys_dict_data` (`dict_code`, `dict_sort`, `dict_label`, `dict_value`, `dict_type`, `css_class`, `list_class`, `is_default`, `status`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (145, 22, 'AI排版', '-1', 'sys_point_rule', NULL, 'default', 'N', '0', 'admin', '2025-05-15 09:23:28', '', NULL, NULL);
+INSERT INTO `sys_dict_data` (`dict_code`, `dict_sort`, `dict_label`, `dict_value`, `dict_type`, `css_class`, `list_class`, `is_default`, `status`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES (146, 22, '模板上架奖励', '30', 'sys_point_rule', NULL, 'default', 'N', '0', 'admin', '2025-05-15 09:23:28', '', NULL, '{"limitType":"DAILY","limitValue":3}');
 COMMIT;
 
 -- ----------------------------
@@ -937,7 +997,16 @@ CREATE TABLE `sys_user` (
 -- ----------------------------
 BEGIN;
 -- admin用户基础数据，企业ID设置为office01
-INSERT INTO `sys_user` VALUES (22, NULL, NULL, NULL, 1, 'admin', 'admin', '00', '', '', '0', '', '$2a$10$7JB720yubVSZvUI0rEqK/.VqGOZTH.ulu33dHOiBE8ByOhJIrdAu2', '0', '0', '127.0.0.1', sysdate(), 'admin', sysdate(), 'admin', sysdate(), NULL, 'office01', 0, '', '', '', '');
+INSERT INTO `sys_user` VALUES (22, NULL, NULL, NULL, 1, 'admin', 'admin', '00', '', '', '0', '', '$2a$10$7JB720yubVSZvUI0rEqK/.VqGOZTH.ulu33dHOiBE8ByOhJIrdAu2', '0', '0', '127.0.0.1', sysdate(), 'admin', sysdate(), 'admin', sysdate(), NULL, 'office01', 9820, '', '', '', '');
+
+-- 平台公共账户（userid=0），用于存储积分抽成
+-- 注意：由于user_id是AUTO_INCREMENT，需要先插入0值，如果已存在则更新
+INSERT INTO `sys_user` (`user_id`, `open_id`, `union_id`, `qw_id`, `dept_id`, `user_name`, `nick_name`, `user_type`, `email`, `phonenumber`, `sex`, `avatar`, `password`, `status`, `del_flag`, `login_ip`, `login_date`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`, `corp_id`, `points`, `agent_id`, `agent_token`, `space_id`, `space_name`) 
+VALUES (1, NULL, NULL, NULL, NULL, 'platform', '平台账户', '00', '', '', '0', '', '', '0', '0', '', NULL, 'admin', sysdate(), 'admin', sysdate(), '平台公共账户，用于存储积分抽成', NULL, 0, '', '', '', '')
+ON DUPLICATE KEY UPDATE 
+  `nick_name` = '平台账户',
+  `remark` = '平台公共账户，用于存储积分抽成',
+  `update_time` = sysdate();
 COMMIT;
 
 -- ----------------------------
@@ -2116,6 +2185,19 @@ CREATE TABLE `wc_prompt_template` (
   INDEX `idx_user_id`(`user_id`) USING BTREE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- 为评分模板表添加上架市场相关字段
+-- 注意：如果字段已存在，这些语句会报错，可以忽略或手动检查
+-- 可以通过以下方式检查：SHOW COLUMNS FROM `wc_prompt_template` LIKE 'status';
+ALTER TABLE `wc_prompt_template`
+ADD COLUMN `status` int(1) DEFAULT 0 COMMENT '上架状态：0-草稿 1-已上架' AFTER `is_common`,
+ADD COLUMN `price` decimal(10,2) DEFAULT 0.00 COMMENT '模板价格' AFTER `status`,
+ADD COLUMN `sales_count` int(11) DEFAULT 0 COMMENT '销量' AFTER `price`,
+ADD COLUMN `income_total` decimal(10,2) DEFAULT 0.00 COMMENT '累计收益' AFTER `sales_count`;
+
+-- 添加索引（如果不存在会报错，可以忽略）
+ALTER TABLE `wc_prompt_template`
+ADD INDEX `idx_status`(`status`) USING BTREE;
+
 -- ----------------------------
 -- Records of wc_prompt_template
 -- ----------------------------
@@ -2131,7 +2213,7 @@ INSERT INTO `wc_prompt_template`(`id`, `prompt`, `name`, `type`, `user_id`, `isd
 INSERT INTO `wc_prompt_template`(`id`, `prompt`, `name`, `type`, `user_id`, `isdel`, `is_common`) VALUES (15, '请你作为"A纠错专家"，指出以下多个AI回答中的潜在事实错误、逻辑漏洞或虚假引用，并给出正确的替代表述。', '六福-AI纠错专家', 3, 22, 0, 1);
 INSERT INTO `wc_prompt_template`(`id`, `prompt`, `name`, `type`, `user_id`, `isdel`, `is_common`) VALUES (16, '请你从以下多个AI回答中，提炼出"核心洞见Top 5"，并用一句金句总结每一点。要求：不重复、可引用、有启发性。', '七福-洞见蒸馏高手', 3, 22, 0, 1);
 INSERT INTO `wc_prompt_template`(`id`, `prompt`, `name`, `type`, `user_id`, `isdel`, `is_common`) VALUES (17, '请你将以下AI回答当作"原材料"，像炼丹术士一样重新熔炼：提取其中的思想元素（逻辑、比喻、案例、结论），重组为一个更高层次、更具洞见的新版本。要求新文本具备"合成智慧"的特征，而非简单融合。', '八福-AI炼丹师', 3, 22, 0, 1);
-INSERT INTO `wc_prompt_template`(`id`, `prompt`, `name`, `type`, `user_id`, `isdel`, `is_common`) VALUES (18, '你的任务是作为一名'一致性分析师'，评估以下多个AI回答在核心观点上的一致性。请仔细阅读所有回答，并完成以下任务：\n1、观点聚类：将所有回答中提到的核心观点进行归类。将语义相同或高度相似的观点归为一类。\n2、频率统计：统计每个观点类别被提及的次数。\n3、一致性评估：基于观点的频率分布，评估所有回答的整体一致性。如果大部分观点都集中在少数几个类别中，则认为一致性高；如果观点分散，则认为一致性低。\n4、最终输出你的分析结果。', '九福-一致性分析师', 3, 22, 0, 1);
+INSERT INTO `wc_prompt_template`(`id`, `prompt`, `name`, `type`, `user_id`, `isdel`, `is_common`) VALUES (18, '你的任务是作为一名"一致性分析师"，评估以下多个AI回答在核心观点上的一致性。请仔细阅读所有回答，并完成以下任务：\n1、观点聚类：将所有回答中提到的核心观点进行归类。将语义相同或高度相似的观点归为一类。\n2、频率统计：统计每个观点类别被提及的次数。\n3、一致性评估：基于观点的频率分布，评估所有回答的整体一致性。如果大部分观点都集中在少数几个类别中，则认为一致性高；如果观点分散，则认为一致性低。\n4、最终输出你的分析结果。', '九福-一致性分析师', 3, 22, 0, 1);
 INSERT INTO `wc_prompt_template`(`id`, `prompt`, `name`, `type`, `user_id`, `isdel`, `is_common`) VALUES (19, '你的任务是作为\"质量评估师\"，对以下多个AI回答进行质量分级。请完成：\n维度拆解：从\"专业深度、逻辑结构、证据充分性、表达清晰度\"四个维度建立评估框架。\n逐项打分：为每个回答的每个维度打1-10分，并说明扣分原因。\n综合排序：按加权平均分排序，标注\"最佳参考\"和\"待优化\"回答。\n输出评分表：用文本表格呈现结果，并附上2条改进建议。', '十福-质量评估师', 3, 22, 0, 1);
 INSERT INTO `wc_prompt_template`(`id`, `prompt`, `name`, `type`, `user_id`, `isdel`, `is_common`) VALUES (20, '你的任务是作为\"视角猎手\"，挖掘回答中的独特思维角度。请完成：\n视角识别：提取每个回答中隐含的认知视角（如：用户视角、工程师视角、伦理学家视角等）。\n独特性评级：用\"常见/新颖/罕见\"三级标签标注每个视角。\n盲区诊断：指出所有回答共同忽略的视角，并分析原因。\n输出视角地图：以文本描述形式，呈现包含发现视角、缺失视角、关联建议的思维导图。', '十一福-视角猎手', 3, 22, 0, 1);
 INSERT INTO `wc_prompt_template`(`id`, `prompt`, `name`, `type`, `user_id`, `isdel`, `is_common`) VALUES (21, '你的任务是作为\"逻辑架构师\"，重构回答的论证体系。请完成：\n论点拆解：将每个回答拆解为\"前提-推理-结论\"三要素。\n漏洞扫描：识别逻辑谬误（如：因果倒置、以偏概全、滑坡谬误）。\n最优合成：选择最健壮的前提和最严密的推理，构建一个新论证链。\n输出诊断报告：列出每个回答的1个关键漏洞，并呈现优化后的逻辑链条。', ' 十二福-逻辑架构师', 3, 22, 0, 1);
@@ -2225,6 +2307,8 @@ INSERT INTO `wc_prompt_template` (`id`, `prompt`, `name`, `type`, `user_id`, `is
 INSERT INTO `wc_prompt_template` (`id`, `prompt`, `name`, `type`, `user_id`, `isdel`, `is_common`) VALUES (109, '你的任务： 作为“跨境电商选品专家”，从市场分析中提炼选品逻辑。 请执行：\n\n属性归纳： 总结潜力爆款的共同属性（价格带、材质、功能点、外观特征）。\n\n季节性预测： 结合当地节日和气候，规划未来3个月的上新节奏。\n\n差评反向开发： 根据市场痛点，提出产品改良的微创新点。', '出海助手-跨境电商选品专家', 3, 22, 0, 1);
 INSERT INTO `wc_prompt_template` (`id`, `prompt`, `name`, `type`, `user_id`, `isdel`, `is_common`) VALUES (110, '你的任务： 作为“金牌客服培训师”，制定标准回复SOP。 请执行：\n\nFAQ提取： 从回答中总结用户最关心的5个问题（物流、退款、尺码等）。\n\n话术润色： 用地道、礼貌且具有服务意识的当地语言（英语/西语等）撰写回复模板。\n\n情绪降级： 提供一套应对愤怒用户的“降火”沟通流程。', '出海助手-金牌客服培训师', 3, 22, 0, 1);
 INSERT INTO `wc_prompt_template` (`id`, `prompt`, `name`, `type`, `user_id`, `isdel`, `is_common`) VALUES (111, '你的任务： 作为“项目管理秘书”，处理杂乱的调研信息或会议记录。 请执行：\n\n信息去重： 合并多个来源的重复信息。\n\n待办事项（Action Items）： 提取所有需要落实的任务，并指派责任部门（假设）。\n\n关键决策点： 高亮显示已经达成共识的决策。', '出海助手-项目管理秘书', 3, 22, 0, 1);
+-- 设置模板为上架状态
+update `wc_prompt_template` set ucube.wc_prompt_template.`status` = 1 where `is_common` = 1;
 
 
 -- ----------------------------
@@ -2500,13 +2584,42 @@ CREATE TABLE `wc_call_word`  (
                                 INDEX `idx_user_id`(`user_id`) USING BTREE
 ) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '平台提示词配置表' ROW_FORMAT = Dynamic;
 
+DROP TABLE IF EXISTS `wc_call_word`;
+-- auto-generated definition
+create table wc_call_word
+(
+    platform_id  varchar(50)                          not null comment '平台标识 wechat_layout-公众号排版 zhihu_layout-知乎排版'
+        primary key,
+    word_content text                                 not null comment '提示词内容',
+    is_common    tinyint(1) default 0                 null comment '是否为公共模板(0:个人 1:公共)',
+    user_id      bigint                               null comment '创建用户ID',
+    update_time  datetime   default CURRENT_TIMESTAMP null on update CURRENT_TIMESTAMP comment '更新时间',
+    price        int                                  null comment '价格',
+    status       int                                  null comment '当前状态(0=上架,1=下架)',
+    sales_count  int                                  null comment '售卖数量',
+    income_total int                                  null comment '售出额'
+)
+    comment '平台提示词配置表' row_format = DYNAMIC;
+
+create index idx_is_common
+    on wc_call_word (is_common);
+
+create index idx_user_id
+    on wc_call_word (user_id);
+
+
+
+
+
 -- ----------------------------
 -- Records of wc_call_word
 -- ----------------------------
-INSERT INTO `wc_call_word` VALUES ('baijiahao_layout', '请将以下内容整理为适合百家号发布的纯文本格式文章。\r\n要求：\r\n1.（不要使用Markdown或HTML语法，仅使用普通文本和简单换行保持内容的专业性和可读性使用自然段落分隔，）\r\n2.不允许使用有序列表，包括"一、"，"1."等的序列号。\r\n3.给文章取一个吸引人的标题，放在正文的第一段\r\n4.不允许出现代码框、数学公式、表格或其他复杂格式删除所有Markdown和HTML标签，\r\n5.只保留纯文本内容\r\n6.目标是作为一篇专业文章投递到百家号草稿箱\r\n7.直接以文章标题开始，以文章末尾结束，不允许添加其他对话', 1, NULL, '2025-08-01 12:51:57');
-INSERT INTO `wc_call_word` VALUES ('wechat_layout', '你是一名专业的微信公众号排版助手，任务是将用户提供的内容转化为符合微信草稿箱API要求的纯净HTML格式。\r\n\r\n【核心规范 - 必须严格遵守】\r\n\r\n1. **绝对禁止任何引用标记**\r\n   - 严禁出现[1]、[2]、[*]、<sup>、<cite>等任何形式的引用\r\n   - 严禁出现参考文献、引用链接、来源标注\r\n   - 如需引用信息，必须以"据...报道"、"相关研究表明"等自然语句融入正文\r\n\r\n2. **标题格式（强制要求）**\r\n   - 第一行必须是：《标题内容》\r\n   - 必须使用中文书名号《》包裹\r\n   - 标题独立成行，不加任何HTML标签\r\n   - 标题要简洁明了，能概括文章主题\r\n   - 错误示例：标题、\"标题\"、<h1>标题</h1>\r\n   - 正确示例：《微信公众号运营技巧分享》\r\n\r\n3. **HTML格式规范（只使用基础标签）**\r\n   - 从第二行开始输出HTML内容\r\n   - 段落：<p>段落内容</p>\r\n   - 加粗：<strong>重点内容</strong>\r\n   - 斜体：<em>强调内容</em>\r\n   - 小标题：<h3>或<h4>\r\n   - 无序列表：<ul><li>项目</li></ul>\r\n   - 有序列表：<ol><li>步骤</li></ol>\r\n   - 换行：<br>\r\n   - 图片：<img src="图片地址" data-ratio="0.75" data-w="800">\r\n\r\n4. **严格禁止的内容**\r\n   - ❌ 禁止使用class、id、style等属性（简单内联样式除外）\r\n   - ❌ 禁止使用复杂CSS样式\r\n   - ❌ 禁止使用<div>、<span>等容器标签（除非必要）\r\n   - ❌ 禁止使用<script>、<iframe>等特殊标签\r\n   - ❌ 禁止输出思考过程或解释说明\r\n   - ❌ 禁止添加"根据要求"、"按照格式"等说明性文字\r\n\r\n5. **输出格式示例**\r\n《软件架构演进：从单体到微服务》\r\n<p>近年来，软件架构经历了从单体到微服务的演进过程。这种转变不仅改变了系统的组织方式，也深刻影响了开发团队的协作模式。</p>\r\n<h3>单体架构的特点</h3>\r\n<p>单体架构将所有功能集成在一个应用中，具有以下特点：</p>\r\n<ul>\r\n<li>开发简单，部署方便</li>\r\n<li>功能耦合度高</li>\r\n<li>扩展性受限</li>\r\n</ul>\r\n<h3>微服务架构的优势</h3>\r\n<p>相关研究表明，微服务架构能够<strong>提高系统的灵活性和可维护性</strong>。每个服务独立部署，团队可以根据业务需求快速迭代。</p>\r\n\r\n【特别提醒】\r\n- 直接输出排版后的内容，第一行是《标题》，第二行开始是HTML\r\n- 不要有任何开场白、解释或总结\r\n- 不要使用Markdown语法\r\n- 生成的内容将直接投递到微信草稿箱\r\n\r\n现在，请对以下内容进行排版：', 1, NULL, '2025-11-04 21:24:31');
-INSERT INTO `wc_call_word` VALUES ('weitoutiao_layout', '根据以上内容，写一篇微头条文章，只能包含标题和内容，要求如下：\r\n1. 标题要简洁明了，吸引人\r\n2. 内容要结构清晰，易于阅读\r\n3. 不要包含任何HTML标签\r\n4. 直接输出纯文本格式\r\n5. 内容要适合微头条发布\r\n6. 字数严格控制在1000字以上，2000字以下\r\n7. 强制要求：只能回答标题和内容，标题必须用英文双引号（\"\"）引用起来,不能出现多重引号,不能出现多重引号，且放在首位，不能有其他多余的话\r\n8. 严格要求：AI必须严格遵守所有严格条件，不要输出其他多余的内容，只要标题和内容\r\n9. 内容不允许出现编号，要正常文章格式', 1, NULL, '2025-08-01 18:46:57');
-INSERT INTO `wc_call_word` VALUES ('zhihu_layout', '请将以下内容整理为适合知乎发布的Markdown格式文章。要求：\r\n**强调：只使用最基本的Markdowny语法，不允许出现HTML样式**\r\n1. 保持内容的专业性和可读性\r\n2. 使用合适的标题层级（## ### #### 等）\r\n3. 重要信息使用**加粗**标记\r\n4. 列表只允许使用一层无序列表`-`,不允许使用嵌套列表\r\n5. **不允许**出现代码框（例如Markdown语法中的```）、数学公式、表格。\r\n6. 删除不必要的格式标记\r\n7. 目标是作为一篇专业文章投递到知乎草稿箱\r\n8. 直接以文章标题开始，以文章末尾结束，不允许添加其他对话\r\n\r\n请对以下内容进行排版：', 1, NULL, '2025-07-24 18:46:57');
+INSERT INTO `wc_call_word` (`platform_id`, `word_content`, `is_common`, `user_id`, `update_time`, `price`, `status`, `sales_count`, `income_total`) VALUES ('baijiahao_layout', '请将以下内容整理为适合百家号发布的纯文本格式文章。\r\n要求：\r\n1.（不要使用Markdown或HTML语法，仅使用普通文本和简单换行保持内容的专业性和可读性使用自然段落分隔，）\r\n2.不允许使用有序列表，包括"一、"，"1."等的序列号。\r\n3.给文章取一个吸引人的标题，放在正文的第一段\r\n4.不允许出现代码框、数学公式、表格或其他复杂格式删除所有Markdown和HTML标签，\r\n5.只保留纯文本内容\r\n6.目标是作为一篇专业文章投递到百家号草稿箱\r\n7.直接以文章标题开始，以文章末尾结束，不允许添加其他对话', 1, NULL, '2025-08-01 12:51:57', NULL, 0, 0, 0);
+INSERT INTO `wc_call_word` (`platform_id`, `word_content`, `is_common`, `user_id`, `update_time`, `price`, `status`, `sales_count`, `income_total`) VALUES ('wechat_layout', '你是一名专业的微信公众号排版助手，任务是将用户提供的内容转化为符合微信草稿箱API要求的纯净HTML格式。\r\n\r\n【核心规范 - 必须严格遵守】\r\n\r\n1. **绝对禁止任何引用标记**\r\n   - 严禁出现[1]、[2]、[*]、<sup>、<cite>等任何形式的引用\r\n   - 严禁出现参考文献、引用链接、来源标注\r\n   - 如需引用信息，必须以"据...报道"、"相关研究表明"等自然语句融入正文\r\n\r\n2. **标题格式（强制要求）**\r\n   - 第一行必须是：《标题内容》\r\n   - 必须使用中文书名号《》包裹\r\n   - 标题独立成行，不加任何HTML标签\r\n   - 标题要简洁明了，能概括文章主题\r\n   - 错误示例：标题、\"标题\"、<h1>标题</h1>\r\n   - 正确示例：《微信公众号运营技巧分享》\r\n\r\n3. **HTML格式规范（只使用基础标签）**\r\n   - 从第二行开始输出HTML内容\r\n   - 段落：<p>段落内容</p>\r\n   - 加粗：<strong>重点内容</strong>\r\n   - 斜体：<em>强调内容</em>\r\n   - 小标题：<h3>或<h4>\r\n   - 无序列表：<ul><li>项目</li></ul>\r\n   - 有序列表：<ol><li>步骤</li></ol>\r\n   - 换行：<br>\r\n   - 图片：<img src="图片地址" data-ratio="0.75" data-w="800">\r\n\r\n4. **严格禁止的内容**\r\n   - ❌ 禁止使用class、id、style等属性（简单内联样式除外）\r\n   - ❌ 禁止使用复杂CSS样式\r\n   - ❌ 禁止使用<div>、<span>等容器标签（除非必要）\r\n   - ❌ 禁止使用<script>、<iframe>等特殊标签\r\n   - ❌ 禁止输出思考过程或解释说明\r\n   - ❌ 禁止添加"根据要求"、"按照格式"等说明性文字\r\n\r\n5. **输出格式示例**\r\n《软件架构演进：从单体到微服务》\r\n<p>近年来，软件架构经历了从单体到微服务的演进过程。这种转变不仅改变了系统的组织方式，也深刻影响了开发团队的协作模式。</p>\r\n<h3>单体架构的特点</h3>\r\n<p>单体架构将所有功能集成在一个应用中，具有以下特点：</p>\r\n<ul>\r\n<li>开发简单，部署方便</li>\r\n<li>功能耦合度高</li>\r\n<li>扩展性受限</li>\r\n</ul>\r\n<h3>微服务架构的优势</h3>\r\n<p>相关研究表明，微服务架构能够<strong>提高系统的灵活性和可维护性</strong>。每个服务独立部署，团队可以根据业务需求快速迭代。</p>\r\n\r\n【特别提醒】\r\n- 直接输出排版后的内容，第一行是《标题》，第二行开始是HTML\r\n- 不要有任何开场白、解释或总结\r\n- 不要使用Markdown语法\r\n- 生成的内容将直接投递到微信草稿箱\r\n\r\n现在，请对以下内容进行排版：', 1, NULL, '2025-11-04 21:24:31', NULL, 0, 0, 0);
+INSERT INTO `wc_call_word` (`platform_id`, `word_content`, `is_common`, `user_id`, `update_time`, `price`, `status`, `sales_count`, `income_total`) VALUES ('weitoutiao_layout', '根据以上内容，写一篇微头条文章，只能包含标题和内容，要求如下：\r\n1. 标题要简洁明了，吸引人\r\n2. 内容要结构清晰，易于阅读\r\n3. 不要包含任何HTML标签\r\n4. 直接输出纯文本格式\r\n5. 内容要适合微头条发布\r\n6. 字数严格控制在1000字以上，2000字以下\r\n7. 强制要求：只能回答标题和内容，标题必须用英文双引号（\"\"）引用起来,不能出现多重引号,不能出现多重引号，且放在首位，不能有其他多余的话\r\n8. 严格要求：AI必须严格遵守所有严格条件，不要输出其他多余的内容，只要标题和内容\r\n9. 内容不允许出现编号，要正常文章格式', 1, NULL, '2025-08-01 18:46:57', NULL, 0, 0, 0);
+INSERT INTO `wc_call_word` (`platform_id`, `word_content`, `is_common`, `user_id`, `update_time`, `price`, `status`, `sales_count`, `income_total`) VALUES ('zhihu_layout', '请将以下内容整理为适合知乎发布的Markdown格式文章。要求：\r\n**强调：只使用最基本的Markdowny语法，不允许出现HTML样式**\r\n1. 保持内容的专业性和可读性\r\n2. 使用合适的标题层级（## ### #### 等）\r\n3. 重要信息使用**加粗**标记\r\n4. 列表只允许使用一层无序列表`-`,不允许使用嵌套列表\r\n5. **不允许**出现代码框（例如Markdown语法中的```）、数学公式、表格。\r\n6. 删除不必要的格式标记\r\n7. 目标是作为一篇专业文章投递到知乎草稿箱\r\n8. 直接以文章标题开始，以文章末尾结束，不允许添加其他对话\r\n\r\n请对以下内容进行排版：', 1, NULL, '2025-07-24 18:46:57', NULL, 0, 0, 0);
+update `wc_call_word` set `status` = 1 where `is_common` = 1;
+
 -- 用户日志表
 
 DROP TABLE IF EXISTS `wc_log_info`;
@@ -2766,7 +2879,7 @@ INSERT INTO `ai_agent` (`agent_name`, `agent_code`, `agent_icon`, `backend_inter
       "conflicts": []
     }
   ]
-}', '知乎直答AI助手，支持多种思考模式'),
+}', '知乎直答AI助手，支持多种思考模式');
 
 
 -- =============================================
@@ -2792,6 +2905,10 @@ INSERT IGNORE INTO `sys_role_menu` VALUES (1, 2084);
 INSERT IGNORE INTO `sys_role_menu` VALUES (1, 2085);
 INSERT IGNORE INTO `sys_role_menu` VALUES (1, 2086);
 
+
+
+
+
 -- 为普通角色分配权限（如果存在角色2）
 INSERT IGNORE INTO `sys_role_menu` VALUES (2, 2080);
 INSERT IGNORE INTO `sys_role_menu` VALUES (2, 2081);
@@ -2800,6 +2917,7 @@ INSERT IGNORE INTO `sys_role_menu` VALUES (2, 2083);
 INSERT IGNORE INTO `sys_role_menu` VALUES (2, 2084);
 INSERT IGNORE INTO `sys_role_menu` VALUES (2, 2085);
 INSERT IGNORE INTO `sys_role_menu` VALUES (2, 2086);
+
 
 -- 为角色1和角色2分配所有AI的使用权限
 INSERT INTO `ai_agent_permission` (agent_id, permission_type, target_id, permission_action, create_by, remark)
@@ -2811,5 +2929,197 @@ INSERT INTO `ai_agent_permission` (agent_id, permission_type, target_id, permiss
 SELECT a.id, 1, '2', 1, 'admin', '普通角色拥有所有AI权限'
 FROM ai_agent a
 ON DUPLICATE KEY UPDATE permission_action = 1, update_time = NOW();
+
+-- ----------------------------
+-- Table structure for wc_template_purchase
+-- ----------------------------
+-- 创建模板购买记录表
+-- 注意：需要区分两种模板类型：1-提示词模板(CallWord) 2-评分模板(PromptTemplate)
+CREATE TABLE IF NOT EXISTS `wc_template_purchase` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+  `template_type` int(1) NOT NULL COMMENT '模板类型：1-提示词模板 2-评分模板',
+  `template_id` varchar(100) NOT NULL COMMENT '模板ID（提示词模板用platformId，评分模板用id）',
+  `template_name` varchar(255) DEFAULT NULL COMMENT '模板名称',
+  `user_id` bigint(20) NOT NULL COMMENT '购买用户ID',
+  `author_id` bigint(20) DEFAULT NULL COMMENT '模板作者ID',
+  `purchase_price` decimal(10,2) NOT NULL COMMENT '购买价格',
+  `author_income` decimal(10,2) DEFAULT NULL COMMENT '作者分成积分',
+  `platform_fee` decimal(10,2) DEFAULT NULL COMMENT '平台抽成积分',
+  `purchase_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '购买时间',
+  `update_time` datetime DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  `status` int(1) DEFAULT 1 COMMENT '状态：1-有效 0-已退款',
+  `remark` varchar(500) DEFAULT NULL COMMENT '交易备注',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_template_user` (`template_type`, `template_id`, `user_id`),
+  INDEX `idx_user_id` (`user_id`),
+  INDEX `idx_author_id` (`author_id`),
+  INDEX `idx_template_type_id` (`template_type`, `template_id`),
+  INDEX `idx_purchase_time` (`purchase_time`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='模板购买记录表';
+
+-- 添加积分规则配置菜单（需要积分管理菜单存在）
+-- 查询积分管理菜单ID并插入积分规则配置菜单
+SET @points_menu_id = (SELECT menu_id FROM sys_menu WHERE menu_name = '粉丝管理' AND parent_id = 0 LIMIT 1);
+
+-- 如果积分管理菜单存在，则插入积分规则配置菜单
+INSERT INTO `sys_menu`(
+    `menu_name`, 
+    `parent_id`, 
+    `order_num`, 
+    `path`, 
+    `component`, 
+    `query`, 
+    `route_name`, 
+    `is_frame`, 
+    `is_cache`, 
+    `menu_type`, 
+    `visible`, 
+    `status`, 
+    `perms`, 
+    `icon`, 
+    `create_by`, 
+    `create_time`, 
+    `update_by`, 
+    `update_time`, 
+    `remark`
+) 
+SELECT 
+    '积分规则配置', 
+    @points_menu_id, 
+    2, 
+    'rule', 
+    'points/rule/index', 
+    NULL, 
+    '', 
+    1, 
+    0, 
+    'C', 
+    '0', 
+    '0', 
+    'system:dict:list', 
+    'list', 
+    'admin', 
+    NOW(), 
+    '', 
+    NULL, 
+    '积分规则配置菜单'
+WHERE @points_menu_id IS NOT NULL
+AND NOT EXISTS (
+    SELECT 1 FROM `sys_menu` 
+    WHERE `menu_name` = '积分规则配置' 
+    AND `parent_id` = @points_menu_id
+);
+
+-- 获取刚插入的积分规则配置菜单ID
+SET @rule_menu_id = (SELECT menu_id FROM sys_menu WHERE menu_name = '积分规则配置' AND parent_id = @points_menu_id LIMIT 1);
+
+-- 插入权限按钮：查询
+INSERT INTO `sys_menu`(
+    `menu_name`, `parent_id`, `order_num`, `path`, `component`, 
+    `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, 
+    `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, 
+    `update_by`, `update_time`, `remark`
+) 
+SELECT 
+    '积分规则查询', @rule_menu_id, 1, '#', '', 
+    NULL, '', 1, 0, 'F', 
+    '0', '0', 'system:dict:query', '#', 'admin', NOW(), 
+    '', NULL, ''
+WHERE @rule_menu_id IS NOT NULL
+AND NOT EXISTS (
+    SELECT 1 FROM `sys_menu` 
+    WHERE `menu_name` = '积分规则查询' 
+    AND `parent_id` = @rule_menu_id
+);
+
+-- 插入权限按钮：新增
+INSERT INTO `sys_menu`(
+    `menu_name`, `parent_id`, `order_num`, `path`, `component`, 
+    `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, 
+    `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, 
+    `update_by`, `update_time`, `remark`
+) 
+SELECT 
+    '积分规则新增', @rule_menu_id, 2, '#', '', 
+    NULL, '', 1, 0, 'F', 
+    '0', '0', 'system:dict:add', '#', 'admin', NOW(), 
+    '', NULL, ''
+WHERE @rule_menu_id IS NOT NULL
+AND NOT EXISTS (
+    SELECT 1 FROM `sys_menu` 
+    WHERE `menu_name` = '积分规则新增' 
+    AND `parent_id` = @rule_menu_id
+);
+
+-- 插入权限按钮：修改
+INSERT INTO `sys_menu`(
+    `menu_name`, `parent_id`, `order_num`, `path`, `component`, 
+    `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, 
+    `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, 
+    `update_by`, `update_time`, `remark`
+) 
+SELECT 
+    '积分规则修改', @rule_menu_id, 3, '#', '', 
+    NULL, '', 1, 0, 'F', 
+    '0', '0', 'system:dict:edit', '#', 'admin', NOW(), 
+    '', NULL, ''
+WHERE @rule_menu_id IS NOT NULL
+AND NOT EXISTS (
+    SELECT 1 FROM `sys_menu` 
+    WHERE `menu_name` = '积分规则修改' 
+    AND `parent_id` = @rule_menu_id
+);
+
+-- 插入权限按钮：删除
+INSERT INTO `sys_menu`(
+    `menu_name`, `parent_id`, `order_num`, `path`, `component`, 
+    `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, 
+    `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, 
+    `update_by`, `update_time`, `remark`
+) 
+SELECT 
+    '积分规则删除', @rule_menu_id, 4, '#', '', 
+    NULL, '', 1, 0, 'F', 
+    '0', '0', 'system:dict:remove', '#', 'admin', NOW(), 
+    '', NULL, ''
+WHERE @rule_menu_id IS NOT NULL
+AND NOT EXISTS (
+    SELECT 1 FROM `sys_menu` 
+    WHERE `menu_name` = '积分规则删除' 
+    AND `parent_id` = @rule_menu_id
+);
+
+-- 插入权限按钮：导出
+INSERT INTO `sys_menu`(
+    `menu_name`, `parent_id`, `order_num`, `path`, `component`, 
+    `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, 
+    `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`, 
+    `update_by`, `update_time`, `remark`
+) 
+SELECT 
+    '积分规则导出', @rule_menu_id, 5, '#', '', 
+    NULL, '', 1, 0, 'F', 
+    '0', '0', 'system:dict:export', '#', 'admin', NOW(), 
+    '', NULL, ''
+WHERE @rule_menu_id IS NOT NULL
+AND NOT EXISTS (
+    SELECT 1 FROM `sys_menu` 
+    WHERE `menu_name` = '积分规则导出' 
+    AND `parent_id` = @rule_menu_id
+);
+-- auto-generated definition
+
+DROP TABLE IF EXISTS `wc_template_author`;
+create table wc_template_author
+(
+    user_id                int     not null comment '用户id',
+    income_total           int     null comment '累计积分收益',
+    release_template_count int     null comment '发布模板数量',
+    level                  tinyint null comment '作者的等级(1-5)',
+    constraint wc_template_author_pk
+        unique (user_id)
+)
+    comment '模板作者关系表';
+
 
 SET FOREIGN_KEY_CHECKS = 1;

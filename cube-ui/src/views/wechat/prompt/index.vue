@@ -73,7 +73,19 @@
           </el-tag>
         </template>
       </el-table-column>
-      <el-table-column label="操作" align="center" class-name="small-padding fixed-width" width="280">
+      <el-table-column label="价格" align="center" prop="price" width="100">
+        <template #default="scope">
+          <span>{{ formatPrice(scope.row.price) }}</span>
+        </template>
+      </el-table-column>
+      <el-table-column label="上架状态" align="center" prop="status" width="100">
+        <template #default="scope">
+          <el-tag :type="scope.row.status === 1 ? 'success' : 'info'">
+            {{ scope.row.status === 1 ? '已上架' : '草稿' }}
+          </el-tag>
+        </template>
+      </el-table-column>
+      <el-table-column label="操作" align="center" class-name="small-padding fixed-width" width="350">
         <template #default="scope">
           <el-button
             v-if="scope.row.isCommon === 0"
@@ -125,6 +137,20 @@
             @click="handleSetCommon(scope.row, 0)"
             v-hasRole="['admin', 'common']"
           >取消公共</el-button>
+          <el-button
+            v-if="scope.row.status !== 1 && scope.row.isCommon === 0"
+            size="small"
+            type="text"
+            style="color: #409EFF"
+            @click="openPublishDialog(scope.row)"
+          >上架市场</el-button>
+          <el-button
+            v-if="scope.row.status === 1 && scope.row.isCommon === 0"
+            size="small"
+            type="text"
+            style="color: #F56C6C"
+            @click="handleUnpublish(scope.row)"
+          >下架</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -153,6 +179,29 @@
         <el-button @click="cancel">取 消</el-button>
       </div>
     </el-dialog>
+
+    <!-- 上架对话框 -->
+    <el-dialog title="上架模板到市场" v-model="publishDialogVisible" width="500px" append-to-body>
+      <el-form ref="publishFormRef" :model="publishForm" :rules="publishRules" label-width="100px">
+        <el-form-item label="模板名称">
+          <el-input v-model="publishForm.name" disabled />
+        </el-form-item>
+        <el-form-item label="上架价格" prop="price">
+          <el-input-number 
+            v-model="publishForm.price" 
+            :min="0.01" 
+            :precision="2" 
+            :step="1" 
+            controls-position="right" 
+            style="width: 100%;" 
+          />
+        </el-form-item>
+      </el-form>
+      <div slot="footer" class="dialog-footer">
+        <el-button type="primary" @click="submitPublish" :loading="publishing">确 定</el-button>
+        <el-button @click="publishDialogVisible = false">取 消</el-button>
+      </div>
+    </el-dialog>
   </div>
 </template>
 
@@ -160,7 +209,7 @@
 import { Delete, Download, Edit, Plus, Refresh, Search } from '@element-plus/icons-vue';
 
 // import { listPrompt, getPrompt, delPrompt, addPrompt, updatePrompt } from "@/api/wechat/prompt";
-import { getScorePromptList,getScorePrompt,deleteScorePrompt,saveScorePrompt,updateScorePrompt,setScorePromptCommon } from "@/api/wechat/aigc";
+import { getScorePromptList,getScorePrompt,deleteScorePrompt,saveScorePrompt,updateScorePrompt,setScorePromptCommon,publishScorePrompt,unpublishScorePrompt } from "@/api/wechat/aigc";
 
 export default {
   name: "Prompt",
@@ -212,6 +261,20 @@ export default {
         prompt: [
           { required: true, message: "模板不能为空", trigger: "blur" }
         ],
+      },
+      // 上架对话框
+      publishDialogVisible: false,
+      publishing: false,
+      publishForm: {
+        id: null,
+        name: null,
+        price: null
+      },
+      publishRules: {
+        price: [
+          { required: true, message: "请输入上架价格", trigger: "blur" },
+          { type: "number", min: 0.01, message: "价格必须大于0", trigger: "blur" }
+        ]
       }
     };
   },
@@ -241,7 +304,9 @@ export default {
         prompt: null,
         type: null,
         userId: null,
-        isdel: null
+        isdel: null,
+        price: 0,
+        status: 0
       };
       this.resetForm("form");
     },
@@ -322,6 +387,50 @@ export default {
         this.getList();
         this.$modal.msgSuccess(`${text}成功`);
       }).catch(() => {});
+    },
+    /** 打开上架对话框 */
+    openPublishDialog(row) {
+      this.publishForm = {
+        id: row.id,
+        name: row.name,
+        price: row.price && Number(row.price) > 0 ? Number(row.price) : null
+      };
+      this.publishDialogVisible = true;
+      this.$nextTick(() => {
+        if (this.$refs.publishFormRef) {
+          this.$refs.publishFormRef.clearValidate();
+        }
+      });
+    },
+    /** 提交上架 */
+    submitPublish() {
+      this.$refs.publishFormRef.validate(valid => {
+        if (!valid) return;
+        this.publishing = true;
+        publishScorePrompt({
+          id: this.publishForm.id,
+          price: this.publishForm.price
+        }).then(() => {
+          this.$modal.msgSuccess("上架成功");
+          this.publishDialogVisible = false;
+          this.getList();
+        }).finally(() => {
+          this.publishing = false;
+        });
+      });
+    },
+    /** 下架模板 */
+    handleUnpublish(row) {
+      this.$modal.confirm(`确认下架模板「${row.name}」吗？`).then(() => {
+        return unpublishScorePrompt(row.id);
+      }).then(() => {
+        this.$modal.msgSuccess("模板已下架");
+        this.getList();
+      }).catch(() => {});
+    },
+    /** 格式化价格 */
+    formatPrice(value) {
+      return Number(value || 0).toFixed(2);
     }
   }
 };

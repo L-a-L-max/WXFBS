@@ -1395,7 +1395,7 @@
 
 				//调用后端接口
 				this.jsonRpcReqest.id = this.generateUUID();
-				this.jsonRpcReqest.method = "使用F8S";
+				this.jsonRpcReqest.method = "AI智能对话";
 				this.jsonRpcReqest.params = this.userInfoReq;
 			
 			console.log('📡 [sendPrompt] 准备发送JSON-RPC请求');
@@ -2128,7 +2128,7 @@
           case 'RETURN_METASO_STATUS':
           case 'RETURN_BAIDU_STATUS':
           case 'RETURN_ZHZD_STATUS':
-          case '使用F8S':
+          case 'AI智能对话':
             // 这些是状态消息和chatId消息，不需要在handleAIResult中处理
             console.log('ℹ️ 收到状态/chatId消息，类型:', dataObj.type);
             return;
