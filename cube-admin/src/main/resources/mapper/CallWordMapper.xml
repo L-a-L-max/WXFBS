@@ -10,10 +10,14 @@
         <result property="isCommon" column="is_common"/>
         <result property="userId" column="user_id"/>
         <result property="updateTime" column="update_time"/>
+        <result property="status" column="status"/>
+        <result property="price" column="price"/>
+        <result property="salesCount" column="sales_count"/>
+        <result property="incomeTotal" column="income_total"/>
     </resultMap>
 
     <sql id="selectCallWordVo">
-        select platform_id, word_content, is_common, user_id, update_time from wc_call_word
+        select platform_id, word_content, is_common, user_id, update_time, status, price, sales_count, income_total from wc_call_word
     </sql>
     <delete id="deleteCallWordByPlatformIds" parameterType="String">
         delete from wc_call_word where platform_id in
@@ -41,6 +45,10 @@
             <if test="wordContent != null and wordContent != ''">word_content,</if>
             <if test="isCommon != null">is_common,</if>
             <if test="userId != null">user_id,</if>
+            <if test="status != null">status,</if>
+            <if test="price != null">price,</if>
+            <if test="salesCount != null">sales_count,</if>
+            <if test="incomeTotal != null">income_total,</if>
             update_time,
         </trim>
         <trim prefix="values (" suffix=")" suffixOverrides=",">
@@ -48,6 +56,10 @@
             <if test="wordContent != null and wordContent != ''">#{wordContent},</if>
             <if test="isCommon != null">#{isCommon},</if>
             <if test="userId != null">#{userId},</if>
+            <if test="status != null">#{status},</if>
+            <if test="price != null">#{price},</if>
+            <if test="salesCount != null">#{salesCount},</if>
+            <if test="incomeTotal != null">#{incomeTotal},</if>
             NOW(),
         </trim>
     </insert>
@@ -58,6 +70,10 @@
             <if test="wordContent != null and wordContent != ''">word_content = #{wordContent},</if>
             <if test="isCommon != null">is_common = #{isCommon},</if>
             <if test="userId != null">user_id = #{userId},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="price != null">price = #{price},</if>
+            <if test="salesCount != null">sales_count = #{salesCount},</if>
+            <if test="incomeTotal != null">income_total = #{incomeTotal},</if>
             update_time = NOW(),
         </trim>
         where platform_id = #{platformId}
@@ -72,6 +88,86 @@
     <select id="selectByPlatformId" parameterType="String" resultMap="CallWordResult">
         <include refid="selectCallWordVo"/>
         where platform_id = #{platformId}
+    </select>
+
+    <update id="updateCallWordCommon">
+        update wc_call_word
+        set is_common = #{isCommon},
+            update_time = NOW()
+        where platform_id = #{platformId}
+    </update>
+
+    <!-- 查询我创建的提示词模板 -->
+    <select id="getMyCreatedCallWords" resultMap="CallWordResult">
+        <include refid="selectCallWordVo"/>
+        <where>
+            user_id = #{userId}
+            <if test="platformId != null and platformId != ''">
+                and platform_id like concat('%', #{platformId}, '%')
+            </if>
+        </where>
+        order by update_time desc
+        limit #{offset}, #{limit}
+    </select>
+
+    <!-- 统计我创建的提示词模板数量 -->
+    <select id="countMyCreatedCallWords" resultType="int">
+        select count(1) from wc_call_word
+        <where>
+            user_id = #{userId}
+            <if test="platformId != null and platformId != ''">
+                and platform_id like concat('%', #{platformId}, '%')
+            </if>
+        </where>
+    </select>
+
+    <!-- 查询市场中的提示词模板（已上架的） -->
+    <select id="getMarketCallWords" resultType="java.util.HashMap">
+        select 
+            cw.platform_id as id,
+            cw.platform_id as name,
+            cw.word_content as prompt,
+            cw.price,
+            cw.status,
+            cw.sales_count as salesCount,
+            cw.income_total as incomeTotal,
+            u.user_name as authorName
+        from wc_call_word cw
+        left join sys_user u on cw.user_id = u.user_id COLLATE utf8mb4_unicode_ci
+        <where>
+            cw.status = 1
+            and (cw.is_common = 0 or cw.is_common is null)
+            <if test="platformId != null and platformId != ''">
+                and cw.platform_id like concat('%', #{platformId}, '%')
+            </if>
+            <if test="minPrice != null">
+                and cw.price >= #{minPrice}
+            </if>
+            <if test="maxPrice != null">
+                and cw.price &lt;= #{maxPrice}
+            </if>
+        </where>
+        order by cw.sales_count desc, cw.update_time desc
+        limit #{offset}, #{limit}
+    </select>
+
+    <!-- 统计市场中的提示词模板数量 -->
+    <select id="countMarketCallWords" resultType="int">
+        select count(1)
+        from wc_call_word cw
+        <where>
+            cw.status = 1
+            and (cw.is_common = 0 or cw.is_common is null)
+            <if test="platformId != null and platformId != ''">
+                and cw.platform_id like concat('%', #{platformId}, '%')
+            </if>
+            <if test="minPrice != null">
+                and cw.price >= #{minPrice}
+            </if>
+            <if test="maxPrice != null">
+                and cw.price &lt;= #{maxPrice}
+            </if>
+        </where>
     </select>
 
 </mapper>

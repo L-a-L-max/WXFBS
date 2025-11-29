@@ -49,12 +49,11 @@
             class-name="small-padding fixed-width"
           >
             <template #default="scope">
-              <div v-if="scope.row && scope.row.userId !== 1">
+              <div v-if="scope.row">
                 <el-button
                   size="small"
                   type="text"
                   @click="handleUpdate(scope.row)"
-                  v-hasPermi="['wechat:points:edit']"
                 >设置积分</el-button>
                 <el-button
                   size="small"

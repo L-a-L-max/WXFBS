@@ -1371,7 +1371,7 @@ handleVisibilityEvaluation() {
   const visibilityRequest = {
     jsonrpc: "2.0",
     id: uuidv4(),
-    method: "使用F8S",
+    method: "AI智能对话",
     params: params,
   };
 
@@ -1765,7 +1765,7 @@ async sendPrompt() {
           this.userInfoReq.userPrompt = "不要进入其他模式，直接回答结果即可。" + this.userInfoReq.userPrompt;
         }
         //调用后端接口
-        this.jsonRpcReqest.method = "使用F8S";
+        this.jsonRpcReqest.method = "AI智能对话";
         this.jsonRpcReqest.params = this.userInfoReq;
         this.message(this.jsonRpcReqest);
         this.userInfoReq.isNewChat = false;
@@ -2433,10 +2433,16 @@ showScoreDialog() {
         };
         let ai = this.aiList.filter(ai => ai.name === this.scoreAI)[0];
 
+        // 安全检查：确保 ai 对象存在
+        if (!ai) {
+          console.error("未找到匹配的AI配置:", this.scoreAI);
+          return;
+        }
+
         {
           if(ai.name === "豆包") {
             scoreRequest.params.roles = scoreRequest.params.roles + "zj-db,";
-            if(ai.selectedCapabilities.includes("deep_thinking")) {
+            if(ai.selectedCapabilities && Array.isArray(ai.selectedCapabilities) && ai.selectedCapabilities.includes("deep_thinking")) {
               scoreRequest.params.roles = scoreRequest.params.roles + "zj-db-sdsk,";
             }
           }
@@ -2454,36 +2460,36 @@ showScoreDialog() {
             // 根据选择的模型设置角色
             if(ai.selectedModel === 'hunyuan') {
               scoreRequest.params.roles = scoreRequest.params.roles + 'yb-hunyuan-pt,';
-              if(ai.selectedCapabilities.includes("deep_thinking")) {
+              if(ai.selectedCapabilities && Array.isArray(ai.selectedCapabilities) && ai.selectedCapabilities.includes("deep_thinking")) {
                 scoreRequest.params.roles = scoreRequest.params.roles + 'yb-hunyuan-sdsk,';
               }
-              if(ai.selectedCapabilities.includes("web_search")) {
+              if(ai.selectedCapabilities && Array.isArray(ai.selectedCapabilities) && ai.selectedCapabilities.includes("web_search")) {
                 scoreRequest.params.roles = scoreRequest.params.roles + 'yb-hunyuan-lwss,';
               }
             } else if(ai.selectedModel === 'deepseek') {
               scoreRequest.params.roles = scoreRequest.params.roles + 'yb-deepseek-pt,';
-              if(ai.selectedCapabilities.includes("deep_thinking")) {
+              if(ai.selectedCapabilities && Array.isArray(ai.selectedCapabilities) && ai.selectedCapabilities.includes("deep_thinking")) {
                 scoreRequest.params.roles = scoreRequest.params.roles + 'yb-deepseek-sdsk,';
               }
-              if(ai.selectedCapabilities.includes("web_search")) {
+              if(ai.selectedCapabilities && Array.isArray(ai.selectedCapabilities) && ai.selectedCapabilities.includes("web_search")) {
                 scoreRequest.params.roles = scoreRequest.params.roles + 'yb-deepseek-lwss,';
               }
             }
           }
           if(ai.name === '百度AI') {
             scoreRequest.params.roles = scoreRequest.params.roles + 'baidu-agent,';
-            if(ai.selectedCapabilities.includes("deep_search")) {
+            if(ai.selectedCapabilities && Array.isArray(ai.selectedCapabilities) && ai.selectedCapabilities.includes("deep_search")) {
               scoreRequest.params.roles = scoreRequest.params.roles + 'baidu-sdss,';
             } else if(ai.isModel) {
               if(ai.isWeb) {
                 scoreRequest.params.roles = scoreRequest.params.roles + 'baidu-web,';
               }
 
-              if(ai.selectedModel.includes("dsr1")) {
+              if(ai.selectedModel && ai.selectedModel.includes("dsr1")) {
                 scoreRequest.params.roles = scoreRequest.params.roles + 'baidu-dsr1,';
-              } else if(ai.selectedModel.includes("dsv3")) {
+              } else if(ai.selectedModel && ai.selectedModel.includes("dsv3")) {
                 scoreRequest.params.roles = scoreRequest.params.roles + 'baidu-dsv3,';
-              } else if(ai.selectedModel.includes("wenxin")) {
+              } else if(ai.selectedModel && ai.selectedModel.includes("wenxin")) {
                 scoreRequest.params.roles = scoreRequest.params.roles + 'baidu-wenxin,';
               }
             }
@@ -2492,10 +2498,10 @@ showScoreDialog() {
 
           if(ai.name === "DeepSeek") {
             scoreRequest.params.roles = scoreRequest.params.roles + "deepseek,";
-            if(ai.selectedCapabilities.includes("deep_thinking")) {
+            if(ai.selectedCapabilities && Array.isArray(ai.selectedCapabilities) && ai.selectedCapabilities.includes("deep_thinking")) {
               scoreRequest.params.roles = scoreRequest.params.roles + "ds-sdsk,";
             }
-            if(ai.selectedCapabilities.includes("web_search")) {
+            if(ai.selectedCapabilities && Array.isArray(ai.selectedCapabilities) && ai.selectedCapabilities.includes("web_search")) {
               scoreRequest.params.roles = scoreRequest.params.roles + "ds-lwss,";
             }
           }

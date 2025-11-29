@@ -20,4 +20,8 @@ public class ScorePromptQuery {
     private String name;
 
     private String prompt;
+
+    private Double minPrice;
+
+    private Double maxPrice;
 }
