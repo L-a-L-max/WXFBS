@@ -164,7 +164,7 @@ public class MyWebSocketHandler extends TextWebSocketHandler {
                 System.out.println("客户端连接已关闭，ID: " + clientId);
                 return "false";
             }
-            userInfoRequest.setRoles("使用F8S:" + userInfoRequest.getRoles());
+            userInfoRequest.setRoles("AI智能对话:" + userInfoRequest.getRoles());
             log.info("发送给openAI：" + JSONObject.toJSONString(userInfoRequest));
             webSocketSession.sendMessage(new TextMessage(JSONObject.toJSONString(userInfoRequest)));
         } catch (IOException e) {

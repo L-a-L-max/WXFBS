@@ -433,7 +433,7 @@ INSERT INTO `sys_dict_data` VALUES (139, 17, '调用公众号智能体API', '-1'
 INSERT INTO `sys_dict_data` VALUES (140, 18, '首次绑定元宝账号', '5', 'sys_point_rule', NULL, 'default', 'N', '0', 'o3lds67b1zyFvifHTC_32epnmzqM', '2025-03-26 15:54:46', 'admin', '2025-03-27 15:08:57', '');
 INSERT INTO `sys_dict_data` VALUES (141, 19, '模板配置', '-1', 'sys_point_rule', NULL, 'default', 'N', '0', 'o3lds67b1zyFvifHTC_32epnmzqM', '2025-03-26 15:55:02', 'admin', '2025-03-27 15:16:53', '附加提示词配置');
 INSERT INTO `sys_dict_data` VALUES (142, 20, '记忆修改', '-1', 'sys_point_rule', NULL, 'default', 'N', '0', 'o3lds67b1zyFvifHTC_32epnmzqM', '2025-03-26 15:55:19', 'admin', '2025-03-27 15:17:00', '记忆描述配置');
-INSERT INTO `sys_dict_data` VALUES (143, 21, '使用F8S', '-1', 'sys_point_rule', NULL, 'default', 'N', '0', 'o3lds67b1zyFvifHTC_32epnmzqM', '2025-03-26 15:55:34', 'admin', '2025-03-27 15:09:21', '');
+INSERT INTO `sys_dict_data` VALUES (143, 21, 'AI智能对话', '-1', 'sys_point_rule', NULL, 'default', 'N', '0', 'o3lds67b1zyFvifHTC_32epnmzqM', '2025-03-26 15:55:34', 'admin', '2025-03-27 15:09:21', '');
 INSERT INTO `sys_dict_data` VALUES (144, 22, 'AI评分', '-1', 'sys_point_rule', NULL, 'default', 'N', '0', 'admin', '2025-05-15 09:23:28', '', NULL, NULL);
 INSERT INTO `sys_dict_data` VALUES (145, 23, 'AI排版', '-1', 'sys_point_rule', NULL, 'default', 'N', '0', 'admin', '2025-05-15 09:23:28', '', NULL, NULL);
 INSERT INTO `sys_dict_data` VALUES (145, 23, '模板上架奖励', '30', 'sys_point_rule', NULL, 'default', 'N', '0', 'admin', '2025-05-15 09:23:28', '', NULL,'{"limitType":"DAILY","limitValue":3}' );

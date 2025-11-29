@@ -1371,7 +1371,7 @@ handleVisibilityEvaluation() {
   const visibilityRequest = {
     jsonrpc: "2.0",
     id: uuidv4(),
-    method: "使用F8S",
+    method: "AI智能对话",
     params: params,
   };
 
@@ -1765,7 +1765,7 @@ async sendPrompt() {
           this.userInfoReq.userPrompt = "不要进入其他模式，直接回答结果即可。" + this.userInfoReq.userPrompt;
         }
         //调用后端接口
-        this.jsonRpcReqest.method = "使用F8S";
+        this.jsonRpcReqest.method = "AI智能对话";
         this.jsonRpcReqest.params = this.userInfoReq;
         this.message(this.jsonRpcReqest);
         this.userInfoReq.isNewChat = false;
