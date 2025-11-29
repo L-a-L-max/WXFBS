@@ -108,6 +108,8 @@ INSERT INTO `sys_role_menu` VALUES (1, 1058);
 INSERT INTO `sys_role_menu` VALUES (1, 1059);
 INSERT INTO `sys_role_menu` VALUES (1, 1060);
 INSERT INTO `sys_role_menu` VALUES (1, 2001);
+INSERT INTO `sys_role_menu` VALUES (1, 2050);
+INSERT INTO `sys_role_menu` VALUES (1, 2051);
 INSERT INTO `sys_role_menu` VALUES (1, 2070);
 INSERT INTO `sys_role_menu` VALUES (1, 2071);
 INSERT INTO `sys_role_menu` VALUES (1, 2072);
@@ -240,11 +242,31 @@ INSERT INTO `sys_role_menu` VALUES (2, 2038);
 INSERT INTO `sys_role_menu` VALUES (2, 2046);
 INSERT INTO `sys_role_menu` VALUES (2, 2047);
 INSERT INTO `sys_role_menu` VALUES (2, 2048);
+INSERT INTO `sys_role_menu` VALUES (2, 2050);
+INSERT INTO `sys_role_menu` VALUES (2, 2051);
 INSERT INTO `sys_role_menu` VALUES (2, 2070);
 INSERT INTO `sys_role_menu` VALUES (2, 2071);
 INSERT INTO `sys_role_menu` VALUES (2, 2072);
 INSERT INTO `sys_role_menu` VALUES (2, 2073);
 INSERT INTO `sys_role_menu` VALUES (2, 2074);
+INSERT  INTO `sys_role_menu` VALUES (2, 2100);
+INSERT  INTO `sys_role_menu` VALUES (2, 2101);
+INSERT INTO `sys_role_menu` VALUES (2, 2102);
+INSERT  INTO `sys_role_menu` VALUES (2, 2103);
+INSERT  INTO `sys_role_menu` VALUES (2, 2104);
+INSERT  INTO `sys_role_menu` VALUES (2, 2105);
+INSERT  INTO `sys_role_menu` VALUES (2, 2106);
+INSERT  INTO `sys_role_menu` VALUES (2, 2107);
+INSERT  INTO `sys_role_menu` VALUES (2, 2108);
+INSERT INTO `sys_role_menu` VALUES (2, 2109);
+INSERT INTO `sys_role_menu` VALUES (2, 2110);
+INSERT  INTO `sys_role_menu` VALUES (2, 2111);
+INSERT  INTO `sys_role_menu` VALUES (2, 2112);
+INSERT  INTO `sys_role_menu` VALUES (2, 2113);
+INSERT  INTO `sys_role_menu` VALUES (2, 2114);
+INSERT  INTO `sys_role_menu` VALUES (2, 2115);
+INSERT  INTO `sys_role_menu` VALUES (2, 2116);
+INSERT  INTO `sys_role_menu` VALUES (2, 2117);
 INSERT INTO `sys_role_menu` VALUES (101, 2000);
 INSERT INTO `sys_role_menu` VALUES (101, 2017);
 INSERT INTO `sys_role_menu` VALUES (101, 2021);
@@ -2285,6 +2307,8 @@ INSERT INTO `wc_prompt_template` (`id`, `prompt`, `name`, `type`, `user_id`, `is
 INSERT INTO `wc_prompt_template` (`id`, `prompt`, `name`, `type`, `user_id`, `isdel`, `is_common`) VALUES (109, '你的任务： 作为“跨境电商选品专家”，从市场分析中提炼选品逻辑。 请执行：\n\n属性归纳： 总结潜力爆款的共同属性（价格带、材质、功能点、外观特征）。\n\n季节性预测： 结合当地节日和气候，规划未来3个月的上新节奏。\n\n差评反向开发： 根据市场痛点，提出产品改良的微创新点。', '出海助手-跨境电商选品专家', 3, 22, 0, 1);
 INSERT INTO `wc_prompt_template` (`id`, `prompt`, `name`, `type`, `user_id`, `isdel`, `is_common`) VALUES (110, '你的任务： 作为“金牌客服培训师”，制定标准回复SOP。 请执行：\n\nFAQ提取： 从回答中总结用户最关心的5个问题（物流、退款、尺码等）。\n\n话术润色： 用地道、礼貌且具有服务意识的当地语言（英语/西语等）撰写回复模板。\n\n情绪降级： 提供一套应对愤怒用户的“降火”沟通流程。', '出海助手-金牌客服培训师', 3, 22, 0, 1);
 INSERT INTO `wc_prompt_template` (`id`, `prompt`, `name`, `type`, `user_id`, `isdel`, `is_common`) VALUES (111, '你的任务： 作为“项目管理秘书”，处理杂乱的调研信息或会议记录。 请执行：\n\n信息去重： 合并多个来源的重复信息。\n\n待办事项（Action Items）： 提取所有需要落实的任务，并指派责任部门（假设）。\n\n关键决策点： 高亮显示已经达成共识的决策。', '出海助手-项目管理秘书', 3, 22, 0, 1);
+-- 设置模板为上架状态
+update `wc_prompt_template` set ucube.wc_prompt_template.`status` = 1 where `is_common` = 1;
 
 
 -- ----------------------------
@@ -2878,8 +2902,7 @@ INSERT IGNORE INTO `sys_role_menu` VALUES (1, 2083);
 INSERT IGNORE INTO `sys_role_menu` VALUES (1, 2084);
 INSERT IGNORE INTO `sys_role_menu` VALUES (1, 2085);
 INSERT IGNORE INTO `sys_role_menu` VALUES (1, 2086);
-INSERT IGNORE INTO `sys_role_menu` VALUES (1, 2050);
-INSERT IGNORE INTO `sys_role_menu` VALUES (1, 2051);
+
 
 
 
@@ -2892,6 +2915,7 @@ INSERT IGNORE INTO `sys_role_menu` VALUES (2, 2083);
 INSERT IGNORE INTO `sys_role_menu` VALUES (2, 2084);
 INSERT IGNORE INTO `sys_role_menu` VALUES (2, 2085);
 INSERT IGNORE INTO `sys_role_menu` VALUES (2, 2086);
+
 
 -- 为角色1和角色2分配所有AI的使用权限
 INSERT INTO `ai_agent_permission` (agent_id, permission_type, target_id, permission_action, create_by, remark)
