@@ -745,7 +745,7 @@ CREATE TABLE `sys_user_role` (
 -- Records of sys_user_role
 -- ----------------------------
 BEGIN;
-INSERT INTO `sys_user_role` (`user_id`, `role_id`) VALUES (22, 1);
+INSERT INTO `sys_user_role` (`user_id`, `role_id`) VALUES (22, 2);
 INSERT INTO `sys_user_role` (`user_id`, `role_id`) VALUES (22, 101);
 COMMIT;
 
