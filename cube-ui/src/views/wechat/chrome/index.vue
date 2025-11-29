@@ -1849,10 +1849,16 @@ import { ChatDotSquare, Document, Link, Loading, Plus, Promotion } from '@elemen
         };
         let ai = this.aiList.filter(ai => ai.name === this.scoreAI)[0];
 
+        // 安全检查：确保 ai 对象存在
+        if (!ai) {
+          console.error("未找到匹配的AI配置:", this.scoreAI);
+          return;
+        }
+
         {
           if(ai.name === "豆包") {
             scoreRequest.params.roles = scoreRequest.params.roles + "zj-db,";
-            if(ai.selectedCapabilities.includes("deep_thinking")) {
+            if(ai.selectedCapabilities && Array.isArray(ai.selectedCapabilities) && ai.selectedCapabilities.includes("deep_thinking")) {
               scoreRequest.params.roles = scoreRequest.params.roles + "zj-db-sdsk,";
             }
           }
@@ -1870,36 +1876,36 @@ import { ChatDotSquare, Document, Link, Loading, Plus, Promotion } from '@elemen
             // 根据选择的模型设置角色
             if(ai.selectedModel === 'hunyuan') {
               scoreRequest.params.roles = scoreRequest.params.roles + 'yb-hunyuan-pt,';
-              if(ai.selectedCapabilities.includes("deep_thinking")) {
+              if(ai.selectedCapabilities && Array.isArray(ai.selectedCapabilities) && ai.selectedCapabilities.includes("deep_thinking")) {
                 scoreRequest.params.roles = scoreRequest.params.roles + 'yb-hunyuan-sdsk,';
               }
-              if(ai.selectedCapabilities.includes("web_search")) {
+              if(ai.selectedCapabilities && Array.isArray(ai.selectedCapabilities) && ai.selectedCapabilities.includes("web_search")) {
                 scoreRequest.params.roles = scoreRequest.params.roles + 'yb-hunyuan-lwss,';
               }
             } else if(ai.selectedModel === 'deepseek') {
               scoreRequest.params.roles = scoreRequest.params.roles + 'yb-deepseek-pt,';
-              if(ai.selectedCapabilities.includes("deep_thinking")) {
+              if(ai.selectedCapabilities && Array.isArray(ai.selectedCapabilities) && ai.selectedCapabilities.includes("deep_thinking")) {
                 scoreRequest.params.roles = scoreRequest.params.roles + 'yb-deepseek-sdsk,';
               }
-              if(ai.selectedCapabilities.includes("web_search")) {
+              if(ai.selectedCapabilities && Array.isArray(ai.selectedCapabilities) && ai.selectedCapabilities.includes("web_search")) {
                 scoreRequest.params.roles = scoreRequest.params.roles + 'yb-deepseek-lwss,';
               }
             }
           }
           if(ai.name === '百度AI') {
             scoreRequest.params.roles = scoreRequest.params.roles + 'baidu-agent,';
-            if(ai.selectedCapabilities.includes("deep_search")) {
+            if(ai.selectedCapabilities && Array.isArray(ai.selectedCapabilities) && ai.selectedCapabilities.includes("deep_search")) {
               scoreRequest.params.roles = scoreRequest.params.roles + 'baidu-sdss,';
             } else if(ai.isModel) {
               if(ai.isWeb) {
                 scoreRequest.params.roles = scoreRequest.params.roles + 'baidu-web,';
               }
 
-              if(ai.selectedModel.includes("dsr1")) {
+              if(ai.selectedModel && ai.selectedModel.includes("dsr1")) {
                 scoreRequest.params.roles = scoreRequest.params.roles + 'baidu-dsr1,';
-              } else if(ai.selectedModel.includes("dsv3")) {
+              } else if(ai.selectedModel && ai.selectedModel.includes("dsv3")) {
                 scoreRequest.params.roles = scoreRequest.params.roles + 'baidu-dsv3,';
-              } else if(ai.selectedModel.includes("wenxin")) {
+              } else if(ai.selectedModel && ai.selectedModel.includes("wenxin")) {
                 scoreRequest.params.roles = scoreRequest.params.roles + 'baidu-wenxin,';
               }
             }
@@ -1908,10 +1914,10 @@ import { ChatDotSquare, Document, Link, Loading, Plus, Promotion } from '@elemen
 
           if(ai.name === "DeepSeek") {
             scoreRequest.params.roles = scoreRequest.params.roles + "deepseek,";
-            if(ai.selectedCapabilities.includes("deep_thinking")) {
+            if(ai.selectedCapabilities && Array.isArray(ai.selectedCapabilities) && ai.selectedCapabilities.includes("deep_thinking")) {
               scoreRequest.params.roles = scoreRequest.params.roles + "ds-sdsk,";
             }
-            if(ai.selectedCapabilities.includes("web_search")) {
+            if(ai.selectedCapabilities && Array.isArray(ai.selectedCapabilities) && ai.selectedCapabilities.includes("web_search")) {
               scoreRequest.params.roles = scoreRequest.params.roles + "ds-lwss,";
             }
           }
