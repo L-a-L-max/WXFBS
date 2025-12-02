@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cube.system.mapper.DailyArticleMapper">
+
+    <resultMap type="DailyArticle" id="DailyArticleResult">
+        <result property="id"                 column="id"                  />
+        <result property="userId"             column="user_id"             />
+        <result property="articleTitle"       column="article_title"       />
+        <result property="selectedModels"     column="selected_models"     />
+        <result property="publishCount"       column="publish_count"       />
+        <result property="optimizedContent"   column="optimized_content"   />
+        <result property="model1Content"      column="model1_content"      />
+        <result property="model2Content"      column="model2_content"      />
+        <result property="model3Content"      column="model3_content"      />
+        <result property="model1Name"         column="model1_name"         />
+        <result property="model2Name"         column="model2_name"         />
+        <result property="model3Name"         column="model3_name"         />
+        <result property="agentTaskId"        column="agent_task_id"       />
+        <result property="processStatus"      column="process_status"      />
+        <result property="errorMessage"       column="error_message"       />
+        <result property="createBy"           column="create_by"           />
+        <result property="createTime"         column="create_time"         />
+        <result property="updateBy"           column="update_by"           />
+        <result property="updateTime"         column="update_time"         />
+        <result property="remark"             column="remark"              />
+    </resultMap>
+
+    <sql id="selectDailyArticleVo">
+        select id, user_id, article_title, selected_models, publish_count,
+               cast(optimized_content as char) as optimized_content,
+               cast(model1_content as char) as model1_content,
+               cast(model2_content as char) as model2_content,
+               cast(model3_content as char) as model3_content,
+               model1_name, model2_name, model3_name,
+               agent_task_id, process_status, error_message,
+               create_by, create_time, update_by, update_time, remark
+        from daily_article
+    </sql>
+
+    <select id="selectDailyArticleById" parameterType="Long" resultMap="DailyArticleResult">
+        <include refid="selectDailyArticleVo"/>
+        where id = #{id}
+    </select>
+
+    <select id="selectDailyArticleList" parameterType="DailyArticle" resultMap="DailyArticleResult">
+        <include refid="selectDailyArticleVo"/>
+        <where>
+            <if test="userId != null">
+                AND user_id = #{userId}
+            </if>
+            <if test="articleTitle != null and articleTitle != ''">
+                AND article_title like concat('%', #{articleTitle}, '%')
+            </if>
+            <if test="processStatus != null">
+                AND process_status = #{processStatus}
+            </if>
+            <if test="agentTaskId != null and agentTaskId != ''">
+                AND agent_task_id = #{agentTaskId}
+            </if>
+        </where>
+        order by create_time desc
+    </select>
+
+    <select id="selectDailyArticleListByUserId" parameterType="Long" resultMap="DailyArticleResult">
+        <include refid="selectDailyArticleVo"/>
+        where user_id = #{userId}
+          and process_status in (0, 1, 2)
+        order by create_time desc
+    </select>
+
+    <insert id="insertDailyArticle" parameterType="DailyArticle" useGeneratedKeys="true" keyProperty="id">
+        insert into daily_article (
+            <if test="userId != null">user_id, </if>
+            <if test="articleTitle != null and articleTitle != ''">article_title, </if>
+            <if test="selectedModels != null and selectedModels != ''">selected_models, </if>
+            <if test="optimizedContent != null">optimized_content, </if>
+            <if test="model1Content != null">model1_content, </if>
+            <if test="model2Content != null">model2_content, </if>
+            <if test="model3Content != null">model3_content, </if>
+            <if test="model1Name != null and model1Name != ''">model1_name, </if>
+            <if test="model2Name != null and model2Name != ''">model2_name, </if>
+            <if test="model3Name != null and model3Name != ''">model3_name, </if>
+            <if test="agentTaskId != null and agentTaskId != ''">agent_task_id, </if>
+            <if test="processStatus != null">process_status, </if>
+            <if test="errorMessage != null and errorMessage != ''">error_message, </if>
+            <if test="remark != null and remark != ''">remark, </if>
+            <if test="createBy != null and createBy != ''">create_by, </if>
+            create_time
+        ) values (
+            <if test="userId != null">#{userId}, </if>
+            <if test="articleTitle != null and articleTitle != ''">#{articleTitle}, </if>
+            <if test="selectedModels != null and selectedModels != ''">#{selectedModels}, </if>
+            <if test="optimizedContent != null">#{optimizedContent}, </if>
+            <if test="model1Content != null">#{model1Content}, </if>
+            <if test="model2Content != null">#{model2Content}, </if>
+            <if test="model3Content != null">#{model3Content}, </if>
+            <if test="model1Name != null and model1Name != ''">#{model1Name}, </if>
+            <if test="model2Name != null and model2Name != ''">#{model2Name}, </if>
+            <if test="model3Name != null and model3Name != ''">#{model3Name}, </if>
+            <if test="agentTaskId != null and agentTaskId != ''">#{agentTaskId}, </if>
+            <if test="processStatus != null">#{processStatus}, </if>
+            <if test="errorMessage != null and errorMessage != ''">#{errorMessage}, </if>
+            <if test="remark != null and remark != ''">#{remark}, </if>
+            <if test="createBy != null and createBy != ''">#{createBy}, </if>
+            sysdate()
+        )
+    </insert>
+
+    <update id="updateDailyArticle" parameterType="DailyArticle">
+        update daily_article
+        <set>
+            <if test="articleTitle != null and articleTitle != ''">article_title = #{articleTitle}, </if>
+            <if test="selectedModels != null and selectedModels != ''">selected_models = #{selectedModels}, </if>
+            <if test="publishCount != null">publish_count = #{publishCount}, </if>
+            <if test="optimizedContent != null">optimized_content = #{optimizedContent}, </if>
+            <if test="model1Content != null">model1_content = #{model1Content}, </if>
+            <if test="model2Content != null">model2_content = #{model2Content}, </if>
+            <if test="model3Content != null">model3_content = #{model3Content}, </if>
+            <if test="model1Name != null and model1Name != ''">model1_name = #{model1Name}, </if>
+            <if test="model2Name != null and model2Name != ''">model2_name = #{model2Name}, </if>
+            <if test="model3Name != null and model3Name != ''">model3_name = #{model3Name}, </if>
+            <if test="agentTaskId != null and agentTaskId != ''">agent_task_id = #{agentTaskId}, </if>
+            <if test="processStatus != null">process_status = #{processStatus}, </if>
+            <if test="errorMessage != null">error_message = #{errorMessage}, </if>
+            <if test="remark != null and remark != ''">remark = #{remark}, </if>
+            <if test="updateBy != null and updateBy != ''">update_by = #{updateBy}, </if>
+            update_time = sysdate()
+        </set>
+        where id = #{id}
+    </update>
+
+    <update id="updateProcessStatus">
+        update daily_article
+        set process_status = #{processStatus},
+            update_time = sysdate()
+        where id = #{id}
+    </update>
+
+    <update id="updateOptimizedContent">
+        update daily_article
+        set optimized_content = #{optimizedContent},
+            update_time = sysdate()
+        where id = #{id}
+    </update>
+
+    <update id="updateModelContent" parameterType="DailyArticle">
+        update daily_article
+        <set>
+            <if test="model1Content != null">model1_content = #{model1Content}, </if>
+            <if test="model2Content != null">model2_content = #{model2Content}, </if>
+            <if test="model3Content != null">model3_content = #{model3Content}, </if>
+            <if test="model1Name != null and model1Name != ''">model1_name = #{model1Name}, </if>
+            <if test="model2Name != null and model2Name != ''">model2_name = #{model2Name}, </if>
+            <if test="model3Name != null and model3Name != ''">model3_name = #{model3Name}, </if>
+            update_time = sysdate()
+        </set>
+        where id = #{id}
+    </update>
+
+    <delete id="deleteDailyArticleById" parameterType="Long">
+        delete from daily_article where id = #{id}
+    </delete>
+
+    <delete id="deleteDailyArticleByIds" parameterType="Long">
+        delete from daily_article where id in
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+</mapper>
