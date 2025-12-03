@@ -352,9 +352,30 @@ public class DailyArticleServiceImpl implements IDailyArticleService
             throw new RuntimeException("未找到启用的腾讯元器智能体配置，请先配置智能体");
         }
 
-        // 2. 调用腾讯元器同步排版工作流
+        // 2. 获取排版智能体配置（优先使用排版专用智能体）
         String appKey = config.getApiKey();
-        String appId = config.getAgentId();
+        String appId = config.getAgentId(); // 默认使用主智能体
+        
+        // 尝试从 configJson 中获取排版专用智能体ID
+        String configJson = config.getConfigJson();
+        if (configJson != null && !configJson.trim().isEmpty()) {
+            try {
+                // 使用 Jackson 解析 JSON
+                com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+                com.fasterxml.jackson.databind.JsonNode jsonNode = mapper.readTree(configJson);
+                
+                if (jsonNode.has("layoutAgentId")) {
+                    String layoutAgentId = jsonNode.get("layoutAgentId").asText();
+                    if (layoutAgentId != null && !layoutAgentId.trim().isEmpty()) {
+                        appId = layoutAgentId; // 使用排版专用智能体
+                        log.info("使用排版专用智能体 - LayoutAgentId: {}", layoutAgentId);
+                    }
+                }
+            } catch (Exception e) {
+                log.warn("解析 configJson 失败，使用默认智能体 - configJson: {}, error: {}", configJson, e.getMessage());
+            }
+        }
+        
         String userIdStr = String.valueOf(userId);
         
         log.info("调用腾讯元器同步排版工作流 - AppId: {}, ContentLength: {}", appId, content.length());

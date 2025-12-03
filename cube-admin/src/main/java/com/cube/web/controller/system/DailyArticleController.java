@@ -3,6 +3,8 @@ package com.cube.web.controller.system;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import com.cube.common.annotation.Anonymous;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -165,6 +167,7 @@ public class DailyArticleController extends BaseController
      * 保存大模型生成的文章内容
      * 注意：此接口供工作流回调使用，无需用户认证，因此不记录操作日志
      */
+    @Anonymous
     @PostMapping("/saveModelContent")
     public AjaxResult saveModelContent(@RequestBody Map<String, Object> params)
     {
@@ -211,6 +214,7 @@ public class DailyArticleController extends BaseController
      * 更新优化后的文章内容
      * 注意：此接口供工作流回调使用，无需用户认证，因此不记录操作日志
      */
+    @Anonymous
     @PostMapping("/updateOptimizedContent")
     public AjaxResult updateOptimizedContent(@RequestBody Map<String, Object> params)
     {

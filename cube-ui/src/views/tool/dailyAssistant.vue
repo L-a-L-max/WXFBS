@@ -463,6 +463,18 @@
             固定地址，直接复制即可
           </div>
         </el-form-item>
+        
+        <el-divider content-position="left">排版智能体配置（可选）</el-divider>
+        
+        <el-form-item label="排版智能体ID">
+          <el-input
+            v-model="configForm.layoutAgentId"
+            placeholder="排版专用智能体ID（可选）"
+          />
+          <div style="color: #909399; font-size: 12px; margin-top: 4px;">
+            如不配置，将使用上面的主智能体进行排版
+          </div>
+        </el-form-item>
       </el-form>
       <template #footer>
         <el-button @click="configDialogVisible = false">取消</el-button>
@@ -525,7 +537,8 @@ const configForm = ref({
   agentName: '',
   apiKey: '',
   apiEndpoint: '',
-  isActive: 1
+  isActive: 1,
+  layoutAgentId: '' // 排版智能体ID
 })
 
 // 排版相关
@@ -832,7 +845,22 @@ const showConfigDialog = async () => {
   try {
     const response = await getMyConfig()
     if (response.code === 200 && response.data) {
-      configForm.value = { ...response.data }
+      const config = { ...response.data }
+      
+      // 从 configJson 中解析排版智能体配置
+      if (config.configJson) {
+        try {
+          const jsonConfig = JSON.parse(config.configJson)
+          config.layoutAgentId = jsonConfig.layoutAgentId || ''
+        } catch (e) {
+          console.warn('解析 configJson 失败:', e)
+          config.layoutAgentId = ''
+        }
+      } else {
+        config.layoutAgentId = ''
+      }
+      
+      configForm.value = config
     }
   } catch (error) {
     console.error('加载配置失败', error)
@@ -845,12 +873,19 @@ const handleSaveConfig = async () => {
   try {
     await configFormRef.value.validate()
     
-    // 准备保存的数据，添加userId（后端会自动从当前登录用户获取，这里传null即可被后端自动填充）
-    // 或者如果需要明确传递，可以从store获取：import { useStore } from 'vuex'; const store = useStore(); configData.userId = store.state.user.userId
+    // 准备保存的数据
     const configData = {
       ...configForm.value
-      // userId会由后端根据当前登录用户自动设置，无需前端传递
     }
+    
+    // 将 layoutAgentId 保存到 configJson 中
+    const jsonConfig = {
+      layoutAgentId: configForm.value.layoutAgentId || ''
+    }
+    configData.configJson = JSON.stringify(jsonConfig)
+    
+    // 从表单数据中移除 layoutAgentId，因为它不是数据库字段
+    delete configData.layoutAgentId
     
     const apiFunc = configForm.value.id ? updateYuanqiConfig : addYuanqiConfig
     const response = await apiFunc(configData)

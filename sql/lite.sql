@@ -737,6 +737,16 @@ INSERT INTO `sys_menu` VALUES (2114, '积分规则新增', 2112, 2, '#', NULL, '
 INSERT INTO `sys_menu` VALUES (2115, '积分规则修改', 2112, 3, '#', NULL, '', '', 1, 0, 'F', '0', '0', 'system:dict:edit', '#', 'admin', '2025-11-28 00:46:51', '', NULL, '');
 INSERT INTO `sys_menu` VALUES (2116, '积分规则删除', 2112, 4, '#', NULL, '', '', 1, 0, 'F', '0', '0', 'system:dict:remove', '#', 'admin', '2025-11-28 00:46:51', '', NULL, '');
 INSERT INTO `sys_menu` VALUES (2117, '积分规则导出', 2112, 5, '#', NULL, '', '', 1, 0, 'F', '0', '0', 'system:dict:export', '#', 'admin', '2025-11-28 00:46:51', '', NULL, '');
+
+-- =============================================
+-- 日更助手菜单配置（放在内容管理下面）
+-- =============================================
+INSERT INTO `sys_menu` VALUES (2120, '日更助手', 2000, 10, 'daily-assistant', 'tool/dailyAssistant', '', '', 1, 0, 'C', '0', '0', 'wechat:daily:list', 'edit', 'admin', NOW(), '', NULL, '日更助手功能菜单');
+INSERT INTO `sys_menu` VALUES (2121, '文章查询', 2120, 1, '#', '', '', '', 1, 0, 'F', '0', '0', 'wechat:daily:query', '#', 'admin', NOW(), '', NULL, '');
+INSERT INTO `sys_menu` VALUES (2122, '文章新增', 2120, 2, '#', '', '', '', 1, 0, 'F', '0', '0', 'wechat:daily:add', '#', 'admin', NOW(), '', NULL, '');
+INSERT INTO `sys_menu` VALUES (2123, '文章删除', 2120, 3, '#', '', '', '', 1, 0, 'F', '0', '0', 'wechat:daily:remove', '#', 'admin', NOW(), '', NULL, '');
+INSERT INTO `sys_menu` VALUES (2124, '智能体配置', 2120, 4, '#', '', '', '', 1, 0, 'F', '0', '0', 'wechat:daily:config', '#', 'admin', NOW(), '', NULL, '');
+
 -- ----------------------------
 -- Table structure for sys_notice
 -- ----------------------------
@@ -1016,6 +1026,11 @@ INSERT INTO `sys_role_menu` VALUES (1, 2114);
 INSERT INTO `sys_role_menu` VALUES (1, 2115);
 INSERT INTO `sys_role_menu` VALUES (1, 2116);
 INSERT INTO `sys_role_menu` VALUES (1, 2117);
+INSERT INTO `sys_role_menu` VALUES (1, 2120);
+INSERT INTO `sys_role_menu` VALUES (1, 2121);
+INSERT INTO `sys_role_menu` VALUES (1, 2122);
+INSERT INTO `sys_role_menu` VALUES (1, 2123);
+INSERT INTO `sys_role_menu` VALUES (1, 2124);
 INSERT INTO `sys_role_menu` VALUES (2, 1);
 INSERT INTO `sys_role_menu` VALUES (2, 2);
 INSERT INTO `sys_role_menu` VALUES (2, 3);
@@ -1150,6 +1165,12 @@ INSERT INTO `sys_role_menu` VALUES (2, 2114);
 INSERT INTO `sys_role_menu` VALUES (2, 2115);
 INSERT INTO `sys_role_menu` VALUES (2, 2116);
 INSERT INTO `sys_role_menu` VALUES (2, 2117);
+-- 日更助手菜单权限（普通用户）
+INSERT INTO `sys_role_menu` VALUES (2, 2120);
+INSERT INTO `sys_role_menu` VALUES (2, 2121);
+INSERT INTO `sys_role_menu` VALUES (2, 2122);
+INSERT INTO `sys_role_menu` VALUES (2, 2123);
+INSERT INTO `sys_role_menu` VALUES (2, 2124);
 INSERT INTO `sys_role_menu` VALUES (101, 2000);
 INSERT INTO `sys_role_menu` VALUES (101, 2017);
 INSERT INTO `sys_role_menu` VALUES (101, 2021);
@@ -2609,4 +2630,57 @@ create table wc_template_author
 )
     comment '模板作者关系表';
 
+-- =============================================
+-- 日更助手数据表结构
+-- =============================================
 
+-- 1. 创建日更助手文章表
+DROP TABLE IF EXISTS `daily_article`;
+CREATE TABLE `daily_article` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '文章ID',
+  `user_id` bigint(20) NOT NULL COMMENT '用户ID',
+  `article_title` varchar(500) NOT NULL COMMENT '原始文章标题',
+  `optimized_content` longtext COMMENT '优化后的文章内容（来自腾讯元器智能体）',
+  `model1_content` longtext COMMENT '大模型1未优化的文章内容',
+  `model2_content` longtext COMMENT '大模型2未优化的文章内容',
+  `model3_content` longtext COMMENT '大模型3未优化的文章内容',
+  `model1_name` varchar(100) DEFAULT NULL COMMENT '大模型1名称',
+  `model2_name` varchar(100) DEFAULT NULL COMMENT '大模型2名称',
+  `model3_name` varchar(100) DEFAULT NULL COMMENT '大模型3名称',
+  `agent_task_id` varchar(200) DEFAULT NULL COMMENT '腾讯元器智能体任务ID',
+  `process_status` tinyint(1) NOT NULL DEFAULT 0 COMMENT '处理状态：0-处理中，1-已完成，2-失败',
+  `error_message` varchar(1000) DEFAULT NULL COMMENT '错误信息',
+  `selected_models` varchar(50) DEFAULT '1,2,3' COMMENT '已选择的模型，格式如"1,2,3"',
+  `publish_count` int(11) DEFAULT 0 COMMENT '发布次数',
+  `create_by` varchar(64) DEFAULT NULL COMMENT '创建者',
+  `create_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_by` varchar(64) DEFAULT NULL COMMENT '更新者',
+  `update_time` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  `remark` varchar(500) DEFAULT NULL COMMENT '备注',
+  PRIMARY KEY (`id`) USING BTREE,
+  KEY `idx_user_id` (`user_id`) USING BTREE COMMENT '用户ID索引',
+  KEY `idx_create_time` (`create_time`) USING BTREE COMMENT '创建时间索引',
+  KEY `idx_process_status` (`process_status`) USING BTREE COMMENT '处理状态索引',
+  KEY `idx_agent_task_id` (`agent_task_id`) USING BTREE COMMENT '智能体任务ID索引'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='日更助手文章表';
+
+-- 2. 创建腾讯元器智能体配置表
+DROP TABLE IF EXISTS `yuanqi_agent_config`;
+CREATE TABLE `yuanqi_agent_config` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '配置ID',
+  `user_id` bigint(20) NOT NULL COMMENT '用户ID',
+  `agent_id` varchar(200) NOT NULL COMMENT '腾讯元器智能体ID',
+  `agent_name` varchar(100) DEFAULT NULL COMMENT '智能体名称',
+  `api_key` varchar(500) DEFAULT NULL COMMENT 'API密钥（加密存储）',
+  `api_endpoint` varchar(500) DEFAULT NULL COMMENT 'API端点URL',
+  `is_active` tinyint(1) NOT NULL DEFAULT 1 COMMENT '是否启用：0-禁用，1-启用',
+  `config_json` json DEFAULT NULL COMMENT '其他配置（JSON格式）',
+  `create_by` varchar(64) DEFAULT NULL COMMENT '创建者',
+  `create_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_by` varchar(64) DEFAULT NULL COMMENT '更新者',
+  `update_time` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  `remark` varchar(500) DEFAULT NULL COMMENT '备注',
+  PRIMARY KEY (`id`) USING BTREE,
+  KEY `idx_user_id` (`user_id`) USING BTREE COMMENT '用户ID索引',
+  KEY `idx_agent_id` (`agent_id`) USING BTREE COMMENT '智能体ID索引'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='腾讯元器智能体配置表';
