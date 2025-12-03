@@ -4,7 +4,6 @@ const path = require('path')
 function resolve(dir) {
   return path.join(__dirname, dir)
 }
-
 const CompressionPlugin = require('compression-webpack-plugin')
 
 const name = 'U3W优立方AI平台-悟空共创' // 网页标题
