@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cube.system.mapper.YuanqiAgentConfigMapper">
+
+    <resultMap type="YuanqiAgentConfig" id="YuanqiAgentConfigResult">
+        <result property="id"             column="id"              />
+        <result property="userId"         column="user_id"         />
+        <result property="agentId"        column="agent_id"        />
+        <result property="agentName"      column="agent_name"      />
+        <result property="apiKey"         column="api_key"         />
+        <result property="apiEndpoint"    column="api_endpoint"    />
+        <result property="isActive"       column="is_active"       />
+        <result property="configJson"     column="config_json"     />
+        <result property="createBy"       column="create_by"       />
+        <result property="createTime"     column="create_time"     />
+        <result property="updateBy"       column="update_by"       />
+        <result property="updateTime"     column="update_time"     />
+        <result property="remark"         column="remark"          />
+    </resultMap>
+
+    <sql id="selectYuanqiAgentConfigVo">
+        select id, user_id, agent_id, agent_name, api_key, api_endpoint, 
+               is_active, config_json, create_by, create_time, update_by, update_time, remark
+        from yuanqi_agent_config
+    </sql>
+
+    <select id="selectYuanqiAgentConfigById" parameterType="Long" resultMap="YuanqiAgentConfigResult">
+        <include refid="selectYuanqiAgentConfigVo"/>
+        where id = #{id}
+    </select>
+
+    <select id="selectYuanqiAgentConfigList" parameterType="YuanqiAgentConfig" resultMap="YuanqiAgentConfigResult">
+        <include refid="selectYuanqiAgentConfigVo"/>
+        <where>
+            <if test="userId != null">
+                AND user_id = #{userId}
+            </if>
+            <if test="agentId != null and agentId != ''">
+                AND agent_id = #{agentId}
+            </if>
+            <if test="agentName != null and agentName != ''">
+                AND agent_name like concat('%', #{agentName}, '%')
+            </if>
+            <if test="isActive != null">
+                AND is_active = #{isActive}
+            </if>
+        </where>
+        order by create_time desc
+    </select>
+
+    <select id="selectActiveConfigByUserId" parameterType="Long" resultMap="YuanqiAgentConfigResult">
+        <include refid="selectYuanqiAgentConfigVo"/>
+        where user_id = #{userId} and is_active = 1
+        limit 1
+    </select>
+
+    <insert id="insertYuanqiAgentConfig" parameterType="YuanqiAgentConfig" useGeneratedKeys="true" keyProperty="id">
+        insert into yuanqi_agent_config (
+            <if test="userId != null">user_id, </if>
+            <if test="agentId != null and agentId != ''">agent_id, </if>
+            <if test="agentName != null and agentName != ''">agent_name, </if>
+            <if test="apiKey != null and apiKey != ''">api_key, </if>
+            <if test="apiEndpoint != null and apiEndpoint != ''">api_endpoint, </if>
+            <if test="isActive != null">is_active, </if>
+            <if test="configJson != null and configJson != ''">config_json, </if>
+            <if test="remark != null and remark != ''">remark, </if>
+            <if test="createBy != null and createBy != ''">create_by, </if>
+            create_time
+        ) values (
+            <if test="userId != null">#{userId}, </if>
+            <if test="agentId != null and agentId != ''">#{agentId}, </if>
+            <if test="agentName != null and agentName != ''">#{agentName}, </if>
+            <if test="apiKey != null and apiKey != ''">#{apiKey}, </if>
+            <if test="apiEndpoint != null and apiEndpoint != ''">#{apiEndpoint}, </if>
+            <if test="isActive != null">#{isActive}, </if>
+            <if test="configJson != null and configJson != ''">#{configJson}, </if>
+            <if test="remark != null and remark != ''">#{remark}, </if>
+            <if test="createBy != null and createBy != ''">#{createBy}, </if>
+            sysdate()
+        )
+    </insert>
+
+    <update id="updateYuanqiAgentConfig" parameterType="YuanqiAgentConfig">
+        update yuanqi_agent_config
+        <set>
+            <if test="agentId != null and agentId != ''">agent_id = #{agentId}, </if>
+            <if test="agentName != null and agentName != ''">agent_name = #{agentName}, </if>
+            <if test="apiKey != null and apiKey != ''">api_key = #{apiKey}, </if>
+            <if test="apiEndpoint != null and apiEndpoint != ''">api_endpoint = #{apiEndpoint}, </if>
+            <if test="isActive != null">is_active = #{isActive}, </if>
+            <if test="configJson != null">config_json = #{configJson}, </if>
+            <if test="remark != null and remark != ''">remark = #{remark}, </if>
+            <if test="updateBy != null and updateBy != ''">update_by = #{updateBy}, </if>
+            update_time = sysdate()
+        </set>
+        where id = #{id}
+    </update>
+
+    <delete id="deleteYuanqiAgentConfigById" parameterType="Long">
+        delete from yuanqi_agent_config where id = #{id}
+    </delete>
+
+    <delete id="deleteYuanqiAgentConfigByIds" parameterType="Long">
+        delete from yuanqi_agent_config where id in
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+</mapper>
