@@ -46,7 +46,7 @@
 
 #### 6.1 配置小程序AppID在后端配置文件
 编辑 `<项目根目录>/cube-admin/src/main/resources/application.yml` 文件，设置小程序AppID：
-前往https://mp.weixin.qq.com/登录获取AppSecret并进行配置
+前往https://mp.weixin.qq.com/ 登录获取AppSecret并进行配置
 ```
 # 小程序配置
 mini:
