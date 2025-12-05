@@ -1,5 +1,5 @@
-<h1 align="center" style="margin: 30px 0 30px; font-weight: bold;">微信福帮手 企业级后台管理 v1.0.0</h1>
-<h4 align="center">基于若依框架二次开发的企业级后台管理系统</h4>
+<h1 align="center" style="margin: 30px 0 30px; font-weight: bold;">微信福帮手</h1>
+<h4 align="center">微信生态内容智能化工具</h4>
 <p align="center">
 	<a href="https://gitee.com/U3W-AI/RuoYi-Vue"><img src="https://img.shields.io/badge/WxFbsir-v1.0.0-brightgreen.svg"></a>
 	<a href="https://wx.fbsir.com"><img src="https://img.shields.io/badge/website-wx.fbsir.com-blue.svg"></a>
@@ -7,7 +7,7 @@
 
 ## 项目简介
 
-微信福帮手(WxFbsir)是基于若依框架进行二次开发的企业级后台管理系统，针对企业实际需求进行了全面优化和定制。
+微信福帮手(WxFbsir)基于腾讯元器智能体开发平台及RuoYi等开源框架进行整合开发，助力中小团队快速高效实现微信生态的内容资产智能化。
 
 ### 技术栈
 * **前端**: Vue 3.5.16 + Element Plus 2.10.7 + Vite 6.3.5
