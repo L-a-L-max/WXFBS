@@ -164,29 +164,35 @@ create table sys_menu (
 -- 初始化-菜单信息表数据
 -- ----------------------------
 -- 一级菜单
-insert into sys_menu values('1', '系统管理', '0', '1', 'system',           null, '', '', 1, 0, 'M', '0', '0', '', 'system',   'admin', sysdate(), '', null, '系统管理目录');
-insert into sys_menu values('2', '系统监控', '0', '2', 'monitor',          null, '', '', 1, 0, 'M', '0', '0', '', 'monitor',  'admin', sysdate(), '', null, '系统监控目录');
-insert into sys_menu values('3', '系统工具', '0', '3', 'tool',             null, '', '', 1, 0, 'M', '0', '0', '', 'tool',     'admin', sysdate(), '', null, '系统工具目录');
-insert into sys_menu values('4', '微信福帮手官网', '0', '4', 'https://wx.fbsir.com', null, '', '', 0, 0, 'M', '0', '0', '', 'guide',    'admin', sysdate(), '', null, '微信福帮手官网地址');
+insert into sys_menu values('1', '内容管理', '0', '1', 'content',          null, '', '', 1, 0, 'M', '0', '0', '', 'edit',     'admin', sysdate(), '', null, '内容管理目录');
+insert into sys_menu values('2', '系统管理', '0', '2', 'system',           null, '', '', 1, 0, 'M', '0', '0', '', 'system',   'admin', sysdate(), '', null, '系统管理目录');
+insert into sys_menu values('3', '系统监控', '0', '3', 'monitor',          null, '', '', 1, 0, 'M', '0', '0', '', 'monitor',  'admin', sysdate(), '', null, '系统监控目录');
+insert into sys_menu values('4', '系统工具', '0', '4', 'tool',             null, '', '', 1, 0, 'M', '0', '0', '', 'tool',     'admin', sysdate(), '', null, '系统工具目录');
+insert into sys_menu values('5', '微信福帮手官网', '0', '5', 'https://wx.fbsir.com', null, '', '', 0, 0, 'M', '0', '0', '', 'guide',    'admin', sysdate(), '', null, '微信福帮手官网地址');
 -- 二级菜单
-insert into sys_menu values('100',  '用户管理', '1',   '1', 'user',       'system/user/index',        '', '', 1, 0, 'C', '0', '0', 'system:user:list',        'user',          'admin', sysdate(), '', null, '用户管理菜单');
-insert into sys_menu values('101',  '角色管理', '1',   '2', 'role',       'system/role/index',        '', '', 1, 0, 'C', '0', '0', 'system:role:list',        'peoples',       'admin', sysdate(), '', null, '角色管理菜单');
-insert into sys_menu values('102',  '菜单管理', '1',   '3', 'menu',       'system/menu/index',        '', '', 1, 0, 'C', '0', '0', 'system:menu:list',        'tree-table',    'admin', sysdate(), '', null, '菜单管理菜单');
-insert into sys_menu values('103',  '部门管理', '1',   '4', 'dept',       'system/dept/index',        '', '', 1, 0, 'C', '0', '0', 'system:dept:list',        'tree',          'admin', sysdate(), '', null, '部门管理菜单');
-insert into sys_menu values('104',  '岗位管理', '1',   '5', 'post',       'system/post/index',        '', '', 1, 0, 'C', '0', '0', 'system:post:list',        'post',          'admin', sysdate(), '', null, '岗位管理菜单');
-insert into sys_menu values('105',  '字典管理', '1',   '6', 'dict',       'system/dict/index',        '', '', 1, 0, 'C', '0', '0', 'system:dict:list',        'dict',          'admin', sysdate(), '', null, '字典管理菜单');
-insert into sys_menu values('106',  '参数设置', '1',   '7', 'config',     'system/config/index',      '', '', 1, 0, 'C', '0', '0', 'system:config:list',      'edit',          'admin', sysdate(), '', null, '参数设置菜单');
-insert into sys_menu values('107',  '通知公告', '1',   '8', 'notice',     'system/notice/index',      '', '', 1, 0, 'C', '0', '0', 'system:notice:list',      'message',       'admin', sysdate(), '', null, '通知公告菜单');
-insert into sys_menu values('108',  '日志管理', '1',   '9', 'log',        '',                         '', '', 1, 0, 'M', '0', '0', '',                        'log',           'admin', sysdate(), '', null, '日志管理菜单');
-insert into sys_menu values('109',  '在线用户', '2',   '1', 'online',     'monitor/online/index',     '', '', 1, 0, 'C', '0', '0', 'monitor:online:list',     'online',        'admin', sysdate(), '', null, '在线用户菜单');
-insert into sys_menu values('110',  '定时任务', '2',   '2', 'job',        'monitor/job/index',        '', '', 1, 0, 'C', '0', '0', 'monitor:job:list',        'job',           'admin', sysdate(), '', null, '定时任务菜单');
-insert into sys_menu values('111',  '数据监控', '2',   '3', 'druid',      'monitor/druid/index',      '', '', 1, 0, 'C', '0', '0', 'monitor:druid:list',      'druid',         'admin', sysdate(), '', null, '数据监控菜单');
-insert into sys_menu values('112',  '服务监控', '2',   '4', 'server',     'monitor/server/index',     '', '', 1, 0, 'C', '0', '0', 'monitor:server:list',     'server',        'admin', sysdate(), '', null, '服务监控菜单');
-insert into sys_menu values('113',  '缓存监控', '2',   '5', 'cache',      'monitor/cache/index',      '', '', 1, 0, 'C', '0', '0', 'monitor:cache:list',      'redis',         'admin', sysdate(), '', null, '缓存监控菜单');
-insert into sys_menu values('114',  '缓存列表', '2',   '6', 'cacheList',  'monitor/cache/list',       '', '', 1, 0, 'C', '0', '0', 'monitor:cache:list',      'redis-list',    'admin', sysdate(), '', null, '缓存列表菜单');
-insert into sys_menu values('115',  '表单构建', '3',   '1', 'build',      'tool/build/index',         '', '', 1, 0, 'C', '0', '0', 'tool:build:list',         'build',         'admin', sysdate(), '', null, '表单构建菜单');
-insert into sys_menu values('116',  '代码生成', '3',   '2', 'gen',        'tool/gen/index',           '', '', 1, 0, 'C', '0', '0', 'tool:gen:list',           'code',          'admin', sysdate(), '', null, '代码生成菜单');
-insert into sys_menu values('117',  '系统接口', '3',   '3', 'swagger',    'tool/swagger/index',       '', '', 1, 0, 'C', '0', '0', 'tool:swagger:list',       'swagger',       'admin', sysdate(), '', null, '系统接口菜单');
+-- 内容管理子菜单（parent_id=1）
+insert into sys_menu values('10',   '日更助手', '1',   '1', 'daily-assistant', 'business/dailyAssistant', '', '', 1, 0, 'C', '0', '0', 'business:daily:view',     'edit',          'admin', sysdate(), '', null, '日更助手菜单');
+-- 系统管理子菜单（parent_id=2）
+insert into sys_menu values('100',  '用户管理', '2',   '1', 'user',       'system/user/index',        '', '', 1, 0, 'C', '0', '0', 'system:user:list',        'user',          'admin', sysdate(), '', null, '用户管理菜单');
+insert into sys_menu values('101',  '角色管理', '2',   '2', 'role',       'system/role/index',        '', '', 1, 0, 'C', '0', '0', 'system:role:list',        'peoples',       'admin', sysdate(), '', null, '角色管理菜单');
+insert into sys_menu values('102',  '菜单管理', '2',   '3', 'menu',       'system/menu/index',        '', '', 1, 0, 'C', '0', '0', 'system:menu:list',        'tree-table',    'admin', sysdate(), '', null, '菜单管理菜单');
+insert into sys_menu values('103',  '部门管理', '2',   '4', 'dept',       'system/dept/index',        '', '', 1, 0, 'C', '0', '0', 'system:dept:list',        'tree',          'admin', sysdate(), '', null, '部门管理菜单');
+insert into sys_menu values('104',  '岗位管理', '2',   '5', 'post',       'system/post/index',        '', '', 1, 0, 'C', '0', '0', 'system:post:list',        'post',          'admin', sysdate(), '', null, '岗位管理菜单');
+insert into sys_menu values('105',  '字典管理', '2',   '6', 'dict',       'system/dict/index',        '', '', 1, 0, 'C', '0', '0', 'system:dict:list',        'dict',          'admin', sysdate(), '', null, '字典管理菜单');
+insert into sys_menu values('106',  '参数设置', '2',   '7', 'config',     'system/config/index',      '', '', 1, 0, 'C', '0', '0', 'system:config:list',      'edit',          'admin', sysdate(), '', null, '参数设置菜单');
+insert into sys_menu values('107',  '通知公告', '2',   '8', 'notice',     'system/notice/index',      '', '', 1, 0, 'C', '0', '0', 'system:notice:list',      'message',       'admin', sysdate(), '', null, '通知公告菜单');
+insert into sys_menu values('108',  '日志管理', '2',   '9', 'log',        '',                         '', '', 1, 0, 'M', '0', '0', '',                        'log',           'admin', sysdate(), '', null, '日志管理菜单');
+-- 系统监控子菜单（parent_id=3）
+insert into sys_menu values('109',  '在线用户', '3',   '1', 'online',     'monitor/online/index',     '', '', 1, 0, 'C', '0', '0', 'monitor:online:list',     'online',        'admin', sysdate(), '', null, '在线用户菜单');
+insert into sys_menu values('110',  '定时任务', '3',   '2', 'job',        'monitor/job/index',        '', '', 1, 0, 'C', '0', '0', 'monitor:job:list',        'job',           'admin', sysdate(), '', null, '定时任务菜单');
+insert into sys_menu values('111',  '数据监控', '3',   '3', 'druid',      'monitor/druid/index',      '', '', 1, 0, 'C', '0', '0', 'monitor:druid:list',      'druid',         'admin', sysdate(), '', null, '数据监控菜单');
+insert into sys_menu values('112',  '服务监控', '3',   '4', 'server',     'monitor/server/index',     '', '', 1, 0, 'C', '0', '0', 'monitor:server:list',     'server',        'admin', sysdate(), '', null, '服务监控菜单');
+insert into sys_menu values('113',  '缓存监控', '3',   '5', 'cache',      'monitor/cache/index',      '', '', 1, 0, 'C', '0', '0', 'monitor:cache:list',      'redis',         'admin', sysdate(), '', null, '缓存监控菜单');
+insert into sys_menu values('114',  '缓存列表', '3',   '6', 'cacheList',  'monitor/cache/list',       '', '', 1, 0, 'C', '0', '0', 'monitor:cache:list',      'redis-list',    'admin', sysdate(), '', null, '缓存列表菜单');
+-- 系统工具子菜单（parent_id=4）
+insert into sys_menu values('115',  '表单构建', '4',   '1', 'build',      'tool/build/index',         '', '', 1, 0, 'C', '0', '0', 'tool:build:list',         'build',         'admin', sysdate(), '', null, '表单构建菜单');
+insert into sys_menu values('116',  '代码生成', '4',   '2', 'gen',        'tool/gen/index',           '', '', 1, 0, 'C', '0', '0', 'tool:gen:list',           'code',          'admin', sysdate(), '', null, '代码生成菜单');
+insert into sys_menu values('117',  '系统接口', '4',   '3', 'swagger',    'tool/swagger/index',       '', '', 1, 0, 'C', '0', '0', 'tool:swagger:list',       'swagger',       'admin', sysdate(), '', null, '系统接口菜单');
 -- 三级菜单
 insert into sys_menu values('500',  '操作日志', '108', '1', 'operlog',    'monitor/operlog/index',    '', '', 1, 0, 'C', '0', '0', 'monitor:operlog:list',    'form',          'admin', sysdate(), '', null, '操作日志菜单');
 insert into sys_menu values('501',  '登录日志', '108', '2', 'logininfor', 'monitor/logininfor/index', '', '', 1, 0, 'C', '0', '0', 'monitor:logininfor:list', 'logininfor',    'admin', sysdate(), '', null, '登录日志菜单');
@@ -264,6 +270,13 @@ insert into sys_menu values('1057', '生成删除', '116', '3', '#', '', '', '',
 insert into sys_menu values('1058', '导入代码', '116', '4', '#', '', '', '', 1, 0, 'F', '0', '0', 'tool:gen:import',            '#', 'admin', sysdate(), '', null, '');
 insert into sys_menu values('1059', '预览代码', '116', '5', '#', '', '', '', 1, 0, 'F', '0', '0', 'tool:gen:preview',           '#', 'admin', sysdate(), '', null, '');
 insert into sys_menu values('1060', '生成代码', '116', '6', '#', '', '', '', 1, 0, 'F', '0', '0', 'tool:gen:code',              '#', 'admin', sysdate(), '', null, '');
+-- 日更助手按钮
+insert into sys_menu values('1061', '文章查询', '10',  '1', '#', '', '', '', 1, 0, 'F', '0', '0', 'business:daily:query',       '#', 'admin', sysdate(), '', null, '');
+insert into sys_menu values('1062', '文章新增', '10',  '2', '#', '', '', '', 1, 0, 'F', '0', '0', 'business:daily:add',         '#', 'admin', sysdate(), '', null, '');
+insert into sys_menu values('1063', '文章删除', '10',  '3', '#', '', '', '', 1, 0, 'F', '0', '0', 'business:daily:remove',      '#', 'admin', sysdate(), '', null, '');
+insert into sys_menu values('1064', '智能体配置', '10',  '4', '#', '', '', '', 1, 0, 'F', '0', '0', 'business:daily:config',      '#', 'admin', sysdate(), '', null, '');
+insert into sys_menu values('1065', '智能排版', '10',  '5', '#', '', '', '', 1, 0, 'F', '0', '0', 'business:daily:layout',      '#', 'admin', sysdate(), '', null, '');
+insert into sys_menu values('1066', '发布公众号', '10',  '6', '#', '', '', '', 1, 0, 'F', '0', '0', 'business:daily:publish',     '#', 'admin', sysdate(), '', null, '');
 
 
 -- ----------------------------
@@ -280,6 +293,11 @@ create table sys_user_role (
 -- 初始化-用户和角色关联表数据
 -- ----------------------------
 insert into sys_user_role values ('1', '1');
+
+-- ----------------------------
+-- 注意：所有用户默认拥有日更助手访问权限
+-- 如需限制特定用户访问，请在角色管理中调整
+-- ----------------------------
 
 
 -- ----------------------------
@@ -300,6 +318,8 @@ insert into sys_role_menu values ('2', '1');
 insert into sys_role_menu values ('2', '2');
 insert into sys_role_menu values ('2', '3');
 insert into sys_role_menu values ('2', '4');
+insert into sys_role_menu values ('2', '5');
+insert into sys_role_menu values ('2', '10');
 insert into sys_role_menu values ('2', '100');
 insert into sys_role_menu values ('2', '101');
 insert into sys_role_menu values ('2', '102');
@@ -381,11 +401,19 @@ insert into sys_role_menu values ('2', '1057');
 insert into sys_role_menu values ('2', '1058');
 insert into sys_role_menu values ('2', '1059');
 insert into sys_role_menu values ('2', '1060');
+insert into sys_role_menu values ('2', '1061');
+insert into sys_role_menu values ('2', '1062');
+insert into sys_role_menu values ('2', '1063');
+insert into sys_role_menu values ('2', '1064');
+insert into sys_role_menu values ('2', '1065');
+insert into sys_role_menu values ('2', '1066');
 -- 只读权限角色（ID=3）只有查询权限
 insert into sys_role_menu values ('3', '1');
 insert into sys_role_menu values ('3', '2');
 insert into sys_role_menu values ('3', '3');
 insert into sys_role_menu values ('3', '4');
+insert into sys_role_menu values ('3', '5');
+insert into sys_role_menu values ('3', '10');
 insert into sys_role_menu values ('3', '100');
 insert into sys_role_menu values ('3', '101');
 insert into sys_role_menu values ('3', '102');
@@ -419,6 +447,7 @@ insert into sys_role_menu values ('3', '1042');
 insert into sys_role_menu values ('3', '1046');
 insert into sys_role_menu values ('3', '1049');
 insert into sys_role_menu values ('3', '1055');
+insert into sys_role_menu values ('3', '1061');
 
 -- ----------------------------
 -- 8、角色和部门关联表  角色1-N部门
@@ -747,3 +776,64 @@ create table gen_table_column (
   update_time       datetime                                   comment '更新时间',
   primary key (column_id)
 ) engine=innodb auto_increment=1 comment = '代码生成业务表字段';
+
+
+-- =============================================
+-- 业务模块：日更助手
+-- =============================================
+
+-- ----------------------------
+-- 20、日更助手文章表
+-- ----------------------------
+DROP TABLE IF EXISTS `daily_article`;
+CREATE TABLE `daily_article` (
+  `id`  bigint(20) NOT NULL AUTO_INCREMENT COMMENT '文章ID',
+  `user_id`  bigint(20) NOT NULL COMMENT '用户ID',
+  `article_title`  varchar(500) NOT NULL COMMENT '原始文章标题',
+  `optimized_content`  longtext COMMENT '优化后的文章内容（来自腾讯元器智能体）',
+  `model1_content`  longtext COMMENT '大模型1未优化的文章内容',
+  `model2_content`  longtext COMMENT '大模型2未优化的文章内容',
+  `model3_content`  longtext COMMENT '大模型3未优化的文章内容',
+  `model1_name`  varchar(100) DEFAULT NULL COMMENT '大模型1名称',
+  `model2_name`  varchar(100) DEFAULT NULL COMMENT '大模型2名称',
+  `model3_name`  varchar(100) DEFAULT NULL COMMENT '大模型3名称',
+  `agent_task_id`  varchar(200) DEFAULT NULL COMMENT '腾讯元器智能体任务ID',
+  `process_status`  tinyint(1) NOT NULL DEFAULT 0 COMMENT '处理状态：0-处理中，1-已完成，2-失败',
+  `error_message`  varchar(1000) DEFAULT NULL COMMENT '错误信息',
+  `selected_models`  varchar(50) DEFAULT '1,2,3' COMMENT '已选择的模型，格式如"1,2,3"',
+  `publish_count`  int(11) DEFAULT 0 COMMENT '发布次数',
+  `create_by`  varchar(64) DEFAULT NULL COMMENT '创建者',
+  `create_time`  datetime DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_by`  varchar(64) DEFAULT NULL COMMENT '更新者',
+  `update_time`  datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  `remark`  varchar(500) DEFAULT NULL COMMENT '备注',
+  PRIMARY KEY (`id`) USING BTREE,
+  KEY `idx_user_id` (`user_id`) USING BTREE COMMENT '用户ID索引',
+  KEY `idx_create_time` (`create_time`) USING BTREE COMMENT '创建时间索引',
+  KEY `idx_process_status` (`process_status`) USING BTREE COMMENT '处理状态索引',
+  KEY `idx_agent_task_id` (`agent_task_id`) USING BTREE COMMENT '智能体任务ID索引'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='日更助手文章表';
+
+
+-- ----------------------------
+-- 21、腾讯元器智能体配置表
+-- ----------------------------
+DROP TABLE IF EXISTS `yuanqi_agent_config`;
+CREATE TABLE `yuanqi_agent_config` (
+  `id`  bigint(20) NOT NULL AUTO_INCREMENT COMMENT '配置ID',
+  `user_id`  bigint(20) NOT NULL COMMENT '用户ID',
+  `agent_id`  varchar(200) NOT NULL COMMENT '腾讯元器智能体ID',
+  `agent_name`  varchar(100) DEFAULT NULL COMMENT '智能体名称',
+  `api_key`  varchar(500) DEFAULT NULL COMMENT 'API密钥（加密存储）',
+  `api_endpoint`  varchar(500) DEFAULT NULL COMMENT 'API端点URL',
+  `is_active`  tinyint(1) NOT NULL DEFAULT 1 COMMENT '是否启用：0-禁用，1-启用',
+  `config_json`  json DEFAULT NULL COMMENT '其他配置（JSON格式）',
+  `create_by`  varchar(64) DEFAULT NULL COMMENT '创建者',
+  `create_time`  datetime DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_by`  varchar(64) DEFAULT NULL COMMENT '更新者',
+  `update_time`  datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  `remark`  varchar(500) DEFAULT NULL COMMENT '备注',
+  PRIMARY KEY (`id`) USING BTREE,
+  KEY `idx_user_id` (`user_id`) USING BTREE COMMENT '用户ID索引',
+  KEY `idx_agent_id` (`agent_id`) USING BTREE COMMENT '智能体ID索引'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='腾讯元器智能体配置表';

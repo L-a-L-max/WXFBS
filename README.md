@@ -55,35 +55,29 @@
 ## 快速开始
 
 ### 环境要求
-- JDK 17
-- MySQL 8.0
-- Redis 6.0
-- Node.js 18
+- JDK 17+
+- MySQL 8.0+
+- Redis 6.0+（可选）
+- Node.js 18+
 
-### 安装部署
+### 快速部署
 
-1. **克隆项目**
+详细部署步骤请查看 [部署文档](./部署文档.md)
+
 ```bash
-git clone https://gitee.com/U3W-AI/RuoYi-Vue.git
-cd RuoYi-Vue
-```
+# 1. 克隆项目
+git clone https://gitee.com/U3W-AI/WFBS.git
+cd WFBS
 
-2. **数据库初始化**
-```sql
--- 直接导入SQL文件（已包含数据库创建语句）
-source sql/wxfbsir.sql
-source sql/quartz.sql
-```
+# 2. 初始化数据库
+mysql -u root -p wxfbsir < sql/wxfbsir.sql
 
-3. **后端启动**
-```bash
+# 3. 启动后端
 cd WxFbsir-admin
 mvn clean install
 mvn spring-boot:run
-```
 
-4. **前端启动**
-```bash
+# 4. 启动前端
 cd WxFbsir-ui
 npm install
 npm run dev
@@ -93,10 +87,35 @@ npm run dev
 - 用户名：`admin`
 - 密码：`admin123`
 
+## 📚 文档中心
+
+- **[部署文档](./部署文档.md)** - 完整的部署指南（包含元器工作流配置）
+- **[项目结构说明](./项目结构说明.md)** - 项目目录结构和模块说明
+- **[文档中心](./docs/README.md)** - 更多技术文档和开发规范
+
+### 开发规范
+- **[代码规范](./docs/代码规范.md)** - Java、Vue、数据库代码规范
+- **[代码合并PR规范](./docs/代码合并PR规范.md)** - 代码提交和PR流程规范
+- **[文档规范总结](./docs/文档规范总结.md)** - 文档编写规范
+
+### 帮助文档
+- **[常见问题 (FAQ)](./docs/FAQ.md)** - 常见问题解答
+
+## 贡献指南
+
+欢迎贡献代码和文档！请遵循以下步骤：
+
+1. Fork 本仓库到你的账号
+2. 创建功能分支：`git checkout -b feature/your-feature`
+3. 提交代码：`git commit -m "feat: 添加新功能 (2025-12-05)"`
+4. 推送到分支：`git push origin feature/your-feature`
+5. 提交 Pull Request
+
+详细规范请查看 [代码合并PR规范](./docs/代码合并PR规范.md)
+
 ## 技术支持
 
-- **官网**: [https://wx.fbsir.com](https://wx.fbsir.com)
-- **源码**: [https://gitee.com/U3W-AI/RuoYi-Vue](https://gitee.com/U3W-AI/RuoYi-Vue)
+- **源码**: [https://gitee.com/U3W-AI/WFBS](https://gitee.com/U3W-AI/WFBS)
 
 ## 许可证
 

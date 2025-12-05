@@ -58,6 +58,12 @@
             <artifactId>WxFbsir-common</artifactId>
         </dependency>
 
+        <!-- 业务模块-->
+        <dependency>
+            <groupId>com.wx.fbsir</groupId>
+            <artifactId>WxFbsir-business</artifactId>
+        </dependency>
+
     </dependencies>
 
     <build>

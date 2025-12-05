@@ -51,7 +51,6 @@ nbdist/
 node_modules/
 dist/
 *.local
-.vite/
 .cache/
 .temp/
 .tmp/
@@ -139,8 +138,6 @@ android/*.hprof
 
 # Flutter
 .dart_tool/
-.flutter-plugins
-.flutter-plugins-dependencies
 .packages
 .pub-cache/
 .pub/
@@ -151,7 +148,6 @@ ios/Flutter/Flutter.podspec
 
 # Cordova
 platforms/
-plugins/
 www/
 
 ######################################################################
@@ -222,7 +218,6 @@ test-results/
 # Documentation
 .docusaurus/
 .vuepress/dist/
-.vitepress/dist/
 
 ######################################################################
 # Misc

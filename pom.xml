@@ -185,6 +185,13 @@
                 <version>${wxfbsir.version}</version>
             </dependency>
 
+            <!-- 业务模块-->
+            <dependency>
+                <groupId>com.wx.fbsir</groupId>
+                <artifactId>WxFbsir-business</artifactId>
+                <version>${wxfbsir.version}</version>
+            </dependency>
+
         </dependencies>
     </dependencyManagement>
 
@@ -195,6 +202,7 @@
         <module>WxFbsir-quartz</module>
         <module>WxFbsir-generator</module>
         <module>WxFbsir-common</module>
+        <module>WxFbsir-business</module>
     </modules>
     <packaging>pom</packaging>
 
