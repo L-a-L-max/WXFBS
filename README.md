@@ -1,13 +1,13 @@
-<h1 align="center" style="margin: 30px 0 30px; font-weight: bold;">FBSIR 企业级管理系统 v1.0.0</h1>
+<h1 align="center" style="margin: 30px 0 30px; font-weight: bold;">微信福帮手 企业级后台管理 v1.0.0</h1>
 <h4 align="center">基于若依框架二次开发的企业级后台管理系统</h4>
 <p align="center">
-	<a href="https://gitee.com/U3W-AI/RuoYi-Vue"><img src="https://img.shields.io/badge/FBSIR-v1.0.0-brightgreen.svg"></a>
-	<a href="https://fbsir.com"><img src="https://img.shields.io/badge/website-fbsir.com-blue.svg"></a>
+	<a href="https://gitee.com/U3W-AI/RuoYi-Vue"><img src="https://img.shields.io/badge/WxFbsir-v1.0.0-brightgreen.svg"></a>
+	<a href="https://wx.fbsir.com"><img src="https://img.shields.io/badge/website-wx.fbsir.com-blue.svg"></a>
 </p>
 
 ## 项目简介
 
-FBSIR是基于若依框架进行二次开发的企业级后台管理系统，针对企业实际需求进行了全面优化和定制。
+微信福帮手(WxFbsir)是基于若依框架进行二次开发的企业级后台管理系统，针对企业实际需求进行了全面优化和定制。
 
 ### 技术栈
 * **前端**: Vue 3.5.16 + Element Plus 2.10.7 + Vite 6.3.5
@@ -71,20 +71,20 @@ cd RuoYi-Vue
 2. **数据库初始化**
 ```sql
 -- 直接导入SQL文件（已包含数据库创建语句）
-source sql/fbsir.sql
+source sql/wxfbsir.sql
 source sql/quartz.sql
 ```
 
 3. **后端启动**
 ```bash
-cd fbsir-admin
+cd WxFbsir-admin
 mvn clean install
 mvn spring-boot:run
 ```
 
 4. **前端启动**
 ```bash
-cd fbsir-ui
+cd WxFbsir-ui
 npm install
 npm run dev
 ```
@@ -95,7 +95,7 @@ npm run dev
 
 ## 技术支持
 
-- **官网**: [https://fbsir.com](https://fbsir.com)
+- **官网**: [https://wx.fbsir.com](https://wx.fbsir.com)
 - **源码**: [https://gitee.com/U3W-AI/RuoYi-Vue](https://gitee.com/U3W-AI/RuoYi-Vue)
 
 ## 许可证
