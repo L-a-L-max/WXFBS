@@ -106,10 +106,20 @@ public class ScreenshotUtil {
             
             return url;
         } catch (com.microsoft.playwright.impl.TargetClosedError e) {
-            System.out.println("⚠️ [截图工具] 目标页面已关闭: " + imageName);
+            // 页面已关闭，静默返回
             return "";
         } catch (com.microsoft.playwright.PlaywrightException e) {
-            System.err.println("❌ [截图工具] Playwright异常: " + e.getMessage());
+            // 🔥 静默处理Playwright异常（worker不存在、页面关闭等）
+            String errorMsg = e.getMessage();
+            if (errorMsg != null && (errorMsg.contains("Object doesn't exist") || 
+                                    errorMsg.contains("Target closed") ||
+                                    errorMsg.contains("Worker") ||
+                                    errorMsg.contains("crashed"))) {
+                // 这些是页面状态异常，静默返回
+                return "";
+            }
+            // 其他Playwright异常记录警告
+            System.err.println("⚠️ [截图工具] Playwright异常: " + errorMsg);
             return "";
         } catch (Exception e) {
             System.err.println("❌ [截图工具] 截图失败: " + e.getMessage());

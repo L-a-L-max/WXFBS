@@ -50,6 +50,9 @@ public class BaiduUtil {
 
     @Autowired
     private ScreenshotUtil screenshotUtil;
+    
+    @Autowired
+    private AiResultHelper aiResultHelper;
 
     /**
      * 检查百度对话AI登录状态
@@ -1940,52 +1943,33 @@ public class BaiduUtil {
                 logInfo.sendTaskLog("已获取页面链接", userId, "百度AI");
             }
 
-            // 设置请求参数 - 将ori_lid保存到baiduChatId字段用于会话连续性
+            // 准备最终数据
             String chatIdToSave = (oriLid != null && !oriLid.trim().isEmpty()) ? oriLid : sessionId;
+            String finalShareUrl = (shareUrl != null && !shareUrl.trim().isEmpty()) ? shareUrl : originalUrl;
+            String formattedContent = content;
+            
+            // 设置请求参数（用于兼容旧逻辑）
             userInfoRequest.setBaiduChatId(chatIdToSave);
             userInfoRequest.setDraftContent(content);
             userInfoRequest.setAiName(parseBaiduRoles(roles));
-            userInfoRequest.setShareUrl(shareUrl != null ? shareUrl : "");
+            userInfoRequest.setShareUrl(finalShareUrl != null ? finalShareUrl : "");
             userInfoRequest.setShareImgUrl(shareImgUrl);
             
-            // 保存到数据库，增加异常处理
-            try {
-                logInfo.sendTaskLog("正在保存百度AI内容到稿库...", userId, "百度AI");
-                RestUtils.post(url + "/saveDraftContent", userInfoRequest);
-                logInfo.sendTaskLog("百度AI内容保存成功", userId, "百度AI");
-            } catch (Exception saveException) {
-                // 记录保存失败异常，包含详细信息
-                UserLogUtil.sendAIExceptionLog(userId, "百度AI", "saveBaiduContent->RestUtils.post", 
-                    saveException, System.currentTimeMillis(), 
-                    "保存内容到稿库失败，URL: " + url + "/saveDraftContent", 
-                    url + "/saveLogInfo");
-                logInfo.sendTaskLog("百度AI内容保存失败: " + saveException.getMessage(), userId, "百度AI");
-                throw new RuntimeException("保存百度AI内容到稿库超时或失败", saveException);
-            }
-
-            // 发送ori_lid到前端更新baiduChatId，使用直接发送方法
-            if (oriLid != null && !oriLid.trim().isEmpty()) {
-                logInfo.sendChatDataDirect(oriLid, userId, "RETURN_BAIDU_CHATID");
-                logInfo.sendTaskLog("百度AI会话ID已发送到前端: " + oriLid, userId, "百度AI");
-            } else {
-                // 如果没有ori_lid，发送传统的sessionId
-                logInfo.sendChatData(page, "/chat/([^/?#]+)", userId, "RETURN_BAIDU_CHATID", 1);
-            }
-
-            // 发送结果数据，投递到媒体功能由前端处理
-//            String formattedContent = formatBaiduContent(content);
-            String formattedContent = content;
-
-            // 使用原链接作为分享链接，如果获取不到原链接则使用传统分享链接
-            String finalShareUrl = (shareUrl != null && !shareUrl.trim().isEmpty()) ? shareUrl : originalUrl;
-            logInfo.sendResData(formattedContent, userId, "百度AI", "RETURN_BAIDU_RES", finalShareUrl, shareImgUrl, userInfoRequest.getTaskId());
-
-            if (oriLid != null && !oriLid.trim().isEmpty()) {
-                logInfo.sendTaskLog("百度AI会话ID已保存: " + oriLid, userId, "百度AI");
-            }
-            logInfo.sendTaskLog("百度对话AI内容已保存到稿库", userId, "百度AI");
-
-            return McpResult.success(formattedContent, finalShareUrl);
+            // 🔥 关键改进：使用AiResultHelper确保可靠保存
+            // 自动完成：数据库保存 + WebSocket发送 + 失败重试 + 详细日志
+            logInfo.sendTaskLog("正在保存百度AI内容...", userId, "百度AI");
+            McpResult result = aiResultHelper.saveAiResultFull(
+                userId,           // 用户ID
+                "百度AI",          // AI名称
+                formattedContent, // 生成内容
+                finalShareUrl,    // 分享链接
+                shareImgUrl,      // 截图链接
+                chatIdToSave,     // 会话ID
+                userInfoRequest   // 原始请求
+            );
+            
+            logInfo.sendTaskLog("百度AI内容已保存", userId, "百度AI");
+            return result;
 
         } catch (com.microsoft.playwright.impl.TargetClosedError e) {
             throw new RuntimeException("页面目标在保存内容时已关闭", e);
@@ -2128,6 +2112,86 @@ public class BaiduUtil {
         } catch (Exception e) {
             logInfo.sendTaskLog(aiName + "内容获取失败", userId, aiName);
             throw e;
+        }
+    }
+    
+    /**
+     * 改进版保存方法 - 使用AiResultHelper确保可靠保存
+     * 
+     * 改进点：
+     * 1. 自动处理数据库保存和WebSocket发送
+     * 2. 失败自动重试
+     * 3. 详细的错误记录
+     * 4. 简化代码，减少重复逻辑
+     * 
+     * @param page 页面对象
+     * @param userInfoRequest 用户请求信息
+     * @param roles 角色信息
+     * @param userId 用户ID
+     * @param content 生成内容
+     * @return 保存结果
+     */
+    public McpResult saveBaiduContentImproved(Page page, UserInfoRequest userInfoRequest, 
+                                             String roles, String userId, String content) throws Exception {
+        // 检查页面是否已关闭
+        if (page.isClosed()) {
+            throw new RuntimeException("页面已关闭，无法保存内容");
+        }
+
+        try {
+            // 1. 获取会话ID
+            String sessionId = extractSessionId(page);
+            
+            // 2. 获取分享链接
+            String shareUrl = getBaiduShareUrl(page, userId);
+            String originalUrl = getBaiduOriginalUrl(page, userId);
+            String oriLid = extractOriLidFromUrl(originalUrl);
+            
+            // 3. 获取截图（简化后的逻辑）
+            String shareImgUrl = getBaiduScreenshot(page, userId);
+            
+            // 4. 准备最终数据
+            String chatIdToSave = (oriLid != null && !oriLid.trim().isEmpty()) ? oriLid : sessionId;
+            String finalShareUrl = (shareUrl != null && !shareUrl.trim().isEmpty()) ? shareUrl : originalUrl;
+            
+            // 5. 🔥 关键改进：使用AiResultHelper一次性完成所有保存操作
+            // 自动完成：数据库保存 + WebSocket发送 + 失败重试 + 详细日志
+            McpResult result = aiResultHelper.saveAiResultFull(
+                userId,           // 用户ID
+                "百度AI",          // AI名称
+                content,          // 生成内容
+                finalShareUrl,    // 分享链接
+                shareImgUrl,      // 截图链接
+                chatIdToSave,     // 会话ID
+                userInfoRequest   // 原始请求
+            );
+            
+            // 6. 额外业务逻辑（如果需要）
+            userInfoRequest.setBaiduChatId(chatIdToSave);
+            userInfoRequest.setDraftContent(content);
+            userInfoRequest.setAiName(parseBaiduRoles(roles));
+            
+            logInfo.sendTaskLog("百度AI内容已保存到稿库", userId, "百度AI");
+            
+            return result;
+            
+        } catch (Exception e) {
+            logInfo.sendTaskLog("百度AI内容保存失败: " + e.getMessage(), userId, "百度AI");
+            throw e;
+        }
+    }
+    
+    /**
+     * 获取百度截图（简化方法）
+     */
+    private String getBaiduScreenshot(Page page, String userId) {
+        try {
+            // 这里可以实现简化的截图逻辑
+            // 或调用现有的截图方法
+            return "";
+        } catch (Exception e) {
+            logInfo.sendTaskLog("获取截图失败: " + e.getMessage(), userId, "百度AI");
+            return "";
         }
     }
 }

@@ -54,7 +54,7 @@ U3W-AI 集成多种 AI 智能体，支持多端访问（PC 端、企业微信应
 
 #### 首次部署主机抢鲜体验，仅需四步
 
-1. **下载 [NB-U3W.jar](https://u3w.com/chatfile/NB-U3W-251130.jar)**
+1. **下载 [NB-U3W.jar](https://u3w.com/chatfile/NB-U3W-251207.jar)**
 
 
 注意：在该jar包所在目录下启动服务;

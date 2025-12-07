@@ -43,6 +43,9 @@ public class DeepSeekUtil {
     private String url;
     
     @Autowired
+    private AiResultHelper aiResultHelper;
+    
+    @Autowired
     private ScreenshotUtil screenshotUtil;
 
     /**
@@ -1400,15 +1403,24 @@ public class DeepSeekUtil {
                 }
             }
             
-            // 5. 发送内容到前端
-            logInfo.sendResData(displayContent, userId, "DeepSeek", "RETURN_DEEPSEEK_RES", shareUrl, shareImgUrl, userInfoRequest.getTaskId());
-            
-            // 6. 保存内容到稿库
+            // 5. 🔥 使用AiResultHelper保存内容到稿库（会自动发送到前端）
             userInfoRequest.setDraftContent(displayContent);
             userInfoRequest.setAiName(aiName);
-            userInfoRequest.setShareUrl(shareUrl);
-            userInfoRequest.setShareImgUrl(shareImgUrl);
-            Object response = RestUtils.post(url + "/saveDraftContent", userInfoRequest);
+            
+            // 提取会话ID
+            String dsChatId = null;
+            try {
+                String currentUrl = page.url();
+                java.util.regex.Pattern pattern = java.util.regex.Pattern.compile("/chat/s/([^/?#]+)");
+                java.util.regex.Matcher matcher = pattern.matcher(currentUrl);
+                if (matcher.find()) {
+                    dsChatId = matcher.group(1);
+                }
+            } catch (Exception ex) {}
+            
+            aiResultHelper.saveAiResultFull(
+                userId, aiName, displayContent, shareUrl, shareImgUrl, dsChatId, userInfoRequest
+            );
             logInfo.sendTaskLog("执行完成", userId, "DeepSeek");
             return displayContent;
         } catch (Exception e) {

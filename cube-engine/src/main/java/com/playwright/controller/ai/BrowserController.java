@@ -1115,127 +1115,18 @@ public class BrowserController {
 
     }
 
-    // 提取账号选择处理为独立方法，增强异常处理
+    // 静默处理元宝账号类型选择（无日志输出）
     private void handleAccountTypeSelection(Page page) {
         try {
-            System.out.println("🔍 [元宝登录] 开始检测账号类型选择弹窗");
+            // 🔥 静默检测并点击个人账号
+            Locator personalAccountBtn = page.locator(".ybc-login-account-list_item.ybc-login-account-list_personal");
             
-            // 🔥 修复：增加多种弹窗检测方式，适应不同的页面结构
-            // 方案1：检测包含"选择账号类型"文本的弹窗
-            Locator accountTypeModal1 = page.locator(".choose-content:has-text('选择账号类型')");
-            // 方案2：检测包含"个人账号"和"团队账号"的弹窗容器
-            Locator accountTypeModal2 = page.locator("div:has-text('个人账号'):has-text('团队账号')");
-            // 方案3：检测包含账号选择按钮的容器
-            Locator accountTypeModal3 = page.locator(".ybc-login-account-list_personal").locator("xpath=ancestor::div[contains(@class,'modal') or contains(@class,'dialog') or contains(@class,'choose')]");
-            
-            boolean hasModal = false;
-            Locator activeModal = null;
-            
-            // 检测哪种弹窗存在
-            try {
-                if (accountTypeModal1.count() > 0 && accountTypeModal1.isVisible()) {
-                    hasModal = true;
-                    activeModal = accountTypeModal1;
-                    System.out.println("✅ [元宝登录] 检测到账号类型选择弹窗 (方案1)");
-                } else if (accountTypeModal2.count() > 0 && accountTypeModal2.isVisible()) {
-                    hasModal = true;
-                    activeModal = accountTypeModal2;
-                    System.out.println("✅ [元宝登录] 检测到账号类型选择弹窗 (方案2)");
-                } else if (accountTypeModal3.count() > 0 && accountTypeModal3.isVisible()) {
-                    hasModal = true;
-                    activeModal = accountTypeModal3;
-                    System.out.println("✅ [元宝登录] 检测到账号类型选择弹窗 (方案3)");
-                }
-            } catch (Exception e) {
-                System.out.println("⚠️ [元宝登录] 弹窗检测异常: " + e.getMessage());
+            if (personalAccountBtn.count() > 0) {
+                personalAccountBtn.first().click(new Locator.ClickOptions().setTimeout(2000));
+                Thread.sleep(500);
             }
-
-            if (!hasModal) {
-                System.out.println("ℹ️ [元宝登录] 未检测到账号类型选择弹窗，可能已选择或不需要选择");
-                return;
-            }
-
-            System.out.println("🎯 [元宝登录] 开始选择个人账号");
-            
-            // 🔥 修复：增加多种个人账号按钮定位方式
-            boolean buttonClicked = false;
-            
-            // 方案1：通过class定位个人账号按钮
-            try {
-                Locator personalAccountBtn = page.locator(".ybc-login-account-list_personal");
-                if (personalAccountBtn.count() > 0 && personalAccountBtn.isVisible() && !isElementDisabled(personalAccountBtn)) {
-                    System.out.println("✅ [元宝登录] 使用class选择器点击个人账号按钮");
-                    personalAccountBtn.click();
-                    buttonClicked = true;
-                }
-            } catch (Exception e) {
-                System.out.println("⚠️ [元宝登录] class选择器失败: " + e.getMessage());
-            }
-            
-            // 方案2：通过文本定位个人账号按钮
-            if (!buttonClicked) {
-                try {
-                    Locator textBasedBtn = page.locator("//span[contains(text(),'个人账号')]");
-                    if (textBasedBtn.count() > 0 && textBasedBtn.isVisible()) {
-                        System.out.println("✅ [元宝登录] 使用文本选择器点击个人账号按钮");
-                        textBasedBtn.click();
-                        buttonClicked = true;
-                    }
-                } catch (Exception e) {
-                    System.out.println("⚠️ [元宝登录] 文本选择器失败: " + e.getMessage());
-                }
-            }
-            
-            // 方案3：通过更宽泛的文本匹配
-            if (!buttonClicked) {
-                try {
-                    Locator personalBtn = page.locator("*:has-text('个人账号'), *:has-text('个人'), button:has-text('个人')");
-                    if (personalBtn.count() > 0) {
-                        System.out.println("✅ [元宝登录] 使用宽泛选择器点击个人账号按钮");
-                        personalBtn.first().click();
-                        buttonClicked = true;
-                    }
-                } catch (Exception e) {
-                    System.out.println("⚠️ [元宝登录] 宽泛选择器失败: " + e.getMessage());
-                }
-            }
-            
-            // 方案4：通过按钮索引选择（通常个人账号是第一个）
-            if (!buttonClicked) {
-                try {
-                    Locator allButtons = page.locator("button, .btn, [role='button']").locator("visible=true");
-                    if (allButtons.count() >= 2) {
-                        System.out.println("✅ [元宝登录] 使用索引选择器点击第一个按钮（通常是个人账号）");
-                        allButtons.first().click();
-                        buttonClicked = true;
-                    }
-                } catch (Exception e) {
-                    System.out.println("⚠️ [元宝登录] 索引选择器失败: " + e.getMessage());
-                }
-            }
-            
-            if (buttonClicked) {
-                System.out.println("✅ [元宝登录] 个人账号选择成功，等待页面响应");
-                Thread.sleep(2000); // 等待页面响应
-                
-                // 🔥 验证弹窗是否已关闭
-                try {
-                    boolean modalStillExists = page.locator(".choose-content:has-text('选择账号类型'), div:has-text('个人账号'):has-text('团队账号')").count() > 0;
-                    if (!modalStillExists) {
-                        System.out.println("✅ [元宝登录] 账号类型选择弹窗已关闭");
-                    } else {
-                        System.out.println("⚠️ [元宝登录] 弹窗仍然存在，可能需要额外操作");
-                    }
-                } catch (Exception e) {
-                    System.out.println("⚠️ [元宝登录] 弹窗关闭验证失败: " + e.getMessage());
-                }
-            } else {
-                System.out.println("❌ [元宝登录] 未能找到可点击的个人账号按钮");
-            }
-            
         } catch (Exception e) {
-            // 不抛出异常，仅记录日志
-            System.err.println("❌ [元宝登录] 账号类型选择弹窗处理失败: " + e.getMessage());
+            // 静默失败
         }
     }
 

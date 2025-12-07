@@ -46,6 +46,9 @@ public class TencentUtil {
 
     @Value("${cube.url}")
     private String url;
+    
+    @Autowired
+    private AiResultHelper aiResultHelper;
 
     @Value("${cube.uploadurl}")
     private String uploadUrl;
@@ -266,9 +269,21 @@ public class TencentUtil {
             Thread.sleep(3000);
             userInfoRequest.setDraftContent(copiedText);
             userInfoRequest.setAiName("Agent-" + aiName);
-            userInfoRequest.setShareUrl(shareUrl);
-            userInfoRequest.setShareImgUrl(sharImgUrl);
-            RestUtils.post(url + "/saveDraftContent", userInfoRequest);
+            
+            // 🔥 使用AiResultHelper保存（腾讯Agent）
+            String chatId = null;
+            try {
+                String pageUrl = page.url();
+                Pattern pattern = Pattern.compile("/chat/([^/]+)/([^/]+)");
+                Matcher matcher = pattern.matcher(pageUrl);
+                if (matcher.find()) {
+                    chatId = matcher.group(2);
+                }
+            } catch (Exception e) {}
+            
+            aiResultHelper.saveAiResultFull(
+                userId, "Agent-" + aiName, copiedText, shareUrl, sharImgUrl, chatId, userInfoRequest
+            );
             return copiedText;
         } catch (TimeoutError e) {
             // 记录网络超时异常
@@ -557,44 +572,49 @@ public class TencentUtil {
 
             try {
                 Thread.sleep(3000);
+                // 确定AI名称和会话ID
+                String chatId = null;
+                try {
+                    String pageUrl = page.url();
+                    Pattern pattern = Pattern.compile("/chat/([^/]+)/([^/]+)");
+                    Matcher matcher = pattern.matcher(pageUrl);
+                    if (matcher.find()) {
+                        chatId = matcher.group(2);
+                    }
+                } catch (Exception e) {
+                    logInfo.sendTaskLog("提取会话ID失败: " + e.getMessage(), userId, agentName);
+                }
+                
                 if (aiName.contains("znpb")) {
-                    try {
-                        logInfo.sendTaskLog("执行完成", userId, "智能排版");
-                        logInfo.sendResData(copiedText, userId, "智能排版", "RETURN_ZNPB_RES", "", "", userInfoRequest.getTaskId());
-                        // 等待所有线程执行完毕
-                        userInfoRequest.setDraftContent(copiedText);
-                        userInfoRequest.setAiName("智能排版");
-                        userInfoRequest.setShareUrl(shareUrl);
-                        userInfoRequest.setShareImgUrl(sharImgUrl);
-                        RestUtils.post(url + "/saveDraftContent", userInfoRequest);
-                        return McpResult.success(copiedText, shareUrl);
-                    } catch (Exception e) {
-                        return McpResult.fail(copiedText, shareUrl);
-                    }
+                    logInfo.sendTaskLog("执行完成", userId, "智能排版");
+                    userInfoRequest.setDraftContent(copiedText);
+                    userInfoRequest.setAiName("智能排版");
+                    
+                    // 🔥 使用AiResultHelper保存
+                    McpResult result = aiResultHelper.saveAiResultFull(
+                        userId, "智能排版", copiedText, shareUrl, sharImgUrl, chatId, userInfoRequest
+                    );
+                    return result;
                 } else if (aiName.contains("hunyuan")) {
-                    // 🔥 修复腾讯元宝T1结果处理
-                    logInfo.sendTaskLog("腾讯元宝T1执行完成，正在发送结果...", userId, "腾讯元宝T1");
-                    logInfo.sendChatData(page, "/chat/([^/]+)/([^/]+)", userId, "RETURN_YBT1_CHATID", 2);
-
-                    // 确保有内容才发送
-                    if (copiedText != null && !copiedText.trim().isEmpty()) {
-                        logInfo.sendResData(copiedText, userId, "腾讯元宝T1", "RETURN_YBT1_RES", shareUrl, sharImgUrl, userInfoRequest.getTaskId());
-                        logInfo.sendTaskLog("腾讯元宝T1结果已发送到前端", userId, "腾讯元宝T1");
-                    } else {
-                        logInfo.sendTaskLog("腾讯元宝T1内容为空，跳过发送", userId, "腾讯元宝T1");
-                    }
+                    logInfo.sendTaskLog("腾讯元宝T1执行完成", userId, "腾讯元宝T1");
+                    userInfoRequest.setDraftContent(copiedText);
+                    userInfoRequest.setAiName("腾讯元宝T1");
+                    
+                    // 🔥 使用AiResultHelper保存
+                    McpResult result = aiResultHelper.saveAiResultFull(
+                        userId, "腾讯元宝T1", copiedText, shareUrl, sharImgUrl, chatId, userInfoRequest
+                    );
+                    return result;
                 } else if (aiName.contains("deepseek")) {
-                    // 🔥 修复腾讯元宝DS结果处理
-                    logInfo.sendTaskLog("腾讯元宝DS执行完成，正在发送结果...", userId, "腾讯元宝DS");
-                    logInfo.sendChatData(page, "/chat/([^/]+)/([^/]+)", userId, "RETURN_YBDS_CHATID", 2);
-
-                    // 确保有内容才发送，并修正AI名称
-                    if (copiedText != null && !copiedText.trim().isEmpty()) {
-                        logInfo.sendResData(copiedText, userId, "腾讯元宝DS", "RETURN_YBDS_RES", shareUrl, sharImgUrl, userInfoRequest.getTaskId());
-                        logInfo.sendTaskLog("腾讯元宝DS结果已发送到前端", userId, "腾讯元宝DS");
-                    } else {
-                        logInfo.sendTaskLog("腾讯元宝DS内容为空，跳过发送", userId, "腾讯元宝DS");
-                    }
+                    logInfo.sendTaskLog("腾讯元宝DS执行完成", userId, "腾讯元宝DS");
+                    userInfoRequest.setDraftContent(copiedText);
+                    userInfoRequest.setAiName("腾讯元宝DS");
+                    
+                    // 🔥 使用AiResultHelper保存
+                    McpResult result = aiResultHelper.saveAiResultFull(
+                        userId, "腾讯元宝DS", copiedText, shareUrl, sharImgUrl, chatId, userInfoRequest
+                    );
+                    return result;
                 }
             } catch (InterruptedException e) {
                 logInfo.sendTaskLog("线程被中断: " + e.getMessage(), userId, agentName);
@@ -602,22 +622,29 @@ public class TencentUtil {
                 logInfo.sendTaskLog("结果处理异常: " + e.getMessage(), userId, agentName);
             }
 
-            // 🔥 确保数据库保存逻辑正确执行
+            // 🔥 关键改进：使用AiResultHelper确保可靠保存
+            logInfo.sendTaskLog("正在保存" + agentName + "内容...", userId, agentName);
+            userInfoRequest.setDraftContent(copiedText);
+            userInfoRequest.setAiName(agentName);
+            
+            // 提取会话ID
+            String chatId = null;
             try {
-                userInfoRequest.setDraftContent(copiedText);
-                userInfoRequest.setAiName("腾讯元宝-" + aiName);
-                userInfoRequest.setShareUrl(shareUrl);
-                userInfoRequest.setShareImgUrl(sharImgUrl);
-
-                Object saveResult = RestUtils.post(url + "/saveDraftContent", userInfoRequest);
-                logInfo.sendTaskLog("内容已保存到稿库: " + (saveResult != null ? "成功" : "失败"), userId, agentName);
-
-                return McpResult.success(copiedText, shareUrl);
+                String pageUrl = page.url();
+                Pattern pattern = Pattern.compile("/chat/([^/]+)/([^/]+)");
+                Matcher matcher = pattern.matcher(pageUrl);
+                if (matcher.find()) {
+                    chatId = matcher.group(2);
+                }
             } catch (Exception e) {
-                logInfo.sendTaskLog("保存到稿库失败: " + e.getMessage(), userId, agentName);
-                // 即使保存失败，也返回成功，让前端能显示内容
-                return McpResult.success(copiedText, shareUrl);
+                logInfo.sendTaskLog("提取会话ID失败: " + e.getMessage(), userId, agentName);
             }
+            
+            McpResult result = aiResultHelper.saveAiResultFull(
+                userId, agentName, copiedText, shareUrl, sharImgUrl, chatId, userInfoRequest
+            );
+            logInfo.sendTaskLog(agentName + "内容已保存", userId, agentName);
+            return result;
         } catch (Exception e) {
             UserLogUtil.sendExceptionLog(userId, aiName + "任务执行异常", "saveDraftData", e, url + "/saveLogInfo");
         }

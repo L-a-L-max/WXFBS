@@ -93,11 +93,9 @@ public class MessageValidationUtil {
      */
     public static void logMessageSent(String messageType, String userId, String taskId, 
                                     String aiName, String content) {
-        // 只记录AI结果消息，其他消息完全静默
-        if (messageType.contains("_RES")) {
-            logAIResult(messageType, userId, aiName, content);
-        }
-        // 所有过程日志完全静默，减少终端噪音
+        // 🔥 完全静默所有消息日志
+        // 因为LogMsgUtil.sendResData()中已经调用了logCompleteAIResult()输出完整信息
+        // 这里不需要再输出，避免重复
     }
     
     /**
@@ -129,7 +127,7 @@ public class MessageValidationUtil {
     }
     
     /**
-     * 记录完整的AI结果信息（包含分享链接和截图）
+     * 记录完整的AI结果信息（精简版：移除截图信息）
      */
     public static void logCompleteAIResult(String userId, String aiName, String content, 
                                          String shareUrl, String shareImgUrl, String chatId) {
@@ -141,19 +139,16 @@ public class MessageValidationUtil {
                 contentPreview = plainText.length() > 20 ? plainText.substring(0, 20) + "..." : plainText;
             }
             
-            // 构建附加信息
+            // 🔥 精简版：只显示分享链接和会话ID，移除截图信息
             StringBuilder extraInfo = new StringBuilder();
             if (shareUrl != null && !shareUrl.isEmpty()) {
                 extraInfo.append(" | 分享链接:").append(shareUrl);
-            }
-            if (shareImgUrl != null && !shareImgUrl.isEmpty()) {
-                extraInfo.append(" | 截图:").append(shareImgUrl.substring(shareImgUrl.lastIndexOf("/") + 1));
             }
             if (chatId != null && !chatId.isEmpty()) {
                 extraInfo.append(" | 会话ID:").append(chatId);
             }
             
-            // 终端显示完整结果（移除数据库ID显示）
+            // 终端显示精简结果
             System.out.println(String.format("✅ %s完成 | 用户:%s | 内容:%s%s", 
                 aiName != null ? aiName : "AI", 
                 userId != null ? userId : "未知",
@@ -161,7 +156,7 @@ public class MessageValidationUtil {
                 extraInfo.toString()));
                 
         } catch (Exception e) {
-            // 简化错误日志显示（移除数据库ID相关）
+            // 简化错误日志显示
             String errorMsg = e.getMessage();
             if (errorMsg != null && errorMsg.length() > 50) {
                 errorMsg = errorMsg.substring(0, 50) + "...";

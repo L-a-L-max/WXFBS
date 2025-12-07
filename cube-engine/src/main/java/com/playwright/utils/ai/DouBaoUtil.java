@@ -7,6 +7,7 @@ import com.microsoft.playwright.options.WaitForSelectorState;
 import com.playwright.entity.AiResult;
 import com.playwright.entity.UserInfoRequest;
 import com.playwright.entity.mcp.McpResult;
+import com.playwright.utils.common.AiResultHelper;
 import com.playwright.utils.common.ClipboardLockManager;
 import com.playwright.utils.common.LogMsgUtil;
 import com.playwright.utils.common.UserLogUtil;
@@ -40,6 +41,9 @@ public class DouBaoUtil {
 
     @Value("${cube.url}")
     private String url;
+    
+    @Autowired
+    private AiResultHelper aiResultHelper;
 
     /**
      * 🔥 安全地点击最新消息的分享按钮

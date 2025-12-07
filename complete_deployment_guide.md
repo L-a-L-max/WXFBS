@@ -279,8 +279,8 @@ java -jar target/U3W.jar
 ### 9.3 导入工作流
 1. 工作流配置文件：
    [20251029-028A-001.zip](元器-工作流/20251029-028A-001.zip),
-   [export-排版助手.zip](%E5%85%83%E5%99%A8-%E5%B7%A5%E4%BD%9C%E6%B5%81%2Fexport-%E6%8E%92%E7%89%88%E5%8A%A9%E6%89%8B.zip),
-   [export-日更助手.zip](%E5%85%83%E5%99%A8-%E5%B7%A5%E4%BD%9C%E6%B5%81%2Fexport-%E6%97%A5%E6%9B%B4%E5%8A%A9%E6%89%8B.zip)
+   [export-排版助手-中优先级.zip](%E5%85%83%E5%99%A8-%E5%B7%A5%E4%BD%9C%E6%B5%81/export-%E6%8E%92%E7%89%88%E5%8A%A9%E6%89%8B-%E4%B8%AD%E4%BC%98%E5%85%88%E7%BA%A7.zip),
+   [export-日更助手-高优先级等.zip](%E5%85%83%E5%99%A8-%E5%B7%A5%E4%BD%9C%E6%B5%81/export-%E6%97%A5%E6%9B%B4%E5%8A%A9%E6%89%8B-%E9%AB%98%E4%BC%98%E5%85%88%E7%BA%A7%E7%AD%89.zip)
 2. 在元器平台中进入**对话式智能体**的工作流管理页面
 3. *新建* 选择批量导入，上传配置文件
 ![工作流创建操作示例](docs-img/workflow_create_operation_example-2.png)
@@ -332,6 +332,38 @@ java -jar target/U3W.jar
 
 ### 10.3 日更助手
 1. 在网页端日更助手配置智能体
+   #### 10.3.1. 获取 API 密钥（appKey）
+
+   1. **进入应用发布服务状态页面**
+      - 点击智能体右上角的"发布"或"应用状态"按钮
+      - 进入应用发布服务状态管理页面
+
+   2. **在 API 管理中**
+      - 点击"复制"按钮
+
+   #### 10.3.2. 获取智能体 ID（appID）
+   
+   **推荐方法：从体验链接中提取**
+   
+   1. **从体验链接提取 appID**
+   
+      体验链接示例：
+      ```
+      https://yuanqi.tencent.com/webim/#/chat/mJsohw?appid=1996840&experience=true&space_id=123
+      ```
+   
+      从 URL 中找到 `appid=` 后面的数字，即为智能体 ID：
+      ```
+      appID: 1996840
+      ```
+
+   #### 10.3.3. 配置信息汇总
+   
+   请将以下信息记录下来，下一步需要使用：
+   - **智能体 ID (appID)**：从体验链接提取的数字
+     - **API 密钥 (appKey)**：从 API 管理复制
+     - **API 端点**：`https://yuanqi.tencent.com/openapi/v1/agent/chat/completions`（固定值）
+
 2. 通过输入标题调用工作流获取文章内容
 
 

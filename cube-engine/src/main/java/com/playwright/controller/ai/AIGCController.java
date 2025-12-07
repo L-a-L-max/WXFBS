@@ -104,6 +104,9 @@ public class AIGCController {
     @Autowired
     @Lazy
     private CubeMcp cubeMcp;
+    
+    @Autowired
+    private AiResultHelper aiResultHelper;
 
     /**
      * 处理腾讯元宝平台的请求
@@ -354,13 +357,23 @@ public class AIGCController {
             logInfo.sendTaskLog("执行完成", userId, "智能评分");
             logInfo.sendResData(copiedText, userId, "智能评分", "RETURN_WKPF_RES", shareUrl, sharImgUrl, userInfoRequest.getTaskId());
 
-            //保存数据库
+            // 🔥 使用AiResultHelper保存（智能评分）
             userInfoRequest.setDraftContent(copiedText);
             userInfoRequest.setAiName("智能评分");
-            userInfoRequest.setShareUrl(shareUrl);
-            userInfoRequest.setShareImgUrl(sharImgUrl);
-            RestUtils.post(url + "/saveDraftContent", userInfoRequest);
-            return McpResult.success(copiedText, shareUrl);
+            
+            String dbChatId = null;
+            try {
+                String currentUrl = page.url();
+                java.util.regex.Pattern pattern = java.util.regex.Pattern.compile("/chat/([^/?#]+)");
+                java.util.regex.Matcher matcher = pattern.matcher(currentUrl);
+                if (matcher.find()) {
+                    dbChatId = matcher.group(1);
+                }
+            } catch (Exception ex) {}
+            
+            return aiResultHelper.saveAiResultFull(
+                userId, "智能评分", copiedText, shareUrl, sharImgUrl, dbChatId, userInfoRequest
+            );
         } catch (Exception e) {
             throw e;
         }
@@ -638,21 +651,22 @@ public class AIGCController {
                 }
             }
             
-            // 发送结果到前端
-            if(userInfoRequest.getSelectedMedia() != null && userInfoRequest.getSelectedMedia().contains("wechat")) {
-                logInfo.sendResData(aiResult.getTextContent(), userId, "豆包", dynamicAiType, douBaoShareUrl, sharImgUrl, userInfoRequest.getTaskId());
-            } else {
-                logInfo.sendResData(aiResult.getHtmlContent(), userId, "豆包", dynamicAiType, douBaoShareUrl, sharImgUrl, userInfoRequest.getTaskId());
-            }
-
-            //保存数据库
-            userInfoRequest.setDbChatId(capturedDbChatId); // 保存会话ID到数据库
-            userInfoRequest.setDraftContent(aiResult.getHtmlContent());
+            // 准备保存的内容
+            String contentToSave = userInfoRequest.getSelectedMedia() != null && userInfoRequest.getSelectedMedia().contains("wechat") 
+                ? aiResult.getTextContent() : aiResult.getHtmlContent();
+            
+            // 设置请求参数（用于兼容）
+            userInfoRequest.setDbChatId(capturedDbChatId);
+            userInfoRequest.setDraftContent(contentToSave);
             userInfoRequest.setAiName(dynamicAiName);
-            userInfoRequest.setShareUrl(shareUrl);
-            userInfoRequest.setShareImgUrl(sharImgUrl);
-            RestUtils.post(url + "/saveDraftContent", userInfoRequest);
-            return McpResult.success(aiResult.getHtmlContent(), shareUrl);
+            
+            // 🔥 关键改进：使用AiResultHelper确保可靠保存
+            logInfo.sendTaskLog("正在保存豆包内容...", userId, dynamicAiName);
+            McpResult result = aiResultHelper.saveAiResultFull(
+                userId, dynamicAiName, contentToSave, douBaoShareUrl, sharImgUrl, capturedDbChatId, userInfoRequest
+            );
+            logInfo.sendTaskLog("豆包内容已保存", userId, dynamicAiName);
+            return result;
         } catch (Exception e) {
             throw e;
         }
@@ -1001,10 +1015,9 @@ public class AIGCController {
                             // 保存错误信息到数据库
                             userInfoRequest.setDraftContent(errorMessage);
                             userInfoRequest.setAiName("DeepSeek");
-                            userInfoRequest.setShareUrl("");
-                            userInfoRequest.setShareImgUrl("");
-                            RestUtils.post(url + "/saveDraftContent", userInfoRequest);
-
+                            
+                            // 🔥 即使失败也保存错误信息
+                            aiResultHelper.saveAiResult(userId, "DeepSeek", errorMessage, userInfoRequest);
                             return McpResult.fail(errorMessage, "");
                         }
                     } catch (Exception e) {
@@ -1113,12 +1126,21 @@ public class AIGCController {
             // 保存数据库
             userInfoRequest.setDraftContent(copiedText);
             userInfoRequest.setAiName("DeepSeek");
-            userInfoRequest.setShareUrl(shareUrl);
-            userInfoRequest.setShareImgUrl(shareImgUrl);
-            RestUtils.post(url + "/saveDraftContent", userInfoRequest);
-
-
-            return McpResult.success(copiedText, shareImgUrl);
+            
+            // 🔥 使用AiResultHelper保存（DeepSeek）
+            String dsChatId = null;
+            try {
+                String currentUrl = page.url();
+                java.util.regex.Pattern pattern = java.util.regex.Pattern.compile("/chat/([^/?#]+)");
+                java.util.regex.Matcher matcher = pattern.matcher(currentUrl);
+                if (matcher.find()) {
+                    dsChatId = matcher.group(1);
+                }
+            } catch (Exception ex) {}
+            
+            return aiResultHelper.saveAiResultFull(
+                userId, "DeepSeek", copiedText, shareUrl, shareImgUrl, dsChatId, userInfoRequest
+            );
 
         } catch (Exception e) {
 
@@ -1310,11 +1332,21 @@ public class AIGCController {
             userInfoRequest.setTyChatId(capturedSessionId);
             userInfoRequest.setDraftContent(formattedContent);
             userInfoRequest.setAiName(aiName);
-            userInfoRequest.setShareUrl(shareUrl);
-            userInfoRequest.setShareImgUrl(sharImgUrl);
-            RestUtils.post(url + "/saveDraftContent", userInfoRequest);
-
-            return McpResult.success(formattedContent,shareUrl);
+            
+            // 🔥 使用AiResultHelper保存（百度相关）
+            String chatId = null;
+            try {
+                String currentUrl = page.url();
+                java.util.regex.Pattern pattern = java.util.regex.Pattern.compile("/chat/([^/?#]+)");
+                java.util.regex.Matcher matcher = pattern.matcher(currentUrl);
+                if (matcher.find()) {
+                    chatId = matcher.group(1);
+                }
+            } catch (Exception ex) {}
+            
+            return aiResultHelper.saveAiResultFull(
+                userId, aiName, formattedContent, shareUrl, sharImgUrl, chatId, userInfoRequest
+            );
 
         } catch (Exception e) {
             logInfo.sendTaskLog("执行通义千问任务时发生严重错误：" + e.getMessage(), userInfoRequest.getUserId(), "通义千问");
@@ -1647,10 +1679,21 @@ public class AIGCController {
                 logInfo.sendResData(modelAnswer, userId, "mita", "RETURN_METASO_RES", shareUrl, sharImgUrl, userInfoRequest.getTaskId());
                 userInfoRequest.setDraftContent(modelAnswer);
                 userInfoRequest.setAiName("秘塔");
-                userInfoRequest.setShareUrl(shareUrl);
-                userInfoRequest.setShareImgUrl(sharImgUrl);
-                RestUtils.post(url + "/saveDraftContent", userInfoRequest);
-                return McpResult.success(modelAnswer, shareUrl);
+                
+                // 🔥 使用AiResultHelper保存（秘塔）
+                // 提取会话ID
+                try {
+                    String currentUrl = page.url();
+                    java.util.regex.Pattern pattern = java.util.regex.Pattern.compile("/search[^/]*/([^/?#]+)");
+                    java.util.regex.Matcher matcher = pattern.matcher(currentUrl);
+                    if (matcher.find()) {
+                        metasoChatId = matcher.group(1);
+                    }
+                } catch (Exception ex) {}
+                
+                return aiResultHelper.saveAiResultFull(
+                    userId, "秘塔", modelAnswer, shareUrl, sharImgUrl, metasoChatId, userInfoRequest
+                );
             }
             
             //等待html片段获取完成
@@ -1743,18 +1786,27 @@ public class AIGCController {
             }
             
             logInfo.sendTaskLog("执行完成", userId, "秘塔");
-            // 更新WebSocket发送的正则，兼容两种格式
-            logInfo.sendChatData(page, "/search(?:-v2)?/([^/?#]+)", userId, "RETURN_METASO_CHATID", 1);
-            logInfo.sendResData(finalContent, userId, "mita", "RETURN_METASO_RES", shareUrl, sharImgUrl, userInfoRequest.getTaskId());
-
+            
             //保存数据库
             userInfoRequest.setMetasoChatId(capturedMetasoChatId); // 保存会话ID到数据库
             userInfoRequest.setDraftContent(finalContent);
             userInfoRequest.setAiName("秘塔");
-            userInfoRequest.setShareUrl(shareUrl);
-            userInfoRequest.setShareImgUrl(sharImgUrl);
-            RestUtils.post(url + "/saveDraftContent", userInfoRequest);
-            return McpResult.success(finalContent, shareUrl);
+            
+            // 🔥 使用AiResultHelper保存（秘塔）
+            // 重用乊前定义的metasoChatId变量
+            metasoChatId = null; // 重置为最新值
+            try {
+                String currentUrl = page.url();
+                java.util.regex.Pattern pattern = java.util.regex.Pattern.compile("/search[^/]*/([^/?#]+)");
+                java.util.regex.Matcher matcher = pattern.matcher(currentUrl);
+                if (matcher.find()) {
+                    metasoChatId = matcher.group(1);
+                }
+            } catch (Exception ex) {}
+            
+            return aiResultHelper.saveAiResultFull(
+                userId, "秘塔", finalContent, shareUrl, sharImgUrl, metasoChatId, userInfoRequest
+            );
         } catch (Exception e) {
             // 🔥 修复：添加详细的异常日志输出
             String userId = userInfoRequest.getUserId(); // 在catch块中重新获取userId
@@ -1861,10 +1913,9 @@ public class AIGCController {
                     userInfoRequest.setZhzdChatId(sessionId);
                     userInfoRequest.setDraftContent(errorMessage);
                     userInfoRequest.setAiName(aiName);
-                    userInfoRequest.setShareUrl("");
-                    userInfoRequest.setShareImgUrl("");
-                    RestUtils.post(url + "/saveDraftContent", userInfoRequest);
-
+                    
+                    // 🔥 即使失败也保存错误信息（知乎直答）
+                    aiResultHelper.saveAiResult(userId, aiName, errorMessage, userInfoRequest);
                     return McpResult.fail(errorMessage, "");
                 }
 
@@ -2118,21 +2169,28 @@ public class AIGCController {
             try {
                 // 回传数据
                 logInfo.sendTaskLog("执行完成", userId, aiName);
-                logInfo.sendChatData(page, "/search/([^/?#]+)", userId, "RETURN_ZHZD_CHATID", 1);
-
-                logInfo.sendResData(formattedContent, userId, aiName, "RETURN_ZHZD_RES", shareUrl, shareImgUrl, userInfoRequest.getTaskId());
 
                 // 保存数据库
                 userInfoRequest.setZhzdChatId(sessionId);
                 userInfoRequest.setDraftContent(formattedContent);
                 userInfoRequest.setAiName(aiName);
-                userInfoRequest.setShareUrl(shareUrl);
-                userInfoRequest.setShareImgUrl(shareImgUrl);
-                RestUtils.post(url + "/saveDraftContent", userInfoRequest);
+                
+                // 使用AiResultHelper保存（知乎直答）
+                String zhihuChatId = null;
+                try {
+                    String zhihuUrl = page.url();
+                    java.util.regex.Pattern pattern = java.util.regex.Pattern.compile("/search/([^/?#]+)");
+                    java.util.regex.Matcher matcher = pattern.matcher(zhihuUrl);
+                    if (matcher.find()) {
+                        zhihuChatId = matcher.group(1);
+                    }
+                } catch (Exception ex) {}
+                
+                aiResultHelper.saveAiResultFull(
+                    userId, aiName, formattedContent, shareUrl, shareImgUrl, zhihuChatId, userInfoRequest
+                );
             } catch (Exception e) {
-                logInfo.sendTaskLog("执行完成", userId, aiName);
-                logInfo.sendChatData(page, "/search/([^/?#]+)", userId, "RETURN_ZHZD_CHATID", 1);
-                logInfo.sendResData(formattedContent, userId, aiName, "RETURN_ZHZD_RES", shareUrl, shareImgUrl, userInfoRequest.getTaskId());
+                // catch块中的异常已在外层处理
             }
             return McpResult.success(formattedContent, shareUrl);
         } catch (Exception e) {

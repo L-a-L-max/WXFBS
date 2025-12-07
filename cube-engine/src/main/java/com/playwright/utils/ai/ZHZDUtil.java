@@ -4,6 +4,7 @@ import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.TimeoutError;
 import com.playwright.entity.UserInfoRequest;
+import com.playwright.utils.common.AiResultHelper;
 import com.playwright.utils.common.ClipboardLockManager;
 import com.playwright.utils.common.LogMsgUtil;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,6 +25,9 @@ public class ZHZDUtil {
     
     @Autowired
     private ClipboardLockManager clipboardLockManager;
+    
+    @Autowired
+    private AiResultHelper aiResultHelper;
 
     /**
      * 处理知乎直答思考模式选择 - 支持三种模式

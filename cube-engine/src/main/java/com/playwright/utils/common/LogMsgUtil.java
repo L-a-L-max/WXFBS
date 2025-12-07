@@ -51,7 +51,8 @@ public class  LogMsgUtil {
         imgData.put("type","RETURN_PC_TASK_IMG");
         webSocketClientService.sendMessage(imgData.toJSONString());
         } catch (Exception e) {
-            System.err.println("发送截图数据失败: " + e.getMessage());
+            // 🔥 使用ExceptionLogger记录详细异常
+            ExceptionLogger.logScreenshotException(imageName, userId, e);
             // 静默处理，不影响主要业务流程
         }
     }
@@ -75,7 +76,8 @@ public class  LogMsgUtil {
         imgData.put("type","RETURN_PC_TASK_IMG");
         webSocketClientService.sendMessage(imgData.toJSONString());
         } catch (Exception e) {
-            System.err.println("发送截图数据失败: " + e.getMessage());
+            // 🔥 使用ExceptionLogger记录详细异常
+            ExceptionLogger.logScreenshotException(imageName + " (taskId:" + taskId + ")", userId, e);
             // 静默处理，不影响主要业务流程
         }
     }
@@ -161,9 +163,18 @@ public class  LogMsgUtil {
         // 🔥 使用统一的消息增强工具
         resData = MessageValidationUtil.enhanceMessage(resData, userId, taskId);
         
-        // 记录完整的AI结果信息（包含分享链接和截图）
-        String chatId = extractChatIdFromShareUrl(shareUrl);
-        MessageValidationUtil.logCompleteAIResult(userId, aiName, copiedText, shareUrl, shareImgUrl, chatId);
+        // 🔥 添加消息唯一ID，防止前端去重或覆盖
+        String messageId = System.currentTimeMillis() + "_" + aiName + "_" + userId;
+        resData.put("messageId", messageId);
+        
+        // 🔥 添加AI标识，便于前端识别
+        resData.put("aiCode", aiName.toLowerCase().replaceAll("[^a-z0-9]", ""));
+        
+        // 🔥 只在发送结果消息时输出日志，chatId消息静默
+        if (type != null && type.contains("_RES")) {
+            String chatId = extractChatIdFromShareUrl(shareUrl);
+            MessageValidationUtil.logCompleteAIResult(userId, aiName, copiedText, shareUrl, shareImgUrl, chatId);
+        }
         
         webSocketClientService.sendMessage(resData.toJSONString());
     }
