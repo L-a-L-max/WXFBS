@@ -5,6 +5,8 @@
 	<a href="https://wx.fbsir.com"><img src="https://img.shields.io/badge/website-wx.fbsir.com-blue.svg"></a>
 </p>
 
+
+
 ## 项目简介
 
 微信福帮手(WxFbsir)基于腾讯元器智能体开发平台及RuoYi等开源框架进行整合开发，助力中小团队快速高效实现微信生态的内容资产智能化。
@@ -135,4 +137,4 @@ npm run dev
 - **系统接口**: Swagger API文档自动生成
 - **表单构建**: 在线表单设计器
 
-
+#####  文档更新日期：2025年12月7日 12：25  文档版本：1.1
