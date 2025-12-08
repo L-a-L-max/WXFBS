@@ -1,7 +1,7 @@
 <h1 align="center" style="margin: 30px 0 30px; font-weight: bold;">微信福帮手</h1>
 <h4 align="center">微信生态内容智能化工具</h4>
 <p align="center">
-	<a href="https://gitee.com/U3W-AI/RuoYi-Vue"><img src="https://img.shields.io/badge/WxFbsir-v1.0.0-brightgreen.svg"></a>
+	<a href="https://gitee.com/U3W-AI/RuoYi-Vue"><img src="https://img.shields.io/badge/WxFbsir-v1.1.0-brightgreen.svg"></a>
 	<a href="https://wx.fbsir.com"><img src="https://img.shields.io/badge/website-wx.fbsir.com-blue.svg"></a>
 </p>
 
@@ -18,7 +18,7 @@
 作为本项目的基本模块，日更助手是一个基于AI大模型的公众号文章生成系统，通过集成腾讯元器智能体平台，帮助用户快速生成高质量的文章内容。
 
 ✅ 多模型协同生成
-同时调用3个大模型（混元、DeepSeek、精调模型）生成不同风格的初稿，用户可自主选择参与的模型
+同时调用3个大模型（混元 2.0、DeepSeek 3.2、优图精调模型）生成不同风格的初稿，用户可自主选择参与的模型
 
 ✅ 智能内容整合
 使用混元优化大模型整合多个版本，生成最优质的文章内容
@@ -137,4 +137,4 @@ npm run dev
 - **系统接口**: Swagger API文档自动生成
 - **表单构建**: 在线表单设计器
 
-#####  文档更新日期：2025年12月7日 12：25  文档版本：1.1
+#####  文档更新日期：2025年12月8日 12：35  文档版本：1.11
