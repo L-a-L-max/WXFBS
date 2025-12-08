@@ -1,7 +1,7 @@
 <h1 align="center" style="margin: 30px 0 30px; font-weight: bold;">微信福帮手</h1>
 <h4 align="center">微信生态内容智能化工具</h4>
 <p align="center">
-	<a href="https://gitee.com/U3W-AI/RuoYi-Vue"><img src="https://img.shields.io/badge/WxFbsir-v1.1.0-brightgreen.svg"></a>
+	<a href="https://gitee.com/U3W-AI/RuoYi-Vue"><img src="https://img.shields.io/badge/WxFbsir-v1.1.1-brightgreen.svg"></a>
 	<a href="https://wx.fbsir.com"><img src="https://img.shields.io/badge/website-wx.fbsir.com-blue.svg"></a>
 </p>
 
@@ -137,4 +137,4 @@ npm run dev
 - **系统接口**: Swagger API文档自动生成
 - **表单构建**: 在线表单设计器
 
-#####  文档更新日期：2025年12月8日 12：35  文档版本：1.11
+#####  文档更新日期：2025年12月8日 12：35  文档版本：1.1.1
