@@ -186,6 +186,7 @@ insert into sys_menu values('1', '内容管理', '0', '1', 'content',          n
 insert into sys_menu values('2', '系统管理', '0', '2', 'system',           null, '', '', 1, 0, 'M', '0', '0', '', 'system',   'admin', sysdate(), '', null, '系统管理目录');
 insert into sys_menu values('3', '系统监控', '0', '3', 'monitor',          null, '', '', 1, 0, 'M', '0', '0', '', 'monitor',  'admin', sysdate(), '', null, '系统监控目录');
 insert into sys_menu values('4', '系统工具', '0', '4', 'tool',             null, '', '', 1, 0, 'M', '0', '0', '', 'tool',     'admin', sysdate(), '', null, '系统工具目录');
+
 -- 二级菜单（ID范围：100-499）
 -- 内容管理子菜单（parent_id=1，业务功能从118开始）
 insert into sys_menu values('118',  '日更助手', '1',   '1', 'daily-assistant', 'business/content/dailyassistant/index', '', '', 1, 0, 'C', '0', '0', 'business:daily:view',     'edit',          'admin', sysdate(), '', null, '日更助手菜单');
@@ -211,6 +212,7 @@ insert into sys_menu values('114',  '缓存列表', '3',   '6', 'cacheList',  'm
 insert into sys_menu values('115',  '表单构建', '4',   '1', 'build',      'tool/build/index',         '', '', 1, 0, 'C', '0', '0', 'tool:build:list',         'build',         'admin', sysdate(), '', null, '表单构建菜单');
 insert into sys_menu values('116',  '代码生成', '4',   '2', 'gen',        'tool/gen/index',           '', '', 1, 0, 'C', '0', '0', 'tool:gen:list',           'code',          'admin', sysdate(), '', null, '代码生成菜单');
 insert into sys_menu values('117',  '系统接口', '4',   '3', 'swagger',    'tool/swagger/index',       '', '', 1, 0, 'C', '0', '0', 'tool:swagger:list',       'swagger',       'admin', sysdate(), '', null, '系统接口菜单');
+
 -- 三级菜单（ID范围：500-999）
 insert into sys_menu values('500',  '操作日志', '108', '1', 'operlog',    'monitor/operlog/index',    '', '', 1, 0, 'C', '0', '0', 'monitor:operlog:list',    'form',          'admin', sysdate(), '', null, '操作日志菜单');
 insert into sys_menu values('501',  '登录日志', '108', '2', 'logininfor', 'monitor/logininfor/index', '', '', 1, 0, 'C', '0', '0', 'monitor:logininfor:list', 'logininfor',    'admin', sysdate(), '', null, '登录日志菜单');
@@ -366,6 +368,9 @@ insert into sys_role_menu values ('2', '114');  -- 缓存列表
 insert into sys_role_menu values ('2', '115');  -- 表单构建
 insert into sys_role_menu values ('2', '116');  -- 代码生成
 insert into sys_role_menu values ('2', '117');  -- 系统接口
+-- 二级菜单-积分管理
+insert into sys_role_menu values ('2', '120');  -- 积分总览
+insert into sys_role_menu values ('2', '121');  -- 积分规则配置
 -- 三级菜单-日志管理
 insert into sys_role_menu values ('2', '500');  -- 操作日志
 insert into sys_role_menu values ('2', '501');  -- 登录日志
@@ -484,6 +489,9 @@ insert into sys_role_menu values ('3', '114');  -- 缓存列表
 insert into sys_role_menu values ('3', '115');  -- 表单构建
 insert into sys_role_menu values ('3', '116');  -- 代码生成
 insert into sys_role_menu values ('3', '117');  -- 系统接口
+-- 二级菜单-积分管理
+insert into sys_role_menu values ('3', '120');  -- 积分总览
+insert into sys_role_menu values ('3', '121');  -- 积分规则配置
 -- 三级菜单-日志管理
 insert into sys_role_menu values ('3', '500');  -- 操作日志
 insert into sys_role_menu values ('3', '501');  -- 登录日志
@@ -537,6 +545,7 @@ insert into sys_role_menu values ('10', '1066'); -- 日更助手-发布公众号
 insert into sys_role_menu values ('10', '1067'); -- 发布记录-记录查询
 insert into sys_role_menu values ('10', '1068'); -- 发布记录-记录详情
 insert into sys_role_menu values ('10', '1069'); -- 发布记录-记录删除
+
 
 -- ----------------------------
 -- 8、角色和部门关联表  角色1-N部门
@@ -976,3 +985,6 @@ CREATE TABLE `wc_office_publish_record` (
                                             KEY `idx_create_time` (`create_time`) USING BTREE COMMENT '创建时间索引',
                                             KEY `idx_del_flag` (`del_flag`) USING BTREE COMMENT '删除标志索引'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='公众号文章发布记录表';
+
+
+
