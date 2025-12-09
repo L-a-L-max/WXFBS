@@ -63,13 +63,14 @@ create table sys_user (
   update_by         varchar(64)     default ''                 comment '更新者',
   update_time       datetime                                   comment '更新时间',
   remark            varchar(500)    default null               comment '备注',
+  points           int(5)          default 0                  comment '积分余额',
   primary key (user_id)
 ) engine=innodb auto_increment=100 comment = '用户信息表';
 
 -- ----------------------------
 -- 初始化-用户信息表数据
 -- ----------------------------
-insert into sys_user values(1,  103, 'admin', '管理员', '00', '', '', '0', '', '$2a$10$7JB720yubVSZvUI0rEqK/.VqGOZTH.ulu33dHOiBE8ByOhJIrdAu2', '0', '0', '127.0.0.1', sysdate(), sysdate(), 'admin', sysdate(), '', null, '超级管理员');
+insert into sys_user values(1,  103, 'admin', '管理员', '00', '', '', '0', '', '$2a$10$7JB720yubVSZvUI0rEqK/.VqGOZTH.ulu33dHOiBE8ByOhJIrdAu2', '0', '0', '127.0.0.1', sysdate(), sysdate(), 'admin', sysdate(), '', null, '超级管理员',0);
 
 
 -- ----------------------------
@@ -186,6 +187,8 @@ insert into sys_menu values('1', '内容管理', '0', '1', 'content',          n
 insert into sys_menu values('2', '系统管理', '0', '2', 'system',           null, '', '', 1, 0, 'M', '0', '0', '', 'system',   'admin', sysdate(), '', null, '系统管理目录');
 insert into sys_menu values('3', '系统监控', '0', '3', 'monitor',          null, '', '', 1, 0, 'M', '0', '0', '', 'monitor',  'admin', sysdate(), '', null, '系统监控目录');
 insert into sys_menu values('4', '系统工具', '0', '4', 'tool',             null, '', '', 1, 0, 'M', '0', '0', '', 'tool',     'admin', sysdate(), '', null, '系统工具目录');
+
+insert into sys_menu values('6', '积分管理', '0', '6', 'points', null, '', '', 1, 0, 'M', '0', '0', '', 'money', 'admin', sysdate(), '', null, '积分管理目录');
 -- 二级菜单（ID范围：100-499）
 -- 内容管理子菜单（parent_id=1，业务功能从118开始）
 insert into sys_menu values('118',  '日更助手', '1',   '1', 'daily-assistant', 'business/content/dailyassistant/index', '', '', 1, 0, 'C', '0', '0', 'business:daily:view',     'edit',          'admin', sysdate(), '', null, '日更助手菜单');
@@ -211,6 +214,9 @@ insert into sys_menu values('114',  '缓存列表', '3',   '6', 'cacheList',  'm
 insert into sys_menu values('115',  '表单构建', '4',   '1', 'build',      'tool/build/index',         '', '', 1, 0, 'C', '0', '0', 'tool:build:list',         'build',         'admin', sysdate(), '', null, '表单构建菜单');
 insert into sys_menu values('116',  '代码生成', '4',   '2', 'gen',        'tool/gen/index',           '', '', 1, 0, 'C', '0', '0', 'tool:gen:list',           'code',          'admin', sysdate(), '', null, '代码生成菜单');
 insert into sys_menu values('117',  '系统接口', '4',   '3', 'swagger',    'tool/swagger/index',       '', '', 1, 0, 'C', '0', '0', 'tool:swagger:list',       'swagger',       'admin', sysdate(), '', null, '系统接口菜单');
+-- 积分管理子菜单（parent_id=6）
+insert into sys_menu values('120',   '积分总览', '6',   '1', 'points-overview', 'business/points/overview/index', '', '', 1, 0, 'C', '0', '0', 'business:points:view', 'money', 'admin', sysdate(), '', null, '积分总览菜单');
+insert into sys_menu values('121',   '积分规则配置', '6', '2', 'points-rule', 'system/points/rule/index', '', '', 1, 0, 'C', '0', '0', 'points:rule:list', 'edit', 'admin', sysdate(), '', null, '积分规则配置菜单');
 -- 三级菜单（ID范围：500-999）
 insert into sys_menu values('500',  '操作日志', '108', '1', 'operlog',    'monitor/operlog/index',    '', '', 1, 0, 'C', '0', '0', 'monitor:operlog:list',    'form',          'admin', sysdate(), '', null, '操作日志菜单');
 insert into sys_menu values('501',  '登录日志', '108', '2', 'logininfor', 'monitor/logininfor/index', '', '', 1, 0, 'C', '0', '0', 'monitor:logininfor:list', 'logininfor',    'admin', sysdate(), '', null, '登录日志菜单');
@@ -300,6 +306,14 @@ insert into sys_menu values('1066', '发布公众号', '118', '6', '#', '', '', 
 insert into sys_menu values('1067', '记录查询', '119', '1', '#', '', '', '', 1, 0, 'F', '0', '0', 'business:publish:list',      '#', 'admin', sysdate(), '', null, '查询发布记录列表');
 insert into sys_menu values('1068', '记录详情', '119', '2', '#', '', '', '', 1, 0, 'F', '0', '0', 'business:publish:query',     '#', 'admin', sysdate(), '', null, '查看发布记录详情');
 insert into sys_menu values('1069', '记录删除', '119', '3', '#', '', '', '', 1, 0, 'F', '0', '0', 'business:publish:remove',    '#', 'admin', sysdate(), '', null, '删除发布记录');
+-- 积分总览按钮(parent_id=120)
+insert into sys_menu values('1070', '积分查询', '120', '1', '', '', '', '', 1, 0, 'F', '0', '0', 'business:points:query', '#', 'admin', sysdate(), '', null, '');
+INSERT INTO sys_menu VALUES('1071', '明细查询', '120', '1', '', '', '', '', 1, 0, 'F', '0', '0', 'business:points:record:query', '#', 'admin', sysdate(), '', null, '');
+-- 积分规则配置按钮(parent_id=121)
+insert into sys_menu values('1072', '规则查询', '121', '1', '', '', '', '', 1, 0, 'F', '0', '0', 'points:rule:query', '#', 'admin', sysdate(), '', null, '');
+insert into sys_menu values('1073', '规则新增', '121', '2', '', '', '', '', 1, 0, 'F', '0', '0', 'points:rule:add', '#', 'admin', sysdate(), '', null, '');
+insert into sys_menu values('1074', '规则修改', '121', '3', '', '', '', '', 1, 0, 'F', '0', '0', 'points:rule:edit', '#', 'admin', sysdate(), '', null, '');
+insert into sys_menu values('1075', '规则删除', '121', '4', '', '', '', '', 1, 0, 'F', '0', '0', 'points:rule:remove', '#', 'admin', sysdate(), '', null, '');
 
 
 -- ----------------------------
@@ -342,6 +356,7 @@ insert into sys_role_menu values ('2', '1');    -- 内容管理
 insert into sys_role_menu values ('2', '2');    -- 系统管理
 insert into sys_role_menu values ('2', '3');    -- 系统监控
 insert into sys_role_menu values ('2', '4');    -- 系统工具
+insert into sys_role_menu values ('2', '6');    -- 积分管理
 -- 二级菜单-内容管理
 insert into sys_role_menu values ('2', '118');  -- 日更助手
 insert into sys_role_menu values ('2', '119');  -- 发布记录
@@ -366,6 +381,9 @@ insert into sys_role_menu values ('2', '114');  -- 缓存列表
 insert into sys_role_menu values ('2', '115');  -- 表单构建
 insert into sys_role_menu values ('2', '116');  -- 代码生成
 insert into sys_role_menu values ('2', '117');  -- 系统接口
+-- 二级菜单-积分管理
+insert into sys_role_menu values ('2', '120');  -- 积分总览
+insert into sys_role_menu values ('2', '121');  -- 积分规则配置
 -- 三级菜单-日志管理
 insert into sys_role_menu values ('2', '500');  -- 操作日志
 insert into sys_role_menu values ('2', '501');  -- 登录日志
@@ -454,12 +472,20 @@ insert into sys_role_menu values ('2', '1066'); -- 发布公众号
 insert into sys_role_menu values ('2', '1067'); -- 记录查询
 insert into sys_role_menu values ('2', '1068'); -- 记录详情
 insert into sys_role_menu values ('2', '1069'); -- 记录删除
+-- 按钮权限-积分管理
+insert into sys_role_menu values ('2', '1070');  -- 积分查询
+insert into sys_role_menu values ('2', '1071');  -- 明细查询
+insert into sys_role_menu values ('2', '1072');  -- 规则查询
+insert into sys_role_menu values ('2', '1073');  -- 规则新增
+insert into sys_role_menu values ('2', '1074');  -- 规则修改
+insert into sys_role_menu values ('2', '1075');  -- 规则删除
 -- 只读权限角色（ID=3）拥有内容管理的全部权限，系统管理等模块只有查询权限
 -- 一级菜单
 insert into sys_role_menu values ('3', '1');    -- 内容管理
 insert into sys_role_menu values ('3', '2');    -- 系统管理
 insert into sys_role_menu values ('3', '3');    -- 系统监控
 insert into sys_role_menu values ('3', '4');    -- 系统工具
+insert into sys_role_menu values ('3', '6');    -- 积分管理
 -- 二级菜单-内容管理
 insert into sys_role_menu values ('3', '118');  -- 日更助手
 insert into sys_role_menu values ('3', '119');  -- 发布记录
@@ -484,6 +510,9 @@ insert into sys_role_menu values ('3', '114');  -- 缓存列表
 insert into sys_role_menu values ('3', '115');  -- 表单构建
 insert into sys_role_menu values ('3', '116');  -- 代码生成
 insert into sys_role_menu values ('3', '117');  -- 系统接口
+-- 二级菜单-积分管理
+insert into sys_role_menu values ('3', '120');  -- 积分总览
+insert into sys_role_menu values ('3', '121');  -- 积分规则配置
 -- 三级菜单-日志管理
 insert into sys_role_menu values ('3', '500');  -- 操作日志
 insert into sys_role_menu values ('3', '501');  -- 登录日志
@@ -537,6 +566,9 @@ insert into sys_role_menu values ('10', '1066'); -- 日更助手-发布公众号
 insert into sys_role_menu values ('10', '1067'); -- 发布记录-记录查询
 insert into sys_role_menu values ('10', '1068'); -- 发布记录-记录详情
 insert into sys_role_menu values ('10', '1069'); -- 发布记录-记录删除
+insert into sys_role_menu values ('10', '1070'); -- 积分查询
+insert into sys_role_menu values ('10', '1071'); -- 明细查询
+insert into sys_role_menu values ('10', '1072'); -- 规则查询
 
 -- ----------------------------
 -- 8、角色和部门关联表  角色1-N部门
@@ -976,3 +1008,80 @@ CREATE TABLE `wc_office_publish_record` (
                                             KEY `idx_create_time` (`create_time`) USING BTREE COMMENT '创建时间索引',
                                             KEY `idx_del_flag` (`del_flag`) USING BTREE COMMENT '删除标志索引'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='公众号文章发布记录表';
+
+-- ----------------------------
+-- 24、积分规则配置表
+-- ----------------------------
+DROP TABLE IF EXISTS `wx_points_rule`;
+CREATE TABLE `wx_points_rule` (
+  `rule_id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '规则ID',
+  `rule_code` VARCHAR(50) NOT NULL COMMENT '规则编码（唯一标识，用于业务索引）',
+  `rule_name` VARCHAR(100) NOT NULL COMMENT '规则名称（用于显示，可修改）',
+  `points_value` INT NOT NULL COMMENT '积分值（正数为奖励，负数为扣减）',
+  `limit_type` VARCHAR(20) DEFAULT NULL COMMENT '限频类型：DAILY/WEEKLY/MONTHLY/TOTAL',
+  `limit_value` INT DEFAULT NULL COMMENT '限频次数',
+  `max_amount` INT DEFAULT NULL COMMENT '累计上限',
+  `status` CHAR(1) DEFAULT '0' COMMENT '状态（0正常 1停用）',
+  `sort_order` INT DEFAULT 0 COMMENT '排序',
+  `remark` VARCHAR(500) DEFAULT NULL COMMENT '备注',
+  `create_by` VARCHAR(64) DEFAULT '' COMMENT '创建者',
+  `create_time` DATETIME NOT NULL COMMENT '创建时间',
+  `update_by` VARCHAR(64) DEFAULT '' COMMENT '更新者',
+  `update_time` DATETIME DEFAULT NULL COMMENT '更新时间',
+  PRIMARY KEY (`rule_id`),
+  UNIQUE KEY `uk_rule_code` (`rule_code`),
+  KEY `idx_status` (`status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='积分规则配置表';
+
+-- ----------------------------
+-- 25、积分明细记录表
+-- ----------------------------
+DROP TABLE IF EXISTS `wx_points_record`;
+CREATE TABLE `wx_points_record` (
+  `record_id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '记录ID',
+  `user_id` BIGINT NOT NULL COMMENT '用户ID',
+  `rule_code` VARCHAR(50) NOT NULL COMMENT '规则编码（关联wx_points_rule.rule_code）',
+  `change_amount` INT NOT NULL COMMENT '变动金额（正数为增加，负数为扣减）',
+  `balance_before` INT NOT NULL COMMENT '变动前余额',
+  `balance_after` INT NOT NULL COMMENT '变动后余额',
+  `remark` VARCHAR(500) DEFAULT NULL COMMENT '备注说明',
+  `create_by` VARCHAR(64) DEFAULT '' COMMENT '创建者',
+  `create_time` DATETIME NOT NULL COMMENT '创建时间',
+  `update_by` VARCHAR(64) DEFAULT '' COMMENT '更新者',
+  `update_time` DATETIME DEFAULT NULL COMMENT '更新时间',
+  PRIMARY KEY (`record_id`),
+  KEY `idx_user_id` (`user_id`),
+  KEY `idx_rule_code` (`rule_code`),
+  KEY `idx_create_time` (`create_time`),
+  KEY `idx_user_time` (`user_id`, `create_time`),
+  CONSTRAINT `fk_points_record_rule` FOREIGN KEY (`rule_code`) REFERENCES `wx_points_rule` (`rule_code`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='积分明细记录表';
+
+-- ----------------------------
+-- 26、积分统计表（可选，用于统计分析）
+-- ----------------------------
+DROP TABLE IF EXISTS `wx_points_statistics`;
+CREATE TABLE `wx_points_statistics` (
+  `stat_id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '统计ID',
+  `user_id` BIGINT NOT NULL COMMENT '用户ID',
+  `stat_date` DATE NOT NULL COMMENT '统计日期',
+  `points_gain` INT DEFAULT 0 COMMENT '当日获得积分',
+  `points_used` INT DEFAULT 0 COMMENT '当日使用积分',
+  `create_time` DATETIME NOT NULL COMMENT '创建时间',
+  PRIMARY KEY (`stat_id`),
+  UNIQUE KEY `uk_user_date` (`user_id`, `stat_date`),
+  KEY `idx_stat_date` (`stat_date`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='积分统计表';
+
+-- ----------------------------
+-- 初始化积分规则数据
+-- ----------------------------
+INSERT INTO `wx_points_rule` (`rule_code`, `rule_name`, `points_value`, `limit_type`, `limit_value`, `max_amount`, `status`, `sort_order`, `remark`, `create_by`, `create_time`) VALUES
+('FIRST_LOGIN_BONUS', '首次登录奖励', 5000, NULL, NULL, NULL, '0', 2, '用户首次登录奖励', 'admin', NOW()),
+('DAILY_LOGIN', '每日登录', 10, 'DAILY', 1, NULL, '0', 1, '用户每日首次登录奖励', 'admin', NOW()),
+('USE_DAILY_ASSISTANT', '使用日更助手', -1, NULL, NULL, NULL, '0', 2, '使用日更助手生成文章时扣减', 'admin', NOW()),
+('TEMPLATE_PUBLISH', '模板上架', 50, NULL, NULL, NULL, '0', 3, '用户上架模板到市场奖励', 'admin', NOW()),
+('TEMPLATE_BUY', '模板购买', 0, NULL, NULL, NULL, '0', 4, '购买模板时扣减', 'admin', NOW()),
+('TEMPLATE_REWARD', '模板分成', 0, NULL, NULL, NULL, '0', 5, '模板被购买时的作者分成', 'admin', NOW());
+
+
