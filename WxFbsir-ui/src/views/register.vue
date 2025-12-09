@@ -76,7 +76,7 @@
 </template>
 
 <script setup>
-import { ElMessageBox } from "element-plus"
+import { ElMessageBox, ElMessage } from "element-plus"
 import { getCodeImg, register } from "@/api/login"
 import defaultSettings from '@/settings'
 
@@ -84,6 +84,7 @@ const title = import.meta.env.VITE_APP_TITLE
 const footerContent = defaultSettings.footerContent
 const router = useRouter()
 const { proxy } = getCurrentInstance()
+const registerEnabled = ref(false)
 
 const registerForm = ref({
   username: "",
@@ -122,7 +123,36 @@ const codeUrl = ref("")
 const loading = ref(false)
 const captchaEnabled = ref(true)
 
+function getCode() {
+  getCodeImg().then(res => {
+    captchaEnabled.value = res.captchaEnabled === undefined ? true : res.captchaEnabled
+    registerEnabled.value = res.registerEnabled === true
+    
+    // 检查注册功能是否开启
+    if (!registerEnabled.value) {
+      ElMessage.warning('系统当前不允许注册新用户，请联系管理员')
+      router.push('/login')
+      return
+    }
+    
+    if (captchaEnabled.value) {
+      codeUrl.value = "data:image/gif;base64," + res.img
+      registerForm.value.uuid = res.uuid
+    }
+  }).catch(() => {
+    ElMessage.error('获取验证码失败，请稍后再试')
+    router.push('/login')
+  })
+}
+
 function handleRegister() {
+  // 再次检查注册功能是否开启
+  if (!registerEnabled.value) {
+    ElMessage.warning('系统当前不允许注册新用户，请联系管理员')
+    router.push('/login')
+    return
+  }
+  
   proxy.$refs.registerRef.validate(valid => {
     if (valid) {
       loading.value = true
@@ -140,16 +170,6 @@ function handleRegister() {
           getCode()
         }
       })
-    }
-  })
-}
-
-function getCode() {
-  getCodeImg().then(res => {
-    captchaEnabled.value = res.captchaEnabled === undefined ? true : res.captchaEnabled
-    if (captchaEnabled.value) {
-      codeUrl.value = "data:image/gif;base64," + res.img
-      registerForm.value.uuid = res.uuid
     }
   })
 }

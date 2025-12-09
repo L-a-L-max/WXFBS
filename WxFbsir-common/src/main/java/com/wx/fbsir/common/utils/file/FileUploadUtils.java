@@ -154,6 +154,38 @@ public class FileUploadUtils
         return StringUtils.format("{}/{}.{}", DateUtils.datePath(), IdUtils.fastSimpleUUID(), getExtension(file));
     }
 
+    /**
+     * 公众号专用文件名(用户ID目录 + 原文件名 + 后缀)
+     * 如果文件名重复，自动添加序号
+     * 
+     * @param file 上传文件
+     * @param userId 用户ID
+     * @param baseDir 基础目录
+     * @return 文件相对路径
+     */
+    public static final String officialAccountFilename(MultipartFile file, Long userId, String baseDir)
+    {
+        String originalFilename = file.getOriginalFilename();
+        String baseName = FilenameUtils.getBaseName(originalFilename);
+        String extension = getExtension(file);
+        
+        // 构建用户目录路径
+        String userDir = String.valueOf(userId);
+        String fileName = StringUtils.format("{}.{}", baseName, extension);
+        
+        // 检查文件是否存在，如果存在则添加序号
+        File targetFile = new File(baseDir + File.separator + userDir + File.separator + fileName);
+        int counter = 1;
+        while (targetFile.exists())
+        {
+            fileName = StringUtils.format("{}({}).{}", baseName, counter, extension);
+            targetFile = new File(baseDir + File.separator + userDir + File.separator + fileName);
+            counter++;
+        }
+        
+        return StringUtils.format("{}/{}", userDir, fileName);
+    }
+
     public static final File getAbsoluteFile(String uploadDir, String fileName) throws IOException
     {
         File desc = new File(uploadDir + File.separator + fileName);
@@ -173,6 +205,95 @@ public class FileUploadUtils
         int dirLastIndex = WxFbsirConfig.getProfile().length() + 1;
         String currentDir = StringUtils.substring(uploadDir, dirLastIndex);
         return Constants.RESOURCE_PREFIX + "/" + currentDir + "/" + fileName;
+    }
+
+    /**
+     * 获取完整的URL（包含域名）
+     *
+     * @param uploadDir 上传目录
+     * @param fileName 文件名
+     * @return 完整的URL
+     * @throws IOException
+     */
+    public static final String getFullUrl(String uploadDir, String fileName) throws IOException
+    {
+        String pathFileName = getPathFileName(uploadDir, fileName);
+        String domain = WxFbsirConfig.getDomain();
+        if (StringUtils.isEmpty(domain))
+        {
+            throw new IOException("域名配置为空，请在application.yml中配置wxfbsir.domain");
+        }
+        // 确保域名不以/结尾
+        if (domain.endsWith("/"))
+        {
+            domain = domain.substring(0, domain.length() - 1);
+        }
+        return domain + pathFileName;
+    }
+
+    /**
+     * 文件上传并返回完整URL
+     *
+     * @param baseDir 相对应用的基目录
+     * @param file 上传的文件
+     * @param allowedExtension 上传文件类型
+     * @return 返回完整的URL（包含域名）
+     * @throws FileSizeLimitExceededException 如果超出最大大小
+     * @throws FileNameLengthLimitExceededException 文件名太长
+     * @throws IOException 比如读写文件出错时
+     * @throws InvalidExtensionException 文件校验异常
+     */
+    public static final String uploadAndGetFullUrl(String baseDir, MultipartFile file, String[] allowedExtension)
+            throws FileSizeLimitExceededException, IOException, FileNameLengthLimitExceededException,
+            InvalidExtensionException
+    {
+        int fileNameLength = Objects.requireNonNull(file.getOriginalFilename()).length();
+        if (fileNameLength > FileUploadUtils.DEFAULT_FILE_NAME_LENGTH)
+        {
+            throw new FileNameLengthLimitExceededException(FileUploadUtils.DEFAULT_FILE_NAME_LENGTH);
+        }
+
+        assertAllowed(file, allowedExtension);
+
+        String fileName = extractFilename(file);
+
+        String absPath = getAbsoluteFile(baseDir, fileName).getAbsolutePath();
+        file.transferTo(Paths.get(absPath));
+        return getFullUrl(baseDir, fileName);
+    }
+
+    /**
+     * 公众号专用上传方法并返回完整URL
+     * 使用用户ID作为目录，文件名重复时自动添加序号
+     *
+     * @param baseDir 相对应用的基目录
+     * @param file 上传的文件
+     * @param userId 用户ID
+     * @param allowedExtension 上传文件类型
+     * @return 返回完整的URL（包含域名）
+     * @throws FileSizeLimitExceededException 如果超出最大大小
+     * @throws FileNameLengthLimitExceededException 文件名太长
+     * @throws IOException 比如读写文件出错时
+     * @throws InvalidExtensionException 文件校验异常
+     */
+    public static final String uploadOfficialAccountAndGetFullUrl(String baseDir, MultipartFile file, Long userId, String[] allowedExtension)
+            throws FileSizeLimitExceededException, IOException, FileNameLengthLimitExceededException,
+            InvalidExtensionException
+    {
+        int fileNameLength = Objects.requireNonNull(file.getOriginalFilename()).length();
+        if (fileNameLength > FileUploadUtils.DEFAULT_FILE_NAME_LENGTH)
+        {
+            throw new FileNameLengthLimitExceededException(FileUploadUtils.DEFAULT_FILE_NAME_LENGTH);
+        }
+
+        assertAllowed(file, allowedExtension);
+
+        // 使用公众号专用的文件名生成方法
+        String fileName = officialAccountFilename(file, userId, baseDir);
+
+        String absPath = getAbsoluteFile(baseDir, fileName).getAbsolutePath();
+        file.transferTo(Paths.get(absPath));
+        return getFullUrl(baseDir, fileName);
     }
 
     /**

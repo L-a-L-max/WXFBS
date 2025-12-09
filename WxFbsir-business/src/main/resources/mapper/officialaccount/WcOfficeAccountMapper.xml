@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.wx.fbsir.business.officialaccount.mapper.WcOfficeAccountMapper">
+    
+    <resultMap type="com.wx.fbsir.business.officialaccount.domain.WcOfficeAccount" id="WcOfficeAccountResult">
+        <result property="id"    column="id"    />
+        <result property="userId"    column="user_id"    />
+        <result property="appId"    column="app_id"    />
+        <result property="appSecret"    column="app_secret"    />
+        <result property="authorName"    column="author_name"    />
+        <result property="picUrl"    column="pic_url"    />
+        <result property="mediaId"    column="media_id"    />
+        <result property="isActive"    column="is_active"    />
+        <result property="createBy"    column="create_by"    />
+        <result property="createTime"    column="create_time"    />
+        <result property="updateBy"    column="update_by"    />
+        <result property="updateTime"    column="update_time"    />
+        <result property="remark"    column="remark"    />
+    </resultMap>
+
+    <sql id="selectWcOfficeAccountVo">
+        select id, user_id, app_id, app_secret, author_name, pic_url, media_id, is_active, create_by, create_time, update_by, update_time, remark from wc_office_account
+    </sql>
+
+    <select id="selectWcOfficeAccountList" parameterType="com.wx.fbsir.business.officialaccount.domain.WcOfficeAccount" resultMap="WcOfficeAccountResult">
+        <include refid="selectWcOfficeAccountVo"/>
+        <where>  
+            <if test="userId != null "> and user_id = #{userId}</if>
+            <if test="authorName != null  and authorName != ''"> and author_name like concat('%', #{authorName}, '%')</if>
+            <if test="isActive != null "> and is_active = #{isActive}</if>
+        </where>
+    </select>
+    
+    <select id="selectWcOfficeAccountById" parameterType="Long" resultMap="WcOfficeAccountResult">
+        <include refid="selectWcOfficeAccountVo"/>
+        where id = #{id}
+    </select>
+
+    <select id="selectWcOfficeAccountByUserId" parameterType="Long" resultMap="WcOfficeAccountResult">
+        <include refid="selectWcOfficeAccountVo"/>
+        where user_id = #{userId}
+        limit 1
+    </select>
+        
+    <insert id="insertWcOfficeAccount" parameterType="com.wx.fbsir.business.officialaccount.domain.WcOfficeAccount" useGeneratedKeys="true" keyProperty="id">
+        insert into wc_office_account
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="userId != null">user_id,</if>
+            <if test="appId != null and appId != ''">app_id,</if>
+            <if test="appSecret != null and appSecret != ''">app_secret,</if>
+            <if test="authorName != null and authorName != ''">author_name,</if>
+            <if test="picUrl != null and picUrl != ''">pic_url,</if>
+            <if test="mediaId != null and mediaId != ''">media_id,</if>
+            <if test="isActive != null">is_active,</if>
+            <if test="createBy != null">create_by,</if>
+            <if test="createTime != null">create_time,</if>
+            <if test="updateBy != null">update_by,</if>
+            <if test="updateTime != null">update_time,</if>
+            <if test="remark != null">remark,</if>
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="userId != null">#{userId},</if>
+            <if test="appId != null and appId != ''">#{appId},</if>
+            <if test="appSecret != null and appSecret != ''">#{appSecret},</if>
+            <if test="authorName != null and authorName != ''">#{authorName},</if>
+            <if test="picUrl != null and picUrl != ''">#{picUrl},</if>
+            <if test="mediaId != null and mediaId != ''">#{mediaId},</if>
+            <if test="isActive != null">#{isActive},</if>
+            <if test="createBy != null">#{createBy},</if>
+            <if test="createTime != null">#{createTime},</if>
+            <if test="updateBy != null">#{updateBy},</if>
+            <if test="updateTime != null">#{updateTime},</if>
+            <if test="remark != null">#{remark},</if>
+         </trim>
+    </insert>
+
+    <update id="updateWcOfficeAccount" parameterType="com.wx.fbsir.business.officialaccount.domain.WcOfficeAccount">
+        update wc_office_account
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="userId != null">user_id = #{userId},</if>
+            <if test="appId != null and appId != ''">app_id = #{appId},</if>
+            <if test="appSecret != null and appSecret != ''">app_secret = #{appSecret},</if>
+            <if test="authorName != null and authorName != ''">author_name = #{authorName},</if>
+            <if test="picUrl != null and picUrl != ''">pic_url = #{picUrl},</if>
+            <if test="mediaId != null and mediaId != ''">media_id = #{mediaId},</if>
+            <if test="isActive != null">is_active = #{isActive},</if>
+            <if test="updateBy != null">update_by = #{updateBy},</if>
+            <if test="updateTime != null">update_time = #{updateTime},</if>
+            <if test="remark != null">remark = #{remark},</if>
+        </trim>
+        where id = #{id}
+    </update>
+
+    <delete id="deleteWcOfficeAccountById" parameterType="Long">
+        delete from wc_office_account where id = #{id}
+    </delete>
+
+    <delete id="deleteWcOfficeAccountByIds" parameterType="String">
+        delete from wc_office_account where id in 
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+</mapper>

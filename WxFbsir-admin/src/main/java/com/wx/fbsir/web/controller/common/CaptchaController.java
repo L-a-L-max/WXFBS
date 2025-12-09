@@ -48,6 +48,11 @@ public class CaptchaController
         AjaxResult ajax = AjaxResult.success();
         boolean captchaEnabled = configService.selectCaptchaEnabled();
         ajax.put("captchaEnabled", captchaEnabled);
+        
+        // 检查是否允许用户注册
+        boolean registerEnabled = configService.selectConfigByKey("sys.account.registerUser").equals("true");
+        ajax.put("registerEnabled", registerEnabled);
+        
         if (!captchaEnabled)
         {
             return ajax;

@@ -10,10 +10,11 @@ export function listDailyArticle(query) {
 }
 
 // 查询当前用户的日更助手文章列表
-export function getMyArticles() {
+export function getMyArticles(query) {
   return request({
     url: '/system/daily-article/myList',
-    method: 'get'
+    method: 'get',
+    params: query
   })
 }
 
@@ -65,11 +66,13 @@ export function updateOptimizedContent(articleId, optimizedContent) {
 }
 
 // 对文章内容进行智能排版（同步返回排版结果，不保存到数据库）
+// 注意：排版调用腾讯元器同步工作流，通常需要10-20秒
 export function layoutArticle(content) {
   return request({
     url: '/system/daily-article/layoutArticle',
     method: 'post',
     data: { content }
+    // 使用全局60秒超时，无需单独设置
   })
 }
 

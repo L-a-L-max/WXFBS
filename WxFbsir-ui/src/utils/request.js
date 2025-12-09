@@ -16,10 +16,10 @@ axios.defaults.headers['Content-Type'] = 'application/json;charset=utf-8'
 const service = axios.create({
   // axios中请求配置有baseURL选项，表示请求URL公共部分
   baseURL: import.meta.env.VITE_APP_BASE_API,
-  // 超时时间：10秒
-  // 注意：虽然使用了@Async异步处理，但异步线程内部仍需等待元器API响应（60秒）
-  // 因此前端需要等待足够长的时间才能收到后端返回
-  timeout: 10000
+  // 超时时间：60秒（支持排版等长时间操作）
+  // 注意：排版API需要调用腾讯元器同步工作流，通常需要10-20秒
+  // 单个请求可以通过config.timeout覆盖此全局设置
+  timeout: 60000
 })
 
 // request拦截器

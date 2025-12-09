@@ -1,36 +1,37 @@
 # 功能说明文档目录
 
-本目录用于存放微信福帮手系统所有功能模块的详细说明文档。
-
-## 📚 文档列表
-
-### 已完成功能
-
-- **[日更助手功能说明](./日更助手功能说明.md)**  
-  基于腾讯元器智能体的公众号文章自动生成系统，包含完整的技术架构、数据库设计、核心代码实现等
-
-### 待补充功能
-
-- 用户权限管理功能说明
-- 其他业务功能说明...
-
-## 📝 文档规范
-
-每个功能说明文档应包含以下内容：
-
-1. **功能概述**：功能的核心特性和业务流程
-2. **技术架构**：技术栈、系统架构图
-3. **数据库设计**：相关数据表结构说明
-4. **核心功能实现**：关键代码实现和逻辑说明
-5. **配置说明**：外部服务配置（如有）
-6. **使用说明**：详细的操作指南
-7. **常见问题**：FAQ 和问题解决方案
-
-## 🔄 更新记录
-
-- **2025-12-07**：创建功能说明目录，添加日更助手功能说明文档
+系统功能模块说明文档索引。
 
 ---
 
-**维护团队**：开发团队  
-**最后更新**：2025-12-07
+## 📚 文档列表
+
+### [日更助手功能说明](./日更助手功能说明.md)
+基于腾讯元器智能体的文章自动生成系统，支持多模型并行生成、智能优化、智能排版。
+
+**代码位置：**
+- 后端：`WxFbsir-business/src/main/java/com/wx/fbsir/business/dailyassistant/`
+- 前端：`WxFbsir-ui/src/views/business/content/dailyassistant/`
+
+---
+
+### [公众号草稿上传功能说明](./公众号草稿上传功能说明.md)
+文章自动投递到微信公众号草稿箱，包含配置管理、图片上传、发布记录等功能。
+
+**代码位置：**
+- 后端：`WxFbsir-business/src/main/java/com/wx/fbsir/business/officialaccount/`
+- 前端：`WxFbsir-ui/src/views/system/user/profile/officeAccountConfig.vue`
+- 工具：`WxFbsir-common/src/main/java/com/wx/fbsir/common/utils/AesEncryptUtils.java`
+
+---
+
+### [AES加密配置说明](./AES加密配置说明.md)
+AES-256-GCM加密算法配置和使用说明。
+
+**代码位置：**
+- 工具类：`WxFbsir-common/src/main/java/com/wx/fbsir/common/utils/AesEncryptUtils.java`
+- 配置：`application.yml`
+
+---
+
+**最后更新：** 2025-12-09

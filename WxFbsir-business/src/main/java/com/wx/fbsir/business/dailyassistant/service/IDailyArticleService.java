@@ -78,6 +78,16 @@ public interface IDailyArticleService
     public DailyArticle createArticleAndOptimize(Long userId, String articleTitle, String selectedModels);
 
     /**
+     * 触发文章优化（异步执行）
+     * 此方法必须从外部类调用以确保@Async生效
+     *
+     * @param articleId 文章ID
+     * @param userId 用户ID
+     * @param articleTitle 文章标题
+     */
+    public void triggerArticleOptimization(Long articleId, Long userId, String articleTitle);
+
+    /**
      * 保存大模型生成的未优化文章内容
      *
      * @param articleId 文章ID

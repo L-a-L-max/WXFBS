@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.wx.fbsir.business.officialaccount.mapper.WcOfficePublishRecordMapper">
+    
+    <resultMap type="com.wx.fbsir.business.officialaccount.domain.WcOfficePublishRecord" id="WcOfficePublishRecordResult">
+        <result property="id"    column="id"    />
+        <result property="userId"    column="user_id"    />
+        <result property="articleId"    column="article_id"    />
+        <result property="officeAccountId"    column="office_account_id"    />
+        <result property="contentType"    column="content_type"    />
+        <result property="publishStatus"    column="publish_status"    />
+        <result property="mediaId"    column="media_id"    />
+        <result property="errorMessage"    column="error_message"    />
+        <result property="createBy"    column="create_by"    />
+        <result property="createTime"    column="create_time"    />
+        <result property="updateBy"    column="update_by"    />
+        <result property="updateTime"    column="update_time"    />
+        <result property="remark"    column="remark"    />
+        <result property="delFlag"    column="del_flag"    />
+    </resultMap>
+
+    <sql id="selectWcOfficePublishRecordVo">
+        select id, user_id, article_id, office_account_id, content_type, publish_status, media_id, error_message, create_by, create_time, update_by, update_time, remark, del_flag from wc_office_publish_record
+    </sql>
+
+    <select id="selectWcOfficePublishRecordList" parameterType="com.wx.fbsir.business.officialaccount.domain.WcOfficePublishRecord" resultMap="WcOfficePublishRecordResult">
+        <include refid="selectWcOfficePublishRecordVo"/>
+        <where>  
+            and del_flag = '0'
+            <if test="userId != null "> and user_id = #{userId}</if>
+            <if test="articleId != null "> and article_id = #{articleId}</if>
+            <if test="officeAccountId != null "> and office_account_id = #{officeAccountId}</if>
+            <if test="contentType != null  and contentType != ''"> and content_type = #{contentType}</if>
+            <if test="publishStatus != null "> and publish_status = #{publishStatus}</if>
+        </where>
+        order by create_time desc
+    </select>
+    
+    <select id="selectWcOfficePublishRecordById" parameterType="Long" resultMap="WcOfficePublishRecordResult">
+        <include refid="selectWcOfficePublishRecordVo"/>
+        where id = #{id} and del_flag = '0'
+    </select>
+
+    <select id="selectWcOfficePublishRecordListByArticleId" parameterType="Long" resultMap="WcOfficePublishRecordResult">
+        <include refid="selectWcOfficePublishRecordVo"/>
+        where article_id = #{articleId} and del_flag = '0'
+        order by create_time desc
+    </select>
+        
+    <insert id="insertWcOfficePublishRecord" parameterType="com.wx.fbsir.business.officialaccount.domain.WcOfficePublishRecord" useGeneratedKeys="true" keyProperty="id">
+        insert into wc_office_publish_record
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="userId != null">user_id,</if>
+            <if test="articleId != null">article_id,</if>
+            <if test="officeAccountId != null">office_account_id,</if>
+            <if test="contentType != null and contentType != ''">content_type,</if>
+            <if test="publishStatus != null">publish_status,</if>
+            <if test="mediaId != null and mediaId != ''">media_id,</if>
+            <if test="errorMessage != null and errorMessage != ''">error_message,</if>
+            <if test="createBy != null">create_by,</if>
+            <if test="createTime != null">create_time,</if>
+            <if test="updateBy != null">update_by,</if>
+            <if test="updateTime != null">update_time,</if>
+            <if test="remark != null">remark,</if>
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="userId != null">#{userId},</if>
+            <if test="articleId != null">#{articleId},</if>
+            <if test="officeAccountId != null">#{officeAccountId},</if>
+            <if test="contentType != null and contentType != ''">#{contentType},</if>
+            <if test="publishStatus != null">#{publishStatus},</if>
+            <if test="mediaId != null and mediaId != ''">#{mediaId},</if>
+            <if test="errorMessage != null and errorMessage != ''">#{errorMessage},</if>
+            <if test="createBy != null">#{createBy},</if>
+            <if test="createTime != null">#{createTime},</if>
+            <if test="updateBy != null">#{updateBy},</if>
+            <if test="updateTime != null">#{updateTime},</if>
+            <if test="remark != null">#{remark},</if>
+         </trim>
+    </insert>
+
+    <update id="updateWcOfficePublishRecord" parameterType="com.wx.fbsir.business.officialaccount.domain.WcOfficePublishRecord">
+        update wc_office_publish_record
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="userId != null">user_id = #{userId},</if>
+            <if test="articleId != null">article_id = #{articleId},</if>
+            <if test="officeAccountId != null">office_account_id = #{officeAccountId},</if>
+            <if test="contentType != null and contentType != ''">content_type = #{contentType},</if>
+            <if test="publishStatus != null">publish_status = #{publishStatus},</if>
+            <if test="mediaId != null and mediaId != ''">media_id = #{mediaId},</if>
+            <if test="errorMessage != null">error_message = #{errorMessage},</if>
+            <if test="updateBy != null">update_by = #{updateBy},</if>
+            <if test="updateTime != null">update_time = #{updateTime},</if>
+            <if test="remark != null">remark = #{remark},</if>
+        </trim>
+        where id = #{id}
+    </update>
+
+    <!-- 逻辑删除：将del_flag设置为'1'而非物理删除 -->
+    <update id="deleteWcOfficePublishRecordById" parameterType="Long">
+        update wc_office_publish_record set del_flag = '1' where id = #{id}
+    </update>
+
+    <update id="deleteWcOfficePublishRecordByIds" parameterType="String">
+        update wc_office_publish_record set del_flag = '1' where id in 
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </update>
+</mapper>

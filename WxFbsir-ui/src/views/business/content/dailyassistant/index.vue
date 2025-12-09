@@ -10,14 +10,39 @@
                 <el-icon><Document /></el-icon>
                 日更助手
               </span>
-              <el-button
-                type="primary"
-                size="small"
-                @click="showConfigDialog"
-              >
-                <el-icon><Setting /></el-icon>
-                配置智能体
-              </el-button>
+              <div style="display: flex; gap: 10px;">
+                <el-button
+                  type="primary"
+                  size="small"
+                  @click="showConfigDialog"
+                >
+                  <el-icon><Setting /></el-icon>
+                  配置智能体
+                </el-button>
+                
+                <!-- 公众号配置检查按钮 -->
+                <el-button
+                  v-if="!officeAccountConfigured"
+                  type="warning"
+                  size="small"
+                  @click="goToOfficeAccountConfig"
+                >
+                  <el-icon><WarningFilled /></el-icon>
+                  未配置公众号
+                </el-button>
+                <el-button
+                  v-else
+                  :type="officeAccountValid ? 'success' : 'danger'"
+                  size="small"
+                  @click="verifyOfficeAccount"
+                  :loading="verifyingOfficeAccount"
+                >
+                  <el-icon v-if="!verifyingOfficeAccount">
+                    <component :is="officeAccountValid ? 'CircleCheck' : 'CircleClose'" />
+                  </el-icon>
+                  {{ officeAccountValid ? '公众号可用' : '验证公众号' }}
+                </el-button>
+              </div>
             </div>
           </template>
 
@@ -36,6 +61,7 @@
                   :loading="creating"
                   @click="handleCreate"
                   :disabled="!articleTitle.trim() || selectedModels.length === 0"
+                  v-hasPermi="['business:daily:add']"
                 >
                   <el-icon><Plus /></el-icon>
                   创建优化
@@ -62,11 +88,11 @@
           <!-- 文章列表 -->
           <div class="article-list">
             <div class="list-header">
-              <span>我的文章</span>
+              <span>我的文章 <el-tag v-if="totalArticles > 0" size="small" type="info">{{ totalArticles }}</el-tag></span>
               <el-button
                 type="text"
                 size="small"
-                @click="loadArticles"
+                @click="refreshArticles"
                 :loading="loading"
               >
                 <el-icon><Refresh /></el-icon>
@@ -74,7 +100,7 @@
               </el-button>
             </div>
 
-            <el-scrollbar height="500px">
+            <el-scrollbar height="500px" ref="scrollbarRef" @scroll="handleScroll">
               <div
                 v-for="article in articles"
                 :key="article.id"
@@ -118,6 +144,7 @@
                       size="small"
                       text
                       @click.stop="handleDelete(article)"
+                      v-hasPermi="['business:daily:remove']"
                     >
                       <el-icon><Delete /></el-icon>
                     </el-button>
@@ -125,10 +152,26 @@
                 </div>
               </div>
 
+              <!-- 加载更多提示 -->
+              <div v-if="hasMore && !loading" class="load-more-tip">
+                <el-text type="info" size="small">下拉加载更多...</el-text>
+              </div>
+              
+              <!-- 加载中 -->
+              <div v-if="loadingMore" class="loading-more">
+                <el-icon class="is-loading"><Loading /></el-icon>
+                <span>加载中...</span>
+              </div>
+              
+              <!-- 没有更多 -->
+              <div v-if="!hasMore && articles.length > 0" class="no-more-tip">
+                <el-text type="info" size="small">没有更多了</el-text>
+              </div>
+
               <el-empty
                 v-if="!loading && articles.length === 0"
-                description="暂无文章"
-                :image-size="100"
+                description="暂无文章，快来创建第一篇文章吧！"
+                :image-size="120"
               />
             </el-scrollbar>
           </div>
@@ -169,9 +212,22 @@
                         type="success"
                         size="small"
                         @click="handleSmartLayout(selectedArticle.optimizedContent)"
+                        v-hasPermi="['business:daily:layout']"
                       >
                         <el-icon><Reading /></el-icon>
                         智能排版
+                      </el-button>
+                      <el-button
+                        v-if="selectedArticle.optimizedContent"
+                        type="warning"
+                        size="small"
+                        :loading="publishing"
+                        :disabled="!officeAccountConfigured || !officeAccountValid"
+                        @click="handlePublishToWechat('optimized')"
+                        v-hasPermi="['business:daily:publish']"
+                      >
+                        <el-icon><Upload /></el-icon>
+                        投递到公众号
                       </el-button>
                     </div>
                   </div>
@@ -223,9 +279,22 @@
                         type="success"
                         size="small"
                         @click="handleSmartLayout(selectedArticle.model1Content)"
+                        v-hasPermi="['business:daily:layout']"
                       >
                         <el-icon><Reading /></el-icon>
                         智能排版
+                      </el-button>
+                      <el-button
+                        v-if="selectedArticle.model1Content"
+                        type="warning"
+                        size="small"
+                        :loading="publishing"
+                        :disabled="!officeAccountConfigured || !officeAccountValid"
+                        @click="handlePublishToWechat('model1')"
+                        v-hasPermi="['business:daily:publish']"
+                      >
+                        <el-icon><Upload /></el-icon>
+                        投递到公众号
                       </el-button>
                     </div>
                   </div>
@@ -271,9 +340,22 @@
                         type="success"
                         size="small"
                         @click="handleSmartLayout(selectedArticle.model2Content)"
+                        v-hasPermi="['business:daily:layout']"
                       >
                         <el-icon><Reading /></el-icon>
                         智能排版
+                      </el-button>
+                      <el-button
+                        v-if="selectedArticle.model2Content"
+                        type="warning"
+                        size="small"
+                        :loading="publishing"
+                        :disabled="!officeAccountConfigured || !officeAccountValid"
+                        @click="handlePublishToWechat('model2')"
+                        v-hasPermi="['business:daily:publish']"
+                      >
+                        <el-icon><Upload /></el-icon>
+                        投递到公众号
                       </el-button>
                     </div>
                   </div>
@@ -319,9 +401,22 @@
                         type="success"
                         size="small"
                         @click="handleSmartLayout(selectedArticle.model3Content)"
+                        v-hasPermi="['business:daily:layout']"
                       >
                         <el-icon><Reading /></el-icon>
                         智能排版
+                      </el-button>
+                      <el-button
+                        v-if="selectedArticle.model3Content"
+                        type="warning"
+                        size="small"
+                        :loading="publishing"
+                        :disabled="!officeAccountConfigured || !officeAccountValid"
+                        @click="handlePublishToWechat('model3')"
+                        v-hasPermi="['business:daily:publish']"
+                      >
+                        <el-icon><Upload /></el-icon>
+                        投递到公众号
                       </el-button>
                     </div>
                   </div>
@@ -390,6 +485,7 @@
               size="small"
               :loading="publishing"
               style="margin-left: 10px;"
+              :disabled="!officeAccountConfigured || !officeAccountValid"
               @click="handlePublishToWechat('layout')"
             >
               <el-icon><Upload /></el-icon>
@@ -431,8 +527,13 @@
         <el-form-item label="智能体ID" prop="agentId">
           <el-input
             v-model="configForm.agentId"
-            placeholder="请输入appid"
-          />
+            :placeholder="isAgentIdEncrypted ? '已加密存储，输入新值可覆盖' : '请输入appid'"
+            @focus="handleAgentIdFocus"
+          >
+            <template #suffix>
+              <el-tag v-if="isAgentIdEncrypted" type="success" size="small">已添加</el-tag>
+            </template>
+          </el-input>
           <div style="color: #909399; font-size: 12px; margin-top: 4px;">
             从 智能体配置→应用发布→体验链接 中获取
           </div>
@@ -447,9 +548,14 @@
           <el-input
             v-model="configForm.apiKey"
             type="password"
-            placeholder="请输入appkey"
+            :placeholder="isApiKeyEncrypted ? '已加密存储，输入新值可覆盖' : '请输入appkey'"
             show-password
-          />
+            @focus="handleApiKeyFocus"
+          >
+            <template #suffix>
+              <el-tag v-if="isApiKeyEncrypted" type="success" size="small" style="margin-right: 30px;">已添加</el-tag>
+            </template>
+          </el-input>
           <div style="color: #909399; font-size: 12px; margin-top: 4px;">
             从 应用发布→API管理 中获取
           </div>
@@ -457,22 +563,10 @@
         <el-form-item label="API端点" prop="apiEndpoint">
           <el-input
             v-model="configForm.apiEndpoint"
-            placeholder="https://yuanqi.tencent.com/openapi/v1/agent/chat/completions"
+            placeholder="请输入API端点URL"
           />
           <div style="color: #909399; font-size: 12px; margin-top: 4px;">
-            固定地址，直接复制即可
-          </div>
-        </el-form-item>
-        
-        <el-divider content-position="left">排版智能体配置（可选）</el-divider>
-        
-        <el-form-item label="排版智能体ID">
-          <el-input
-            v-model="configForm.layoutAgentId"
-            placeholder="排版专用智能体ID（可选）"
-          />
-          <div style="color: #909399; font-size: 12px; margin-top: 4px;">
-            如不配置，将使用上面的主智能体进行排版
+            默认：https://yuanqi.tencent.com/openapi/v1/agent/chat/completions
           </div>
         </el-form-item>
       </el-form>
@@ -486,7 +580,7 @@
 
 <script setup>
 import { ref, onMounted, reactive } from 'vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { ElMessage, ElMessageBox, ElNotification } from 'element-plus'
 import useUserStore from '@/store/modules/user'
 import {
   Document,
@@ -500,33 +594,52 @@ import {
   Upload,
   WarningFilled,
   RefreshRight,
-  Loading
+  Loading,
+  CircleCheck,
+  CircleClose
 } from '@element-plus/icons-vue'
 import {
   getMyArticles,
   createAndOptimize,
   delDailyArticle,
-  publishToWechat,
   layoutArticleNew as layoutArticle
-} from '@/api/business/dailyArticle'
+} from '@/api/business/content/dailyassistant/dailyArticle'
 import {
   getMyConfig,
   addYuanqiConfig,
   updateYuanqiConfig
-} from '@/api/business/yuanqiConfig'
+} from '@/api/business/content/dailyassistant/yuanqiConfig'
+import {
+  publishToWechat,
+  getMyOfficeAccount,
+  verifyConfig
+} from '@/api/business/content/dailyassistant/officeAccount'
+import { useRouter } from 'vue-router'
 
 // 获取 Pinia store
 const userStore = useUserStore()
+const router = useRouter()
 
 // 数据
 const articleTitle = ref('')
-const selectedModels = ref([1, 2, 3]) // 默认全选三个模型
-const creating = ref(false)
-const loading = ref(false)
 const articles = ref([])
 const selectedArticle = ref(null)
+const loading = ref(false)
+const loadingMore = ref(false)
+const creating = ref(false)
 const activeTab = ref('optimized')
+const selectedModels = ref([1, 2, 3])
+const scrollbarRef = ref(null)
+const currentPage = ref(1)
+const pageSize = ref(10)
+const totalArticles = ref(0)
+const hasMore = ref(true)
 const publishing = ref(false)
+
+// 公众号配置相关
+const officeAccountConfigured = ref(false) // 是否已配置公众号
+const officeAccountValid = ref(false) // 公众号配置是否有效
+const verifyingOfficeAccount = ref(false) // 正在验证公众号
 
 // 配置对话框
 const configDialogVisible = ref(false)
@@ -536,10 +649,14 @@ const configForm = ref({
   agentId: '',
   agentName: '',
   apiKey: '',
-  apiEndpoint: '',
-  isActive: 1,
-  layoutAgentId: '' // 排版智能体ID
+  apiEndpoint: 'https://yuanqi.tencent.com/openapi/v1/agent/chat/completions',
+  isActive: 1
 })
+
+// 加密标记
+const MASKED_VALUE = '***已加密***'
+const isAgentIdEncrypted = ref(false)
+const isApiKeyEncrypted = ref(false)
 
 // 排版相关
 const layoutDialogVisible = ref(false)
@@ -555,31 +672,78 @@ const configRules = {
   apiEndpoint: [{ required: true, message: '请输入API端点URL', trigger: 'blur' }]
 }
 
-// 加载文章列表
-const loadArticles = async () => {
-  loading.value = true
+// 加载文章列表（分页）
+const loadArticles = async (append = false) => {
+  if (append) {
+    loadingMore.value = true
+  } else {
+    loading.value = true
+    currentPage.value = 1
+  }
+  
   try {
-    const response = await getMyArticles()
-    const newArticles = response.data || []
+    const response = await getMyArticles({
+      pageNum: currentPage.value,
+      pageSize: pageSize.value
+    })
     
-    console.log('文章列表已刷新，共', newArticles.length, '篇文章')
+    const newArticles = response.rows || response.data || []
+    totalArticles.value = response.total || newArticles.length
     
-    // 更新文章列表
-    articles.value = newArticles
+    // 追加或替换文章列表
+    if (append) {
+      articles.value = [...articles.value, ...newArticles]
+    } else {
+      articles.value = newArticles
+    }
+    
+    // 判断是否还有更多数据
+    hasMore.value = articles.value.length < totalArticles.value
     
     // 如果有选中的文章，更新它的状态
     if (selectedArticle.value) {
-      const updated = newArticles.find(a => a.id === selectedArticle.value.id)
+      const updated = articles.value.find(a => a.id === selectedArticle.value.id)
       if (updated) {
         selectedArticle.value = updated
-        console.log('已更新选中文章状态：', updated.processStatus)
       }
     }
   } catch (error) {
-    console.error('加载文章列表失败:', error)
-    ElMessage.error('加载文章列表失败')
+    console.error('加载文章失败:', error)
+    ElMessage.error('加载文章失败')
   } finally {
     loading.value = false
+    loadingMore.value = false
+  }
+}
+
+// 刷新文章列表
+const refreshArticles = async () => {
+  currentPage.value = 1
+  await loadArticles(false)
+}
+
+// 加载更多文章
+const loadMoreArticles = async () => {
+  if (!hasMore.value || loadingMore.value) return
+  currentPage.value++
+  await loadArticles(true)
+}
+
+// 处理滚动事件
+const handleScroll = ({ scrollTop, scrollLeft }) => {
+  const scrollbarEl = scrollbarRef.value
+  if (!scrollbarEl) return
+  
+  const wrap = scrollbarEl.wrapRef
+  if (!wrap) return
+  
+  const scrollHeight = wrap.scrollHeight
+  const clientHeight = wrap.clientHeight
+  const distanceToBottom = scrollHeight - scrollTop - clientHeight
+  
+  // 距离底部小于100px时加载更多
+  if (distanceToBottom < 100 && hasMore.value && !loadingMore.value) {
+    loadMoreArticles()
   }
 }
 
@@ -595,45 +759,65 @@ const handleCreate = async () => {
   
   try {
     const response = await createAndOptimize(title, selectedModels.value)
-    if (response.code === 200) {
-      const newArticleId = response.data?.id
+    
+    if (response.code === 200 && response.data) {
+      const newArticleId = response.data.id
+      const newArticleTitle = response.data.articleTitle
+      
+      // 清空输入框
       articleTitle.value = ''
       
-      // 显示生成中提示
+      // 显示成功提示
       ElMessage({
-        message: `文章"${title}"正在生成中，可查看已生成的模型内容`,
-        type: 'info',
-        duration: 10000
+        message: `文章"${newArticleTitle}"创建成功，AI正在生成内容...`,
+        type: 'success',
+        duration: 3000
       })
       
-      // 立即刷新列表（新文章会出现，status=0）
+      // 立即刷新文章列表（新文章会出现在列表中，status=0处理中）
       await loadArticles()
       
-      // 自动选中新创建的文章
+      // 自动选中新创建的文章并显示详情
       if (newArticleId) {
         const newArticle = articles.value.find(a => a.id === newArticleId)
         if (newArticle) {
-          selectedArticle.value = newArticle
+          // 使用selectArticle方法，自动切换到"优化内容"tab
+          selectArticle(newArticle)
+          
+          // 提示用户可以查看实时生成的内容
+          setTimeout(() => {
+            ElMessage({
+              message: '内容正在AI生成中，每个模型的内容会实时显示在下方tab中',
+              type: 'info',
+              duration: 8000,
+              showClose: true
+            })
+          }, 1500)
         }
         
-        // 启动轮询，监控生成进度
-        startPollingArticle(newArticleId, title)
+        // 启动轮询，监控生成进度并实时更新内容
+        startPollingArticle(newArticleId, newArticleTitle)
       }
     } else {
-      ElMessage.error(response.msg || '创建失败')
+      ElMessage.error(response.msg || '创建失败，请重试')
     }
   } catch (error) {
     console.error('创建文章失败:', error)
     
-    // 判断是否是超时错误
+    // 判断是否是超时错误（修复后应该不会出现了）
     if (error.code === 'ECONNABORTED' && error.message.includes('timeout')) {
       ElMessage({
-        message: '请求超时，但文章可能已创建成功，请刷新列表查看',
+        message: '请求超时，但文章可能已创建成功，正在刷新列表...',
         type: 'warning',
-        duration: 8000
+        duration: 5000
       })
       // 超时后也刷新列表，可能文章已创建
       await loadArticles()
+      
+      // 尝试找到最新创建的文章（按时间排序，第一个应该是最新的）
+      if (articles.value.length > 0) {
+        selectArticle(articles.value[0])
+      }
     } else if (error.response && error.response.status === 400) {
       ElMessage.error('创建失败，请检查智能体配置')
       ElMessageBox.confirm(
@@ -646,6 +830,8 @@ const handleCreate = async () => {
         }
       ).then(() => {
         showConfigDialog()
+      }).catch(() => {
+        // 用户取消
       })
     } else {
       ElMessage.error('创建失败：' + (error.message || '未知错误'))
@@ -655,7 +841,7 @@ const handleCreate = async () => {
   }
 }
 
-// 新增：轮询单篇文章的生成状态
+// 轮询单篇文章的生成状态（实时更新内容）
 const startPollingArticle = (articleId, articleTitle) => {
   let pollCount = 0
   const maxPolls = 60  // 5分钟（60 * 5秒 = 300秒）
@@ -669,48 +855,57 @@ const startPollingArticle = (articleId, articleTitle) => {
       const article = articles.value.find(a => a.id === articleId)
       
       if (article) {
-        // 更新选中的文章，显示最新内容
+        // 如果当前选中的就是这篇文章，自动更新显示最新内容
         if (selectedArticle.value && selectedArticle.value.id === articleId) {
           selectedArticle.value = article
         }
         
-        // 只有在完成或失败时才停止轮询
+        // 检查是否完成或失败
         if (article.processStatus === 1) {
+          // 生成完成
           clearInterval(pollInterval)
-          ElMessage({
-            message: `文章"${articleTitle}"生成完成！`,
+          
+          ElNotification({
+            title: '生成完成',
+            message: `文章"${articleTitle}"已生成完成！可以查看各模型的内容了。`,
             type: 'success',
-            duration: 3000
-          })
-        } else if (article.processStatus === 2) {
-          clearInterval(pollInterval)
-          ElMessage({
-            message: `文章"${articleTitle}"生成失败：${article.errorMessage || '未知错误'}`,
-            type: 'error',
             duration: 5000
           })
+        } else if (article.processStatus === 2) {
+          // 生成失败
+          clearInterval(pollInterval)
+          
+          ElNotification({
+            title: '生成失败',
+            message: `文章"${articleTitle}"生成失败：${article.errorMessage || '未知错误'}`,
+            type: 'error',
+            duration: 8000
+          })
         }
-        // status=0 继续轮询，用户可以看到逐步生成的模型内容
+        // status=0 继续轮询，用户可以实时看到逐步生成的模型内容
         
       } else if (pollCount >= maxPolls) {
-        // 超时处理
+        // 超时处理（5分钟）
         clearInterval(pollInterval)
-        ElMessage({
-          message: `文章"${articleTitle}"生成超时（超过5分钟），请检查文章状态`,
+        
+        ElNotification({
+          title: '生成超时',
+          message: `文章"${articleTitle}"生成超时（超过5分钟），请刷新页面检查文章状态`,
           type: 'warning',
-          duration: 5000
+          duration: 0  // 不自动关闭
         })
       }
     } catch (error) {
       console.error('轮询失败:', error)
+      // 轮询失败不影响整体流程，继续轮询
     }
-  }, 5000)
+  }, 5000)  // 每5秒轮询一次
 }
 
 // 选择文章
 const selectArticle = (article) => {
   selectedArticle.value = article
-  activeTab.value = 'optimized'
+  activeTab.value = 'optimized'  // 默认显示"优化内容"tab
 }
 
 // 删除文章
@@ -859,20 +1054,29 @@ const showConfigDialog = async () => {
     if (response.code === 200 && response.data) {
       const config = { ...response.data }
       
-      // 从 configJson 中解析排版智能体配置
-      if (config.configJson) {
-        try {
-          const jsonConfig = JSON.parse(config.configJson)
-          config.layoutAgentId = jsonConfig.layoutAgentId || ''
-        } catch (e) {
-          console.warn('解析 configJson 失败:', e)
-          config.layoutAgentId = ''
-        }
-      } else {
-        config.layoutAgentId = ''
+      // 如果没有API端点，使用默认值
+      if (!config.apiEndpoint) {
+        config.apiEndpoint = 'https://yuanqi.tencent.com/openapi/v1/agent/chat/completions'
+      }
+      
+      // 检查是否已加密
+      isAgentIdEncrypted.value = config.agentId === MASKED_VALUE
+      isApiKeyEncrypted.value = config.apiKey === MASKED_VALUE
+      
+      // 如果是加密的，显示为空，但保留加密标记用于提交
+      if (isAgentIdEncrypted.value) {
+        config.agentId = ''
+      }
+      if (isApiKeyEncrypted.value) {
+        config.apiKey = ''
       }
       
       configForm.value = config
+    } else {
+      // 新配置，使用默认值
+      configForm.value.apiEndpoint = 'https://yuanqi.tencent.com/openapi/v1/agent/chat/completions'
+      isAgentIdEncrypted.value = false
+      isApiKeyEncrypted.value = false
     }
   } catch (error) {
     console.error('加载配置失败', error)
@@ -890,14 +1094,13 @@ const handleSaveConfig = async () => {
       ...configForm.value
     }
     
-    // 将 layoutAgentId 保存到 configJson 中
-    const jsonConfig = {
-      layoutAgentId: configForm.value.layoutAgentId || ''
+    // 如果用户没有修改加密字段（输入框为空且原来已加密），传递加密标记
+    if (!configData.agentId && isAgentIdEncrypted.value) {
+      configData.agentId = MASKED_VALUE
     }
-    configData.configJson = JSON.stringify(jsonConfig)
-    
-    // 从表单数据中移除 layoutAgentId，因为它不是数据库字段
-    delete configData.layoutAgentId
+    if (!configData.apiKey && isApiKeyEncrypted.value) {
+      configData.apiKey = MASKED_VALUE
+    }
     
     const apiFunc = configForm.value.id ? updateYuanqiConfig : addYuanqiConfig
     const response = await apiFunc(configData)
@@ -915,6 +1118,24 @@ const handleSaveConfig = async () => {
 // 关闭配置对话框
 const handleConfigDialogClose = () => {
   configFormRef.value?.resetFields()
+  isAgentIdEncrypted.value = false
+  isApiKeyEncrypted.value = false
+}
+
+// 处理智能体ID输入框获得焦点
+const handleAgentIdFocus = () => {
+  // 如果用户开始输入，标记为未加密（将会重新加密）
+  if (isAgentIdEncrypted.value && !configForm.value.agentId) {
+    // 用户可以输入新值
+  }
+}
+
+// 处理API密钥输入框获得焦点
+const handleApiKeyFocus = () => {
+  // 如果用户开始输入，标记为未加密（将会重新加密）
+  if (isApiKeyEncrypted.value && !configForm.value.apiKey) {
+    // 用户可以输入新值
+  }
 }
 
 // 打开智能排版对话框
@@ -1024,32 +1245,113 @@ const formatTime = (time) => {
   })
 }
 
+// ========== 公众号配置相关 ==========
+// 检查公众号配置
+const checkOfficeAccountConfig = async () => {
+  try {
+    const response = await getMyOfficeAccount()
+    if (response.data && response.data.id) {
+      officeAccountConfigured.value = true
+      // 配置存在时，自动验证一次
+      await verifyOfficeAccount(false) // false表示静默验证，不显示成功提示
+    } else {
+      officeAccountConfigured.value = false
+      officeAccountValid.value = false
+    }
+  } catch (error) {
+    console.warn('检查公众号配置失败', error)
+    officeAccountConfigured.value = false
+    officeAccountValid.value = false
+  }
+}
+
+// 验证公众号配置是否可用
+const verifyOfficeAccount = async (showMessage = true) => {
+  if (!officeAccountConfigured.value) {
+    ElMessage.warning('请先配置公众号信息')
+    return
+  }
+  
+  verifyingOfficeAccount.value = true
+  try {
+    const response = await verifyConfig()
+    if (response.code === 200) {
+      officeAccountValid.value = true
+      if (showMessage) {
+        ElMessage.success('公众号配置验证成功，可以正常投递')
+      }
+    } else {
+      officeAccountValid.value = false
+      ElMessageBox.alert(
+        response.msg || '公众号配置验证失败，请检查配置信息',
+        '验证失败',
+        {
+          type: 'error',
+          dangerouslyUseHTMLString: true,
+          confirmButtonText: '去配置',
+          callback: () => {
+            goToOfficeAccountConfig()
+          }
+        }
+      )
+    }
+  } catch (error) {
+    officeAccountValid.value = false
+    ElMessageBox.alert(
+      '公众号配置验证失败，请检查：<br/>1. 开发者ID和密钥是否正确<br/>2. 服务器IP是否已添加到白名单<br/>3. 网络连接是否正常',
+      '验证失败',
+      {
+        type: 'error',
+        dangerouslyUseHTMLString: true,
+        confirmButtonText: '去配置',
+        callback: () => {
+          goToOfficeAccountConfig()
+        }
+      }
+    )
+  } finally {
+    verifyingOfficeAccount.value = false
+  }
+}
+
+// 跳转到公众号配置页面
+const goToOfficeAccountConfig = () => {
+  router.push('/user/profile')
+  ElMessage.info('请在个人中心配置公众号信息')
+}
+
 // 页面加载
 onMounted(async () => {
   loadArticles()
   
-  // 检查是否有配置
+  // 检查公众号配置
+  checkOfficeAccountConfig()
+  
+  // 检查是否有配置（非阻塞，失败不影响功能使用）
   try {
     const response = await getMyConfig()
     if (!response.data) {
       // 如果没有配置，显示提示
-      ElMessageBox.confirm(
-        '您还未配置腾讯元器智能体，需要先配置才能使用日更助手功能。',
-        '提示',
-        {
-          confirmButtonText: '去配置',
-          cancelButtonText: '稍后配置',
-          type: 'info',
-          closeOnClickModal: false
-        }
-      ).then(() => {
-        showConfigDialog()
-      }).catch(() => {
-        // 用户选择稍后配置
-      })
+      setTimeout(() => {
+        ElMessageBox.confirm(
+          '您还未配置腾讯元器智能体，需要先配置才能使用日更助手功能。',
+          '提示',
+          {
+            confirmButtonText: '去配置',
+            cancelButtonText: '稍后配置',
+            type: 'info',
+            closeOnClickModal: false
+          }
+        ).then(() => {
+          showConfigDialog()
+        }).catch(() => {
+          // 用户选择稍后配置
+        })
+      }, 500) // 延迟500ms显示，避免页面加载时立即弹窗
     }
   } catch (error) {
-    console.log('检查配置失败', error)
+    console.warn('检查配置失败，可能是后端服务未启动或Redis连接异常', error)
+    // 失败时不弹窗，仅在控制台警告，不影响功能使用
   }
   
   // 定期刷新列表（每30秒），保持数据新鲜
@@ -1209,6 +1511,36 @@ onMounted(async () => {
           gap: 5px;
           align-items: center;
         }
+      }
+    }
+    
+    // 加载更多提示
+    .load-more-tip,
+    .loading-more,
+    .no-more-tip {
+      text-align: center;
+      padding: 15px;
+      color: #909399;
+      font-size: 13px;
+    }
+    
+    .loading-more {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      
+      .el-icon {
+        font-size: 16px;
+      }
+    }
+    
+    .load-more-tip {
+      cursor: pointer;
+      transition: color 0.3s;
+      
+      &:hover {
+        color: #409eff;
       }
     }
   }

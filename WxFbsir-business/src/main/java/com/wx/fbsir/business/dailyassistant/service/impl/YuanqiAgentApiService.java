@@ -66,7 +66,7 @@ public class YuanqiAgentApiService {
             // 3. 创建请求实体
             HttpEntity<Map<String, Object>> requestEntity = new HttpEntity<>(requestBody, headers);
             
-            log.info("提交腾讯元器工作流任务 - AppId: {}, UserId: {}, Title: {}, ArticleId: {}", appId, userId, articleTitle, articleId);
+            log.debug("[元器API] 提交工作流任务 - AppId: {}, ArticleId: {}", appId, articleId);
             
             // 4. 发送请求（非流式）
             ResponseEntity<String> response = restTemplate.exchange(
@@ -79,7 +79,7 @@ public class YuanqiAgentApiService {
             // 5. 解析响应（只需确认任务已提交，内容通过回调接收）
             if (response.getStatusCode() == HttpStatus.OK) {
                 String responseBody = response.getBody();
-                log.info("工作流任务提交成功，等待回调传递结果");
+                log.debug("[元器API] 任务提交成功，等待回调");
                 
                 return parseResponse(responseBody);
             } else {
@@ -184,7 +184,7 @@ public class YuanqiAgentApiService {
             }
             
             // 异步模式：任务已提交成功，返回taskId，不等待内容
-            log.info("工作流任务已提交 - TaskId: {}, 后续结果将通过HTTP回调接收", taskId);
+            log.info("[元器API] 任务已提交 - TaskId: {}, 等待回调", taskId);
             return YuanqiApiResponse.success("", taskId);
             
         } catch (Exception e) {
@@ -217,8 +217,7 @@ public class YuanqiAgentApiService {
             // 3. 创建请求实体
             HttpEntity<Map<String, Object>> requestEntity = new HttpEntity<>(requestBody, headers);
             
-            log.info("提交腾讯元器同步排版任务 - AppId: {}, UserId: {}, ContentLength: {}", 
-                    appId, userId, content.length());
+            log.debug("[元器排版] 提交同步任务 - AppId: {}, 内容长度: {}", appId, content.length());
             
             // 4. 发送请求（非流式，等待响应）
             ResponseEntity<String> response = restTemplate.exchange(
@@ -231,7 +230,7 @@ public class YuanqiAgentApiService {
             // 5. 解析响应并提取排版后的内容
             if (response.getStatusCode() == HttpStatus.OK) {
                 String responseBody = response.getBody();
-                log.info("同步排版任务执行完成");
+                log.debug("[元器排版] 任务执行完成");
                 
                 return parseLayoutResponse(responseBody);
             } else {
@@ -351,7 +350,7 @@ public class YuanqiAgentApiService {
                         layoutedContent = sb.toString();
                     }
                     
-                    log.info("成功提取排版内容，长度: {}", layoutedContent.length());
+                    log.info("[元器排版] 成功 - 输出: {} 字符", layoutedContent.length());
                     return YuanqiApiResponse.success(layoutedContent, null);
                 }
             }

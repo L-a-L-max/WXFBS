@@ -130,7 +130,7 @@ create table sys_role (
 insert into sys_role values('1', '超级管理员',  'admin',    1, 1, 1, 1, '0', '0', 'admin', sysdate(), '', null, '超级管理员');
 insert into sys_role values('2', '管理员',      'manager',  2, 1, 1, 1, '0', '0', 'admin', sysdate(), '', null, '管理员');
 insert into sys_role values('3', '只读权限',    'readonly', 3, 4, 1, 1, '0', '0', 'admin', sysdate(), '', null, '只读权限角色');
-
+insert into sys_role values('10', '普通用户',   'user',     4, 2, 1, 1, '0', '0', 'admin', sysdate(), '', null, '普通用户，默认拥有内容管理权限');
 
 -- ----------------------------
 -- 5、菜单权限表
@@ -163,15 +163,33 @@ create table sys_menu (
 -- ----------------------------
 -- 初始化-菜单信息表数据
 -- ----------------------------
--- 一级菜单
+-- 菜单ID规划说明（统一规划，便于扩展和维护）：
+-- ┌─────────────┬──────────┬─────────────────────────────────────┐
+-- │ 菜单层级    │ ID范围   │ 说明                                │
+-- ├─────────────┼──────────┼─────────────────────────────────────┤
+-- │ 一级菜单    │ 1-99     │ 顶级目录（如：内容管理、系统管理）  │
+-- │ 二级菜单    │ 100-499  │ 功能页面（系统100-117，业务118起）  │
+-- │ 三级菜单    │ 500-999  │ 子页面/子功能                       │
+-- │ 按钮权限    │ 1000+    │ 按钮级操作（系统1000-1060，业务1061起）│
+-- └─────────────┴──────────┴─────────────────────────────────────┘
+--
+-- 业务模块ID分配：
+--   二级菜单：118=日更助手, 119=发布记录, 120-199预留
+--   按钮权限：1061-1080=日更助手, 1081-1100=发布记录, 1101+预留
+--
+-- 权限标识命名规范：模块:功能:操作
+--   业务模块：business:daily:*, business:publish:*, business:wechat:*
+--   系统模块：system:*, monitor:*, tool:*
+-- ----------------------------
+-- 一级菜单（ID: 1-99）
 insert into sys_menu values('1', '内容管理', '0', '1', 'content',          null, '', '', 1, 0, 'M', '0', '0', '', 'edit',     'admin', sysdate(), '', null, '内容管理目录');
 insert into sys_menu values('2', '系统管理', '0', '2', 'system',           null, '', '', 1, 0, 'M', '0', '0', '', 'system',   'admin', sysdate(), '', null, '系统管理目录');
 insert into sys_menu values('3', '系统监控', '0', '3', 'monitor',          null, '', '', 1, 0, 'M', '0', '0', '', 'monitor',  'admin', sysdate(), '', null, '系统监控目录');
 insert into sys_menu values('4', '系统工具', '0', '4', 'tool',             null, '', '', 1, 0, 'M', '0', '0', '', 'tool',     'admin', sysdate(), '', null, '系统工具目录');
-insert into sys_menu values('5', '微信福帮手官网', '0', '5', 'https://wx.fbsir.com', null, '', '', 0, 0, 'M', '0', '0', '', 'guide',    'admin', sysdate(), '', null, '微信福帮手官网地址');
--- 二级菜单
--- 内容管理子菜单（parent_id=1）
-insert into sys_menu values('10',   '日更助手', '1',   '1', 'daily-assistant', 'business/dailyAssistant', '', '', 1, 0, 'C', '0', '0', 'business:daily:view',     'edit',          'admin', sysdate(), '', null, '日更助手菜单');
+-- 二级菜单（ID范围：100-499）
+-- 内容管理子菜单（parent_id=1，业务功能从118开始）
+insert into sys_menu values('118',  '日更助手', '1',   '1', 'daily-assistant', 'business/content/dailyassistant/index', '', '', 1, 0, 'C', '0', '0', 'business:daily:view',     'edit',          'admin', sysdate(), '', null, '日更助手菜单');
+insert into sys_menu values('119',  '发布记录', '1',   '2', 'publish-record',  'business/content/publishrecord/index',  '', '', 1, 0, 'C', '0', '0', 'business:publish:list',   'documentation', 'admin', sysdate(), '', null, '公众号发布记录菜单');
 -- 系统管理子菜单（parent_id=2）
 insert into sys_menu values('100',  '用户管理', '2',   '1', 'user',       'system/user/index',        '', '', 1, 0, 'C', '0', '0', 'system:user:list',        'user',          'admin', sysdate(), '', null, '用户管理菜单');
 insert into sys_menu values('101',  '角色管理', '2',   '2', 'role',       'system/role/index',        '', '', 1, 0, 'C', '0', '0', 'system:role:list',        'peoples',       'admin', sysdate(), '', null, '角色管理菜单');
@@ -193,9 +211,10 @@ insert into sys_menu values('114',  '缓存列表', '3',   '6', 'cacheList',  'm
 insert into sys_menu values('115',  '表单构建', '4',   '1', 'build',      'tool/build/index',         '', '', 1, 0, 'C', '0', '0', 'tool:build:list',         'build',         'admin', sysdate(), '', null, '表单构建菜单');
 insert into sys_menu values('116',  '代码生成', '4',   '2', 'gen',        'tool/gen/index',           '', '', 1, 0, 'C', '0', '0', 'tool:gen:list',           'code',          'admin', sysdate(), '', null, '代码生成菜单');
 insert into sys_menu values('117',  '系统接口', '4',   '3', 'swagger',    'tool/swagger/index',       '', '', 1, 0, 'C', '0', '0', 'tool:swagger:list',       'swagger',       'admin', sysdate(), '', null, '系统接口菜单');
--- 三级菜单
+-- 三级菜单（ID范围：500-999）
 insert into sys_menu values('500',  '操作日志', '108', '1', 'operlog',    'monitor/operlog/index',    '', '', 1, 0, 'C', '0', '0', 'monitor:operlog:list',    'form',          'admin', sysdate(), '', null, '操作日志菜单');
 insert into sys_menu values('501',  '登录日志', '108', '2', 'logininfor', 'monitor/logininfor/index', '', '', 1, 0, 'C', '0', '0', 'monitor:logininfor:list', 'logininfor',    'admin', sysdate(), '', null, '登录日志菜单');
+-- 按钮权限（ID范围：1000+）
 -- 用户管理按钮
 insert into sys_menu values('1000', '用户查询', '100', '1',  '', '', '', '', 1, 0, 'F', '0', '0', 'system:user:query',          '#', 'admin', sysdate(), '', null, '');
 insert into sys_menu values('1001', '用户新增', '100', '2',  '', '', '', '', 1, 0, 'F', '0', '0', 'system:user:add',            '#', 'admin', sysdate(), '', null, '');
@@ -270,13 +289,17 @@ insert into sys_menu values('1057', '生成删除', '116', '3', '#', '', '', '',
 insert into sys_menu values('1058', '导入代码', '116', '4', '#', '', '', '', 1, 0, 'F', '0', '0', 'tool:gen:import',            '#', 'admin', sysdate(), '', null, '');
 insert into sys_menu values('1059', '预览代码', '116', '5', '#', '', '', '', 1, 0, 'F', '0', '0', 'tool:gen:preview',           '#', 'admin', sysdate(), '', null, '');
 insert into sys_menu values('1060', '生成代码', '116', '6', '#', '', '', '', 1, 0, 'F', '0', '0', 'tool:gen:code',              '#', 'admin', sysdate(), '', null, '');
--- 日更助手按钮
-insert into sys_menu values('1061', '文章查询', '10',  '1', '#', '', '', '', 1, 0, 'F', '0', '0', 'business:daily:query',       '#', 'admin', sysdate(), '', null, '');
-insert into sys_menu values('1062', '文章新增', '10',  '2', '#', '', '', '', 1, 0, 'F', '0', '0', 'business:daily:add',         '#', 'admin', sysdate(), '', null, '');
-insert into sys_menu values('1063', '文章删除', '10',  '3', '#', '', '', '', 1, 0, 'F', '0', '0', 'business:daily:remove',      '#', 'admin', sysdate(), '', null, '');
-insert into sys_menu values('1064', '智能体配置', '10',  '4', '#', '', '', '', 1, 0, 'F', '0', '0', 'business:daily:config',      '#', 'admin', sysdate(), '', null, '');
-insert into sys_menu values('1065', '智能排版', '10',  '5', '#', '', '', '', 1, 0, 'F', '0', '0', 'business:daily:layout',      '#', 'admin', sysdate(), '', null, '');
-insert into sys_menu values('1066', '发布公众号', '10',  '6', '#', '', '', '', 1, 0, 'F', '0', '0', 'business:daily:publish',     '#', 'admin', sysdate(), '', null, '');
+-- 日更助手按钮（parent_id=118）
+insert into sys_menu values('1061', '文章查询', '118', '1', '#', '', '', '', 1, 0, 'F', '0', '0', 'business:daily:query',       '#', 'admin', sysdate(), '', null, '');
+insert into sys_menu values('1062', '文章新增', '118', '2', '#', '', '', '', 1, 0, 'F', '0', '0', 'business:daily:add',         '#', 'admin', sysdate(), '', null, '');
+insert into sys_menu values('1063', '文章删除', '118', '3', '#', '', '', '', 1, 0, 'F', '0', '0', 'business:daily:remove',      '#', 'admin', sysdate(), '', null, '');
+insert into sys_menu values('1064', '智能体配置', '118', '4', '#', '', '', '', 1, 0, 'F', '0', '0', 'business:daily:config',      '#', 'admin', sysdate(), '', null, '');
+insert into sys_menu values('1065', '智能排版', '118', '5', '#', '', '', '', 1, 0, 'F', '0', '0', 'business:daily:layout',      '#', 'admin', sysdate(), '', null, '');
+insert into sys_menu values('1066', '发布公众号', '118', '6', '#', '', '', '', 1, 0, 'F', '0', '0', 'business:daily:publish',     '#', 'admin', sysdate(), '', null, '');
+-- 发布记录管理按钮（parent_id=119）
+insert into sys_menu values('1067', '记录查询', '119', '1', '#', '', '', '', 1, 0, 'F', '0', '0', 'business:publish:list',      '#', 'admin', sysdate(), '', null, '查询发布记录列表');
+insert into sys_menu values('1068', '记录详情', '119', '2', '#', '', '', '', 1, 0, 'F', '0', '0', 'business:publish:query',     '#', 'admin', sysdate(), '', null, '查看发布记录详情');
+insert into sys_menu values('1069', '记录删除', '119', '3', '#', '', '', '', 1, 0, 'F', '0', '0', 'business:publish:remove',    '#', 'admin', sysdate(), '', null, '删除发布记录');
 
 
 -- ----------------------------
@@ -314,140 +337,206 @@ create table sys_role_menu (
 -- 初始化-角色和菜单关联表数据
 -- ----------------------------
 -- 管理员角色（ID=2）拥有全部权限
-insert into sys_role_menu values ('2', '1');
-insert into sys_role_menu values ('2', '2');
-insert into sys_role_menu values ('2', '3');
-insert into sys_role_menu values ('2', '4');
-insert into sys_role_menu values ('2', '5');
-insert into sys_role_menu values ('2', '10');
-insert into sys_role_menu values ('2', '100');
-insert into sys_role_menu values ('2', '101');
-insert into sys_role_menu values ('2', '102');
-insert into sys_role_menu values ('2', '103');
-insert into sys_role_menu values ('2', '104');
-insert into sys_role_menu values ('2', '105');
-insert into sys_role_menu values ('2', '106');
-insert into sys_role_menu values ('2', '107');
-insert into sys_role_menu values ('2', '108');
-insert into sys_role_menu values ('2', '109');
-insert into sys_role_menu values ('2', '110');
-insert into sys_role_menu values ('2', '111');
-insert into sys_role_menu values ('2', '112');
-insert into sys_role_menu values ('2', '113');
-insert into sys_role_menu values ('2', '114');
-insert into sys_role_menu values ('2', '115');
-insert into sys_role_menu values ('2', '116');
-insert into sys_role_menu values ('2', '117');
-insert into sys_role_menu values ('2', '500');
-insert into sys_role_menu values ('2', '501');
-insert into sys_role_menu values ('2', '1000');
-insert into sys_role_menu values ('2', '1001');
-insert into sys_role_menu values ('2', '1002');
-insert into sys_role_menu values ('2', '1003');
-insert into sys_role_menu values ('2', '1004');
-insert into sys_role_menu values ('2', '1005');
-insert into sys_role_menu values ('2', '1006');
-insert into sys_role_menu values ('2', '1007');
-insert into sys_role_menu values ('2', '1008');
-insert into sys_role_menu values ('2', '1009');
-insert into sys_role_menu values ('2', '1010');
-insert into sys_role_menu values ('2', '1011');
-insert into sys_role_menu values ('2', '1012');
-insert into sys_role_menu values ('2', '1013');
-insert into sys_role_menu values ('2', '1014');
-insert into sys_role_menu values ('2', '1015');
-insert into sys_role_menu values ('2', '1016');
-insert into sys_role_menu values ('2', '1017');
-insert into sys_role_menu values ('2', '1018');
-insert into sys_role_menu values ('2', '1019');
-insert into sys_role_menu values ('2', '1020');
-insert into sys_role_menu values ('2', '1021');
-insert into sys_role_menu values ('2', '1022');
-insert into sys_role_menu values ('2', '1023');
-insert into sys_role_menu values ('2', '1024');
-insert into sys_role_menu values ('2', '1025');
-insert into sys_role_menu values ('2', '1026');
-insert into sys_role_menu values ('2', '1027');
-insert into sys_role_menu values ('2', '1028');
-insert into sys_role_menu values ('2', '1029');
-insert into sys_role_menu values ('2', '1030');
-insert into sys_role_menu values ('2', '1031');
-insert into sys_role_menu values ('2', '1032');
-insert into sys_role_menu values ('2', '1033');
-insert into sys_role_menu values ('2', '1034');
-insert into sys_role_menu values ('2', '1035');
-insert into sys_role_menu values ('2', '1036');
-insert into sys_role_menu values ('2', '1037');
-insert into sys_role_menu values ('2', '1038');
-insert into sys_role_menu values ('2', '1039');
-insert into sys_role_menu values ('2', '1040');
-insert into sys_role_menu values ('2', '1041');
-insert into sys_role_menu values ('2', '1042');
-insert into sys_role_menu values ('2', '1043');
-insert into sys_role_menu values ('2', '1044');
-insert into sys_role_menu values ('2', '1045');
-insert into sys_role_menu values ('2', '1046');
-insert into sys_role_menu values ('2', '1047');
-insert into sys_role_menu values ('2', '1048');
-insert into sys_role_menu values ('2', '1049');
-insert into sys_role_menu values ('2', '1050');
-insert into sys_role_menu values ('2', '1051');
-insert into sys_role_menu values ('2', '1052');
-insert into sys_role_menu values ('2', '1053');
-insert into sys_role_menu values ('2', '1054');
-insert into sys_role_menu values ('2', '1055');
-insert into sys_role_menu values ('2', '1056');
-insert into sys_role_menu values ('2', '1057');
-insert into sys_role_menu values ('2', '1058');
-insert into sys_role_menu values ('2', '1059');
-insert into sys_role_menu values ('2', '1060');
-insert into sys_role_menu values ('2', '1061');
-insert into sys_role_menu values ('2', '1062');
-insert into sys_role_menu values ('2', '1063');
-insert into sys_role_menu values ('2', '1064');
-insert into sys_role_menu values ('2', '1065');
-insert into sys_role_menu values ('2', '1066');
--- 只读权限角色（ID=3）只有查询权限
-insert into sys_role_menu values ('3', '1');
-insert into sys_role_menu values ('3', '2');
-insert into sys_role_menu values ('3', '3');
-insert into sys_role_menu values ('3', '4');
-insert into sys_role_menu values ('3', '5');
-insert into sys_role_menu values ('3', '10');
-insert into sys_role_menu values ('3', '100');
-insert into sys_role_menu values ('3', '101');
-insert into sys_role_menu values ('3', '102');
-insert into sys_role_menu values ('3', '103');
-insert into sys_role_menu values ('3', '104');
-insert into sys_role_menu values ('3', '105');
-insert into sys_role_menu values ('3', '106');
-insert into sys_role_menu values ('3', '107');
-insert into sys_role_menu values ('3', '108');
-insert into sys_role_menu values ('3', '109');
-insert into sys_role_menu values ('3', '110');
-insert into sys_role_menu values ('3', '111');
-insert into sys_role_menu values ('3', '112');
-insert into sys_role_menu values ('3', '113');
-insert into sys_role_menu values ('3', '114');
-insert into sys_role_menu values ('3', '115');
-insert into sys_role_menu values ('3', '116');
-insert into sys_role_menu values ('3', '117');
-insert into sys_role_menu values ('3', '500');
-insert into sys_role_menu values ('3', '501');
-insert into sys_role_menu values ('3', '1000');
-insert into sys_role_menu values ('3', '1007');
-insert into sys_role_menu values ('3', '1012');
-insert into sys_role_menu values ('3', '1016');
-insert into sys_role_menu values ('3', '1020');
-insert into sys_role_menu values ('3', '1025');
-insert into sys_role_menu values ('3', '1030');
-insert into sys_role_menu values ('3', '1035');
-insert into sys_role_menu values ('3', '1039');
-insert into sys_role_menu values ('3', '1042');
-insert into sys_role_menu values ('3', '1046');
-insert into sys_role_menu values ('3', '1049');
-insert into sys_role_menu values ('3', '1055');
-insert into sys_role_menu values ('3', '1061');
+-- 一级菜单
+insert into sys_role_menu values ('2', '1');    -- 内容管理
+insert into sys_role_menu values ('2', '2');    -- 系统管理
+insert into sys_role_menu values ('2', '3');    -- 系统监控
+insert into sys_role_menu values ('2', '4');    -- 系统工具
+-- 二级菜单-内容管理
+insert into sys_role_menu values ('2', '118');  -- 日更助手
+insert into sys_role_menu values ('2', '119');  -- 发布记录
+-- 二级菜单-系统管理
+insert into sys_role_menu values ('2', '100');  -- 用户管理
+insert into sys_role_menu values ('2', '101');  -- 角色管理
+insert into sys_role_menu values ('2', '102');  -- 菜单管理
+insert into sys_role_menu values ('2', '103');  -- 部门管理
+insert into sys_role_menu values ('2', '104');  -- 岗位管理
+insert into sys_role_menu values ('2', '105');  -- 字典管理
+insert into sys_role_menu values ('2', '106');  -- 参数设置
+insert into sys_role_menu values ('2', '107');  -- 通知公告
+insert into sys_role_menu values ('2', '108');  -- 日志管理
+-- 二级菜单-系统监控
+insert into sys_role_menu values ('2', '109');  -- 在线用户
+insert into sys_role_menu values ('2', '110');  -- 定时任务
+insert into sys_role_menu values ('2', '111');  -- 数据监控
+insert into sys_role_menu values ('2', '112');  -- 服务监控
+insert into sys_role_menu values ('2', '113');  -- 缓存监控
+insert into sys_role_menu values ('2', '114');  -- 缓存列表
+-- 二级菜单-系统工具
+insert into sys_role_menu values ('2', '115');  -- 表单构建
+insert into sys_role_menu values ('2', '116');  -- 代码生成
+insert into sys_role_menu values ('2', '117');  -- 系统接口
+-- 三级菜单-日志管理
+insert into sys_role_menu values ('2', '500');  -- 操作日志
+insert into sys_role_menu values ('2', '501');  -- 登录日志
+-- 按钮权限-用户管理
+insert into sys_role_menu values ('2', '1000'); -- 用户查询
+insert into sys_role_menu values ('2', '1001'); -- 用户新增
+insert into sys_role_menu values ('2', '1002'); -- 用户修改
+insert into sys_role_menu values ('2', '1003'); -- 用户删除
+insert into sys_role_menu values ('2', '1004'); -- 用户导出
+insert into sys_role_menu values ('2', '1005'); -- 用户导入
+insert into sys_role_menu values ('2', '1006'); -- 重置密码
+-- 按钮权限-角色管理
+insert into sys_role_menu values ('2', '1007'); -- 角色查询
+insert into sys_role_menu values ('2', '1008'); -- 角色新增
+insert into sys_role_menu values ('2', '1009'); -- 角色修改
+insert into sys_role_menu values ('2', '1010'); -- 角色删除
+insert into sys_role_menu values ('2', '1011'); -- 角色导出
+-- 按钮权限-菜单管理
+insert into sys_role_menu values ('2', '1012'); -- 菜单查询
+insert into sys_role_menu values ('2', '1013'); -- 菜单新增
+insert into sys_role_menu values ('2', '1014'); -- 菜单修改
+insert into sys_role_menu values ('2', '1015'); -- 菜单删除
+-- 按钮权限-部门管理
+insert into sys_role_menu values ('2', '1016'); -- 部门查询
+insert into sys_role_menu values ('2', '1017'); -- 部门新增
+insert into sys_role_menu values ('2', '1018'); -- 部门修改
+insert into sys_role_menu values ('2', '1019'); -- 部门删除
+-- 按钮权限-岗位管理
+insert into sys_role_menu values ('2', '1020'); -- 岗位查询
+insert into sys_role_menu values ('2', '1021'); -- 岗位新增
+insert into sys_role_menu values ('2', '1022'); -- 岗位修改
+insert into sys_role_menu values ('2', '1023'); -- 岗位删除
+insert into sys_role_menu values ('2', '1024'); -- 岗位导出
+-- 按钮权限-字典管理
+insert into sys_role_menu values ('2', '1025'); -- 字典查询
+insert into sys_role_menu values ('2', '1026'); -- 字典新增
+insert into sys_role_menu values ('2', '1027'); -- 字典修改
+insert into sys_role_menu values ('2', '1028'); -- 字典删除
+insert into sys_role_menu values ('2', '1029'); -- 字典导出
+-- 按钮权限-参数设置
+insert into sys_role_menu values ('2', '1030'); -- 参数查询
+insert into sys_role_menu values ('2', '1031'); -- 参数新增
+insert into sys_role_menu values ('2', '1032'); -- 参数修改
+insert into sys_role_menu values ('2', '1033'); -- 参数删除
+insert into sys_role_menu values ('2', '1034'); -- 参数导出
+-- 按钮权限-通知公告
+insert into sys_role_menu values ('2', '1035'); -- 公告查询
+insert into sys_role_menu values ('2', '1036'); -- 公告新增
+insert into sys_role_menu values ('2', '1037'); -- 公告修改
+insert into sys_role_menu values ('2', '1038'); -- 公告删除
+-- 按钮权限-操作日志
+insert into sys_role_menu values ('2', '1039'); -- 操作查询
+insert into sys_role_menu values ('2', '1040'); -- 操作删除
+insert into sys_role_menu values ('2', '1041'); -- 日志导出
+-- 按钮权限-登录日志
+insert into sys_role_menu values ('2', '1042'); -- 登录查询
+insert into sys_role_menu values ('2', '1043'); -- 登录删除
+insert into sys_role_menu values ('2', '1044'); -- 日志导出
+insert into sys_role_menu values ('2', '1045'); -- 账户解锁
+-- 按钮权限-在线用户
+insert into sys_role_menu values ('2', '1046'); -- 在线查询
+insert into sys_role_menu values ('2', '1047'); -- 批量强退
+insert into sys_role_menu values ('2', '1048'); -- 单条强退
+-- 按钮权限-定时任务
+insert into sys_role_menu values ('2', '1049'); -- 任务查询
+insert into sys_role_menu values ('2', '1050'); -- 任务新增
+insert into sys_role_menu values ('2', '1051'); -- 任务修改
+insert into sys_role_menu values ('2', '1052'); -- 任务删除
+insert into sys_role_menu values ('2', '1053'); -- 状态修改
+insert into sys_role_menu values ('2', '1054'); -- 任务导出
+-- 按钮权限-代码生成
+insert into sys_role_menu values ('2', '1055'); -- 生成查询
+insert into sys_role_menu values ('2', '1056'); -- 生成修改
+insert into sys_role_menu values ('2', '1057'); -- 生成删除
+insert into sys_role_menu values ('2', '1058'); -- 导入代码
+insert into sys_role_menu values ('2', '1059'); -- 预览代码
+insert into sys_role_menu values ('2', '1060'); -- 生成代码
+-- 按钮权限-日更助手
+insert into sys_role_menu values ('2', '1061'); -- 文章查询
+insert into sys_role_menu values ('2', '1062'); -- 文章新增
+insert into sys_role_menu values ('2', '1063'); -- 文章删除
+insert into sys_role_menu values ('2', '1064'); -- 智能体配置
+insert into sys_role_menu values ('2', '1065'); -- 智能排版
+insert into sys_role_menu values ('2', '1066'); -- 发布公众号
+-- 按钮权限-发布记录
+insert into sys_role_menu values ('2', '1067'); -- 记录查询
+insert into sys_role_menu values ('2', '1068'); -- 记录详情
+insert into sys_role_menu values ('2', '1069'); -- 记录删除
+-- 只读权限角色（ID=3）拥有内容管理的全部权限，系统管理等模块只有查询权限
+-- 一级菜单
+insert into sys_role_menu values ('3', '1');    -- 内容管理
+insert into sys_role_menu values ('3', '2');    -- 系统管理
+insert into sys_role_menu values ('3', '3');    -- 系统监控
+insert into sys_role_menu values ('3', '4');    -- 系统工具
+-- 二级菜单-内容管理
+insert into sys_role_menu values ('3', '118');  -- 日更助手
+insert into sys_role_menu values ('3', '119');  -- 发布记录
+-- 二级菜单-系统管理
+insert into sys_role_menu values ('3', '100');  -- 用户管理
+insert into sys_role_menu values ('3', '101');  -- 角色管理
+insert into sys_role_menu values ('3', '102');  -- 菜单管理
+insert into sys_role_menu values ('3', '103');  -- 部门管理
+insert into sys_role_menu values ('3', '104');  -- 岗位管理
+insert into sys_role_menu values ('3', '105');  -- 字典管理
+insert into sys_role_menu values ('3', '106');  -- 参数设置
+insert into sys_role_menu values ('3', '107');  -- 通知公告
+insert into sys_role_menu values ('3', '108');  -- 日志管理
+-- 二级菜单-系统监控
+insert into sys_role_menu values ('3', '109');  -- 在线用户
+insert into sys_role_menu values ('3', '110');  -- 定时任务
+insert into sys_role_menu values ('3', '111');  -- 数据监控
+insert into sys_role_menu values ('3', '112');  -- 服务监控
+insert into sys_role_menu values ('3', '113');  -- 缓存监控
+insert into sys_role_menu values ('3', '114');  -- 缓存列表
+-- 二级菜单-系统工具
+insert into sys_role_menu values ('3', '115');  -- 表单构建
+insert into sys_role_menu values ('3', '116');  -- 代码生成
+insert into sys_role_menu values ('3', '117');  -- 系统接口
+-- 三级菜单-日志管理
+insert into sys_role_menu values ('3', '500');  -- 操作日志
+insert into sys_role_menu values ('3', '501');  -- 登录日志
+-- 按钮权限-用户管理（只读）
+insert into sys_role_menu values ('3', '1000'); -- 用户查询
+-- 按钮权限-角色管理（只读）
+insert into sys_role_menu values ('3', '1007'); -- 角色查询
+-- 按钮权限-菜单管理（只读）
+insert into sys_role_menu values ('3', '1012'); -- 菜单查询
+-- 按钮权限-部门管理（只读）
+insert into sys_role_menu values ('3', '1016'); -- 部门查询
+-- 按钮权限-岗位管理（只读）
+insert into sys_role_menu values ('3', '1020'); -- 岗位查询
+-- 按钮权限-字典管理（只读）
+insert into sys_role_menu values ('3', '1025'); -- 字典查询
+-- 按钮权限-参数设置（只读）
+insert into sys_role_menu values ('3', '1030'); -- 参数查询
+-- 按钮权限-通知公告（只读）
+insert into sys_role_menu values ('3', '1035'); -- 公告查询
+-- 按钮权限-操作日志（只读）
+insert into sys_role_menu values ('3', '1039'); -- 操作查询
+-- 按钮权限-登录日志（只读）
+insert into sys_role_menu values ('3', '1042'); -- 登录查询
+-- 按钮权限-在线用户（只读）
+insert into sys_role_menu values ('3', '1046'); -- 在线查询
+-- 按钮权限-定时任务（只读）
+insert into sys_role_menu values ('3', '1049'); -- 任务查询
+-- 按钮权限-代码生成（只读）
+insert into sys_role_menu values ('3', '1055'); -- 生成查询
+-- 按钮权限-日更助手（全部权限）
+insert into sys_role_menu values ('3', '1061'); -- 文章查询
+insert into sys_role_menu values ('3', '1062'); -- 文章新增
+insert into sys_role_menu values ('3', '1063'); -- 文章删除
+insert into sys_role_menu values ('3', '1064'); -- 智能体配置
+insert into sys_role_menu values ('3', '1065'); -- 智能排版
+insert into sys_role_menu values ('3', '1066'); -- 发布公众号
+-- 按钮权限-发布记录（全部权限）
+insert into sys_role_menu values ('3', '1067'); -- 记录查询
+insert into sys_role_menu values ('3', '1068'); -- 记录详情
+insert into sys_role_menu values ('3', '1069'); -- 记录删除
+-- 普通用户角色（ID=10）只有内容管理权限
+insert into sys_role_menu values ('10', '1');    -- 内容管理目录
+insert into sys_role_menu values ('10', '10');   -- 日更助手菜单
+insert into sys_role_menu values ('10', '11');   -- 发布记录菜单
+insert into sys_role_menu values ('10', '1061'); -- 日更助手-文章查询
+insert into sys_role_menu values ('10', '1062'); -- 日更助手-文章新增
+insert into sys_role_menu values ('10', '1063'); -- 日更助手-文章删除
+insert into sys_role_menu values ('10', '1064'); -- 日更助手-智能体配置
+insert into sys_role_menu values ('10', '1065'); -- 日更助手-智能排版
+insert into sys_role_menu values ('10', '1066'); -- 日更助手-发布公众号
+insert into sys_role_menu values ('10', '1067'); -- 发布记录-记录查询
+insert into sys_role_menu values ('10', '1068'); -- 发布记录-记录详情
+insert into sys_role_menu values ('10', '1069'); -- 发布记录-记录删除
 
 -- ----------------------------
 -- 8、角色和部门关联表  角色1-N部门
@@ -623,7 +712,7 @@ insert into sys_config values(1, '主框架页-默认皮肤样式名称',     's
 insert into sys_config values(2, '用户管理-账号初始密码',         'sys.user.initPassword',            '123456',        'Y', 'admin', sysdate(), '', null, '初始化密码 123456' );
 insert into sys_config values(3, '主框架页-侧边栏主题',           'sys.index.sideTheme',              'theme-dark',    'Y', 'admin', sysdate(), '', null, '深色主题theme-dark，浅色主题theme-light' );
 insert into sys_config values(4, '账号自助-验证码开关',           'sys.account.captchaEnabled',       'false',          'Y', 'admin', sysdate(), '', null, '是否开启验证码功能（true开启，false关闭）');
-insert into sys_config values(5, '账号自助-是否开启用户注册功能', 'sys.account.registerUser',         'false',         'Y', 'admin', sysdate(), '', null, '是否开启注册用户功能（true开启，false关闭）');
+insert into sys_config values(5, '账号自助-是否开启用户注册功能', 'sys.account.registerUser',         'true',         'Y', 'admin', sysdate(), '', null, '是否开启注册用户功能（true开启，false关闭）');
 insert into sys_config values(6, '用户登录-黑名单列表',           'sys.login.blackIPList',            '',              'Y', 'admin', sysdate(), '', null, '设置登录IP黑名单限制，多个匹配项以;分隔，支持匹配（*通配、网段）');
 insert into sys_config values(7, '用户管理-初始密码修改策略',     'sys.account.initPasswordModify',   '1',             'Y', 'admin', sysdate(), '', null, '0：初始密码修改策略关闭，没有任何提示，1：提醒用户，如果未修改初始密码，则在登录时就会提醒修改密码对话框');
 insert into sys_config values(8, '用户管理-账号密码更新周期',     'sys.account.passwordValidateDays', '0',             'Y', 'admin', sysdate(), '', null, '密码更新周期（填写数字，数据初始化值为0不限制，若修改必须为大于0小于365的正整数），如果超过这个周期登录系统时，则在登录时就会提醒修改密码对话框');
@@ -837,3 +926,53 @@ CREATE TABLE `yuanqi_agent_config` (
   KEY `idx_user_id` (`user_id`) USING BTREE COMMENT '用户ID索引',
   KEY `idx_agent_id` (`agent_id`) USING BTREE COMMENT '智能体ID索引'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='腾讯元器智能体配置表';
+
+-- ----------------------------
+-- 22、微信公众号配置表
+-- ----------------------------
+DROP TABLE IF EXISTS `wc_office_account`;
+CREATE TABLE `wc_office_account` (
+                                     `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '配置ID',
+                                     `user_id` bigint(20) NOT NULL COMMENT '用户ID',
+                                     `app_id` varchar(500) DEFAULT NULL COMMENT '开发者ID（加密存储）',
+                                     `app_secret` varchar(500) DEFAULT NULL COMMENT '开发者密钥（加密存储）',
+                                     `author_name` varchar(100) DEFAULT NULL COMMENT '作者名称（发布文章时显示的作者）',
+                                     `pic_url` varchar(500) DEFAULT NULL COMMENT '素材封面图URL（必填，用于文章封面）',
+                                     `media_id` varchar(100) DEFAULT NULL COMMENT '素材ID（保存配置时上传封面图获取，必填）',
+                                     `is_active` tinyint(1) NOT NULL DEFAULT 1 COMMENT '是否启用：0-禁用，1-启用',
+                                     `create_by` varchar(64) DEFAULT NULL COMMENT '创建者',
+                                     `create_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+                                     `update_by` varchar(64) DEFAULT NULL COMMENT '更新者',
+                                     `update_time` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+                                     `remark` varchar(500) DEFAULT NULL COMMENT '备注',
+                                     PRIMARY KEY (`id`) USING BTREE,
+                                     UNIQUE KEY `uk_user_id` (`user_id`) USING BTREE COMMENT '用户ID唯一索引'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='微信公众号配置表';
+
+
+-- ----------------------------
+-- 23、公众号文章发布记录表
+-- ----------------------------
+DROP TABLE IF EXISTS `wc_office_publish_record`;
+CREATE TABLE `wc_office_publish_record` (
+                                            `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '记录ID',
+                                            `user_id` bigint(20) NOT NULL COMMENT '用户ID',
+                                            `article_id` bigint(20) NOT NULL COMMENT '关联的日更助手文章ID',
+                                            `office_account_id` bigint(20) NOT NULL COMMENT '公众号配置ID',
+                                            `content_type` varchar(50) DEFAULT NULL COMMENT '发布的内容类型：optimized/model1/model2/model3/layout',
+                                            `publish_status` tinyint(1) NOT NULL DEFAULT 0 COMMENT '发布状态：0-发布中，1-成功，2-失败',
+                                            `media_id` varchar(200) DEFAULT NULL COMMENT '微信素材ID',
+                                            `error_message` varchar(1000) DEFAULT NULL COMMENT '失败原因',
+                                            `create_by` varchar(64) DEFAULT NULL COMMENT '创建者',
+                                            `create_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+                                            `update_by` varchar(64) DEFAULT NULL COMMENT '更新者',
+                                            `update_time` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+                                            `remark` varchar(500) DEFAULT NULL COMMENT '备注',
+                                            `del_flag` char(1) DEFAULT '0' COMMENT '删除标志（0代表存在 1代表删除）',
+                                            PRIMARY KEY (`id`) USING BTREE,
+                                            KEY `idx_user_id` (`user_id`) USING BTREE COMMENT '用户ID索引',
+                                            KEY `idx_article_id` (`article_id`) USING BTREE COMMENT '文章ID索引',
+                                            KEY `idx_office_account_id` (`office_account_id`) USING BTREE COMMENT '公众号配置ID索引',
+                                            KEY `idx_create_time` (`create_time`) USING BTREE COMMENT '创建时间索引',
+                                            KEY `idx_del_flag` (`del_flag`) USING BTREE COMMENT '删除标志索引'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='公众号文章发布记录表';

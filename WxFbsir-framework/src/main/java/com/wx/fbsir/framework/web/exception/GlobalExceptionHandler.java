@@ -58,7 +58,8 @@ public class GlobalExceptionHandler
     @ExceptionHandler(ServiceException.class)
     public AjaxResult handleServiceException(ServiceException e, HttpServletRequest request)
     {
-        log.error(e.getMessage(), e);
+        String requestURI = request.getRequestURI();
+        log.error("请求地址'{}',业务异常: {}", requestURI, e.getMessage());
         Integer code = e.getCode();
         return StringUtils.isNotNull(code) ? AjaxResult.error(code, e.getMessage()) : AjaxResult.error(e.getMessage());
     }
@@ -97,7 +98,8 @@ public class GlobalExceptionHandler
     public AjaxResult handleRuntimeException(RuntimeException e, HttpServletRequest request)
     {
         String requestURI = request.getRequestURI();
-        log.error("请求地址'{}',发生未知异常.", requestURI, e);
+        // 只记录错误消息，不打印完整堆栈（简化日志）
+        log.error("请求地址'{}',发生运行时异常: {}", requestURI, e.getMessage());
         return AjaxResult.error(e.getMessage());
     }
 
@@ -108,7 +110,8 @@ public class GlobalExceptionHandler
     public AjaxResult handleException(Exception e, HttpServletRequest request)
     {
         String requestURI = request.getRequestURI();
-        log.error("请求地址'{}',发生系统异常.", requestURI, e);
+        // 只记录错误消息，不打印完整堆栈（简化日志）
+        log.error("请求地址'{}',发生系统异常: {}", requestURI, e.getMessage());
         return AjaxResult.error(e.getMessage());
     }
 
@@ -118,8 +121,8 @@ public class GlobalExceptionHandler
     @ExceptionHandler(BindException.class)
     public AjaxResult handleBindException(BindException e)
     {
-        log.error(e.getMessage(), e);
         String message = e.getAllErrors().get(0).getDefaultMessage();
+        log.error("参数验证异常: {}", message);
         return AjaxResult.error(message);
     }
 
@@ -129,8 +132,8 @@ public class GlobalExceptionHandler
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public Object handleMethodArgumentNotValidException(MethodArgumentNotValidException e)
     {
-        log.error(e.getMessage(), e);
         String message = e.getBindingResult().getFieldError().getDefaultMessage();
+        log.error("参数验证异常: {}", message);
         return AjaxResult.error(message);
     }
 

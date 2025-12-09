@@ -40,7 +40,13 @@
           <img :src="codeUrl" @click="getCode" class="login-code-img"/>
         </div>
       </el-form-item>
-      <el-checkbox v-model="loginForm.rememberMe" style="margin:0px 0px 25px 0px;">记住密码</el-checkbox>
+      <div class="login-options">
+        <el-checkbox v-model="loginForm.rememberMe">记住密码</el-checkbox>
+        <div class="register-link" v-if="registerEnabled">
+          <span class="tip-text">还没有账号？</span>
+          <router-link class="link-type" :to="'/register'">立即注册</router-link>
+        </div>
+      </div>
       <el-form-item style="width:100%;">
         <el-button
           :loading="loading"
@@ -52,9 +58,6 @@
           <span v-if="!loading">登 录</span>
           <span v-else>登 录 中...</span>
         </el-button>
-        <div style="float: right;" v-if="register">
-          <router-link class="link-type" :to="'/register'">立即注册</router-link>
-        </div>
       </el-form-item>
     </el-form>
     <!--  底部  -->
@@ -97,7 +100,7 @@ const loading = ref(false)
 // 验证码开关
 const captchaEnabled = ref(true)
 // 注册开关
-const register = ref(false)
+const registerEnabled = ref(false)
 const redirect = ref(undefined)
 
 watch(route, (newRoute) => {
@@ -143,6 +146,7 @@ function handleLogin() {
 function getCode() {
   getCodeImg().then(res => {
     captchaEnabled.value = res.captchaEnabled === undefined ? true : res.captchaEnabled
+    registerEnabled.value = res.registerEnabled === true
     if (captchaEnabled.value) {
       codeUrl.value = "data:image/gif;base64," + res.img
       loginForm.value.uuid = res.uuid
@@ -227,5 +231,32 @@ getCookie()
 .login-code-img {
   height: 40px;
   padding-left: 12px;
+}
+.login-options {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 25px;
+  
+  .register-link {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    
+    .tip-text {
+      font-size: 13px;
+      color: #909399;
+    }
+    
+    .link-type {
+      font-size: 13px;
+      color: #409eff;
+      text-decoration: none;
+      
+      &:hover {
+        color: #66b1ff;
+      }
+    }
+  }
 }
 </style>

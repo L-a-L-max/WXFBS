@@ -1,6 +1,7 @@
 package com.wx.fbsir.business.dailyassistant.mapper;
 
 import java.util.List;
+import org.apache.ibatis.annotations.Mapper;
 import com.wx.fbsir.business.dailyassistant.domain.YuanqiAgentConfig;
 
 /**
@@ -9,6 +10,7 @@ import com.wx.fbsir.business.dailyassistant.domain.YuanqiAgentConfig;
  * @author wxfbsir
  * @date 2025-12-05
  */
+@Mapper
 public interface YuanqiAgentConfigMapper
 {
     /**

@@ -125,15 +125,10 @@ public class DailyArticleServiceImpl implements IDailyArticleService
     }
 
     /**
-     * 创建文章并异步调用智能体优化
-     * @param userId 用户ID
-     * @param articleTitle 文章标题
-     * @param selectedModels 已选择的模型，格式如"1,2,3"
-     * @return 文章（立即返回，此时status=0处理中）
+     * 创建文章（仅创建记录，不触发优化）
      * 
-     * 注意：此方法不使用@Transactional，以确保文章插入后立即提交到数据库，
-     * 这样工作流回调时能立即查询到该文章记录。
-     * 实际的API调用在后台异步执行，不会阻塞前端响应。
+     * 注意：优化任务需要在Controller层调用 triggerArticleOptimization 方法触发
+     *      这样可以确保异步执行（避免同类调用导致@Async失效）
      */
     @Override
     public DailyArticle createArticleAndOptimize(Long userId, String articleTitle, String selectedModels)
@@ -148,12 +143,9 @@ public class DailyArticleServiceImpl implements IDailyArticleService
         // 2. 立即保存到数据库
         dailyArticleMapper.insertDailyArticle(article);
         
-        log.info("文章创建成功 - 文章ID: {}, 标题: {}, 开始异步处理", article.getId(), articleTitle);
+        log.info("文章创建成功 - 文章ID: {}, 标题: {}, 等待Controller触发异步优化", article.getId(), articleTitle);
 
-        // 3. 异步调用腾讯元器API（不等待结果，立即返回）
-        processArticleOptimizationAsync(article.getId(), userId, articleTitle);
-
-        // 4. 立即返回文章（此时status=0，处理中）
+        // 3. 返回文章（Controller层会调用异步方法）
         return article;
     }
     
@@ -161,21 +153,22 @@ public class DailyArticleServiceImpl implements IDailyArticleService
      * 异步处理文章优化
      * 该方法在后台线程池中执行，不会阻塞主线程
      * 
-     * 注意：此方法会立即在后台线程中执行，但内部仍需等待元器API响应（最多60秒）
-     * 因此前端创建文章后会立即返回（< 1秒），但后台线程会继续等待元器API
+     * 重要：此方法必须由外部类调用才能确保@Async生效
+     *      如果在同一个类内部调用（this.method()），Spring AOP代理不会介入，会导致同步执行
      * 
      * @param articleId 文章ID
      * @param userId 用户ID
      * @param articleTitle 文章标题
      */
     @Async("asyncTaskExecutor")
-    public void processArticleOptimizationAsync(Long articleId, Long userId, String articleTitle)
+    @Override
+    public void triggerArticleOptimization(Long articleId, Long userId, String articleTitle)
     {
         log.info("[异步任务] 开始处理文章优化 - 文章ID: {}", articleId);
         
         try {
-            // 获取用户的腾讯元器智能体配置
-            YuanqiAgentConfig config = yuanqiAgentConfigService.selectActiveConfigByUserId(userId);
+            // 获取用户的腾讯元器智能体配置（解密后的真实配置）
+            YuanqiAgentConfig config = yuanqiAgentConfigService.selectActiveConfigByUserIdDecrypted(userId);
             
             if (config == null) {
                 log.error("[异步任务] 未找到智能体配置 - 文章ID: {}", articleId);
@@ -188,8 +181,7 @@ public class DailyArticleServiceImpl implements IDailyArticleService
             String appId = config.getAgentId();     // 智能体ID（appid）
             String userIdStr = String.valueOf(userId);
             
-            log.info("[异步任务] 调用腾讯元器工作流 - AppId: {}, Title: {}, ArticleId: {} (注意：此调用会等待最多60秒)", 
-                    appId, articleTitle, articleId);
+            log.info("[异步任务] 开始优化文章 - ID: {}, 标题: {}", articleId, articleTitle);
             
             // 调用API服务（异步工作流，只提交任务，不等待内容）
             YuanqiApiResponse response = yuanqiAgentApiService.optimizeArticle(
@@ -205,13 +197,23 @@ public class DailyArticleServiceImpl implements IDailyArticleService
                 // 注意：内容不从这里获取，而是通过工作流的HTTP回调接口传递
                 //      - /saveModelContent 保存各模型生成的内容
                 //      - /updateOptimizedContent 保存最终优化内容
-                updateArticleStatus(articleId, 0, null, null, response.getTaskId());  // status仍为0（处理中）
                 
-                log.info("[异步任务] 工作流任务提交成功 - 文章ID: {}, TaskId: {}, 等待回调传递结果", 
-                        articleId, response.getTaskId());
-                
-                // 启动5分钟超时检查：如果5分钟后还没收到回调，设为失败
-                scheduleCallbackTimeoutCheck(articleId, articleTitle);
+                // 检查文章是否已经通过回调完成（避免竞态条件）
+                DailyArticle currentArticle = dailyArticleMapper.selectDailyArticleById(articleId);
+                if (currentArticle != null && currentArticle.getProcessStatus() == 1) {
+                    // 文章已经通过回调完成，不再更新状态
+                    log.info("[异步任务] 工作流任务提交成功，但文章已通过回调完成 - 文章ID: {}, TaskId: {}, 跳过状态更新", 
+                            articleId, response.getTaskId());
+                } else {
+                    // 文章还未完成，更新taskId并保持处理中状态
+                    updateArticleStatus(articleId, 0, null, null, response.getTaskId());  // status仍为0（处理中）
+                    
+                    log.info("[异步任务] 工作流任务提交成功 - 文章ID: {}, TaskId: {}, 等待回调传递结果", 
+                            articleId, response.getTaskId());
+                    
+                    // 启动5分钟超时检查：如果5分钟后还没收到回调，设为失败
+                    scheduleCallbackTimeoutCheck(articleId, articleTitle);
+                }
             } else {
                 // 任务提交失败
                 updateArticleStatus(articleId, 2, response.getErrorMessage(), null, null);
@@ -272,13 +274,8 @@ public class DailyArticleServiceImpl implements IDailyArticleService
         // 检查该模型是否被选中
         String selectedModels = existingArticle.getSelectedModels();
         if (selectedModels == null || !selectedModels.contains(String.valueOf(modelIndex))) {
-            log.info("模型{}未被选中，跳过保存 - articleId: {}, selectedModels: {}", 
-                    modelIndex, articleId, selectedModels);
-            return 0; // 模型未被选中，不保存，返回0
+            return 0; // 模型未被选中，不保存
         }
-        
-        log.info("模型{}已选中，开始保存内容 - articleId: {}, modelName: {}", 
-                modelIndex, articleId, modelName);
         
         DailyArticle article = new DailyArticle();
         article.setId(articleId);
@@ -314,16 +311,8 @@ public class DailyArticleServiceImpl implements IDailyArticleService
     @Override
     public int updateOptimizedContent(Long articleId, String optimizedContent)
     {
-        log.info("更新优化内容并标记完成 - articleId: {}, contentLength: {}", articleId, optimizedContent.length());
-        
         // updateOptimizedContent 的 SQL 会同时将 process_status 设置为 1
-        int result = dailyArticleMapper.updateOptimizedContent(articleId, optimizedContent);
-        
-        if (result > 0) {
-            log.info("优化内容更新成功，文章已标记为完成 - articleId: {}", articleId);
-        }
-        
-        return result;
+        return dailyArticleMapper.updateOptimizedContent(articleId, optimizedContent);
     }
 
     /**
@@ -349,8 +338,8 @@ public class DailyArticleServiceImpl implements IDailyArticleService
     @Override
     public String layoutArticleSync(Long userId, String content)
     {
-        // 1. 获取用户的腾讯元器配置
-        YuanqiAgentConfig config = yuanqiAgentConfigService.selectActiveConfigByUserId(userId);
+        // 1. 获取用户的腾讯元器配置（解密后的真实配置）
+        YuanqiAgentConfig config = yuanqiAgentConfigService.selectActiveConfigByUserIdDecrypted(userId);
         
         if (config == null) {
             log.error("未找到启用的腾讯元器智能体配置 - userId: {}", userId);
@@ -383,7 +372,7 @@ public class DailyArticleServiceImpl implements IDailyArticleService
         
         String userIdStr = String.valueOf(userId);
         
-        log.info("调用腾讯元器同步排版工作流 - AppId: {}, ContentLength: {}", appId, content.length());
+        log.info("开始智能排版 - 内容长度: {} 字符", content.length());
         
         try {
             // 调用同步排版API

@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import com.wx.fbsir.common.config.WxFbsirConfig;
+import com.wx.fbsir.common.core.controller.BaseController;
 import com.wx.fbsir.common.core.domain.AjaxResult;
 import com.wx.fbsir.common.utils.StringUtils;
 import com.wx.fbsir.common.utils.file.FileUploadUtils;
@@ -27,7 +28,7 @@ import com.wx.fbsir.framework.config.ServerConfig;
  */
 @RestController
 @RequestMapping("/common")
-public class CommonController
+public class CommonController extends BaseController
 {
     private static final Logger log = LoggerFactory.getLogger(CommonController.class);
 
@@ -78,13 +79,12 @@ public class CommonController
         {
             // 上传文件路径
             String filePath = WxFbsirConfig.getUploadPath();
-            // 上传并返回新文件名称
-            String fileName = FileUploadUtils.upload(filePath, file);
-            String url = serverConfig.getUrl() + fileName;
+            // 上传并返回完整URL（包含域名）
+            String fullUrl = FileUploadUtils.uploadAndGetFullUrl(filePath, file, com.wx.fbsir.common.utils.file.MimeTypeUtils.DEFAULT_ALLOWED_EXTENSION);
             AjaxResult ajax = AjaxResult.success();
-            ajax.put("url", url);
-            ajax.put("fileName", fileName);
-            ajax.put("newFileName", FileUtils.getName(fileName));
+            ajax.put("url", fullUrl);  // 返回完整URL
+            ajax.put("fileName", fullUrl);  // 兼容旧代码
+            ajax.put("newFileName", FileUtils.getName(fullUrl));
             ajax.put("originalFilename", file.getOriginalFilename());
             return ajax;
         }
@@ -110,12 +110,11 @@ public class CommonController
             List<String> originalFilenames = new ArrayList<String>();
             for (MultipartFile file : files)
             {
-                // 上传并返回新文件名称
-                String fileName = FileUploadUtils.upload(filePath, file);
-                String url = serverConfig.getUrl() + fileName;
-                urls.add(url);
-                fileNames.add(fileName);
-                newFileNames.add(FileUtils.getName(fileName));
+                // 上传并返回完整URL（包含域名）
+                String fullUrl = FileUploadUtils.uploadAndGetFullUrl(filePath, file, com.wx.fbsir.common.utils.file.MimeTypeUtils.DEFAULT_ALLOWED_EXTENSION);
+                urls.add(fullUrl);
+                fileNames.add(fullUrl);  // 兼容旧代码
+                newFileNames.add(FileUtils.getName(fullUrl));
                 originalFilenames.add(file.getOriginalFilename());
             }
             AjaxResult ajax = AjaxResult.success();
@@ -157,6 +156,43 @@ public class CommonController
         catch (Exception e)
         {
             log.error("下载文件失败", e);
+        }
+    }
+
+    /**
+     * 公众号图片上传请求
+     * 上传到 officialaccount/{userId} 目录，并返回完整URL
+     * 文件名重复时自动添加序号
+     */
+    @PostMapping("/upload/officialaccount")
+    public AjaxResult uploadOfficialAccountImage(MultipartFile file) throws Exception
+    {
+        try
+        {
+            // 获取当前用户ID
+            Long userId = getUserId();
+            
+            // 公众号图片上传路径
+            String filePath = WxFbsirConfig.getOfficialAccountUploadPath();
+            
+            // 使用公众号专用上传方法（按用户ID分目录，文件名重复自动加序号）
+            String fullUrl = FileUploadUtils.uploadOfficialAccountAndGetFullUrl(
+                filePath, 
+                file, 
+                userId, 
+                com.wx.fbsir.common.utils.file.MimeTypeUtils.IMAGE_EXTENSION
+            );
+            
+            AjaxResult ajax = AjaxResult.success();
+            ajax.put("url", fullUrl);  // 返回完整URL
+            ajax.put("fileName", fullUrl);  // 兼容旧代码
+            ajax.put("newFileName", FileUtils.getName(fullUrl));
+            ajax.put("originalFilename", file.getOriginalFilename());
+            return ajax;
+        }
+        catch (Exception e)
+        {
+            return AjaxResult.error(e.getMessage());
         }
     }
 }

@@ -116,9 +116,15 @@ watch(() => props.modelValue, val => {
     // 然后将数组转为对象数组
     fileList.value = list.map(item => {
       if (typeof item === "string") {
-        if (item.indexOf(baseUrl) === -1 && !isExternal(item)) {
+        // 判断是否已经是完整URL（包含http://或https://）
+        if (isExternal(item)) {
+          // 已经是完整URL，直接使用
+          item = { name: item, url: item }
+        } else if (item.indexOf(baseUrl) === -1) {
+          // 不是完整URL且不包含baseUrl，则拼接
           item = { name: baseUrl + item, url: baseUrl + item }
         } else {
+          // 包含baseUrl，直接使用
           item = { name: item, url: item }
         }
       }
@@ -173,7 +179,8 @@ function handleExceed() {
 // 上传成功回调
 function handleUploadSuccess(res, file) {
   if (res.code === 200) {
-    uploadList.value.push({ name: res.fileName, url: res.fileName })
+    // res.url 现在返回的是完整URL，直接使用
+    uploadList.value.push({ name: res.url, url: res.url })
     uploadedSuccessfully()
   } else {
     number.value--
@@ -223,7 +230,8 @@ function listToString(list, separator) {
   separator = separator || ","
   for (let i in list) {
     if (undefined !== list[i].url && list[i].url.indexOf("blob:") !== 0) {
-      strs += list[i].url.replace(baseUrl, "") + separator
+      // 现在直接存储完整URL，不需要移除baseUrl
+      strs += list[i].url + separator
     }
   }
   return strs != "" ? strs.substr(0, strs.length - 1) : ""

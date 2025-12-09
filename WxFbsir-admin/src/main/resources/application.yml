@@ -12,6 +12,9 @@ wxfbsir:
   addressEnabled: false
   # 验证码类型 math 数字计算 char 字符验证
   captchaType: math
+  # 域名配置（用于拼接完整URL）
+  # 开发环境示例：http://localhost:8080
+  domain: http://localhost:8080
 
 # 开发环境配置
 server:
@@ -34,7 +37,7 @@ server:
 # 日志配置
 logging:
   level:
-    com.wx.fbsir: debug
+    com.wx.fbsir: info
     org.springframework: warn
 
 # 用户配置
@@ -142,3 +145,11 @@ xss:
   excludes: /system/notice
   # 匹配链接
   urlPatterns: /system/*,/monitor/*,/tool/*
+# AES加密配置
+aes:
+  secret:
+    # AES加密密钥（256位）- 请勿泄露
+    # 生产环境建议使用环境变量：export AES_SECRET_KEY=your_key
+    # 此密钥用于加密敏感数据（如公众号AppID、AppSecret等）
+    # 密钥复杂度：包含大小写字母、数字、特殊符号，长度64位
+    key: 7Kx#9mP@2wQe$8vN!5hB^4gT&1cR*6yL+3dF%0jM(9sA)8zX~7uW<5iO>4nE|2kV

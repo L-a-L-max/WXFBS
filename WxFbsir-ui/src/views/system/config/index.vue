@@ -101,7 +101,23 @@
          <el-table-column label="参数主键" align="center" prop="configId" />
          <el-table-column label="参数名称" align="center" prop="configName" :show-overflow-tooltip="true" />
          <el-table-column label="参数键名" align="center" prop="configKey" :show-overflow-tooltip="true" />
-         <el-table-column label="参数键值" align="center" prop="configValue" :show-overflow-tooltip="true" />
+         <el-table-column label="参数键值" align="center" prop="configValue" width="150">
+            <template #default="scope">
+               <!-- 如果值是true或false，显示switch开关 -->
+               <el-switch
+                  v-if="isBooleanValue(scope.row.configValue)"
+                  v-model="scope.row.configValue"
+                  active-value="true"
+                  inactive-value="false"
+                  active-color="#13ce66"
+                  inactive-color="#ff4949"
+                  @change="handleConfigValueChange(scope.row)"
+                  v-hasPermi="['system:config:edit']"
+               />
+               <!-- 否则显示普通文本 -->
+               <span v-else :title="scope.row.configValue">{{ scope.row.configValue }}</span>
+            </template>
+         </el-table-column>
          <el-table-column label="系统内置" align="center" prop="configType">
             <template #default="scope">
                <dict-tag :options="sys_yes_no" :value="scope.row.configType" />
@@ -309,6 +325,46 @@ function handleExport() {
 function handleRefreshCache() {
   refreshCache().then(() => {
     proxy.$modal.msgSuccess("刷新缓存成功")
+  })
+}
+
+/** 判断值是否为布尔类型字符串 */
+function isBooleanValue(value) {
+  if (!value) return false
+  const lowerValue = String(value).toLowerCase().trim()
+  return lowerValue === 'true' || lowerValue === 'false'
+}
+
+/** 处理参数值Switch切换 */
+function handleConfigValueChange(row) {
+  const loadingInstance = proxy.$loading({
+    lock: true,
+    text: '正在更新配置...',
+    background: 'rgba(0, 0, 0, 0.7)'
+  })
+  
+  // 准备更新数据
+  const updateData = {
+    configId: row.configId,
+    configName: row.configName,
+    configKey: row.configKey,
+    configValue: row.configValue,
+    configType: row.configType,
+    remark: row.remark
+  }
+  
+  updateConfig(updateData).then(response => {
+    proxy.$modal.msgSuccess('配置更新成功')
+    // 刷新缓存
+    refreshCache()
+    // 刷新列表以确保数据同步
+    getList()
+  }).catch(() => {
+    // 更新失败，恢复原值
+    row.configValue = row.configValue === 'true' ? 'false' : 'true'
+    proxy.$modal.msgError('配置更新失败')
+  }).finally(() => {
+    loadingInstance.close()
   })
 }
 

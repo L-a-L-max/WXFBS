@@ -8,6 +8,7 @@ import com.wx.fbsir.common.annotation.Anonymous;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import com.wx.fbsir.common.annotation.Log;
@@ -45,6 +46,7 @@ public class DailyArticleController extends BaseController
     /**
      * 查询日更助手文章列表
      */
+    @PreAuthorize("@ss.hasPermi('business:daily:query')")
     @GetMapping("/list")
     public TableDataInfo list(DailyArticle dailyArticle)
     {
@@ -54,14 +56,17 @@ public class DailyArticleController extends BaseController
     }
 
     /**
-     * 查询当前用户的日更助手文章列表
+     * 查询当前用户的日更助手文章列表（支持分页）
      */
+    @PreAuthorize("@ss.hasPermi('business:daily:query')")
     @GetMapping("/myList")
-    public AjaxResult myList()
+    public TableDataInfo myList(DailyArticle dailyArticle)
     {
         Long userId = getUserId();
-        List<DailyArticle> list = dailyArticleService.selectDailyArticleListByUserId(userId);
-        return success(list);
+        dailyArticle.setUserId(userId);
+        startPage();
+        List<DailyArticle> list = dailyArticleService.selectDailyArticleList(dailyArticle);
+        return getDataTable(list);
     }
 
     /**
@@ -79,6 +84,7 @@ public class DailyArticleController extends BaseController
     /**
      * 获取日更助手文章详细信息
      */
+    @PreAuthorize("@ss.hasPermi('business:daily:query')")
     @GetMapping(value = "/{id}")
     public AjaxResult getInfo(@PathVariable("id") Long id)
     {
@@ -119,6 +125,7 @@ public class DailyArticleController extends BaseController
     /**
      * 新增日更助手文章
      */
+    @PreAuthorize("@ss.hasPermi('business:daily:add')")
     @Log(title = "日更助手文章", businessType = BusinessType.INSERT)
     @PostMapping
     public AjaxResult add(@Validated @RequestBody DailyArticle dailyArticle)
@@ -132,6 +139,7 @@ public class DailyArticleController extends BaseController
      * 
      * 返回后文章处理状态为 0（处理中），前端需要轮询 /status/{id} 接口查询处理结果
      */
+    @PreAuthorize("@ss.hasPermi('business:daily:add')")
     @Log(title = "日更助手-创建优化文章", businessType = BusinessType.INSERT)
     @PostMapping("/createAndOptimize")
     public AjaxResult createAndOptimize(@RequestBody Map<String, String> params)
@@ -147,10 +155,14 @@ public class DailyArticleController extends BaseController
         }
 
         Long userId = getUserId();
+        
+        // 1. 快速创建文章记录（同步，< 100ms）
         DailyArticle article = dailyArticleService.createArticleAndOptimize(userId, articleTitle, selectedModels);
         
-        // 异步处理：文章已创建，processStatus=0（处理中），后台正在调用AI生成内容
-        // 前端可通过 GET /business/daily-article/status/{id} 接口轮询查询处理状态
+        // 2. 触发异步优化任务（从Controller调用确保@Async生效）
+        dailyArticleService.triggerArticleOptimization(article.getId(), userId, articleTitle);
+        
+        // 3. 立即返回（不等待AI生成结果）
         Map<String, Object> result = new HashMap<>();
         result.put("id", article.getId());
         result.put("articleTitle", article.getArticleTitle());
@@ -169,8 +181,6 @@ public class DailyArticleController extends BaseController
     public AjaxResult saveModelContent(@RequestBody Map<String, Object> params)
     {
         try {
-            logger.info("收到保存模型内容请求，参数: {}", params);
-            
             // 参数校验
             if (params.get("articleId") == null) {
                 return error("缺少参数: articleId");
@@ -190,12 +200,9 @@ public class DailyArticleController extends BaseController
             String content = params.get("content").toString();
             int modelIndex = Integer.parseInt(params.get("modelIndex").toString());
 
-            logger.info("解析参数成功 - articleId: {}, modelName: {}, modelIndex: {}, contentLength: {}", 
-                       articleId, modelName, modelIndex, content.length());
+            logger.info("保存模型{}内容 - 文章ID: {}", modelIndex, articleId);
 
             int result = dailyArticleService.saveModelContent(articleId, modelName, content, modelIndex);
-            
-            logger.info("保存模型内容完成 - result: {}", result);
             return toAjax(result);
             
         } catch (NumberFormatException e) {
@@ -216,8 +223,6 @@ public class DailyArticleController extends BaseController
     public AjaxResult updateOptimizedContent(@RequestBody Map<String, Object> params)
     {
         try {
-            logger.info("收到更新优化内容请求，参数: {}", params);
-            
             // 参数校验
             if (params.get("articleId") == null) {
                 return error("缺少参数: articleId");
@@ -229,18 +234,14 @@ public class DailyArticleController extends BaseController
             Long articleId = Long.parseLong(params.get("articleId").toString());
             String optimizedContent = params.get("optimizedContent").toString();
 
-            logger.info("解析参数成功 - articleId: {}, contentLength: {}", 
-                       articleId, optimizedContent.length());
-
             int result = dailyArticleService.updateOptimizedContent(articleId, optimizedContent);
             
             // 显式更新状态为已完成
             if (result > 0) {
                 dailyArticleService.updateProcessStatus(articleId, 1);
-                logger.info("优化内容更新成功，状态已设置为已完成 - articleId: {}", articleId);
+                logger.info("文章ID: {} 已完成优化", articleId);
             }
             
-            logger.info("更新优化内容完成 - result: {}", result);
             return toAjax(result);
             
         } catch (NumberFormatException e) {
@@ -266,6 +267,7 @@ public class DailyArticleController extends BaseController
     /**
      * 删除日更助手文章
      */
+    @PreAuthorize("@ss.hasPermi('business:daily:remove')")
     @Log(title = "日更助手文章", businessType = BusinessType.DELETE)
     @DeleteMapping("/{ids}")
     public AjaxResult remove(@PathVariable Long[] ids)
@@ -290,26 +292,30 @@ public class DailyArticleController extends BaseController
      * @param params 请求参数（包含content）
      * @return 排版后的内容
      */
+    @PreAuthorize("@ss.hasPermi('business:daily:layout')")
     @Log(title = "日更助手-智能排版", businessType = BusinessType.OTHER)
     @PostMapping("/layoutArticle")
     public AjaxResult layoutArticle(@RequestBody Map<String, Object> params)
     {
-        log.info("=== 收到排版请求 === params: {}", params);
+        log.debug("[排版] 收到请求 - 内容长度: {}", params.containsKey("content") ? params.get("content").toString().length() : 0);
         
         try {
             // 1. 获取参数
             String content = params.get("content").toString();
 
             if (content == null || content.trim().isEmpty()) {
-                log.warn("排版内容为空");
+                log.warn("[排版] 内容为空");
                 return error("排版内容不能为空");
             }
 
-            log.info("开始排版文章 - contentLength: {}", content.length());
+            log.debug("[排版] 开始处理 - 内容长度: {}", content.length());
 
             // 2. 调用Service进行排版（同步返回排版结果，不保存到数据库）
             Long userId = getUserId();
             String layoutedContent = dailyArticleService.layoutArticleSync(userId, content);
+
+            log.info("[排版] 完成 - 输入: {} 字符, 输出: {} 字符", content.length(), layoutedContent.length());
+            log.trace("[排版] HTML前300字符: {}", layoutedContent.length() > 300 ? layoutedContent.substring(0, 300) : layoutedContent);
 
             // 3. 返回排版后的内容
             Map<String, Object> result = new HashMap<>();
@@ -319,7 +325,7 @@ public class DailyArticleController extends BaseController
             return success(result);
 
         } catch (Exception e) {
-            log.error("排版文章失败", e);
+            log.error("[排版] 失败: {}", e.getMessage());
             return error("排版失败：" + e.getMessage());
         }
     }
@@ -331,6 +337,7 @@ public class DailyArticleController extends BaseController
      * @param params 请求参数（articleId, contentType, layoutedContent）
      * @return 投递结果
      */
+    @PreAuthorize("@ss.hasPermi('business:daily:publish')")
     @Log(title = "日更助手-投递公众号", businessType = BusinessType.OTHER)
     @PostMapping("/publishToWechat")
     public AjaxResult publishToWechat(@RequestBody Map<String, Object> params)

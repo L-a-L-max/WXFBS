@@ -30,6 +30,9 @@ public class WxFbsirConfig
     /** 验证码类型 */
     private static String captchaType;
 
+    /** 域名 */
+    private static String domain;
+
     public String getName()
     {
         return name;
@@ -88,6 +91,16 @@ public class WxFbsirConfig
         WxFbsirConfig.captchaType = captchaType;
     }
 
+    public static String getDomain()
+    {
+        return domain;
+    }
+
+    public void setDomain(String domain)
+    {
+        WxFbsirConfig.domain = domain;
+    }
+
     /**
      * 获取导入上传路径
      */
@@ -118,5 +131,13 @@ public class WxFbsirConfig
     public static String getUploadPath()
     {
         return getProfile() + "/upload";
+    }
+
+    /**
+     * 获取公众号图片上传路径
+     */
+    public static String getOfficialAccountUploadPath()
+    {
+        return getProfile() + "/upload/officialaccount";
     }
 }
