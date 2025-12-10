@@ -41,7 +41,8 @@ public class PointsFansController extends BaseController {
     @GetMapping("/list")
     public TableDataInfo list(SysUser user) {
         startPage();
-        List<SysUser> list = userService.selectUserList(user);
+        // 使用积分服务的专门方法获取粉丝列表，避免数据范围限制
+        List<SysUser> list = pointsService.getPointsFansList(user);
         return getDataTable(list);
     }
 

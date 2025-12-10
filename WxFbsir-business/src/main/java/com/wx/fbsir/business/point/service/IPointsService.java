@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Map;
 import com.wx.fbsir.common.core.domain.AjaxResult;
 import com.wx.fbsir.common.core.page.TableDataInfo;
+import com.wx.fbsir.common.core.domain.entity.SysUser;
 import com.wx.fbsir.business.point.domain.PointsRecord;
 
 /**
@@ -64,5 +65,13 @@ public interface IPointsService {
      * @return 结果
      */
     public AjaxResult grantPointsByAdmin(Long userId, Integer pointsAmount, String remark);
+    
+    /**
+     * 获取粉丝列表
+     * 
+     * @param user 用户查询条件
+     * @return 粉丝列表
+     */
+    public List<SysUser> getPointsFansList(SysUser user);
 }
 

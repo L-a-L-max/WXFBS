@@ -49,7 +49,39 @@ router.beforeEach((to, from, next) => {
           })
         })
       } else {
-        next()
+        // 已登录且有角色信息，添加权限刷新机制
+        // 定期刷新权限（每10分钟）
+        const lastPermissionRefresh = sessionStorage.getItem('lastPermissionRefresh')
+        const now = Date.now()
+        const refreshInterval = 10 * 60 * 1000 // 10分钟
+        
+        if (!lastPermissionRefresh || now - parseInt(lastPermissionRefresh) > refreshInterval) {
+          // 刷新权限
+          useUserStore().refreshPermission().then(() => {
+            // 重新生成路由
+            usePermissionStore().generateRoutes().then(accessRoutes => {
+              // 清除旧路由
+              router.getRoutes().forEach(route => {
+                if (!isWhiteList(route.path) && !isHttp(route.path) && route.name !== 'Layout') {
+                  router.removeRoute(route.name)
+                }
+              })
+              // 添加新路由
+              accessRoutes.forEach(route => {
+                if (!isHttp(route.path)) {
+                  router.addRoute(route)
+                }
+              })
+              sessionStorage.setItem('lastPermissionRefresh', now.toString())
+              next({ ...to, replace: true })
+            })
+          }).catch(() => {
+            // 刷新权限失败，继续使用旧权限
+            next()
+          })
+        } else {
+          next()
+        }
       }
     }
   } else {

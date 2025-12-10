@@ -22,6 +22,7 @@ import com.wx.fbsir.business.point.mapper.PointsRuleMapper;
 import com.wx.fbsir.business.point.service.IPointsRuleService;
 import com.wx.fbsir.business.point.service.IPointsService;
 import com.wx.fbsir.common.core.domain.entity.SysUser;
+import com.wx.fbsir.system.mapper.SysUserMapper;
 import com.wx.fbsir.system.service.ISysUserService;
 
 /**
@@ -47,6 +48,9 @@ public class PointsServiceImpl implements IPointsService {
     
     @Autowired
     private ISysUserService userService;
+    
+    @Autowired
+    private SysUserMapper sysUserMapper;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -240,6 +244,12 @@ public class PointsServiceImpl implements IPointsService {
         pointsRecordMapper.insertPointsRecord(record);
         
         return AjaxResult.success("积分发放成功");
+    }
+    
+    @Override
+    public List<SysUser> getPointsFansList(SysUser user) {
+        // 直接调用SysUserMapper查询用户列表，绕过@DataScope注解的限制
+        return sysUserMapper.selectUserList(user);
     }
 
     /**
