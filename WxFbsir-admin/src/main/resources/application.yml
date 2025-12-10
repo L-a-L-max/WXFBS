@@ -7,14 +7,15 @@ wxfbsir:
   # 版权年份
   copyrightYear: 2025
   # 文件路径 示例（ Windows配置D:/WxFbsir/uploadPath，Linux配置 /home/WxFbsir/uploadPath）
-  profile: D:/WxFbsir/uploadPath
+  profile: ${WXFBSIR_FILE_PATH:D:/WxFbsir/uploadPath}
   # 获取ip地址开关
   addressEnabled: false
   # 验证码类型 math 数字计算 char 字符验证
   captchaType: math
   # 域名配置（用于拼接完整URL）
   # 开发环境示例：http://localhost:8080
-  domain: http://localhost:8080
+  # 生产环境建议使用环境变量：WXFBSIR_DOMAIN
+  domain: ${WXFBSIR_DOMAIN:http://localhost:8080}
 
 # 开发环境配置
 server:
@@ -72,13 +73,13 @@ spring:
     # redis 配置
     redis:
       # 地址
-      host: 127.0.0.1
+      host: ${WXFBSIR_REDIS_HOST:127.0.0.1}
       # 端口，默认为6379
-      port: 6379
+      port: ${WXFBSIR_REDIS_PORT:6379}
       # 数据库索引
-      database: 0
+      database: ${WXFBSIR_REDIS_DATABASE:0}
       # 密码
-      password:
+      password: ${WXFBSIR_REDIS_PASSWORD:}
       # 连接超时时间
       timeout: 10s
       lettuce:
@@ -96,8 +97,8 @@ spring:
 token:
   # 令牌自定义标识
   header: Authorization
-  # 令牌密钥
-  secret: abcdefghijklmnopqrstuvwxyz
+  # 令牌密钥（生产环境建议使用环境变量：WXFBSIR_TOKEN_SECRET）
+  secret: ${WXFBSIR_TOKEN_SECRET:abcdefghijklmnopqrstuvwxyz}
   # 令牌有效期（默认30分钟）
   expireTime: 30
 
@@ -149,7 +150,7 @@ xss:
 aes:
   secret:
     # AES加密密钥（256位）- 请勿泄露
-    # 生产环境建议使用环境变量：export AES_SECRET_KEY=your_key
+    # 生产环境建议使用环境变量：WXFBSIR_AES_SECRET_KEY
     # 此密钥用于加密敏感数据（如公众号AppID、AppSecret等）
     # 密钥复杂度：包含大小写字母、数字、特殊符号，长度64位
-    key: 7Kx#9mP@2wQe$8vN!5hB^4gT&1cR*6yL+3dF%0jM(9sA)8zX~7uW<5iO>4nE|2kV
+    key: ${WXFBSIR_AES_SECRET_KEY:7Kx#9mP@2wQe$8vN!5hB^4gT&1cR*6yL+3dF%0jM(9sA)8zX~7uW<5iO>4nE|2kV}
