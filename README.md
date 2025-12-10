@@ -1,7 +1,7 @@
 <h1 align="center" style="margin: 30px 0 30px; font-weight: bold;">微信福帮手</h1>
 <h4 align="center">微信生态内容智能化工具</h4>
 <p align="center">
-	<a href="https://gitee.com/U3W-AI/RuoYi-Vue"><img src="https://img.shields.io/badge/WxFbsir-v1.1.2-brightgreen.svg"></a>
+	<a href="https://gitee.com/U3W-AI/RuoYi-Vue"><img src="https://img.shields.io/badge/WxFbsir-v1.1.3-brightgreen.svg"></a>
 	<a href="https://wx.fbsir.com"><img src="https://img.shields.io/badge/website-wx.fbsir.com-blue.svg"></a>
 </p>
 
@@ -34,6 +34,10 @@
 
 ✅ 历史记录管理
 保存所有生成的文章，支持查看、编辑和删除
+
+✅ 内置积分系统
+支持积分规则配置、积分实现和对用户进行积分管理
+
 
 ## 快速开始
 
@@ -137,4 +141,4 @@ npm run dev
 - **系统接口**: Swagger API文档自动生成
 - **表单构建**: 在线表单设计器
 
-#####  文档更新日期：2025年12月9日 17：00  文档版本：1.1.2
+#####  文档更新日期：2025年12月10日 16：00  文档版本：1.1.3
