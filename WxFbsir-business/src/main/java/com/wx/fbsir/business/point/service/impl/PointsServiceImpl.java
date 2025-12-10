@@ -21,6 +21,8 @@ import com.wx.fbsir.business.point.mapper.PointsRecordMapper;
 import com.wx.fbsir.business.point.mapper.PointsRuleMapper;
 import com.wx.fbsir.business.point.service.IPointsRuleService;
 import com.wx.fbsir.business.point.service.IPointsService;
+import com.wx.fbsir.common.core.domain.entity.SysUser;
+import com.wx.fbsir.system.service.ISysUserService;
 
 /**
  * 积分Service业务层处理
@@ -42,6 +44,9 @@ public class PointsServiceImpl implements IPointsService {
     
     @Autowired
     private IPointsRuleService pointsRuleService;
+    
+    @Autowired
+    private ISysUserService userService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -189,6 +194,52 @@ public class PointsServiceImpl implements IPointsService {
         }
         
         return taskList;
+    }
+    
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public AjaxResult grantPointsByAdmin(Long userId, Integer pointsAmount, String remark) {
+        // 1. 参数校验
+        if (userId == null) {
+            return AjaxResult.error("用户ID不能为空");
+        }
+        if (pointsAmount == null || pointsAmount <= 0) {
+            return AjaxResult.error("积分数量必须大于0");
+        }
+        if (StringUtils.isEmpty(remark)) {
+            return AjaxResult.error("备注不能为空");
+        }
+        
+        // 2. 查询用户是否存在
+        SysUser user = userService.selectUserById(userId);
+        if (user == null) {
+            return AjaxResult.error("用户不存在");
+        }
+        
+        // 3. 查询当前积分余额
+        Integer currentPoints = getUserPoints(userId);
+        if (currentPoints == null) {
+            currentPoints = 0;
+        }
+        
+        // 4. 计算新的积分余额
+        Integer newPoints = currentPoints + pointsAmount;
+        
+        // 5. 更新积分余额
+        pointsMapper.updateUserPoints(userId, newPoints);
+        
+        // 6. 插入积分记录
+        PointsRecord record = new PointsRecord();
+        record.setUserId(userId);
+        record.setRuleCode("ADMIN_GRANT"); // 使用管理员发放积分的特殊规则编码
+        record.setChangeAmount(pointsAmount);
+        record.setBalanceBefore(currentPoints);
+        record.setBalanceAfter(newPoints);
+        record.setRemark(remark);
+        record.setCreateTime(DateUtils.getNowDate());
+        pointsRecordMapper.insertPointsRecord(record);
+        
+        return AjaxResult.success("积分发放成功");
     }
 
     /**

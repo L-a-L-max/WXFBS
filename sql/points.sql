@@ -74,7 +74,8 @@ INSERT INTO `wx_points_rule` (`rule_code`, `rule_name`, `points_value`, `limit_t
 ('USE_DAILY_ASSISTANT', '使用日更助手', -1, NULL, NULL, NULL, '0', 2, '使用日更助手生成文章时扣减', 'admin', NOW()),
 ('TEMPLATE_PUBLISH', '模板上架', 50, NULL, NULL, NULL, '0', 3, '用户上架模板到市场奖励', 'admin', NOW()),
 ('TEMPLATE_BUY', '模板购买', 0, NULL, NULL, NULL, '0', 4, '购买模板时扣减', 'admin', NOW()),
-('TEMPLATE_REWARD', '模板分成', 0, NULL, NULL, NULL, '0', 5, '模板被购买时的作者分成', 'admin', NOW());
+('TEMPLATE_REWARD', '模板分成', 0, NULL, NULL, NULL, '0', 5, '模板被购买时的作者分成', 'admin', NOW()),
+('ADMIN_GRANT', '管理员发放', 0, NULL, NULL, NULL, '0', 6, '管理员给用户发放积分', 'admin', NOW());
 
 
 -- 检查 sys_user 表是否有 points 字段，如果没有则添加
@@ -98,6 +99,7 @@ insert into sys_menu values('6', '积分管理', '0', '6', 'points', null, '', '
 -- 积分管理子菜单（parent_id=6）
 insert into sys_menu values('120',   '积分总览', '6',   '1', 'points-overview', 'business/points/overview/index', '', '', 1, 0, 'C', '0', '0', 'business:points:view', 'money', 'admin', sysdate(), '', null, '积分总览菜单');
 insert into sys_menu values('121',   '积分规则配置', '6', '2', 'points-rule', 'system/points/rule/index', '', '', 1, 0, 'C', '0', '0', 'points:rule:list', 'edit', 'admin', sysdate(), '', null, '积分规则配置菜单');
+insert into sys_menu values('122',   '粉丝管理', '6', '3', 'points-fans', 'business/points/fans/index', '', '', 1, 0, 'C', '0', '0', 'points:fans:list', 'user', 'admin', sysdate(), '', null, '粉丝管理菜单');
 -- 积分总览按钮(parent_id=120)
 insert into sys_menu values('1070', '积分查询', '120', '1', '', '', '', '', 1, 0, 'F', '0', '0', 'business:points:query', '#', 'admin', sysdate(), '', null, '');
 INSERT INTO sys_menu VALUES('1071', '明细查询', '120', '1', '', '', '', '', 1, 0, 'F', '0', '0', 'business:points:record:query', '#', 'admin', sysdate(), '', null, '');
@@ -107,9 +109,17 @@ insert into sys_menu values('1073', '规则新增', '121', '2', '', '', '', '', 
 insert into sys_menu values('1074', '规则修改', '121', '3', '', '', '', '', 1, 0, 'F', '0', '0', 'points:rule:edit', '#', 'admin', sysdate(), '', null, '');
 insert into sys_menu values('1075', '规则删除', '121', '4', '', '', '', '', 1, 0, 'F', '0', '0', 'points:rule:remove', '#', 'admin', sysdate(), '', null, '');
 
+-- 粉丝管理按钮(parent_id=122)
+insert into sys_menu values('1076', '粉丝列表', '122', '1', '', '', '', '', 1, 0, 'F', '0', '0', 'points:fans:list', '#', 'admin', sysdate(), '', null, '');
+insert into sys_menu values('1077', '发放积分', '122', '2', '', '', '', '', 1, 0, 'F', '0', '0', 'points:fans:grant', '#', 'admin', sysdate(), '', null, '');
+insert into sys_menu values('1078', '查看明细', '122', '3', '', '', '', '', 1, 0, 'F', '0', '0', 'points:fans:detail', '#', 'admin', sysdate(), '', null, '');
+
 
 insert into sys_role_menu values ('2', '6');    -- 积分管理
-
+-- 目录权限-积分总览
+insert into sys_role_menu values ('2', '120');  -- 积分总览
+-- 目录权限-积分规则配置
+insert into sys_role_menu values ('2', '121');  -- 积分规则配置
 
 -- 按钮权限-积分管理
 insert into sys_role_menu values ('2', '1070');  -- 积分查询
@@ -118,13 +128,32 @@ insert into sys_role_menu values ('2', '1072');  -- 规则查询
 insert into sys_role_menu values ('2', '1073');  -- 规则新增
 insert into sys_role_menu values ('2', '1074');  -- 规则修改
 insert into sys_role_menu values ('2', '1075');  -- 规则删除
+insert into sys_role_menu values ('2', '122');   -- 粉丝管理
+insert into sys_role_menu values ('2', '1076');  -- 粉丝列表
+insert into sys_role_menu values ('2', '1077');  -- 发放积分
+insert into sys_role_menu values ('2', '1078');  -- 查看明细
 
 insert into sys_role_menu values ('3', '6');    -- 积分管理
+-- 目录权限-积分总览
+insert into sys_role_menu values ('3', '120');  -- 积分总览
+-- 目录权限-积分规则配置
+insert into sys_role_menu values ('3', '121');  -- 积分规则配置
+-- 按钮权限-积分管理
+insert into sys_role_menu values ('3', '1070');  -- 积分查询
+insert into sys_role_menu values ('3', '1071');  -- 明细查询
+insert into sys_role_menu values ('3', '1072');  -- 规则查询
+insert into sys_role_menu values ('3', '122');   -- 粉丝管理
+insert into sys_role_menu values ('3', '1076');  -- 粉丝列表
+insert into sys_role_menu values ('3', '1078');  -- 查看明细
 
-insert into sys_role_menu values ('10', '1070'); -- 积分查询
-insert into sys_role_menu values ('10', '1071'); -- 明细查询
-insert into sys_role_menu values ('10', '1072'); -- 规则查询
+insert into sys_role_menu values ('10', '6');    -- 积分管理
+-- 目录权限-积分总览
+insert into sys_role_menu values ('10', '120');  -- 积分总览
 
+-- 按钮权限-积分管理
+insert into sys_role_menu values ('10', '1070');  -- 积分查询
+insert into sys_role_menu values ('10', '1071');  -- 明细查询
+insert into sys_role_menu values ('10', '1072');  -- 规则查询
 
 
 

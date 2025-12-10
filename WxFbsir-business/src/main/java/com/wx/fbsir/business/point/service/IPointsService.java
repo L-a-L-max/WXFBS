@@ -54,5 +54,15 @@ public interface IPointsService {
      * @return 积分任务列表
      */
     public List<Map<String, Object>> getPointsTaskList(Long userId);
+    
+    /**
+     * 管理员给用户发放积分
+     * 
+     * @param userId 用户ID
+     * @param pointsAmount 积分数量
+     * @param remark 备注
+     * @return 结果
+     */
+    public AjaxResult grantPointsByAdmin(Long userId, Integer pointsAmount, String remark);
 }
 
