@@ -1,6 +1,8 @@
 package com.wx.fbsir.framework.web.service;
 
 import jakarta.annotation.Resource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -27,6 +29,10 @@ import com.wx.fbsir.framework.manager.factory.AsyncFactory;
 import com.wx.fbsir.framework.security.context.AuthenticationContextHolder;
 import com.wx.fbsir.system.service.ISysConfigService;
 import com.wx.fbsir.system.service.ISysUserService;
+import com.wx.fbsir.business.point.enums.PointsRuleCode;
+import com.wx.fbsir.business.point.domain.PointsResult;
+import com.wx.fbsir.business.point.service.PointsPrecheckService;
+import com.wx.fbsir.business.point.mapper.PointsRecordMapper;
 
 /**
  * 登录校验方法
@@ -36,6 +42,8 @@ import com.wx.fbsir.system.service.ISysUserService;
 @Component
 public class SysLoginService
 {
+    private static final Logger log = LoggerFactory.getLogger(SysLoginService.class);
+
     @Autowired
     private TokenService tokenService;
 
@@ -50,6 +58,12 @@ public class SysLoginService
 
     @Autowired
     private ISysConfigService configService;
+
+    @Autowired
+    private PointsPrecheckService pointsPrecheckService;
+
+    @Autowired
+    private PointsRecordMapper pointsRecordMapper;
 
     /**
      * 登录验证
@@ -68,12 +82,17 @@ public class SysLoginService
         loginPreCheck(username, password);
         // 用户验证
         Authentication authentication = null;
+        java.util.Date lastLoginDate = null;
         try
         {
             UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(username, password);
             AuthenticationContextHolder.setContext(authenticationToken);
             // 该方法会去调用UserDetailsServiceImpl.loadUserByUsername
             authentication = authenticationManager.authenticate(authenticationToken);
+            LoginUser tmp = (LoginUser) authentication.getPrincipal();
+            if (tmp != null && tmp.getUser() != null) {
+                lastLoginDate = tmp.getUser().getLoginDate();
+            }
         }
         catch (Exception e)
         {
@@ -95,6 +114,41 @@ public class SysLoginService
         AsyncManager.me().execute(AsyncFactory.recordLogininfor(username, Constants.LOGIN_SUCCESS, MessageUtils.message("user.login.success")));
         LoginUser loginUser = (LoginUser) authentication.getPrincipal();
         recordLoginInfo(loginUser.getUserId());
+        // 首次登录奖励（判断是否已领取），失败不影响登录
+        try
+        {
+            boolean alreadyGranted = pointsRecordMapper.checkUserTaskCompleted(loginUser.getUserId(),
+                    PointsRuleCode.FIRST_LOGIN_BONUS.getCode()) > 0;
+            if (!alreadyGranted)
+            {
+                PointsResult firstLoginResult = pointsPrecheckService.tryChangePoints(loginUser.getUserId(),
+                        PointsRuleCode.FIRST_LOGIN_BONUS.getCode(), PointsRuleCode.FIRST_LOGIN_BONUS.getDefaultPoints());
+                if (!firstLoginResult.isSuccess())
+                {
+                    log.info("First login bonus skipped for user {}, code={}, msg={}",
+                            loginUser.getUserId(), firstLoginResult.getCode(), firstLoginResult.getMsg());
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            log.warn("First login bonus grant error for user {}", loginUser.getUserId(), ex);
+        }
+        // 登录成功后发放每日登录积分（失败不影响登录）
+        try
+        {
+            PointsResult pointsResult = pointsPrecheckService.tryChangePoints(loginUser.getUserId(),
+                    PointsRuleCode.DAILY_LOGIN.getCode(), null);
+            if (!pointsResult.isSuccess())
+            {
+                log.info("Daily login points skipped for user {}, code={}, msg={}",
+                        loginUser.getUserId(), pointsResult.getCode(), pointsResult.getMsg());
+            }
+        }
+        catch (Exception ex)
+        {
+            log.warn("Daily login points grant error for user {}", loginUser.getUserId(), ex);
+        }
         // 生成token
         return tokenService.createToken(loginUser);
     }

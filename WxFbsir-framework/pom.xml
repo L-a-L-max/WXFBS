@@ -59,6 +59,12 @@
             <artifactId>WxFbsir-system</artifactId>
         </dependency>
 
+        <!-- 业务模块：用于登录成功发放积分 -->
+        <dependency>
+            <groupId>com.wx.fbsir</groupId>
+            <artifactId>WxFbsir-business</artifactId>
+        </dependency>
+
     </dependencies>
 
 </project>

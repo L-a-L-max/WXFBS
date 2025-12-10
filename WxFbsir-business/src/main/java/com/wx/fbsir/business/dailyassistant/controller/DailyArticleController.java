@@ -37,6 +37,9 @@ public class DailyArticleController extends BaseController
     @Autowired
     private IDailyArticleService dailyArticleService;
 
+    @Autowired
+    private com.wx.fbsir.business.point.service.PointsPrecheckService pointsPrecheckService;
+
     // TODO: 如需集成微信公众号功能，需要添加以下依赖
     // @Autowired
     // private WechatMpService wechatMpService;
@@ -155,20 +158,34 @@ public class DailyArticleController extends BaseController
         }
 
         Long userId = getUserId();
-        
+
+         // ========== 积分前置校验 ==========
+        // 使用积分前置校验服务，在业务执行前进行积分校验和扣减
+        // 如果积分不足或规则校验失败，直接返回错误，不执行后续业务
+        com.wx.fbsir.business.point.domain.PointsResult pointsResult =
+            pointsPrecheckService.tryChangePoints(userId, "USE_DAILY_ASSISTANT", null);
+
+        if (!pointsResult.isSuccess()) {
+            // 积分校验失败，直接拦截，不执行文章生成业务
+            return AjaxResult.error(pointsResult.getMsg());
+        }
+        // ========== 积分校验通过，继续执行业务 ==========
+
         // 1. 快速创建文章记录（同步，< 100ms）
+
         DailyArticle article = dailyArticleService.createArticleAndOptimize(userId, articleTitle, selectedModels);
         
         // 2. 触发异步优化任务（从Controller调用确保@Async生效）
         dailyArticleService.triggerArticleOptimization(article.getId(), userId, articleTitle);
-        
+
         // 3. 立即返回（不等待AI生成结果）
         Map<String, Object> result = new HashMap<>();
         result.put("id", article.getId());
         result.put("articleTitle", article.getArticleTitle());
         result.put("processStatus", article.getProcessStatus());
         result.put("message", "文章创建成功，AI内容正在生成中，请稍后查询处理状态");
-        
+        result.put("pointsBalance", pointsResult.getBalanceAfter()); // 返回扣减后的积分余额
+
         return success(result);
     }
 
@@ -241,7 +258,7 @@ public class DailyArticleController extends BaseController
                 dailyArticleService.updateProcessStatus(articleId, 1);
                 logger.info("文章ID: {} 已完成优化", articleId);
             }
-            
+
             return toAjax(result);
             
         } catch (NumberFormatException e) {

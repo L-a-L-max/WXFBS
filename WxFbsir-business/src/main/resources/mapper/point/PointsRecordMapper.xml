@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.wx.fbsir.business.point.mapper.PointsRecordMapper">
+
+    <resultMap type="com.wx.fbsir.business.point.domain.PointsRecord" id="PointsRecordResult">
+        <result property="recordId"      column="record_id"       />
+        <result property="userId"        column="user_id"         />
+        <result property="ruleCode"      column="rule_code"       />
+        <result property="ruleName"      column="rule_name"       />
+        <result property="changeAmount"  column="change_amount"   />
+        <result property="balanceBefore" column="balance_before"  />
+        <result property="balanceAfter"  column="balance_after"   />
+        <result property="remark"        column="remark"          />
+        <result property="createBy"      column="create_by"       />
+        <result property="createTime"    column="create_time"     />
+        <result property="updateBy"      column="update_by"       />
+        <result property="updateTime"    column="update_time"     />
+    </resultMap>
+
+    <sql id="selectPointsRecordVo">
+        select r.record_id, r.user_id, r.rule_code, COALESCE(pr.rule_name, r.rule_code) as rule_name, r.change_amount, r.balance_before, r.balance_after,
+               r.remark, r.create_by, r.create_time, r.update_by, r.update_time
+        from wx_points_record r
+        left join wx_points_rule pr on pr.rule_code = r.rule_code
+    </sql>
+
+    <select id="selectPointsRecordByRecordId" parameterType="Long" resultMap="PointsRecordResult">
+        <include refid="selectPointsRecordVo"/>
+        where record_id = #{recordId}
+    </select>
+
+    <select id="selectPointsRecordList" parameterType="com.wx.fbsir.business.point.domain.PointsRecord" resultMap="PointsRecordResult">
+        <include refid="selectPointsRecordVo"/>
+        <where>
+            <if test="userId != null">
+                AND user_id = #{userId}
+            </if>
+            <if test="ruleCode != null and ruleCode != ''">
+                AND rule_code = #{ruleCode}
+            </if>
+            <if test="changeAmount != null">
+                <if test="changeAmount > 0">
+                    AND change_amount > 0
+                </if>
+                <if test="changeAmount &lt; 0">
+                    AND change_amount &lt; 0
+                </if>
+            </if>
+        </where>
+        ORDER BY create_time DESC
+    </select>
+
+    <select id="selectPointsRecordListByUserId" parameterType="Long" resultMap="PointsRecordResult">
+        <include refid="selectPointsRecordVo"/>
+        where user_id = #{userId}
+        ORDER BY create_time DESC
+    </select>
+
+    <select id="checkUserTaskCompleted" resultType="int">
+        SELECT COUNT(1)
+        FROM wx_points_record
+        WHERE user_id = #{userId}
+          AND rule_code = #{ruleCode}
+          AND change_amount > 0
+    </select>
+
+    <select id="sumUserPointsChangeSince" resultType="Integer">
+        SELECT COALESCE(SUM(change_amount), 0)
+        FROM wx_points_record
+        WHERE user_id = #{userId}
+          AND change_amount > 0
+          AND create_time >= #{startTime}
+    </select>
+
+    <select id="getLastPointChange" parameterType="Long" resultMap="PointsRecordResult">
+        <include refid="selectPointsRecordVo"/>
+        WHERE user_id = #{userId}
+        ORDER BY create_time DESC
+        LIMIT 1
+    </select>
+
+    <select id="countUserRuleSince" resultType="int">
+        SELECT COUNT(1)
+        FROM wx_points_record
+        WHERE user_id = #{userId}
+          AND rule_code = #{ruleCode}
+          AND change_amount > 0
+          <if test="startTime != null">
+            AND create_time &gt;= #{startTime}
+          </if>
+    </select>
+
+    <insert id="insertPointsRecord" parameterType="com.wx.fbsir.business.point.domain.PointsRecord" useGeneratedKeys="true" keyProperty="recordId">
+        INSERT INTO wx_points_record
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="userId != null">user_id,</if>
+            <if test="ruleCode != null and ruleCode != ''">rule_code,</if>
+            <if test="changeAmount != null">change_amount,</if>
+            <if test="balanceBefore != null">balance_before,</if>
+            <if test="balanceAfter != null">balance_after,</if>
+            <if test="remark != null">remark,</if>
+            <if test="createBy != null">create_by,</if>
+            create_time
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="userId != null">#{userId},</if>
+            <if test="ruleCode != null and ruleCode != ''">#{ruleCode},</if>
+            <if test="changeAmount != null">#{changeAmount},</if>
+            <if test="balanceBefore != null">#{balanceBefore},</if>
+            <if test="balanceAfter != null">#{balanceAfter},</if>
+            <if test="remark != null">#{remark},</if>
+            <if test="createBy != null">#{createBy},</if>
+            NOW()
+        </trim>
+    </insert>
+
+    <update id="updatePointsRecord" parameterType="com.wx.fbsir.business.point.domain.PointsRecord">
+        UPDATE wx_points_record
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="userId != null">user_id = #{userId},</if>
+            <if test="ruleCode != null and ruleCode != ''">rule_code = #{ruleCode},</if>
+            <if test="changeAmount != null">change_amount = #{changeAmount},</if>
+            <if test="balanceBefore != null">balance_before = #{balanceBefore},</if>
+            <if test="balanceAfter != null">balance_after = #{balanceAfter},</if>
+            <if test="remark != null">remark = #{remark},</if>
+            <if test="updateBy != null">update_by = #{updateBy},</if>
+            update_time = NOW()
+        </trim>
+        WHERE record_id = #{recordId}
+    </update>
+
+    <delete id="deletePointsRecordByRecordId" parameterType="Long">
+        DELETE FROM wx_points_record WHERE record_id = #{recordId}
+    </delete>
+
+    <delete id="deletePointsRecordByRecordIds" parameterType="String">
+        DELETE FROM wx_points_record WHERE record_id IN
+        <foreach item="recordId" collection="array" open="(" separator="," close=")">
+            #{recordId}
+        </foreach>
+    </delete>
+
+</mapper>
+

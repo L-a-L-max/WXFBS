@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.wx.fbsir.business.point.mapper.PointsMapper">
+
+    <select id="getUserPoints" parameterType="Long" resultType="Integer">
+        SELECT IFNULL(points, 0) AS points 
+        FROM sys_user 
+        WHERE user_id = #{userId}
+    </select>
+
+    <update id="updateUserPoints">
+        UPDATE sys_user 
+        SET points = #{points} 
+        WHERE user_id = #{userId}
+    </update>
+
+</mapper>
+

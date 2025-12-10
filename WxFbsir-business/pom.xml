@@ -24,6 +24,12 @@
             <artifactId>WxFbsir-common</artifactId>
         </dependency>
 
+        <!-- 系统模块（用于用户服务） -->
+        <dependency>
+            <groupId>com.wx.fbsir</groupId>
+            <artifactId>WxFbsir-system</artifactId>
+        </dependency>
+
         <!-- Spring Boot Web -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
