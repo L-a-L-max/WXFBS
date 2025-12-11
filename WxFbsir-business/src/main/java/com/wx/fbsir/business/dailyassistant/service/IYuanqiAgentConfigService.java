@@ -75,4 +75,16 @@ public interface IYuanqiAgentConfigService
      * @return 结果
      */
     public int deleteYuanqiAgentConfigById(Long id);
+
+    /**
+     * 验证智能体配置是否可用
+     * 通过调用腾讯元器API测试连通性
+     *
+     * @param agentId 智能体ID
+     * @param apiKey API密钥
+     * @param apiEndpoint API端点
+     * @return 验证结果消息
+     * @throws RuntimeException 验证失败时抛出异常，包含友好的错误信息
+     */
+    public String verifyAgentConfig(String agentId, String apiKey, String apiEndpoint);
 }

@@ -1,6 +1,9 @@
 import { defineConfig, loadEnv } from 'vite'
 import path from 'path'
 import createVitePlugins from './vite/plugins'
+import { fileURLToPath } from 'url'
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 const baseUrl = 'http://localhost:8080' // 后端接口
 
@@ -30,13 +33,27 @@ export default defineConfig(({ mode, command }) => {
       // https://vite.dev/config/build-options.html
       sourcemap: command === 'build' ? false : 'inline',
       outDir: 'dist',
-      assetsDir: 'assets',
-      chunkSizeWarningLimit: 2000,
+      assetsDir: 'static',
+      chunkSizeWarningLimit: 1000,
+      minify: 'esbuild',
       rollupOptions: {
         output: {
           chunkFileNames: 'static/js/[name]-[hash].js',
           entryFileNames: 'static/js/[name]-[hash].js',
-          assetFileNames: 'static/[ext]/[name]-[hash].[ext]'
+          assetFileNames: 'static/[ext]/[name]-[hash].[ext]',
+          // 代码分割配置
+          manualChunks: {
+            // 将Vue相关库分离
+            'vue': ['vue', 'vue-router', 'pinia'],
+            // 将Element Plus分离
+            'element-plus': ['element-plus', '@element-plus/icons-vue'],
+            // 将echarts分离
+            'echarts': ['echarts'],
+            // 将其他大型库分离
+            'utils': ['axios', 'js-cookie', 'nprogress', 'clipboard', 'fuse.js'],
+            // 将quill编辑器分离
+            'quill': ['@vueup/vue-quill']
+          }
         }
       }
     },

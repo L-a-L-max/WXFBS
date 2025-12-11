@@ -153,4 +153,4 @@ aes:
     # 生产环境建议使用环境变量：WXFBSIR_AES_SECRET_KEY
     # 此密钥用于加密敏感数据（如公众号AppID、AppSecret等）
     # 密钥复杂度：包含大小写字母、数字、特殊符号，长度64位
-    key: ${WXFBSIR_AES_SECRET_KEY:7Kx#9mP@2wQe$8vN!5hB^4gT&1cR*6yL+3dF%0jM(9sA)8zX~7uW<5iO>4nE|2kV}
+    key: ${WXFBSIR_AES_SECRET_KEY:WxFbsir2025SecretKey@#$%^&*()}

@@ -379,5 +379,4 @@ git push origin --delete feature/your-feature-name
 
 ---
 
-**最后更新**: 2025-12-05  
-**文档版本**: v1.0.0
+**最后更新**: 2025-12-05

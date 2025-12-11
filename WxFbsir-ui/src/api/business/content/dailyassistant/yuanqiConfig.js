@@ -51,6 +51,15 @@ export function delYuanqiConfig(ids) {
   })
 }
 
+// 验证智能体配置
+export function verifyYuanqiConfig(data) {
+  return request({
+    url: '/system/yuanqi-config/verify',
+    method: 'post',
+    data: data
+  })
+}
+
 // 导出腾讯元器智能体配置
 export function exportYuanqiConfig(query) {
   return request({

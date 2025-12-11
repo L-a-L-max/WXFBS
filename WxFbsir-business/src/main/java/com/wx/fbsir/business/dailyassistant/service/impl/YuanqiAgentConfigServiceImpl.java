@@ -1,11 +1,24 @@
 package com.wx.fbsir.business.dailyassistant.service.impl;
 
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
+import org.springframework.web.client.RestTemplate;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpServerErrorException;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.wx.fbsir.business.dailyassistant.domain.YuanqiAgentConfig;
 import com.wx.fbsir.business.dailyassistant.mapper.YuanqiAgentConfigMapper;
 import com.wx.fbsir.business.dailyassistant.service.IYuanqiAgentConfigService;
@@ -25,8 +38,20 @@ public class YuanqiAgentConfigServiceImpl implements IYuanqiAgentConfigService
     @Autowired
     private YuanqiAgentConfigMapper yuanqiAgentConfigMapper;
     
+    private final RestTemplate restTemplate;
+    private final ObjectMapper objectMapper;
+    
     // 脱敏标记，表示字段已加密存储
     private static final String MASKED_VALUE = "***已加密***";
+    
+    public YuanqiAgentConfigServiceImpl() {
+        // 配置RestTemplate用于验证
+        SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
+        factory.setConnectTimeout(10000);  // 连接超时：10秒
+        factory.setReadTimeout(15000);     // 读取超时：15秒
+        this.restTemplate = new RestTemplate(factory);
+        this.objectMapper = new ObjectMapper();
+    }
 
     /**
      * 查询腾讯元器智能体配置
@@ -215,6 +240,134 @@ public class YuanqiAgentConfigServiceImpl implements IYuanqiAgentConfigService
         } catch (Exception e) {
             log.error("[智能体配置] 解密失败");
             throw new RuntimeException("配置解密失败，可能是历史数据问题，请重新配置");
+        }
+    }
+    
+    /**
+     * 验证智能体配置是否可用
+     * 通过调用腾讯元器API测试连通性，使用最简短的测试问题以节省token
+     *
+     * @param agentId 智能体ID
+     * @param apiKey API密钥
+     * @param apiEndpoint API端点
+     * @return 验证结果消息
+     * @throws RuntimeException 验证失败时抛出异常，包含友好的错误信息
+     */
+    @Override
+    public String verifyAgentConfig(String agentId, String apiKey, String apiEndpoint) {
+        if (!StringUtils.hasText(agentId)) {
+            throw new RuntimeException("智能体ID不能为空");
+        }
+        if (!StringUtils.hasText(apiKey)) {
+            throw new RuntimeException("API密钥不能为空");
+        }
+        if (!StringUtils.hasText(apiEndpoint)) {
+            apiEndpoint = "https://yuanqi.tencent.com/openapi/v1/agent/chat/completions";
+        }
+        
+        try {
+            // 构建请求头
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.set("Authorization", "Bearer " + apiKey.trim());
+            
+            // 构建请求体 - 使用最简短的测试消息以节省token（约3个token）
+            Map<String, Object> requestBody = new HashMap<>();
+            requestBody.put("assistant_id", agentId.trim());
+            requestBody.put("user_id", "test_user");
+            requestBody.put("stream", false);  // 非流式，快速返回
+            
+            // 使用最简短的测试问题（仅2个汉字，约3个token）
+            Map<String, Object> message = new HashMap<>();
+            message.put("role", "user");
+            
+            Map<String, String> content = new HashMap<>();
+            content.put("type", "text");
+            content.put("text", "你好");  // 最简短的测试问题，仅消耗约3个token
+            
+            message.put("content", new Object[]{content});
+            requestBody.put("messages", new Object[]{message});
+            
+            HttpEntity<Map<String, Object>> requestEntity = new HttpEntity<>(requestBody, headers);
+            
+            log.info("[智能体验证] 开始验证配置 - AgentId: {}", agentId);
+            
+            // 发送请求
+            ResponseEntity<String> response = restTemplate.exchange(
+                apiEndpoint,
+                HttpMethod.POST,
+                requestEntity,
+                String.class
+            );
+            
+            // 解析响应
+            String responseBody = response.getBody();
+            if (responseBody != null && !responseBody.isEmpty()) {
+                // 检查是否有错误
+                JsonNode jsonNode = objectMapper.readTree(responseBody);
+                if (jsonNode.has("error")) {
+                    JsonNode errorNode = jsonNode.get("error");
+                    String errorCode = errorNode.has("code") ? errorNode.get("code").asText() : "未知";
+                    String errorMsg = errorNode.has("message") ? errorNode.get("message").asText() : "未知错误";
+                    
+                    log.error("[智能体验证] API返回错误 - Code: {}, Message: {}", errorCode, errorMsg);
+                    throw new RuntimeException("验证失败：" + errorMsg);
+                }
+                
+                // 验证成功
+                log.info("[智能体验证] 验证成功 - AgentId: {}", agentId);
+                return "验证成功，智能体配置可用";
+            }
+            
+            throw new RuntimeException("API响应为空");
+            
+        } catch (HttpClientErrorException e) {
+            // 4xx错误 - 直接根据HTTP状态码返回友好提示
+            String errorBody = e.getResponseBodyAsString();
+            int statusCode = e.getStatusCode().value();
+            log.error("[智能体验证] 客户端错误 - Status: {}, Body: {}", statusCode, errorBody);
+            
+            // 根据HTTP状态码返回友好提示
+            switch (statusCode) {
+                case 400:
+                    throw new RuntimeException("智能体ID格式错误，请检查ID是否正确");
+                case 401:
+                    throw new RuntimeException("API密钥验证失败，请检查密钥是否正确");
+                case 403:
+                    throw new RuntimeException("访问被拒绝，请检查智能体权限配置");
+                case 404:
+                    throw new RuntimeException("智能体不存在，请检查ID是否正确");
+                default:
+                    // 尝试解析响应体中的错误信息
+                    try {
+                        JsonNode errorJson = objectMapper.readTree(errorBody);
+                        if (errorJson.has("error")) {
+                            JsonNode errorNode = errorJson.get("error");
+                            String errorMsg = errorNode.has("message") ? errorNode.get("message").asText() : "";
+                            if (!errorMsg.isEmpty()) {
+                                throw new RuntimeException(errorMsg);
+                            }
+                        }
+                    } catch (RuntimeException re) {
+                        throw re;
+                    } catch (Exception ex) {
+                        // JSON解析失败，使用默认提示
+                    }
+                    throw new RuntimeException("配置验证失败，请检查智能体ID和API密钥");
+            }
+            
+        } catch (HttpServerErrorException e) {
+            // 5xx错误
+            log.error("[智能体验证] 服务器错误 - Status: {}", e.getStatusCode());
+            throw new RuntimeException("腾讯元器服务暂时不可用，请稍后重试");
+            
+        } catch (RuntimeException e) {
+            // 已经是友好的错误信息，直接抛出
+            throw e;
+            
+        } catch (Exception e) {
+            log.error("[智能体验证] 验证失败", e);
+            throw new RuntimeException("验证失败：" + e.getMessage());
         }
     }
 }

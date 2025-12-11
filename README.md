@@ -1,7 +1,7 @@
 <h1 align="center" style="margin: 30px 0 30px; font-weight: bold;">微信福帮手</h1>
 <h4 align="center">微信生态内容智能化工具</h4>
 <p align="center">
-	<a href="https://gitee.com/U3W-AI/RuoYi-Vue"><img src="https://img.shields.io/badge/WxFbsir-v1.1.3-brightgreen.svg"></a>
+	<a href="https://gitee.com/U3W-AI/RuoYi-Vue"><img src="https://img.shields.io/badge/WxFbsir-v1.1.4-brightgreen.svg"></a>
 	<a href="https://wx.fbsir.com"><img src="https://img.shields.io/badge/website-wx.fbsir.com-blue.svg"></a>
 </p>
 
@@ -78,14 +78,7 @@ npm run dev
 
 - **[部署文档](./部署文档.md)** - 完整的部署指南（包含元器工作流配置）
 - **[项目结构说明](./项目结构说明.md)** - 项目目录结构和模块说明
-- **[文档中心](./docs/README.md)** - 更多技术文档和开发规范
-
-### 开发规范
-- **[代码规范](./docs/代码规范.md)** - Java、Vue、数据库代码规范
-- **[代码合并PR规范](./docs/代码合并PR规范.md)** - 代码提交和PR流程规范
-- **[文档规范总结](./docs/文档规范总结.md)** - 文档编写规范
-
-### 帮助文档
+- **[README.md](docs/README.md)** - 文档中心
 - **[常见问题 (FAQ)](./docs/FAQ.md)** - 常见问题解答
 
 ## 贡献指南
@@ -141,4 +134,4 @@ npm run dev
 - **系统接口**: Swagger API文档自动生成
 - **表单构建**: 在线表单设计器
 
-#####  文档更新日期：2025年12月10日 16：00  文档版本：1.1.3
+#####  文档更新日期：2025年12月11日 17：30  文档版本：1.1.4

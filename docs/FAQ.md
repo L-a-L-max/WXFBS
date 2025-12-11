@@ -205,5 +205,4 @@ SELECT * FROM yuanqi_agent_config WHERE is_active = 1;
 
 ---
 
-**最后更新**: 2025-12-05  
-**文档版本**: v1.0.0
+**最后更新**: 2025-12-05

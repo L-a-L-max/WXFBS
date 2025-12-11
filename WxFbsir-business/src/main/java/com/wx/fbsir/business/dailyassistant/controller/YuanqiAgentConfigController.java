@@ -72,24 +72,50 @@ public class YuanqiAgentConfigController extends BaseController
     }
 
     /**
-     * 新增腾讯元器智能体配置
+     * 新增腾讯元器智能体配置（保存前验证）
      */
     @Log(title = "腾讯元器智能体配置", businessType = BusinessType.INSERT)
     @PostMapping
     public AjaxResult add(@Validated @RequestBody YuanqiAgentConfig yuanqiAgentConfig)
     {
+        // 保存前验证配置
+        try {
+            yuanqiAgentConfigService.verifyAgentConfig(
+                yuanqiAgentConfig.getAgentId(),
+                yuanqiAgentConfig.getApiKey(),
+                yuanqiAgentConfig.getApiEndpoint()
+            );
+        } catch (Exception e) {
+            return error(e.getMessage());
+        }
+        
         yuanqiAgentConfig.setUserId(getUserId());
         yuanqiAgentConfig.setCreateBy(getUsername());
         return toAjax(yuanqiAgentConfigService.insertYuanqiAgentConfig(yuanqiAgentConfig));
     }
 
     /**
-     * 修改腾讯元器智能体配置
+     * 修改腾讯元器智能体配置（保存前验证）
      */
     @Log(title = "腾讯元器智能体配置", businessType = BusinessType.UPDATE)
     @PutMapping
     public AjaxResult edit(@Validated @RequestBody YuanqiAgentConfig yuanqiAgentConfig)
     {
+        // 如果用户修改了敏感字段（不是脱敏标记），则验证配置
+        String MASKED_VALUE = "***已加密***";
+        if (!MASKED_VALUE.equals(yuanqiAgentConfig.getAgentId()) || 
+            !MASKED_VALUE.equals(yuanqiAgentConfig.getApiKey())) {
+            try {
+                yuanqiAgentConfigService.verifyAgentConfig(
+                    yuanqiAgentConfig.getAgentId(),
+                    yuanqiAgentConfig.getApiKey(),
+                    yuanqiAgentConfig.getApiEndpoint()
+                );
+            } catch (Exception e) {
+                return error(e.getMessage());
+            }
+        }
+        
         yuanqiAgentConfig.setUpdateBy(getUsername());
         return toAjax(yuanqiAgentConfigService.updateYuanqiAgentConfig(yuanqiAgentConfig));
     }

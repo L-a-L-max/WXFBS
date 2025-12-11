@@ -1,123 +1,67 @@
 <template>
   <div class="app-container home">
-    <el-row :gutter="20">
-      <el-col :sm="24" :lg="12" style="padding-left: 20px">
-        <h2>微信福帮手后台管理框架</h2>
-        <p>
-          微信福帮手(WxFbsir)是一款现代化的企业级后台管理系统，基于成熟的技术栈构建。系统采用前后端分离架构，代码结构清晰，易于维护和扩展。同时支持移动端访问，提供丰富的功能模块。
-        </p>
-        <p>
-          <b>当前版本:</b> <span>v{{ version }}</span>
-        </p>
-        <p>
-          <el-tag type="danger">&yen;免费开源</el-tag>
-        </p>
-        <p>
-          <el-button
-            type="primary"
-            icon="Cloudy"
-            plain
-            @click="goTarget('https://github.com/wxwxfbsir/wxwxfbsir-vue')"
-            >访问GitHub</el-button
-          >
-          <el-button
-            icon="HomeFilled"
-            plain
-            @click="goTarget('https://wx.wxfbsir.com')"
-            >访问主页</el-button
-          >
-        </p>
-      </el-col>
+    <el-row :gutter="20" justify="center">
+      <el-col :xs="24" :sm="22" :md="20" :lg="18" :xl="16">
+        <div class="welcome-section">
+          <h1 class="welcome-title">欢迎使用微信福帮手</h1>
+          <p class="welcome-subtitle">智能化的内容创作与发布助手</p>
+          
+          <el-row :gutter="20" class="feature-cards">
+            <el-col :xs="24" :sm="12" :md="8">
+              <el-card shadow="hover" class="feature-card">
+                <div class="feature-icon">
+                  <el-icon :size="40" color="#409EFF"><EditPen /></el-icon>
+                </div>
+                <h3>AI写作助手</h3>
+                <p>利用AI技术，快速生成高质量文章内容，提升创作效率</p>
+              </el-card>
+            </el-col>
+            <el-col :xs="24" :sm="12" :md="8">
+              <el-card shadow="hover" class="feature-card">
+                <div class="feature-icon">
+                  <el-icon :size="40" color="#67C23A"><Connection /></el-icon>
+                </div>
+                <h3>一键发布</h3>
+                <p>支持直接发布到微信公众号草稿箱，简化发布流程</p>
+              </el-card>
+            </el-col>
+            <el-col :xs="24" :sm="12" :md="8">
+              <el-card shadow="hover" class="feature-card">
+                <div class="feature-icon">
+                  <el-icon :size="40" color="#E6A23C"><DataAnalysis /></el-icon>
+                </div>
+                <h3>内容管理</h3>
+                <p>统一管理文章内容，查看发布记录，轻松追踪内容状态</p>
+              </el-card>
+            </el-col>
+          </el-row>
 
-      <el-col :sm="24" :lg="12" style="padding-left: 50px">
-        <el-row>
-          <el-col :span="12">
-            <h2>技术选型</h2>
-          </el-col>
-        </el-row>
-        <el-row>
-          <el-col :span="6">
-            <h4>后端技术</h4>
-            <ul>
-              <li>SpringBoot</li>
-              <li>Spring Security</li>
-              <li>JWT</li>
-              <li>MyBatis</li>
-              <li>Druid</li>
-              <li>Fastjson</li>
-              <li>...</li>
-            </ul>
-          </el-col>
-          <el-col :span="6">
-            <h4>前端技术</h4>
-            <ul>
-              <li>Vue</li>
-              <li>Vuex</li>
-              <li>Element-ui</li>
-              <li>Axios</li>
-              <li>Sass</li>
-              <li>Quill</li>
-              <li>...</li>
-            </ul>
-          </el-col>
-        </el-row>
-      </el-col>
-    </el-row>
-    <el-divider />
-    <el-row :gutter="20">
-      <el-col :xs="24" :sm="24" :md="12" :lg="8">
-        <el-card class="update-log">
-          <template v-slot:header>
-            <div class="clearfix">
-              <span>联系信息</span>
-            </div>
-          </template>
-          <div class="body">
-            <p>
-              <i class="el-icon-s-promotion"></i> 官网：<el-link
-                href="https://wx.wxfbsir.com"
-                target="_blank"
-                >https://wx.wxfbsir.com</el-link
-              >
-            </p>
-            <p>
-              <i class="el-icon-message"></i> 邮箱：<el-link
-                href="mailto:support@wx.wxfbsir.com"
-                >support@wx.wxfbsir.com</el-link
-              >
-            </p>
-            <p>
-              <i class="el-icon-phone"></i> 技术支持：请通过邮箱联系我们
-            </p>
+          <el-divider />
+
+          <div class="quick-start">
+            <h2>快速开始</h2>
+            <el-steps :active="3" align-center>
+              <el-step title="配置公众号" description="在个人中心配置您的公众号信息" />
+              <el-step title="创建内容" description="使用AI助手创作或导入文章" />
+              <el-step title="发布文章" description="一键发布到公众号草稿箱" />
+            </el-steps>
           </div>
-        </el-card>
-      </el-col>
-      <el-col :xs="24" :sm="24" :md="12" :lg="8">
-        <el-card class="update-log">
-          <template v-slot:header>
-            <div class="clearfix">
-              <span>更新日志</span>
-            </div>
-          </template>
-          <el-collapse accordion>
-            <el-collapse-item title="v1.0.0 - 2025-12-04">
-              <ol>
-                <li>完成从若依框架到微信福帮手企业级系统的全面改造</li>
-                <li>更新所有品牌标识为微信福帮手</li>
-                <li>重新设计角色权限体系（超级管理员、管理员、只读权限）</li>
-                <li>优化用户界面，移除冗余功能按钮</li>
-                <li>更新企业联系信息为专业邮箱支持</li>
-                <li>清理所有第三方联系方式（QQ群、微信等）</li>
-                <li>更新项目描述为现代化企业级管理系统</li>
-                <li>修复所有代码引用关系，确保系统稳定性</li>
-                <li>更新定时任务示例为微信福帮手相关</li>
-                <li>优化代码生成器配置</li>
-                <li>更新所有外部链接指向wx.wxfbsir.com</li>
-                <li>统一版权信息为2025 微信福帮手</li>
-              </ol>
-            </el-collapse-item>
-          </el-collapse>
-        </el-card>
+
+          <div class="help-section">
+            <el-alert
+              title="使用提示"
+              type="info"
+              :closable="false"
+              show-icon
+            >
+              <template #default>
+                <p>1. 首次使用需要先在"个人中心"配置公众号信息</p>
+                <p>2. 使用"内容管理 - 每日助手"功能创建和优化文章</p>
+                <p>3. 查看"发布记录"了解文章的发布状态</p>
+              </template>
+            </el-alert>
+          </div>
+        </div>
       </el-col>
     </el-row>
   </div>
@@ -136,63 +80,80 @@ function goTarget(url) {
 
 <style scoped lang="scss">
 .home {
-  blockquote {
-    padding: 10px 20px;
-    margin: 0 0 20px;
-    font-size: 17.5px;
-    border-left: 5px solid #eee;
-  }
-  hr {
-    margin-top: 20px;
-    margin-bottom: 20px;
-    border: 0;
-    border-top: 1px solid #eee;
-  }
-  .col-item {
-    margin-bottom: 20px;
-  }
-
-  ul {
-    padding: 0;
-    margin: 0;
-  }
-
   font-family: "open sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
-  font-size: 13px;
   color: #676a6c;
   overflow-x: hidden;
+  padding: 20px 0;
 
-  ul {
-    list-style-type: none;
-  }
+  .welcome-section {
+    text-align: center;
+    padding: 40px 20px;
 
-  h4 {
-    margin-top: 0px;
-  }
-
-  h2 {
-    margin-top: 10px;
-    font-size: 26px;
-    font-weight: 100;
-  }
-
-  p {
-    margin-top: 10px;
-
-    b {
-      font-weight: 700;
+    .welcome-title {
+      font-size: 36px;
+      font-weight: 600;
+      color: #303133;
+      margin-bottom: 10px;
     }
-  }
 
-  .update-log {
-    ol {
-      display: block;
-      list-style-type: decimal;
-      margin-block-start: 1em;
-      margin-block-end: 1em;
-      margin-inline-start: 0px;
-      margin-inline-end: 0px;
-      padding-inline-start: 40px;
+    .welcome-subtitle {
+      font-size: 18px;
+      color: #909399;
+      margin-bottom: 50px;
+    }
+
+    .feature-cards {
+      margin-bottom: 50px;
+
+      .feature-card {
+        margin-bottom: 20px;
+        transition: transform 0.3s;
+        cursor: pointer;
+
+        &:hover {
+          transform: translateY(-5px);
+        }
+
+        .feature-icon {
+          margin-bottom: 15px;
+        }
+
+        h3 {
+          font-size: 20px;
+          font-weight: 600;
+          color: #303133;
+          margin-bottom: 10px;
+        }
+
+        p {
+          font-size: 14px;
+          color: #606266;
+          line-height: 1.6;
+          margin: 0;
+        }
+      }
+    }
+
+    .quick-start {
+      margin: 50px 0;
+
+      h2 {
+        font-size: 28px;
+        font-weight: 600;
+        color: #303133;
+        margin-bottom: 30px;
+      }
+    }
+
+    .help-section {
+      margin-top: 40px;
+      text-align: left;
+
+      p {
+        margin: 8px 0;
+        font-size: 14px;
+        line-height: 1.8;
+      }
     }
   }
 }

@@ -10,7 +10,12 @@ export default function createCompression(env) {
             plugin.push(
                 compression({
                     ext: '.gz',
-                    deleteOriginFile: false
+                    deleteOriginFile: false,  // 保留原文件，Nginx会根据浏览器支持情况返回相应版本
+                    threshold: 10240,  // 只压缩大于10KB的文件
+                    algorithm: 'gzip',
+                    compressionOptions: {
+                        level: 9  // 最高压缩级别
+                    }
                 })
             )
         }
@@ -19,7 +24,11 @@ export default function createCompression(env) {
                 compression({
                     ext: '.br',
                     algorithm: 'brotliCompress',
-                    deleteOriginFile: false
+                    deleteOriginFile: false,  // 保留原文件
+                    threshold: 10240,  // 只压缩大于10KB的文件
+                    compressionOptions: {
+                        level: 11  // brotli最高压缩级别
+                    }
                 })
             )
         }

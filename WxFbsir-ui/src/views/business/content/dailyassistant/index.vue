@@ -12,12 +12,14 @@
               </span>
               <div style="display: flex; gap: 10px;">
                 <el-button
-                  type="primary"
+                  :type="agentConfigured ? 'success' : 'primary'"
                   size="small"
                   @click="showConfigDialog"
                 >
-                  <el-icon><Setting /></el-icon>
-                  配置智能体
+                  <el-icon>
+                    <component :is="agentConfigured ? 'CircleCheck' : 'Setting'" />
+                  </el-icon>
+                  {{ agentConfigured ? '已配置' : '配置智能体' }}
                 </el-button>
                 
                 <!-- 公众号配置检查按钮 -->
@@ -57,14 +59,14 @@
             >
               <template #append>
                 <el-button
-                  type="primary"
                   :loading="creating"
                   @click="handleCreate"
                   :disabled="!articleTitle.trim() || selectedModels.length === 0"
                   v-hasPermi="['business:daily:add']"
+                  style="background-color: #409EFF; color: white; border-color: #409EFF;"
                 >
                   <el-icon><Plus /></el-icon>
-                  创建优化
+                  创建
                 </el-button>
               </template>
             </el-input>
@@ -636,6 +638,9 @@ const totalArticles = ref(0)
 const hasMore = ref(true)
 const publishing = ref(false)
 
+// 智能体配置相关
+const agentConfigured = ref(false) // 是否已配置智能体
+
 // 公众号配置相关
 const officeAccountConfigured = ref(false) // 是否已配置公众号
 const officeAccountValid = ref(false) // 公众号配置是否有效
@@ -1047,6 +1052,22 @@ const handlePublishToWechat = async (contentType) => {
   }
 }
 
+// 加载配置状态
+const loadMyConfig = async () => {
+  try {
+    const response = await getMyConfig()
+    if (response.code === 200 && response.data) {
+      // 检查是否已配置
+      agentConfigured.value = !!(response.data.agentId && response.data.apiKey)
+    } else {
+      agentConfigured.value = false
+    }
+  } catch (error) {
+    console.error('加载配置状态失败', error)
+    agentConfigured.value = false
+  }
+}
+
 // 显示配置对话框
 const showConfigDialog = async () => {
   try {
@@ -1084,10 +1105,12 @@ const showConfigDialog = async () => {
   configDialogVisible.value = true
 }
 
-// 保存配置
+// 保存配置（验证在后端进行，一次请求完成）
 const handleSaveConfig = async () => {
   try {
     await configFormRef.value.validate()
+    
+    ElMessage.info('正在保存配置，请稍候...')
     
     // 准备保存的数据
     const configData = {
@@ -1102,12 +1125,17 @@ const handleSaveConfig = async () => {
       configData.apiKey = MASKED_VALUE
     }
     
+    // 直接调用保存接口，验证逻辑在后端进行
     const apiFunc = configForm.value.id ? updateYuanqiConfig : addYuanqiConfig
     const response = await apiFunc(configData)
     
     if (response.code === 200) {
-      ElMessage.success('保存成功')
+      ElMessage.success('配置保存成功')
       configDialogVisible.value = false
+      // 刷新配置状态
+      await loadMyConfig()
+    } else {
+      ElMessage.error(response.msg || '保存失败')
     }
   } catch (error) {
     console.error('保存配置失败:', error)
@@ -1323,6 +1351,9 @@ const goToOfficeAccountConfig = () => {
 // 页面加载
 onMounted(async () => {
   loadArticles()
+  
+  // 加载配置状态
+  await loadMyConfig()
   
   // 检查公众号配置
   checkOfficeAccountConfig()
