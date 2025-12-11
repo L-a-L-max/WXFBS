@@ -327,17 +327,31 @@ public class DailyArticleController extends BaseController
 
             log.debug("[排版] 开始处理 - 内容长度: {}", content.length());
 
-            // 2. 调用Service进行排版（同步返回排版结果，不保存到数据库）
+            // 2. 获取用户ID并进行积分前置校验
             Long userId = getUserId();
+            
+            // 使用积分前置校验服务，在业务执行前进行积分校验和扣减
+            // 如果积分不足或规则校验失败，直接返回错误，不执行后续业务
+            com.wx.fbsir.business.point.domain.PointsResult pointsResult = 
+                pointsPrecheckService.tryChangePoints(userId, "ARTICLE_LAYOUT", null);
+
+            if (!pointsResult.isSuccess()) {
+                // 积分校验失败，直接拦截，不执行排版业务
+                return AjaxResult.error(pointsResult.getMsg());
+            }
+            // ========== 积分校验通过，继续执行业务 ==========
+
+            // 3. 调用Service进行排版（同步返回排版结果，不保存到数据库）
             String layoutedContent = dailyArticleService.layoutArticleSync(userId, content);
 
             log.info("[排版] 完成 - 输入: {} 字符, 输出: {} 字符", content.length(), layoutedContent.length());
             log.trace("[排版] HTML前300字符: {}", layoutedContent.length() > 300 ? layoutedContent.substring(0, 300) : layoutedContent);
 
-            // 3. 返回排版后的内容
+            // 4. 返回排版后的内容和积分信息
             Map<String, Object> result = new HashMap<>();
             result.put("layoutedContent", layoutedContent);
             result.put("message", "排版完成");
+            result.put("pointsBalance", pointsResult.getBalanceAfter()); // 返回扣减后的积分余额
 
             return success(result);
 

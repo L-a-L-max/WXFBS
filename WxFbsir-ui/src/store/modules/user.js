@@ -84,6 +84,23 @@ const useUserStore = defineStore(
             reject(error)
           })
         })
+      },
+      // 刷新权限
+      refreshPermission() {
+        return new Promise((resolve, reject) => {
+          getInfo().then(res => {
+            const user = res.user
+            if (res.roles && res.roles.length > 0) { // 验证返回的roles是否是一个非空数组
+              this.roles = res.roles
+              this.permissions = res.permissions
+            } else {
+              this.roles = ['ROLE_DEFAULT']
+            }
+            resolve(res)
+          }).catch(error => {
+            reject(error)
+          })
+        })
       }
     }
   })

@@ -77,19 +77,17 @@
               <el-button
                 type="primary"
                 size="small"
-                :icon="Plus"
                 @click="handleGrantPoints(scope.row)"
                 v-hasPermi="['points:fans:grant']"
               >
-                设置积分
+                <el-icon><Plus /></el-icon>设置积分
               </el-button>
               <el-button
                 type="info"
                 size="small"
-                :icon="Document"
                 @click="handleViewPointsRecord(scope.row)" v-hasPermi="['points:fans:detail']"
               >
-                积分明细
+                <el-icon><Document /></el-icon>积分明细
               </el-button>
             </template>
           </el-table-column>
