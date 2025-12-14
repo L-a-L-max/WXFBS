@@ -124,7 +124,7 @@ npm run dev
 - 若依官网：[http://ruoyi.vip](http://ruoyi.vip)
 - 若依源码：[https://gitee.com/y_project/RuoYi-Vue](https://gitee.com/y_project/RuoYi-Vue)
 
-### 管理系统功能
+#### 管理系统功能
 
 #### 核心功能
 - **用户管理**: 系统用户信息维护和权限配置
