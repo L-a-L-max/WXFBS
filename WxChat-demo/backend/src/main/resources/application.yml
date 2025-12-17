@@ -1,0 +1,45 @@
+# WxChat Demo 配置文件
+server:
+  port: 8080
+  servlet:
+    context-path: /api
+
+spring:
+  application:
+    name: wxchat-demo
+  
+  # 数据库配置
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/wxchat-demo?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=false&serverTimezone=GMT%2B8&allowPublicKeyRetrieval=true
+    username: wxchat-demo
+    password: password
+
+# MyBatis配置
+mybatis:
+  mapper-locations: classpath:mapper/**/*.xml
+  type-aliases-package: com.demo.wxchat.domain
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+
+# 企业微信配置
+wework:
+  corp-id: corp-id
+  agent-id: agent-id
+  agent-secret: agent-secret
+
+# 元器AI配置
+yuanqi:
+  chat:
+    token: yuanqi-token
+    encoding-aes-key: yuanqi-encoding-aes-key
+    corp-id: yuanqi-corp-id
+    agent-id: yuanqi-agent-id
+    # 元器企业微信通道地址（发送消息到这里）channelId需要替换为实际值
+    target-url: https://yuanqi.tencent.com/api/v2/channel/callback/wecom/message/{channelId}
+
+# 日志配置
+logging:
+  level:
+    com.demo.wxchat: debug
