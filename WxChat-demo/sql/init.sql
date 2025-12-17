@@ -3,7 +3,8 @@
 -- ----------------------------
 
 -- 创建数据库
-
+CREATE DATABASE IF NOT EXISTS `wxchat_demo` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE `wxchat_demo`;
 
 -- ----------------------------
 -- 企业微信配置表
