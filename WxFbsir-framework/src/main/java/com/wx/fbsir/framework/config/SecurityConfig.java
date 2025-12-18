@@ -106,6 +106,8 @@ public class SecurityConfig
                     .requestMatchers("/swagger-ui.html", "/v3/api-docs/**", "/swagger-ui/**", "/druid/**").permitAll()
                     // 元器工作流回调接口，允许匿名访问
                     .requestMatchers("/system/daily-article/saveModelContent", "/system/daily-article/updateOptimizedContent").permitAll()
+                    // WebSocket端点，允许匿名访问（WebSocket有自己的认证机制）
+                    .requestMatchers("/ws/**").permitAll()
                     // 除上面外的所有请求全部需要鉴权认证
                     .anyRequest().authenticated();
             })

@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.wx.fbsir.business.websocket.mapper.WsHostWhitelistMapper">
+
+    <resultMap type="com.wx.fbsir.business.websocket.domain.WsHostWhitelist" id="WsHostWhitelistResult">
+        <result property="id" column="id"/>
+        <result property="hostId" column="host_id"/>
+        <result property="hostName" column="host_name"/>
+        <result property="ownerName" column="owner_name"/>
+        <result property="ownerContact" column="owner_contact"/>
+        <result property="isTeam" column="is_team"/>
+        <result property="teamName" column="team_name"/>
+        <result property="allowedIps" column="allowed_ips"/>
+        <result property="status" column="status"/>
+        <result property="expireTime" column="expire_time"/>
+        <result property="remark" column="remark"/>
+        <result property="delFlag" column="del_flag"/>
+        <result property="createBy" column="create_by"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateBy" column="update_by"/>
+        <result property="updateTime" column="update_time"/>
+    </resultMap>
+
+    <sql id="selectWhitelistVo">
+        SELECT id, host_id, host_name, owner_name, owner_contact, is_team, team_name,
+               allowed_ips, status, expire_time, remark, del_flag, 
+               create_by, create_time, update_by, update_time
+        FROM ws_host_whitelist
+    </sql>
+
+    <select id="selectByHostId" parameterType="String" resultMap="WsHostWhitelistResult">
+        <include refid="selectWhitelistVo"/>
+        WHERE host_id = #{hostId} AND del_flag = 0
+    </select>
+
+    <select id="selectList" parameterType="com.wx.fbsir.business.websocket.domain.WsHostWhitelist" resultMap="WsHostWhitelistResult">
+        <include refid="selectWhitelistVo"/>
+        <where>
+            del_flag = 0
+            <if test="hostId != null and hostId != ''">
+                AND host_id LIKE CONCAT('%', #{hostId}, '%')
+            </if>
+            <if test="hostName != null and hostName != ''">
+                AND host_name LIKE CONCAT('%', #{hostName}, '%')
+            </if>
+            <if test="ownerName != null and ownerName != ''">
+                AND owner_name LIKE CONCAT('%', #{ownerName}, '%')
+            </if>
+            <if test="isTeam != null">
+                AND is_team = #{isTeam}
+            </if>
+            <if test="teamName != null and teamName != ''">
+                AND team_name LIKE CONCAT('%', #{teamName}, '%')
+            </if>
+            <if test="status != null">
+                AND status = #{status}
+            </if>
+        </where>
+        ORDER BY create_time DESC
+    </select>
+
+    <insert id="insert" parameterType="com.wx.fbsir.business.websocket.domain.WsHostWhitelist" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO ws_host_whitelist (
+            host_id, host_name, owner_name, owner_contact, is_team, team_name,
+            allowed_ips, status, expire_time, remark, del_flag, create_by, create_time
+        ) VALUES (
+            #{hostId}, #{hostName}, #{ownerName}, #{ownerContact}, #{isTeam}, #{teamName},
+            #{allowedIps}, #{status}, #{expireTime}, #{remark}, 0, #{createBy}, NOW()
+        )
+    </insert>
+
+    <update id="update" parameterType="com.wx.fbsir.business.websocket.domain.WsHostWhitelist">
+        UPDATE ws_host_whitelist
+        <set>
+            <if test="hostName != null">host_name = #{hostName},</if>
+            <if test="ownerName != null">owner_name = #{ownerName},</if>
+            <if test="ownerContact != null">owner_contact = #{ownerContact},</if>
+            <if test="isTeam != null">is_team = #{isTeam},</if>
+            <if test="teamName != null">team_name = #{teamName},</if>
+            <if test="allowedIps != null">allowed_ips = #{allowedIps},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="expireTime != null">expire_time = #{expireTime},</if>
+            <if test="remark != null">remark = #{remark},</if>
+            <if test="updateBy != null">update_by = #{updateBy},</if>
+            update_time = NOW()
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <update id="deleteById" parameterType="Long">
+        UPDATE ws_host_whitelist SET del_flag = 1, update_time = NOW() WHERE id = #{id}
+    </update>
+
+    <update id="deleteByIds" parameterType="Long">
+        UPDATE ws_host_whitelist SET del_flag = 1, update_time = NOW() 
+        WHERE id IN
+        <foreach item="id" collection="ids" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </update>
+
+    <update id="updateStatus">
+        UPDATE ws_host_whitelist 
+        SET status = #{status}, update_time = NOW() 
+        WHERE host_id = #{hostId} AND del_flag = 0
+    </update>
+
+</mapper>
