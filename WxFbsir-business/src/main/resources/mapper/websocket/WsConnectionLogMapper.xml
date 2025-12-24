@@ -97,6 +97,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="closeCode != null">close_code = #{closeCode},</if>
             <if test="closeReason != null">close_reason = #{closeReason},</if>
             <if test="rejectReason != null">reject_reason = #{rejectReason},</if>
+            <if test="delFlag != null">del_flag = #{delFlag},</if>
             update_time = NOW()
         </set>
         WHERE session_id = #{sessionId}
@@ -134,11 +135,20 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         WHERE session_id = #{sessionId}
     </update>
 
+    <update id="updateConnectionIp">
+        UPDATE ws_connection_log SET
+            remote_ip = #{publicIp},
+            update_time = NOW()
+        WHERE session_id = #{sessionId}
+    </update>
+
     <update id="updateRejected">
         UPDATE ws_connection_log SET
             host_id = #{hostId},
             status = #{status},
             reject_reason = #{rejectReason},
+            error_code = #{errorCode},
+            last_error = CONCAT('连接被拒绝 - 错误码: ', COALESCE(#{errorCode}, '无'), ', 原因: ', COALESCE(#{rejectReason}, '未知')),
             disconnect_time = NOW(),
             update_time = NOW()
         WHERE session_id = #{sessionId}

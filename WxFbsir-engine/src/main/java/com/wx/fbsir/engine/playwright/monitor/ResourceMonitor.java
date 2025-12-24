@@ -57,19 +57,29 @@ public class ResourceMonitor {
     private int baselineThreadCount = 0;
 
     /**
-     * 最大允许的锁数量（超过则视为泄漏）
+     * 自动清理锁的阈值（静默处理）
      */
-    private static final int MAX_EXPECTED_LOCKS = 50;
-
+    private static final int AUTO_CLEANUP_LOCKS = 5;
+    
     /**
-     * 线程增长告警阈值
+     * 告警锁的阈值（影响使用时才告警）
      */
-    private static final int THREAD_GROWTH_THRESHOLD = 100;
-
+    private static final int ALERT_LOCKS = 10;
+    
     /**
-     * 内存使用率告警阈值
+     * 线程增长阈值（相对基线）- 提高到50%
      */
-    private static final double MEMORY_USAGE_THRESHOLD = 0.85;
+    private static final int THREAD_GROWTH_THRESHOLD = 50;
+    
+    /**
+     * 内存使用阈值（比例）- 🟡 P2修复：降低至75%，提前触发清理
+     */
+    private static final double MEMORY_USAGE_THRESHOLD = 0.75;
+    
+    /**
+     * 内存严重告警阈值 - 🟡 P2修复：降低至80%，留更多缓冲空间
+     */
+    private static final double MEMORY_CRITICAL_THRESHOLD = 0.80;
 
     /**
      * 告警计数器（避免重复告警）
@@ -89,9 +99,10 @@ public class ResourceMonitor {
     }
 
     /**
-     * 定期资源检查（每5分钟）
+     * 定期资源检查（每10分钟，启动后5分钟开始）
+     * 降低检查频率，减少资源消耗
      */
-    @Scheduled(fixedRate = 300000)
+    @Scheduled(fixedRate = 600000, initialDelay = 300000)
     public void checkResources() {
         try {
             // 检查锁泄漏
@@ -118,21 +129,19 @@ public class ResourceMonitor {
     private void checkLockLeak() {
         int clipboardLocks = clipboardManager.getLockCount();
         int screenshotLocks = screenshotUtil.getLockCount();
-        int totalLocks = clipboardLocks + screenshotLocks;
         
-        if (totalLocks > MAX_EXPECTED_LOCKS) {
-            log.warn("[资源监控] 可能存在锁泄漏 - 剪贴板锁: {}, 截图锁: {}, 总计: {}, 阈值: {}", 
-                clipboardLocks, screenshotLocks, totalLocks, MAX_EXPECTED_LOCKS);
-            
-            // 如果锁数量过多，尝试清理
-            if (totalLocks > MAX_EXPECTED_LOCKS * 2) {
-                log.warn("[资源监控] 锁数量严重超标，执行强制清理");
-                clipboardManager.clearAllLocks();
-                screenshotUtil.clearAllLocks();
-            }
-        } else {
-            log.debug("[资源监控] 锁状态正常 - 剪贴板锁: {}, 截图锁: {}", 
+        // 自动清理：超过5个锁时静默清理
+        if (clipboardLocks >= AUTO_CLEANUP_LOCKS || screenshotLocks >= AUTO_CLEANUP_LOCKS) {
+            clipboardManager.clearAllLocks();
+            screenshotUtil.clearAllLocks();
+            log.debug("[资源监控] 自动清理锁 - 剪贴板锁: {}, 截图锁: {}", clipboardLocks, screenshotLocks);
+        }
+        
+        // 只在严重影响使用时才告警（超过10个锁）
+        if (clipboardLocks >= ALERT_LOCKS || screenshotLocks >= ALERT_LOCKS) {
+            log.warn("[资源监控] ⚠️ 锁数量过多，已自动清理 - 剪贴板锁: {}, 截图锁: {} | 建议检查任务是否异常退出", 
                 clipboardLocks, screenshotLocks);
+            alertCount.incrementAndGet();
         }
     }
 
@@ -141,43 +150,60 @@ public class ResourceMonitor {
      */
     private void checkThreadLeak() {
         ThreadMXBean threadBean = ManagementFactory.getThreadMXBean();
-        int currentThreadCount = threadBean.getThreadCount();
-        int peakThreadCount = threadBean.getPeakThreadCount();
-        int threadGrowth = currentThreadCount - baselineThreadCount;
+        int currentThreads = threadBean.getThreadCount();
+        int peakThreads = threadBean.getPeakThreadCount();
         
-        if (threadGrowth > THREAD_GROWTH_THRESHOLD) {
-            log.warn("[资源监控] 线程数异常增长 - 当前: {}, 基线: {}, 增长: {}, 峰值: {}", 
-                currentThreadCount, baselineThreadCount, threadGrowth, peakThreadCount);
+        int growth = currentThreads - baselineThreadCount;
+        double growthRatio = (double) growth / baselineThreadCount;
+        
+        // 只有增长超过50%才告警（留足性能空间）
+        if (growth > THREAD_GROWTH_THRESHOLD && growthRatio > 0.5) {
+            log.warn("[资源监控] ⚠️ 线程数量持续增长 - 当前: {}, 基线: {}, 峰值: {}, 增长率: {:.0%} | 建议检查是否有任务未释放资源", 
+                currentThreads, baselineThreadCount, peakThreads, growthRatio);
             alertCount.incrementAndGet();
-        } else {
-            log.debug("[资源监控] 线程状态正常 - 当前: {}, 基线: {}, 峰值: {}", 
-                currentThreadCount, baselineThreadCount, peakThreadCount);
         }
     }
 
     /**
      * 检查内存使用
+     * 🟡 P2修复：降低阈值并添加主动清理逻辑
      */
     private void checkMemoryUsage() {
         MemoryMXBean memoryBean = ManagementFactory.getMemoryMXBean();
         MemoryUsage heapUsage = memoryBean.getHeapMemoryUsage();
         
-        long usedMB = heapUsage.getUsed() / (1024 * 1024);
-        long maxMB = heapUsage.getMax() / (1024 * 1024);
+        long usedMemory = heapUsage.getUsed() / (1024 * 1024);
+        long maxMemory = heapUsage.getMax() / (1024 * 1024);
         double usageRatio = (double) heapUsage.getUsed() / heapUsage.getMax();
         
-        if (usageRatio > MEMORY_USAGE_THRESHOLD) {
-            log.warn("[资源监控] 内存使用率过高 - 已用: {}MB, 最大: {}MB, 使用率: {:.1%}", 
-                usedMB, maxMB, usageRatio);
-            alertCount.incrementAndGet();
-            
-            // 建议执行GC
-            if (usageRatio > 0.9) {
-                log.warn("[资源监控] 内存使用率超过90%，建议检查是否存在内存泄漏");
+        // 75%-80%：触发GC + 清理空闲Session
+        if (usageRatio > MEMORY_USAGE_THRESHOLD && usageRatio < MEMORY_CRITICAL_THRESHOLD) {
+            System.gc();
+            log.debug("[资源监控] 内存使用率 {:.0%}，已触发GC", usageRatio);
+            // 🟡 P2修复：主动清理空闲Session
+            try {
+                browserPoolManager.cleanupExpiredSessions();
+                log.debug("[资源监控] 已清理空闲Session以释放内存");
+            } catch (Exception e) {
+                log.debug("[资源监控] 清理Session失败: {}", e.getMessage());
             }
-        } else {
-            log.debug("[资源监控] 内存状态正常 - 已用: {}MB, 最大: {}MB, 使用率: {:.1%}", 
-                usedMB, maxMB, usageRatio);
+        }
+        
+        // 超过80%告警并拒绝新请求（留20%空间）
+        if (usageRatio > MEMORY_CRITICAL_THRESHOLD) {
+            log.warn("[资源监控] ⚠️ 内存使用率过高 - 已用: {}MB, 最大: {}MB, 使用率: {:.0%} | 建议：1) 增加堆内存 2) 检查内存泄漏 3) 暂停新任务", 
+                usedMemory, maxMemory, usageRatio);
+            alertCount.incrementAndGet();
+            // 🟡 P2修复：强制清理资源
+            try {
+                browserPoolManager.cleanupExpiredSessions();
+                clipboardManager.clearAllLocks();
+                screenshotUtil.clearAllLocks();
+                System.gc();
+                log.info("[资源监控] 已执行强制资源清理");
+            } catch (Exception e) {
+                log.error("[资源监控] 强制清理失败: {}", e.getMessage());
+            }
         }
     }
 
@@ -186,14 +212,43 @@ public class ResourceMonitor {
      */
     private void checkBrowserPool() {
         Map<String, Object> poolStatus = browserPoolManager.getStatus();
-        String leakInfo = browserPoolManager.getResourceLeakInfo();
+        int activeCount = (int) poolStatus.get("activeCount");
+        int persistentCount = (int) poolStatus.get("persistentCount");
+        int temporaryCount = (int) poolStatus.get("temporaryCount");
+        int availableSlots = (int) poolStatus.get("availableSlots");
+        int maxSize = (int) poolStatus.get("maxSize");
         
-        log.debug("[资源监控] 浏览器池状态 - 活跃: {}, 持久化: {}, 临时: {}, 可用槽位: {}, 资源: {}", 
-            poolStatus.get("activeCount"),
-            poolStatus.get("persistentCount"),
-            poolStatus.get("temporaryCount"),
-            poolStatus.get("availableSlots"),
-            leakInfo);
+        double usageRatio = (double) activeCount / maxSize;
+        
+        // 自动清理：使用率超过50%时，尝试清理过期会话
+        if (usageRatio > 0.5) {
+            try {
+                browserPoolManager.cleanupExpiredSessions();
+                log.debug("[资源监控] 浏览器池使用率 {:.0%}，已触发自动清理", usageRatio);
+            } catch (Exception e) {
+                log.debug("[资源监控] 自动清理失败: {}", e.getMessage());
+            }
+        }
+        
+        // 只在使用率超过70%或无可用槽位时才告警
+        if (usageRatio > 0.7 || availableSlots == 0) {
+            String leakInfo = browserPoolManager.getResourceLeakInfo();
+            StringBuilder reason = new StringBuilder();
+            
+            if (availableSlots == 0) {
+                reason.append("浏览器池已满，新任务将被阻塞 | 建议：1) 检查任务是否及时释放会话 2) 增加浏览器池大小");
+            } else if (usageRatio > 0.7) {
+                reason.append(String.format("浏览器池使用率 %.0f%%，接近上限 | 建议：检查是否有会话泄漏", usageRatio * 100));
+            }
+            
+            if (leakInfo != null && !leakInfo.isEmpty() && !leakInfo.equals("无")) {
+                reason.append(" | 泄漏详情: ").append(leakInfo);
+            }
+            
+            log.warn("[资源监控] ⚠️ 浏览器池压力较大 - 活跃: {}/{}, 持久化: {}, 临时: {}, 可用槽位: {} | {}", 
+                activeCount, maxSize, persistentCount, temporaryCount, availableSlots, reason.toString());
+            alertCount.incrementAndGet();
+        }
     }
 
     /**

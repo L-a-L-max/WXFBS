@@ -18,7 +18,9 @@ import jakarta.annotation.PreDestroy;
 import java.net.URI;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * WebSocket 客户端管理器
@@ -47,6 +49,17 @@ public class WebSocketClientManager {
 
     private EngineWebSocketClient client;
     private volatile boolean initialized = false;
+    
+    /**
+     * 待发送消息队列（重连期间消息暂存）- 使用BlockingQueue实现背压控制
+     */
+    private final java.util.concurrent.BlockingQueue<EngineMessage> pendingMessages = 
+        new java.util.concurrent.LinkedBlockingQueue<>(WebSocketConstants.MAX_PENDING_MESSAGES);
+    
+    /**
+     * 丢弃消息计数（队列满时丢弃）
+     */
+    private final AtomicInteger droppedMessageCount = new AtomicInteger(0);
 
     public WebSocketClientManager(EngineProperties properties,
                                    @Qualifier("taskScheduler") ThreadPoolTaskScheduler scheduler,
@@ -58,6 +71,7 @@ public class WebSocketClientManager {
 
     /**
      * 应用启动完成后自动连接主节点
+     * 延迟执行，确保 Playwright 初始化完成
      */
     @EventListener(ApplicationReadyEvent.class)
     public void onApplicationReady() {
@@ -68,7 +82,11 @@ public class WebSocketClientManager {
             capabilityManager.setWebSocketClientManager(this);
         }
         
-        connect();
+        // 延迟2秒连接，确保 Playwright 初始化完成
+        scheduler.schedule(() -> {
+            log.info("[ClientManager] Playwright 初始化完成，开始连接主节点");
+            connect();
+        }, new java.util.Date(System.currentTimeMillis() + 2000));
     }
 
     /**
@@ -132,24 +150,90 @@ public class WebSocketClientManager {
     }
 
     /**
-     * 发送消息
+     * 发送消息（支持重连期间消息暂存）
      *
      * @param message 消息对象
-     * @return true 发送成功，false 发送失败
+     * @return true 发送成功或已加入待发送队列，false 发送失败
      */
     public boolean sendMessage(EngineMessage message) {
         if (client == null || !client.isOpen()) {
-            log.warn("[ClientManager] 连接未建立，无法发送消息");
-            return false;
+            // 连接未建立，尝试加入待发送队列
+            return queuePendingMessage(message);
         }
 
         try {
             client.sendMessage(message);
             return true;
         } catch (Exception e) {
-            log.error("[ClientManager] 消息发送失败 - 错误: {}", e.getMessage());
+            log.error("[ClientManager] 消息发送失败 - 类型: {}, 用户: {}, 错误: {}", 
+                message.getType(), message.getUserId(), e.getMessage(), e);
+            // 发送失败，加入待发送队列
+            return queuePendingMessage(message);
+        }
+    }
+    
+    /**
+     * 将消息加入待发送队列（带背压控制）
+     */
+    private boolean queuePendingMessage(EngineMessage message) {
+        boolean queued = pendingMessages.offer(message);
+        if (!queued) {
+            droppedMessageCount.incrementAndGet();
+            log.warn("[ClientManager] 队列已满，丢弃消息 - 类型: {}, 总丢弃: {}", 
+                message.getType(), droppedMessageCount.get());
+            
+            // 发送错误通知给用户
+            if (message.getUserId() != null) {
+                log.error("[ClientManager] 用户消息丢弃 - 用户: {}, 类型: {}", 
+                    message.getUserId(), message.getType());
+            }
             return false;
         }
+        
+        log.debug("[ClientManager] 消息已加入待发送队列 - 类型: {}, 队列大小: {}", 
+            message.getType(), pendingMessages.size());
+        return true;
+    }
+    
+    /**
+     * 重发待发送消息（连接恢复后调用）
+     */
+    public void flushPendingMessages() {
+        if (client == null || !client.isOpen()) {
+            return;
+        }
+        
+        int sent = 0;
+        int failed = 0;
+        EngineMessage message;
+        
+        while ((message = pendingMessages.poll()) != null) {
+            try {
+                client.sendMessage(message);
+                sent++;
+            } catch (Exception e) {
+                failed++;
+                log.warn("[ClientManager] 重发消息失败 - 类型: {}, 错误: {}", message.getType(), e.getMessage());
+            }
+        }
+        
+        if (sent > 0 || failed > 0) {
+            log.info("[ClientManager] 重发待发送消息完成 - 成功: {}, 失败: {}", sent, failed);
+        }
+    }
+    
+    /**
+     * 获取待发送消息数量
+     */
+    public int getPendingMessageCount() {
+        return pendingMessages.size();
+    }
+    
+    /**
+     * 获取丢弃消息数量
+     */
+    public int getDroppedMessageCount() {
+        return droppedMessageCount.get();
     }
 
     /**

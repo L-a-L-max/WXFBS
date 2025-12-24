@@ -35,11 +35,17 @@ public class ClientMessageRouter {
     /**
      * 路由消息到 Engine
      * 
+     * 核心职责：
+     * 1. 强制生成requestId（确保全链路追踪）
+     * 2. 验证Engine可用性和能力
+     * 3. 转发消息到指定Engine
+     * 
      * ⚠️ 必须在请求中指定 engineId，不支持自动选择
+     * ⚠️ requestId由后端强制生成，前端传递的requestId会被忽略
      */
-    public void routeToEngine(String clientId, String message) {
+    public void routeToEngine(String clientId, String rawMessage) {
         try {
-            JSONObject json = JSON.parseObject(message);
+            JSONObject json = JSON.parseObject(rawMessage);
             String type = json.getString("type");
             String userId = extractUserId(clientId);
             
@@ -69,13 +75,45 @@ public class ClientMessageRouter {
                 return;
             }
             
+            // ━━━━━━━━━━ 强制生成requestId（安全核心）━━━━━━━━━━
+            // 1. 移除前端可能传递的requestId（防止伪造）
+            json.remove("requestId");
+            
+            // 2. 使用RequestIdGenerator生成唯一requestId
+            String requestId = com.wx.fbsir.business.websocket.util.RequestIdGenerator.generate(userId, type);
+            json.put("requestId", requestId);
+            
+            // 3. 记录requestId生成日志（方便追踪）
+            log.info("[Router] 已生成requestId: {} - 用户: {}, 类型: {}, 目标: {}", 
+                requestId, userId, type, engineId);
+            
+            // ━━━━━━━━━━ 构建并发送消息 ━━━━━━━━━━
             // 确保消息包含必要字段
             json.put("userId", userId);
             json.put("sourceClientId", clientId);
             
-            // 转发给 Engine
-            engineSessionManager.sendToEngine(engineId, json.toJSONString());
-            log.debug("[Router] 转发到 Engine: {} -> {} (用户: {})", type, engineId, userId);
+            // 构建 EngineMessage，将 JSON 中的所有字段作为 payload
+            com.wx.fbsir.business.websocket.message.EngineMessage.Builder builder = 
+                com.wx.fbsir.business.websocket.message.EngineMessage.builder()
+                    .type(type)
+                    .engineId(engineId)
+                    .userId(userId);
+            
+            // 将 JSON 的所有字段添加到 payload（包括新生成的requestId）
+            for (String key : json.keySet()) {
+                builder.payload(key, json.get(key));
+            }
+            
+            com.wx.fbsir.business.websocket.message.EngineMessage engineMessage = builder.build();
+            
+            // 发送消息到Engine
+            boolean sent = engineSessionManager.sendMessage(engineId, engineMessage);
+            if (!sent) {
+                sendError(clientId, type, "SEND_FAILED", "消息发送失败，Engine可能已离线");
+                log.warn("[Router] 发送失败: {} -> {} (用户: {}, 请求ID: {})", type, engineId, userId, requestId);
+            } else {
+                log.debug("[Router] 转发到 Engine: {} -> {} (用户: {}, 请求ID: {})", type, engineId, userId, requestId);
+            }
             
         } catch (Exception e) {
             log.error("[Router] 处理客户端消息失败", e);

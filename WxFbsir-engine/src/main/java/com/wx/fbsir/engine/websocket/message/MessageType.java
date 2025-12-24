@@ -3,81 +3,135 @@ package com.wx.fbsir.engine.websocket.message;
 /**
  * WebSocket 消息类型枚举
  * 
- * 替代老项目的字符串魔法值匹配，提高代码可维护性
+ * 设计原则：
+ * 1. 业务消息在上，系统消息在下
+ * 2. 每个消息类型必须有对应的Controller处理
+ * 3. 消息类型与CapabilityRegistry注册一致
+ * 
+ * 添加新消息类型的步骤：
+ * 步骤1：在下方业务消息区添加枚举（参考PLAYWRIGHT_TEST示例）
+ * 步骤2：在Engine模块创建Controller类（参考PlaywrightTestController）
+ * 步骤3：在CapabilityRegistry注册处理器（stream或once）
+ * 步骤4：更新测试文档，添加请求/响应示例
+ * 
+ * 示例：
+ * <pre>
+ * // 1. 流式输出消息（多次返回）
+ * PLAYWRIGHT_TEST("PLAYWRIGHT_TEST", "Playwright测试"),  // 请求
+ * TASK_PROGRESS("TASK_PROGRESS", "任务进度"),        // 响应（多次）
+ * TASK_RESULT("TASK_RESULT", "任务结果"),            // 响应（最终）
+ * 
+ * // 2. 单次返回消息
+ * HEALTH_CHECK("HEALTH_CHECK", "健康检查"),          // 请求
+ * HEALTH_CHECK_RESULT("", ""),                        // 响应（自动生成，无需定义）
+ * </pre>
  *
  * @author wxfbsir
  * @date 2025-12-15
  */
 public enum MessageType {
 
-    // ========== 系统消息 ==========
+    // ==========================================================================
+    // 业务消息（Business Messages）
+    // 说明：由Engine处理的业务功能，需在CapabilityRegistry注册
+    // ==========================================================================
     
     /**
-     * 心跳请求
+     * Playwright自动化测试（流式输出）
+     * 
+     * Controller: PlaywrightTestController
+     * 注册方式: stream() - 支持多次进度返回
+     * 
+     * 请求示例：
+     * {"type":"PLAYWRIGHT_TEST","engineId":"engine-001","payload":{"requestId":"xxx"}}
+     * 
+     * 响应消息：
+     * - TASK_PROGRESS: 进度通知（多次）
+     * - TASK_RESULT: 最终结果（一次）
      */
-    HEARTBEAT_PING("HEARTBEAT_PING", "心跳请求"),
+    PLAYWRIGHT_TEST("PLAYWRIGHT_TEST", "Playwright测试"),
     
     /**
-     * 心跳响应
+     * 健康检查（单次返回）
+     * 
+     * Controller: HealthCheckController
+     * 注册方式: once() - 单次返回结果
+     * 
+     * 请求示例：
+     * {"type":"HEALTH_CHECK","engineId":"engine-001","payload":{"requestId":"xxx"}}
+     * 
+     * 响应消息：
+     * - HEALTH_CHECK_RESULT: 健康数据（type后缀自动加_RESULT）
      */
-    HEARTBEAT_PONG("HEARTBEAT_PONG", "心跳响应"),
+    HEALTH_CHECK("HEALTH_CHECK", "健康检查"),
     
     /**
-     * Engine 注册请求
+     * 简单流式示例
+     * 
+     * 用于演示流式输出的完整流程，新手学习参考
+     * 
+     * 请求消息：
+     * - SIMPLE_STREAM_DEMO: 简单流式示例请求（由Admin转发）
+     * 
+     * 响应消息：
+     * - TASK_PROGRESS: 任务进度（多次）
+     * - TASK_RESULT: 任务结果（一次）
      */
-    ENGINE_REGISTER("ENGINE_REGISTER", "Engine 注册"),
+    SIMPLE_STREAM_DEMO("SIMPLE_STREAM_DEMO", "简单流式示例"),
+    
+    // ---------- 通用响应消息 ----------
     
     /**
-     * Engine 注册响应
-     */
-    ENGINE_REGISTER_ACK("ENGINE_REGISTER_ACK", "Engine 注册确认"),
-    
-    /**
-     * Engine 注销
-     */
-    ENGINE_UNREGISTER("ENGINE_UNREGISTER", "Engine 注销"),
-    
-    /**
-     * 错误消息
-     */
-    ERROR("ERROR", "错误消息"),
-
-    // ========== 业务消息 ==========
-    
-    /**
-     * AI 对话请求
-     */
-    AI_CHAT_REQUEST("AI_CHAT_REQUEST", "AI对话请求"),
-    
-    /**
-     * AI 对话响应
-     */
-    AI_CHAT_RESPONSE("AI_CHAT_RESPONSE", "AI对话响应"),
-    
-    /**
-     * AI 对话流式响应
-     */
-    AI_CHAT_STREAM("AI_CHAT_STREAM", "AI对话流式响应"),
-    
-    /**
-     * 任务请求
-     */
-    TASK_REQUEST("TASK_REQUEST", "任务请求"),
-    
-    /**
-     * 任务进度
+     * 任务进度通知（由Engine主动发送）
+     * 用于流式输出的中间进度反馈
      */
     TASK_PROGRESS("TASK_PROGRESS", "任务进度"),
     
     /**
-     * 任务结果
+     * 任务结果（由Engine主动发送）
+     * 用于流式输出的最终结果
      */
     TASK_RESULT("TASK_RESULT", "任务结果"),
     
+    // ==========================================================================
+    // 系统消息（System Messages）
+    // 说明：框架内部使用，由EngineWebSocketHandler处理
+    // ==========================================================================
+    
     /**
-     * 管理员断开连接
+     * 心跳请求（Engine → Admin）
      */
-    ADMIN_DISCONNECT("ADMIN_DISCONNECT", "管理员断开连接"),
+    HEARTBEAT_PING("HEARTBEAT_PING", "心跳请求"),
+    
+    /**
+     * 心跳响应（Admin → Engine）
+     */
+    HEARTBEAT_PONG("HEARTBEAT_PONG", "心跳响应"),
+    
+    /**
+     * Engine注册请求（Engine → Admin）
+     */
+    ENGINE_REGISTER("ENGINE_REGISTER", "Engine注册"),
+    
+    /**
+     * Engine注册确认（Admin → Engine）
+     */
+    ENGINE_REGISTER_ACK("ENGINE_REGISTER_ACK", "Engine注册确认"),
+    
+    /**
+     * Engine注销（Engine → Admin）
+     */
+    ENGINE_UNREGISTER("ENGINE_UNREGISTER", "Engine注销"),
+    
+    /**
+     * 管理员断开连接（Admin → Engine）
+     */
+    ADMIN_DISCONNECT("ADMIN_DISCONNECT", "管理员断开"),
+    
+    /**
+     * 错误消息（双向）
+     */
+    ERROR("ERROR", "错误消息"),
     
     /**
      * 未知类型

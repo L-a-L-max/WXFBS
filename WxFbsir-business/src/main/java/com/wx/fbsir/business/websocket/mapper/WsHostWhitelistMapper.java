@@ -16,6 +16,14 @@ import java.util.List;
 public interface WsHostWhitelistMapper {
 
     /**
+     * 根据ID查询白名单
+     *
+     * @param id 主键ID
+     * @return 白名单记录
+     */
+    WsHostWhitelist selectById(@Param("id") Long id);
+
+    /**
      * 根据主机ID查询白名单
      *
      * @param hostId 主机ID

@@ -82,7 +82,7 @@ public class IpAccessControlService {
 
             return true;
         } catch (Exception e) {
-            log.error("[限流] 检查异常: {}", e.getMessage());
+            log.error("[限流] 检查异常: {}", e.getMessage(), e);
             return true; // 异常时放行
         }
     }
@@ -115,7 +115,7 @@ public class IpAccessControlService {
                 redisCache.deleteObject(failKey);
             }
         } catch (Exception e) {
-            log.error("[访问控制] 记录失败尝试异常: {}", e.getMessage());
+            log.error("[访问控制] 记录失败尝试异常: {}", e.getMessage(), e);
         }
     }
 
@@ -150,7 +150,7 @@ public class IpAccessControlService {
             log.warn("[自动封禁] IP: {} 已被自动加入黑名单 - 原因: {}, 封禁时长: {}小时", 
                 ip, reason, AUTO_BLOCK_HOURS);
         } catch (Exception e) {
-            log.error("[自动封禁] 添加黑名单失败 - IP: {}, 错误: {}", ip, e.getMessage());
+            log.error("[自动封禁] 添加黑名单失败 - IP: {}, 错误: {}", ip, e.getMessage(), e);
         }
     }
 

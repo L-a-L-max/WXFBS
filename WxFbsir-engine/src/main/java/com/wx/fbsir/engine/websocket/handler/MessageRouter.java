@@ -113,26 +113,32 @@ public class MessageRouter {
     }
 
     /**
-     * 执行消息处理器
+     * 执行消息处理器（带排队支持）
      */
     private void executeHandler(EngineMessage message, MessageType type, MessageHandler handler) {
-        messageExecutor.execute(() -> {
-            long startTime = System.currentTimeMillis();
-            try {
-                log.debug("[消息路由] 开始处理消息 - 类型: {}, 消息ID: {}", 
-                    type.getCode(), message.getMessageId());
-                
-                handler.handle(message);
-                
-                long costTime = System.currentTimeMillis() - startTime;
-                log.debug("[消息路由] 消息处理完成 - 类型: {}, 耗时: {}ms", 
-                    type.getCode(), costTime);
-                
-            } catch (Exception e) {
-                log.error("[消息路由] 消息处理异常 - 类型: {}, 消息ID: {}, 错误: {}", 
-                    type.getCode(), message.getMessageId(), e.getMessage(), e);
-            }
-        });
+        try {
+            messageExecutor.execute(() -> {
+                long startTime = System.currentTimeMillis();
+                try {
+                    log.debug("[消息路由] 开始处理消息 - 类型: {}, 用户: {}", 
+                        type.getCode(), message.getUserId());
+                    
+                    handler.handle(message);
+                    
+                    long costTime = System.currentTimeMillis() - startTime;
+                    log.debug("[消息路由] 消息处理完成 - 类型: {}, 耗时: {}ms", 
+                        type.getCode(), costTime);
+                    
+                } catch (Exception e) {
+                    log.error("[消息路由] 消息处理异常 - 类型: {}, 用户: {}, 错误: {}", 
+                        type.getCode(), message.getUserId(), e.getMessage(), e);
+                }
+            });
+        } catch (java.util.concurrent.RejectedExecutionException e) {
+            // 线程池拒绝（已在EngineCapabilityManager中捕获并发送友好提示）
+            log.warn("[消息路由] 线程池繁忙 - 类型: {}, 用户: {}", 
+                type.getCode(), message.getUserId());
+        }
     }
 
     /**

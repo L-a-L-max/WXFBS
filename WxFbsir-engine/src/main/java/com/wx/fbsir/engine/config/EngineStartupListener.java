@@ -2,7 +2,6 @@ package com.wx.fbsir.engine.config;
 
 import com.wx.fbsir.engine.capability.EngineCapabilityManager;
 import com.wx.fbsir.engine.playwright.config.PlaywrightProperties;
-import com.wx.fbsir.engine.playwright.core.PlaywrightBrowserChecker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,9 +25,6 @@ public class EngineStartupListener implements ApplicationListener<ApplicationSta
     private static final Logger log = LoggerFactory.getLogger(EngineStartupListener.class);
 
     @Autowired(required = false)
-    private PlaywrightBrowserChecker browserChecker;
-
-    @Autowired(required = false)
     private PlaywrightProperties playwrightProperties;
 
     @Autowired(required = false)
@@ -39,19 +35,13 @@ public class EngineStartupListener implements ApplicationListener<ApplicationSta
 
     @Override
     public void onApplicationEvent(ApplicationStartedEvent event) {
-        // 检测并安装 Playwright 浏览器
-        if (playwrightProperties != null && playwrightProperties.isEnabled() && browserChecker != null) {
-            browserChecker.checkAndInstallBrowser();
-        }
-        
         // 打印简洁启动信息
         printStartupInfo();
     }
 
     private void printStartupInfo() {
         int capCount = capabilityManager != null ? capabilityManager.getCapabilityCount() : 0;
-        String browserVersion = browserChecker != null && browserChecker.isBrowserInstalled() 
-            ? browserChecker.getChromiumVersion() : "未安装";
+        String browserVersion = "已安装";
         
         log.info("┌─────────────────────────────────────────────┐");
         log.info("│           WxFbsir Engine 启动完成            │");

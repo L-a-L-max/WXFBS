@@ -32,6 +32,11 @@ public class EngineSession {
      * Engine 版本
      */
     private String version;
+    
+    /**
+     * 设备指纹ID
+     */
+    private String deviceId;
 
     /**
      * Engine 能力列表（包含详细信息）
@@ -39,9 +44,15 @@ public class EngineSession {
     private List<Map<String, Object>> capabilities;
 
     /**
-     * 设备信息
+     * 设备信息（静态信息：CPU型号、内存容量等）
      */
     private Map<String, Object> deviceInfo;
+    
+    /**
+     * 实时性能数据（动态信息：CPU使用率、内存使用率等）
+     * <p>每5分钟通过心跳消息更新一次
+     */
+    private volatile Map<String, Object> performanceData;
 
     /**
      * 连接时间
@@ -94,6 +105,11 @@ public class EngineSession {
      * 最后错误信息
      */
     private volatile String lastError;
+
+    /**
+     * 是否为正常关闭（主动注销）
+     */
+    private volatile boolean normalClose = false;
 
     /**
      * 会话状态枚举
@@ -239,6 +255,14 @@ public class EngineSession {
     public void setVersion(String version) {
         this.version = version;
     }
+    
+    public String getDeviceId() {
+        return deviceId;
+    }
+
+    public void setDeviceId(String deviceId) {
+        this.deviceId = deviceId;
+    }
 
     public List<Map<String, Object>> getCapabilities() {
         return capabilities;
@@ -265,6 +289,25 @@ public class EngineSession {
 
     public void setDeviceInfo(Map<String, Object> deviceInfo) {
         this.deviceInfo = deviceInfo;
+    }
+
+    /**
+     * 获取实时性能数据
+     * 
+     * @return 性能数据Map，包含CPU使用率、内存使用率等
+     */
+    public Map<String, Object> getPerformanceData() {
+        return performanceData;
+    }
+
+    /**
+     * 更新实时性能数据（通过心跳消息更新）
+     * 
+     * @param performanceData 性能数据Map
+     */
+    public void updatePerformanceData(Map<String, Object> performanceData) {
+        this.performanceData = performanceData;
+        this.lastActiveAt = Instant.now();  // 更新活跃时间
     }
 
     public Instant getConnectedAt() {
@@ -305,6 +348,20 @@ public class EngineSession {
 
     public String getLastError() {
         return lastError;
+    }
+
+    /**
+     * 标记为正常关闭（主动注销）
+     */
+    public void markAsNormalClose() {
+        this.normalClose = true;
+    }
+
+    /**
+     * 是否为正常关闭
+     */
+    public boolean isNormalClose() {
+        return normalClose;
     }
 
     @Override

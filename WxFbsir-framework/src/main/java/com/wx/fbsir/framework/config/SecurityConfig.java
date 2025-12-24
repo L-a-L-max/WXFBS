@@ -108,6 +108,8 @@ public class SecurityConfig
                     .requestMatchers("/system/daily-article/saveModelContent", "/system/daily-article/updateOptimizedContent").permitAll()
                     // WebSocket端点，允许匿名访问（WebSocket有自己的认证机制）
                     .requestMatchers("/ws/**").permitAll()
+                    // Engine专属接口（截图上传等），由接口内部验证主机ID
+                    .requestMatchers("/engine/**").permitAll()
                     // 除上面外的所有请求全部需要鉴权认证
                     .anyRequest().authenticated();
             })

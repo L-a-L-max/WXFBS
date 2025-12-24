@@ -5,9 +5,12 @@ import com.wx.fbsir.business.websocket.mapper.WsConnectionLogMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -45,6 +48,57 @@ public class ConnectionLogService {
     private WsConnectionLogMapper connectionLogMapper;
 
     /**
+     * 应用启动时清理旧的活跃连接状态
+     * 将所有状态为0（连接中）或1（已注册）的记录标记为"主节点重启"
+     */
+    @EventListener(ApplicationReadyEvent.class)
+    public void cleanupActiveConnectionsOnStartup() {
+        if (connectionLogMapper == null) {
+            log.debug("[连接记录] Mapper未注入，跳过启动清理");
+            return;
+        }
+
+        try {
+            // 查询所有活跃连接（状态为0或1）
+            WsConnectionLog query = new WsConnectionLog();
+            List<WsConnectionLog> activeLogs = connectionLogMapper.selectList(query);
+            
+            int cleanedCount = 0;
+            for (WsConnectionLog log : activeLogs) {
+                if (log.getStatus() == STATUS_CONNECTING || log.getStatus() == STATUS_REGISTERED) {
+                    // 构建详细的错误信息
+                    String errorMessage = String.format(
+                        "主节点重启导致连接失效 - 原状态: %s, 主机ID: %s, 连接时间: %s",
+                        log.getStatus() == STATUS_CONNECTING ? "连接中" : "已注册",
+                        log.getHostId() != null ? log.getHostId() : "未知",
+                        log.getConnectTime()
+                    );
+                    
+                    // 更新为主节点重启状态，并记录错误信息
+                    connectionLogMapper.updateDisconnected(
+                        log.getSessionId(),
+                        STATUS_SERVER_RESTART,
+                        1006,  // WebSocket异常关闭状态码
+                        "主节点重启",
+                        0L, 0L, 0, 0, 
+                        errorMessage  // 记录详细错误信息到last_error字段
+                    );
+                    cleanedCount++;
+                }
+            }
+            
+            if (cleanedCount > 0) {
+                log.info("[连接记录] 启动清理完成 - 已将 {} 个活跃连接标记为'主节点重启'", cleanedCount);
+            } else {
+                log.debug("[连接记录] 启动清理完成 - 无需清理的活跃连接");
+            }
+
+        } catch (Exception e) {
+            log.error("[连接记录] 启动清理失败: {}", e.getMessage(), e);
+        }
+    }
+
+    /**
      * 记录连接请求
      *
      * @param sessionId  会话ID
@@ -71,7 +125,7 @@ public class ConnectionLogService {
             log.debug("[连接记录] 新连接 - IP: {}", remoteIp);
 
         } catch (Exception e) {
-            log.error("[连接记录] 记录失败 - SessionID: {}, 错误: {}", sessionId, e.getMessage());
+            log.error("[连接记录] 记录失败 - SessionID: {}, 错误: {}", sessionId, e.getMessage(), e);
         }
     }
 
@@ -104,7 +158,27 @@ public class ConnectionLogService {
             log.debug("[连接记录] 注册成功 - HostID: {}", hostId);
 
         } catch (Exception e) {
-            log.error("[连接记录] 更新注册失败 - SessionID: {}, 错误: {}", sessionId, e.getMessage());
+            log.error("[连接记录] 更新注册失败 - SessionID: {}, 错误: {}", sessionId, e.getMessage(), e);
+        }
+    }
+
+    /**
+     * 更新连接记录的IP地址（注册时使用客户端上报的公网IP替换连接IP）
+     *
+     * @param sessionId 会话ID
+     * @param publicIp  公网IP
+     */
+    @Async
+    public void updateConnectionIp(String sessionId, String publicIp) {
+        if (connectionLogMapper == null || publicIp == null || publicIp.isEmpty()) {
+            return;
+        }
+
+        try {
+            connectionLogMapper.updateConnectionIp(sessionId, publicIp);
+            log.debug("[记录] 更新IP - SessionID: {}, 公网IP: {}", sessionId, publicIp);
+        } catch (Exception e) {
+            log.error("[连接记录] 更新IP失败 - SessionID: {}, 错误: {}", sessionId, e.getMessage(), e);
         }
     }
 
@@ -118,16 +192,30 @@ public class ConnectionLogService {
      */
     @Async
     public void updateRejected(String sessionId, String hostId, int status, String rejectReason) {
+        updateRejected(sessionId, hostId, status, rejectReason, null);
+    }
+    
+    /**
+     * 更新连接为被拒绝状态（带错误码）
+     *
+     * @param sessionId    会话ID
+     * @param hostId       主机ID（可能是伪造的）
+     * @param status       拒绝状态
+     * @param rejectReason 拒绝原因
+     * @param errorCode    错误码（E1001-E9999）
+     */
+    @Async
+    public void updateRejected(String sessionId, String hostId, int status, String rejectReason, String errorCode) {
         if (connectionLogMapper == null) {
             return;
         }
 
         try {
-            connectionLogMapper.updateRejected(sessionId, hostId, status, rejectReason);
-            log.debug("[记录] 拒绝 - {}", hostId);
+            connectionLogMapper.updateRejected(sessionId, hostId, status, rejectReason, errorCode);
+            log.debug("[记录] 拒绝 - HostID: {}, 错误码: {}", hostId, errorCode);
 
         } catch (Exception e) {
-            log.error("[连接记录] 记录拒绝失败 - SessionID: {}, 错误: {}", sessionId, e.getMessage());
+            log.error("[连接记录] 记录拒绝失败 - SessionID: {}, 错误: {}", sessionId, e.getMessage(), e);
         }
     }
 
@@ -159,7 +247,7 @@ public class ConnectionLogService {
             log.debug("[记录] 断开 - {}", sessionId);
 
         } catch (Exception e) {
-            log.error("[连接记录] 更新断开失败 - SessionID: {}, 错误: {}", sessionId, e.getMessage());
+            log.error("[连接记录] 更新断开失败 - SessionID: {}, 错讯: {}", sessionId, e.getMessage(), e);
         }
     }
 

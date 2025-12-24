@@ -32,7 +32,8 @@ wxfbsir:
     host-id: engine-001
     
     # 节点版本（用于版本追踪和兼容性检查）
-    version: 1.0.0
+    # 版本号从 pom.xml 的 engine.version 属性自动注入
+    version: @engine.version@
     
     # 主节点 WebSocket 连接配置
     admin:
@@ -52,12 +53,12 @@ wxfbsir:
     reconnect:
       # 是否启用自动重连
       enabled: true
-      # 最大重试次数（12次 * 5秒 = 60秒超时）
-      max-retries: 12
+      # 最大重试次数（10次 * 30秒 = 300秒超时）
+      max-retries: 10
       # 初始重连延迟（秒）
-      initial-delay: 5
+      initial-delay: 30
       # 最大重连延迟（秒）
-      max-delay: 5
+      max-delay: 30
       # 退避乘数（1.0 表示固定间隔）
       backoff-multiplier: 1.0
       

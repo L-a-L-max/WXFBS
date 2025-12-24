@@ -1,10 +1,13 @@
 # 📋 代码合并PR规范
 
-本文档规定了微信福帮手项目的代码提交和Pull Request流程规范。
+> **目标读者**: 所有需要提交代码和发起Pull Request的开发者  
+> **文档用途**: 规范Fork仓库、分支管理、Commit格式、PR提交流程  
+> **更新日期**: 2025-12-23
 
 ---
 
 ## 📋 目录
+- [代码提交位置规范](#-代码提交位置规范) - **⭐⭐⭐ 必读：强制规则**
 - [Fork与分支管理](#-fork与分支管理)
 - [代码提交规范](#-代码提交规范)
 - [PR提交规范](#-pr提交规范)
@@ -13,7 +16,70 @@
 
 ---
 
+## 📏 代码提交位置规范
+（⭐⭐⭐ 必读）
+### 1. 后端代码位置
+
+**强制要求**：
+```
+WxFbsir-business/src/main/java/com/wx/fbsir/business/
+```
+
+- ✅ **所有业务代码必须放在 `WxFbsir-business` 模块下**
+- ❌ **未经管理员允许，不得在其他位置存放业务代码**
+
+### 2. 前端代码位置
+
+**强制要求**（三级目录对应数据库菜单层级）：
+
+#### 页面位置：
+```
+WxFbsir-ui/src/views/business/[二级目录]/[三级目录]/
+
+示例：
+WxFbsir-ui/src/views/business/content/dailyassistant/
+└── business/     # 一级目录（对应一级菜单）
+    └── content/  # 二级目录（对应二级菜单：内容管理）
+        └── dailyassistant/  # 三级目录（对应三级菜单：日更助手）
+```
+
+#### API位置：
+```
+WxFbsir-ui/src/api/business/[二级目录]/[文件名].js
+
+示例：
+WxFbsir-ui/src/api/business/content/dailyassistant.js
+└── business/     # 一级目录
+    └── content/  # 二级目录（与页面目录对应）
+        └── dailyassistant.js  # API文件（与页面目录名对应）
+```
+
+**重要规则**：
+- ✅ **所有业务页面必须放在 `views/business/` 下的某个二级目录中**
+- ✅ **所有业务API必须放在 `api/business/` 下的对应目录中**
+- ✅ **目录层级必须与数据库菜单表层级一一对应**
+- ✅ API文件名与页面目录名保持一致
+- ❌ **未经管理员允许，不得在其他位置存放业务代码**
+
+### 3. 为什么必须遵守目录规范？
+
+1. **模块独立**：各模块代码独立，便于维护和解耦
+2. **权限对应**：目录层级与菜单权限一一对应
+3. **团队协作**：统一的目录结构降低沟通成本
+4. **代码审查**：便于Code Review时快速定位代码位置
+
+### 4. 特殊情况处理
+
+如果你的功能确实不适合放在 `business` 目录下：
+1. **必须先与管理员沟通说明原因**
+2. 获得批准后在PR中明确注明
+3. 更新相关文档说明特殊目录的用途
+
+---
+
 ## 🔀 Fork与分支管理
+
+### 分支管理流程
 
 ### 1. Fork主仓库
 
@@ -76,6 +142,8 @@ git push origin master
 ---
 
 ## 📝 代码提交规范
+
+### 提交消息格式
 
 ### 1. 提交消息格式
 
@@ -146,7 +214,70 @@ git push origin feature/your-feature-name
 
 ---
 
+## 📏 代码提交位置规范（⭐⭐⭐ 必读）
+
+### 1. 后端代码位置
+
+**强制要求**：
+```
+WxFbsir-business/src/main/java/com/wx/fbsir/business/
+```
+
+- ✅ **所有业务代码必须放在 `WxFbsir-business` 模块下**
+- ❌ **未经管理员允许，不得在其他位置存放业务代码**
+
+### 2. 前端代码位置
+
+**强制要求**（三级目录对应数据库菜单层级）：
+
+#### 页面位置：
+```
+WxFbsir-ui/src/views/business/[二级目录]/[三级目录]/
+
+示例：
+WxFbsir-ui/src/views/business/content/dailyassistant/
+└── business/     # 一级目录（对应一级菜单）
+    └── content/  # 二级目录（对应二级菜单：内容管理）
+        └── dailyassistant/  # 三级目录（对应三级菜单：日更助手）
+```
+
+#### API位置：
+```
+WxFbsir-ui/src/api/business/[二级目录]/[文件名].js
+
+示例：
+WxFbsir-ui/src/api/business/content/dailyassistant.js
+└── business/     # 一级目录
+    └── content/  # 二级目录（与页面目录对应）
+        └── dailyassistant.js  # API文件（与页面目录名对应）
+```
+
+**重要规则**：
+- ✅ **所有业务页面必须放在 `views/business/` 下的某个二级目录中**
+- ✅ **所有业务API必须放在 `api/business/` 下的对应目录中**
+- ✅ **目录层级必须与数据库菜单表层级一一对应**
+- ✅ API文件名与页面目录名保持一致
+- ❌ **未经管理员允许，不得在其他位置存放业务代码**
+
+### 3. 为什么必须遵守目录规范？
+
+1. **模块独立**：各模块代码独立，便于维护和解耦
+2. **权限对应**：目录层级与菜单权限一一对应
+3. **团队协作**：统一的目录结构降低沟通成本
+4. **代码审查**：便于Code Review时快速定位代码位置
+
+### 4. 特殊情况处理
+
+如果你的功能确实不适合放在 `business` 目录下：
+1. **必须先与管理员沟通说明原因**
+2. 获得批准后在PR中明确注明
+3. 更新相关文档说明特殊目录的用途
+
+---
+
 ## 🔄 PR提交规范
+
+### Pull Request 提交规范
 
 ### 1. 创建Pull Request
 
@@ -296,10 +427,13 @@ CREATE TABLE IF NOT EXISTS `daily_article` (
 - [ ] 没有调试代码（`console.log`、`System.out.println`）
 - [ ] 没有敏感信息（密码、密钥）
 
-#### 模块划分
-- [ ] 业务逻辑代码放在 `WxFbsir-business` 模块
-- [ ] 前端业务页面放在 `WxFbsir-ui/src/views/business` 目录
-- [ ] 没有在错误的模块中编写代码
+#### 模块划分（⭐⭐⭐ 必检查）
+- [ ] 后端业务代码放在 `WxFbsir-business/src/main/java/com/wx/fbsir/business/`
+- [ ] 前端页面放在 `WxFbsir-ui/src/views/business/[二级目录]/[三级目录]/`
+- [ ] 前端API放在 `WxFbsir-ui/src/api/business/[二级目录]/[文件名].js`
+- [ ] 目录层级与数据库菜单表层级一致
+- [ ] API文件名与页面目录名保持一致
+- [ ] 没有在未经允许的位置存放代码
 
 #### 文件提交
 - [ ] 没有提交本地运行文件（`target/`、`node_modules/`、`.idea/`）
@@ -379,4 +513,7 @@ git push origin --delete feature/your-feature-name
 
 ---
 
-**最后更新**: 2025-12-05
+---
+
+**最后更新**: 2025-12-23  
+**维护者**: WxFbsir Team

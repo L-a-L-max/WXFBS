@@ -99,18 +99,30 @@ public interface WsConnectionLogMapper {
                            @Param("lastError") String lastError);
 
     /**
+     * 更新连接记录的IP地址
+     *
+     * @param sessionId 会话ID
+     * @param publicIp  公网IP
+     * @return 影响行数
+     */
+    int updateConnectionIp(@Param("sessionId") String sessionId,
+                           @Param("publicIp") String publicIp);
+
+    /**
      * 根据会话ID更新拒绝信息
      *
      * @param sessionId    会话ID
      * @param hostId       主机ID
      * @param status       状态
      * @param rejectReason 拒绝原因
+     * @param errorCode    错误码（E1001-E9999）
      * @return 影响行数
      */
     int updateRejected(@Param("sessionId") String sessionId,
                        @Param("hostId") String hostId,
                        @Param("status") Integer status,
-                       @Param("rejectReason") String rejectReason);
+                       @Param("rejectReason") String rejectReason,
+                       @Param("errorCode") String errorCode);
 
     /**
      * 查询连接统计信息

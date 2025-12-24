@@ -27,6 +27,11 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         FROM ws_ip_blacklist
     </sql>
 
+    <select id="selectById" parameterType="Long" resultMap="WsIpBlacklistResult">
+        <include refid="selectBlacklistVo"/>
+        WHERE id = #{id}
+    </select>
+
     <select id="selectByIpAddress" parameterType="String" resultMap="WsIpBlacklistResult">
         <include refid="selectBlacklistVo"/>
         WHERE ip_address = #{ipAddress} AND del_flag = 0

@@ -277,21 +277,18 @@ public final class SystemCapabilityDetector {
         int maxThreads = calculateRecommendedMaxThreads();
         int queueSize = calculateRecommendedQueueCapacity();
         
-        log.info("[系统检测] ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-        log.info("[系统检测] CPU 核心数: {}", getCpuCores());
-        log.info("[系统检测] JVM 最大内存: {} MB", getMaxMemoryMb());
-        log.info("[系统检测] 性能等级: {}", getPerformanceLevel());
-        log.info("[系统检测] 推荐浏览器池: {} 个", poolSize);
-        log.info("[系统检测] 推荐线程池: {}-{} 个", coreThreads, maxThreads);
-        log.info("[系统检测] 推荐队列大小: {} 个", queueSize);
+        log.debug("[系统检测] CPU 核心数: {}", getCpuCores());
+        log.debug("[系统检测] JVM 最大内存: {} MB", getMaxMemoryMb());
+        log.debug("[系统检测] 性能等级: {}", getPerformanceLevel());
+        log.debug("[系统检测] 推荐浏览器池: {} 个", poolSize);
+        log.debug("[系统检测] 推荐线程池: {}-{} 个", coreThreads, maxThreads);
+        log.debug("[系统检测] 推荐队列大小: {} 个", queueSize);
         
         if (isLowPerformanceSystem()) {
             log.warn("[系统检测] 检测到低性能系统，已自动调整配置以确保稳定性");
             if (shouldDisableImages()) {
-                log.info("[系统检测] 建议禁用图片加载以减少资源消耗");
+                log.debug("[系统检测] 建议禁用图片加载以减少资源消耗");
             }
         }
-        
-        log.info("[系统检测] ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
     }
 }

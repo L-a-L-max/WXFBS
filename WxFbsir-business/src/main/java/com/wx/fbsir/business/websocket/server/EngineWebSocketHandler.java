@@ -1,9 +1,11 @@
 package com.wx.fbsir.business.websocket.server;
 
 import com.wx.fbsir.business.websocket.config.WebSocketProperties;
+import com.wx.fbsir.business.websocket.enums.WebSocketErrorCode;
 import com.wx.fbsir.business.websocket.message.EngineMessage;
 import com.wx.fbsir.business.websocket.message.MessageType;
 import com.wx.fbsir.business.websocket.service.ConnectionLogService;
+import com.wx.fbsir.business.websocket.service.ConnectionRateLimiter;
 import com.wx.fbsir.business.websocket.service.WhitelistService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,50 +41,45 @@ public class EngineWebSocketHandler extends TextWebSocketHandler {
     private final EngineMessageRouter messageRouter;
     private final WhitelistService whitelistService;
     private final ConnectionLogService connectionLogService;
+    private final ConnectionRateLimiter rateLimiter;
 
     public EngineWebSocketHandler(EngineSessionManager sessionManager,
                                    WebSocketProperties properties,
                                    EngineMessageRouter messageRouter,
                                    WhitelistService whitelistService,
-                                   ConnectionLogService connectionLogService) {
+                                   ConnectionLogService connectionLogService,
+                                   ConnectionRateLimiter rateLimiter) {
         this.sessionManager = sessionManager;
         this.properties = properties;
         this.messageRouter = messageRouter;
         this.whitelistService = whitelistService;
         this.connectionLogService = connectionLogService;
+        this.rateLimiter = rateLimiter;
     }
 
     @Override
     public void afterConnectionEstablished(WebSocketSession session) throws Exception {
         String sessionId = session.getId();
-        String remoteIp = getRemoteIp(session);
+        String connectionIp = getRemoteIp(session);  // 连接来源IP（可能是127.0.0.1或代理IP）
         Integer remotePort = getRemotePort(session);
         
-        log.debug("[WebSocket] 新连接 - IP: {}", remoteIp);
+        log.debug("[WebSocket] 新连接 - 连接IP: {}", connectionIp);
         
-        // 记录连接请求
-        connectionLogService.logConnection(sessionId, remoteIp, remotePort, "/ws/engine");
+        // 记录连接请求（先使用连接IP，注册时会更新为公网IP）
+        connectionLogService.logConnection(sessionId, connectionIp, remotePort, "/ws/engine");
         
-        // 检查IP黑名单（连接阶段只检查IP，主机ID在注册时验证）
-        WhitelistService.ValidationResult ipResult = whitelistService.checkIpBlacklist(remoteIp);
-        if (!ipResult.isValid()) {
-            log.warn("[WebSocket] IP被拒绝 - IP: {}, 原因: {}", remoteIp, ipResult.getMessage());
-            connectionLogService.updateRejected(sessionId, null, 
-                ConnectionLogService.STATUS_REJECT_BLACKLIST, ipResult.getMessage());
-            
-            sendErrorAndClose(session, ipResult.getMessage(), ipResult.getCode(), CloseStatus.NOT_ACCEPTABLE);
-            return;
-        }
+        // 注意：连接阶段不做IP验证，等待客户端注册时上报公网IP后再验证
+        // 这样可以避免本地开发时127.0.0.1被误判
         
         EngineSession engineSession = sessionManager.addSession(session);
         if (engineSession == null) {
             // 连接数超限，拒绝连接
-            log.warn("[WebSocket] 连接数超限 - IP: {}", remoteIp);
+            log.warn("[WebSocket] 连接数超限 - IP: {}", connectionIp);
             connectionLogService.updateRejected(sessionId, null,
                 ConnectionLogService.STATUS_REJECT_WHITELIST, "连接数超限");
             
-            sendErrorAndClose(session, "服务器连接数已达上限，请稍后重试", 
-                "CONNECTION_LIMIT_EXCEEDED", CloseStatus.SERVICE_OVERLOAD);
+            sendErrorAndClose(session, WebSocketErrorCode.CONNECTION_LIMIT_EXCEEDED.getMessage(), 
+                WebSocketErrorCode.CONNECTION_LIMIT_EXCEEDED.getCode(), CloseStatus.SERVICE_OVERLOAD);
             return;
         }
         
@@ -102,7 +99,8 @@ public class EngineWebSocketHandler extends TextWebSocketHandler {
         if (engineMessage == null) {
             log.warn("[WebSocket] 消息解析失败 - SessionID: {}, 原始消息: {}", 
                 sessionId, payload.length() > 200 ? payload.substring(0, 200) + "..." : payload);
-            sendError(session, "消息格式错误", "INVALID_MESSAGE_FORMAT");
+            sendError(session, WebSocketErrorCode.INVALID_MESSAGE_FORMAT.getMessage(), 
+                WebSocketErrorCode.INVALID_MESSAGE_FORMAT.getCode());
             return;
         }
         
@@ -120,7 +118,7 @@ public class EngineWebSocketHandler extends TextWebSocketHandler {
         // 检查会话是否已注册
         if (engineSession == null || engineSession.getStatus() != EngineSession.SessionStatus.REGISTERED) {
             log.warn("[WebSocket] 会话未注册，拒绝处理业务消息 - SessionID: {}", sessionId);
-            sendError(session, "请先发送注册消息", "NOT_REGISTERED");
+            sendError(session, WebSocketErrorCode.NOT_REGISTERED.getMessage(), WebSocketErrorCode.NOT_REGISTERED.getCode());
             return;
         }
         
@@ -135,7 +133,6 @@ public class EngineWebSocketHandler extends TextWebSocketHandler {
      */
     private boolean handleSystemMessage(WebSocketSession session, EngineMessage message) {
         MessageType type = message.getMessageType();
-        String sessionId = session.getId();
         
         switch (type) {
             case ENGINE_REGISTER:
@@ -161,16 +158,21 @@ public class EngineWebSocketHandler extends TextWebSocketHandler {
         
         // 获取注册信息（hostId 从 engineId 字段获取）
         String hostId = message.getEngineId();
-        String version = message.getPayloadValue("version");
+        // 优先从顶层字段获取version，兼容旧版本从payload获取
+        String version = message.getVersion();
+        if (version == null || version.isEmpty()) {
+            version = message.getPayloadValue("version");
+        }
         String deviceId = message.getPayloadValue("deviceId");
         Object capabilitiesObj = message.getPayloadValue("capabilities");
         
-        // 获取副节点上报的IP信息
+        // 获取客户端上报的IP信息
         String clientLocalIp = message.getPayloadValue("localIp");
         String clientPublicIp = message.getPayloadValue("publicIp");
+        String connectionIp = remoteIp;  // 连接来源IP（可能是127.0.0.1或代理IP）
         
-        // 确定用于黑名单验证的有效IP（优先使用副节点上报的公网IP）
-        String effectiveIp = determineEffectiveIp(remoteIp, clientPublicIp, clientLocalIp);
+        // 统一使用客户端上报的公网IP作为主要IP（用于验证、记录、管理）
+        String primaryIp = clientPublicIp != null && !clientPublicIp.isEmpty() ? clientPublicIp : remoteIp;
         
         // 收集设备信息用于记录
         Map<String, Object> deviceInfo = new HashMap<>();
@@ -181,41 +183,104 @@ public class EngineWebSocketHandler extends TextWebSocketHandler {
         deviceInfo.put("macAddress", message.getPayloadValue("macAddress"));
         deviceInfo.put("localIp", clientLocalIp);
         deviceInfo.put("publicIp", clientPublicIp);
-        deviceInfo.put("connectionIp", remoteIp);  // 连接来源IP（可能是代理IP）
+        deviceInfo.put("connectionIp", connectionIp);
         
-        log.debug("[WebSocket] 注册请求 - HostID: {}, 连接IP: {}, 公网IP: {}, 有效IP: {}", 
-            hostId, remoteIp, clientPublicIp, effectiveIp);
+        log.info("[WebSocket] 注册请求 - HostID: {}, 连接IP: {}, 公网IP: {}, 主要IP: {}", 
+            hostId, connectionIp, clientPublicIp, primaryIp);
+        
+        // 更新连接记录的IP为公网IP
+        connectionLogService.updateConnectionIp(sessionId, primaryIp);
         
         // 1. 验证主机ID是否为空
         if (hostId == null || hostId.trim().isEmpty()) {
-            log.warn("[WebSocket] 拒绝: 主机ID为空 - IP: {}", remoteIp);
+            log.warn("[WebSocket] 拒绝: 主机ID为空 - 公网IP: {}", primaryIp);
             connectionLogService.updateRejected(sessionId, hostId, 
-                ConnectionLogService.STATUS_REJECT_WHITELIST, "主机ID为空");
-            sendError(session, "主机ID不能为空，请向管理员申请主机ID", "EMPTY_HOST_ID");
+                ConnectionLogService.STATUS_REJECT_WHITELIST, "主机ID为空",
+                WebSocketErrorCode.EMPTY_HOST_ID.getCode());
+            
+            // 记录失败并发送错误（使用公网IP）
+            rateLimiter.recordFailure(primaryIp, null, "主机ID为空");
+            sendErrorAndClose(session, WebSocketErrorCode.EMPTY_HOST_ID.getMessage(), 
+                WebSocketErrorCode.EMPTY_HOST_ID.getCode(), CloseStatus.POLICY_VIOLATION);
             return true;
         }
         
-        // 2. 验证白名单（使用有效IP进行黑名单检查）
-        WhitelistService.ValidationResult whitelistResult = whitelistService.validateHostId(hostId, effectiveIp);
+        // 2. 检查公网IP频率限制
+        ConnectionRateLimiter.RateLimitResult ipRateLimit = rateLimiter.checkIpBan(primaryIp);
+        if (!ipRateLimit.isAllowed()) {
+            log.warn("[WebSocket] 公网IP被限流 - IP: {}, 原因: {}", primaryIp, ipRateLimit.getReason());
+            connectionLogService.updateRejected(sessionId, hostId,
+                ConnectionLogService.STATUS_REJECT_BLACKLIST, ipRateLimit.getReason(),
+                WebSocketErrorCode.CONNECTION_RATE_LIMIT.getCode());
+            
+            String errorMsg = WebSocketErrorCode.CONNECTION_RATE_LIMIT.getFormattedMessage(
+                primaryIp, ipRateLimit.getRemainingMinutes());
+            sendErrorAndClose(session, errorMsg, WebSocketErrorCode.CONNECTION_RATE_LIMIT.getCode(), CloseStatus.NOT_ACCEPTABLE);
+            return true;
+        }
+        
+        // 3. 检查公网IP黑名单
+        WhitelistService.ValidationResult ipBlacklistResult = whitelistService.checkIpBlacklist(primaryIp);
+        if (!ipBlacklistResult.isValid()) {
+            log.warn("[WebSocket] 公网IP在黑名单中 - IP: {}, 原因: {}", primaryIp, ipBlacklistResult.getMessage());
+            connectionLogService.updateRejected(sessionId, hostId, 
+                ConnectionLogService.STATUS_REJECT_BLACKLIST, ipBlacklistResult.getMessage(),
+                WebSocketErrorCode.IP_IN_BLACKLIST.getCode());
+            
+            rateLimiter.recordFailure(primaryIp, hostId, "IP在黑名单中");
+            String errorMsg = WebSocketErrorCode.IP_IN_BLACKLIST.getFormattedMessage(primaryIp, ipBlacklistResult.getMessage());
+            sendErrorAndClose(session, errorMsg, WebSocketErrorCode.IP_IN_BLACKLIST.getCode(), CloseStatus.NOT_ACCEPTABLE);
+            return true;
+        }
+        
+        // 4. 检查主机ID频率限制
+        ConnectionRateLimiter.RateLimitResult hostRateLimit = rateLimiter.checkHostIdBan(hostId);
+        if (!hostRateLimit.isAllowed()) {
+            log.warn("[WebSocket] 主机ID被限流 - HostID: {}, 原因: {}", hostId, hostRateLimit.getReason());
+            connectionLogService.updateRejected(sessionId, hostId,
+                ConnectionLogService.STATUS_REJECT_WHITELIST, hostRateLimit.getReason(),
+                WebSocketErrorCode.CONNECTION_RATE_LIMIT.getCode());
+            
+            String errorMsg = WebSocketErrorCode.CONNECTION_RATE_LIMIT.getFormattedMessage(
+                primaryIp, hostRateLimit.getRemainingMinutes());
+            sendErrorAndClose(session, errorMsg, WebSocketErrorCode.CONNECTION_RATE_LIMIT.getCode(), CloseStatus.POLICY_VIOLATION);
+            return true;
+        }
+        
+        // 5. 验证白名单（使用公网IP进行验证）
+        WhitelistService.ValidationResult whitelistResult = whitelistService.validateHostId(hostId, primaryIp);
         if (!whitelistResult.isValid()) {
-            log.warn("[拒绝] {} - {}", whitelistResult.getCode(), hostId);
+            log.warn("[拒绝] {} - HostID: {}, 公网IP: {}", whitelistResult.getCode(), hostId, primaryIp);
+            
+            // 记录失败并发送对应错误码（使用公网IP）
+            rateLimiter.recordFailure(primaryIp, hostId, whitelistResult.getMessage());
+            
+            WebSocketErrorCode errorCode = mapValidationCodeToErrorCode(whitelistResult.getCode());
+            String errorMsg = formatErrorMessage(errorCode, hostId, primaryIp, whitelistResult.getMessage());
+            
             connectionLogService.updateRejected(sessionId, hostId, 
-                ConnectionLogService.STATUS_REJECT_WHITELIST, whitelistResult.getMessage());
-            sendError(session, whitelistResult.getMessage(), whitelistResult.getCode());
+                ConnectionLogService.STATUS_REJECT_WHITELIST, whitelistResult.getMessage(),
+                errorCode.getCode());
+            
+            sendErrorAndClose(session, errorMsg, errorCode.getCode(), CloseStatus.POLICY_VIOLATION);
             return true;
         }
         
-        // 3. 检查是否已有连接（单连接限制）
+        // 6. 检查是否已有连接（单连接限制）
         WhitelistService.ValidationResult duplicateResult = whitelistService.checkDuplicateConnection(hostId);
         if (!duplicateResult.isValid()) {
             log.warn("[WebSocket] 拒绝: 重复连接 - HostID: {}", hostId);
             connectionLogService.updateRejected(sessionId, hostId, 
-                ConnectionLogService.STATUS_REJECT_DUPLICATE, duplicateResult.getMessage());
-            sendError(session, duplicateResult.getMessage(), duplicateResult.getCode());
+                ConnectionLogService.STATUS_REJECT_DUPLICATE, duplicateResult.getMessage(),
+                WebSocketErrorCode.DUPLICATE_CONNECTION.getCode());
+            
+            rateLimiter.recordFailure(primaryIp, hostId, "重复连接");
+            String errorMsg = WebSocketErrorCode.DUPLICATE_CONNECTION.getFormattedMessage(hostId);
+            sendErrorAndClose(session, errorMsg, WebSocketErrorCode.DUPLICATE_CONNECTION.getCode(), CloseStatus.POLICY_VIOLATION);
             return true;
         }
         
-        // 4. 解析能力列表（必须是 Map 格式）
+        // 7. 解析能力列表（必须是 Map 格式）
         List<Map<String, Object>> capabilities = new java.util.ArrayList<>();
         if (capabilitiesObj instanceof List<?> rawList) {
             for (Object item : rawList) {
@@ -227,10 +292,16 @@ public class EngineWebSocketHandler extends TextWebSocketHandler {
             }
         }
         
-        // 5. 注册 Engine
+        // 8. 注册 Engine
         boolean success = sessionManager.registerEngine(sessionId, hostId, version, capabilities);
         
         if (success) {
+            // 获取会话并设置deviceId
+            EngineSession engineSession = sessionManager.getSession(sessionId);
+            if (engineSession != null) {
+                engineSession.setDeviceId(deviceId);
+            }
+            
             // 更新设备信息到会话
             sessionManager.updateDeviceInfo(sessionId, deviceInfo);
             
@@ -247,36 +318,58 @@ public class EngineWebSocketHandler extends TextWebSocketHandler {
             
             try {
                 session.sendMessage(new TextMessage(ackMsg.toJson()));
-                log.info("[Engine] ========================================");
-                log.info("[Engine] 节点已注册 - ID: {}, 版本: {}", hostId, version);
-                log.info("[Engine] ========================================");
+                log.info("[Engine] 节点已注册 → ID:{} | 版本:{}", hostId, version);
             } catch (Exception e) {
                 log.error("[WebSocket] 发送注册确认失败 - HostID: {}, 错误: {}", hostId, e.getMessage());
             }
         } else {
             connectionLogService.updateRejected(sessionId, hostId, 
-                ConnectionLogService.STATUS_REJECT_DUPLICATE, "EngineID已被占用");
-            sendError(session, "主机ID [" + hostId + "] 已有活跃连接，请勿重复连接", "DUPLICATE_CONNECTION");
-            // 关闭新连接
-            try {
-                session.close(new CloseStatus(4008, "EngineID已被占用"));
-            } catch (Exception e) {
-                log.warn("[WebSocket] 关闭重复连接失败: {}", e.getMessage());
-            }
+                ConnectionLogService.STATUS_REJECT_DUPLICATE, "EngineID已被占用",
+                WebSocketErrorCode.DUPLICATE_CONNECTION.getCode());
+            
+            rateLimiter.recordFailure(primaryIp, hostId, "重复连接");
+            String errorMsg = WebSocketErrorCode.DUPLICATE_CONNECTION.getFormattedMessage(hostId);
+            sendErrorAndClose(session, errorMsg, WebSocketErrorCode.DUPLICATE_CONNECTION.getCode(), 
+                new CloseStatus(4008, "EngineID已被占用"));
         }
         
         return true;
     }
 
     /**
-     * 处理心跳（只更新内存中的统计，不写数据库）
+     * 处理心跳（更新内存中的统计，不写数据库）
+     * 
+     * 说明：
+     * - 更新心跳时间戳
+     * - 如果心跳消息携带性能数据，则更新到 EngineSession
+     * - 发送心跳响应
      */
     private boolean handleHeartbeat(WebSocketSession session, EngineMessage message) {
         String sessionId = session.getId();
         EngineSession engineSession = sessionManager.getSession(sessionId);
         
         if (engineSession != null) {
+            // 更新心跳时间
             engineSession.updateHeartbeatTime();
+            
+            // 检查是否携带性能数据（每5分钟更新一次）
+            Object performanceData = message.getPayloadValue("performance");
+            if (performanceData != null && performanceData instanceof Map) {
+                // 类型安全的转换
+                @SuppressWarnings("unchecked")
+                Map<String, Object> perfMap = (Map<String, Object>) performanceData;
+                
+                // 更新性能数据到会话中
+                engineSession.updatePerformanceData(perfMap);
+                
+                // 记录性能数据日志（可选，用于监控）
+                log.debug("[Engine] {} 性能更新 - CPU:{}% | 内存:{}% | 磁盘:{}% | JVM:{}%",
+                    engineSession.getEngineId(),
+                    perfMap.get("cpuUsagePercent"),
+                    perfMap.get("memoryUsagePercent"),
+                    perfMap.get("diskUsagePercent"),
+                    perfMap.get("jvmUsagePercent"));
+            }
         }
         
         // 发送心跳响应
@@ -303,9 +396,13 @@ public class EngineWebSocketHandler extends TextWebSocketHandler {
         
         log.debug("[WebSocket] 注销 - {}", hostId);
         
-        // 更新连接记录（在线状态由 sessionManager.removeSession 自动清理内存）
-        connectionLogService.updateDisconnected(sessionId, 1000, "主动注销", true);
+        // 标记为主动注销，在afterConnectionClosed中会检查这个标记
+        EngineSession engineSession = sessionManager.getSession(sessionId);
+        if (engineSession != null) {
+            engineSession.markAsNormalClose();
+        }
         
+        // 不在这里更新数据库，等待afterConnectionClosed统一处理
         sessionManager.removeSession(sessionId);
         
         return true;
@@ -386,32 +483,39 @@ public class EngineWebSocketHandler extends TextWebSocketHandler {
         if (engineSession != null && engineSession.getEngineId() != null 
             && !engineSession.getEngineId().startsWith("pending-")) {
             
-            // 根据状态码判断断开类型和原因
-            int dbStatus;
-            String closeReason = getFriendlyCloseReason(status, engineSession.getLastError());
-            
-            if (status.getCode() == 4007) {
-                // 管理员断开
-                dbStatus = ConnectionLogService.STATUS_ADMIN_DISCONNECT;
-            } else if (status.getCode() == CloseStatus.NORMAL.getCode()) {
-                // 正常断开
-                dbStatus = ConnectionLogService.STATUS_NORMAL_CLOSE;
+            // 只有已注册的连接断开时才更新状态，已被拒绝的连接不更新
+            if (engineSession.getStatus() == EngineSession.SessionStatus.REGISTERED) {
+                // 根据状态码判断断开类型和原因
+                int dbStatus;
+                String closeReason = getFriendlyCloseReason(status, engineSession.getLastError());
+                
+                if (status.getCode() == 4007) {
+                    // 管理员断开
+                    dbStatus = ConnectionLogService.STATUS_ADMIN_DISCONNECT;
+                } else if (engineSession.isNormalClose()) {
+                    // 正常断开：只有Engine主动注销才算正常断开
+                    dbStatus = ConnectionLogService.STATUS_NORMAL_CLOSE;
+                    closeReason = "主动注销";
+                } else {
+                    // 其他情况都算异常断开
+                    dbStatus = ConnectionLogService.STATUS_ABNORMAL_CLOSE;
+                }
+                
+                // 断开时统一写入统计信息（在线状态由 sessionManager 内存管理）
+                connectionLogService.updateDisconnectedWithStats(
+                    sessionId, status.getCode(), closeReason, dbStatus,
+                    engineSession.getMessageSent(), engineSession.getMessageReceived(),
+                    engineSession.getHeartbeatCount(), engineSession.getErrorCount(),
+                    engineSession.getLastError()
+                );
+                
+                log.info("[Engine] ========================================");
+                log.info("[Engine] 主机 {} 已断开 - {}", engineSession.getEngineId(), closeReason);
+                log.info("[Engine] ========================================");
             } else {
-                // 异常断开
-                dbStatus = ConnectionLogService.STATUS_ABNORMAL_CLOSE;
+                // 已被拒绝的连接，不更新状态，保持原有的拒绝状态
+                log.debug("[Engine] 已拒绝的连接断开，不更新状态 - SessionID: {}", sessionId);
             }
-            
-            // 断开时统一写入统计信息（在线状态由 sessionManager 内存管理）
-            connectionLogService.updateDisconnectedWithStats(
-                sessionId, status.getCode(), closeReason, dbStatus,
-                engineSession.getMessageSent(), engineSession.getMessageReceived(),
-                engineSession.getHeartbeatCount(), engineSession.getErrorCount(),
-                engineSession.getLastError()
-            );
-            
-            log.info("[Engine] ========================================");
-            log.info("[Engine] 主机 {} 已断开 - {}", engineSession.getEngineId(), closeReason);
-            log.info("[Engine] ========================================");
         }
         
         sessionManager.removeSession(sessionId);
@@ -472,81 +576,6 @@ public class EngineWebSocketHandler extends TextWebSocketHandler {
         return null;
     }
     
-    /**
-     * 确定用于黑名单验证的有效IP
-     * 
-     * 优先级：
-     * 1. 副节点上报的公网IP（最可靠，是副节点真实出口IP）
-     * 2. 连接来源IP（如果不是内网IP或代理IP）
-     * 3. 副节点上报的内网IP（最后备选）
-     * 
-     * @param connectionIp 连接来源IP（可能是代理服务器IP）
-     * @param clientPublicIp 副节点上报的公网IP
-     * @param clientLocalIp 副节点上报的内网IP
-     * @return 用于黑名单验证的有效IP
-     */
-    private String determineEffectiveIp(String connectionIp, String clientPublicIp, String clientLocalIp) {
-        // 1. 优先使用副节点上报的公网IP（最可靠）
-        if (isValidPublicIp(clientPublicIp)) {
-            return clientPublicIp;
-        }
-        
-        // 2. 如果连接IP是有效的公网IP，使用连接IP
-        if (isValidPublicIp(connectionIp)) {
-            return connectionIp;
-        }
-        
-        // 3. 如果副节点上报了内网IP，使用内网IP
-        if (clientLocalIp != null && !clientLocalIp.isEmpty() && !"unknown".equals(clientLocalIp)) {
-            return clientLocalIp;
-        }
-        
-        // 4. 最后使用连接IP（即使是127.0.0.1）
-        return connectionIp != null ? connectionIp : "unknown";
-    }
-    
-    /**
-     * 判断是否为有效的公网IP
-     * 排除内网IP、回环IP、未知IP
-     */
-    private boolean isValidPublicIp(String ip) {
-        if (ip == null || ip.isEmpty() || "unknown".equals(ip)) {
-            return false;
-        }
-        
-        // 排除回环地址
-        if (ip.startsWith("127.") || "localhost".equals(ip)) {
-            return false;
-        }
-        
-        // 排除内网地址
-        // 10.0.0.0 - 10.255.255.255
-        if (ip.startsWith("10.")) {
-            return false;
-        }
-        // 172.16.0.0 - 172.31.255.255
-        if (ip.startsWith("172.")) {
-            try {
-                int second = Integer.parseInt(ip.split("\\.")[1]);
-                if (second >= 16 && second <= 31) {
-                    return false;
-                }
-            } catch (Exception e) {
-                // 解析失败，认为是公网IP
-            }
-        }
-        // 192.168.0.0 - 192.168.255.255
-        if (ip.startsWith("192.168.")) {
-            return false;
-        }
-        // 169.254.0.0 - 169.254.255.255 (链路本地地址)
-        if (ip.startsWith("169.254.")) {
-            return false;
-        }
-        
-        return true;
-    }
-
     /**
      * 获取客户端端口
      */
@@ -629,6 +658,33 @@ public class EngineWebSocketHandler extends TextWebSocketHandler {
             case 1015 -> "TLS握手失败";
             case 4007 -> "管理员断开";
             default -> "关闭码: " + code;
+        };
+    }
+    
+    /**
+     * 将白名单验证码映射到错误码
+     */
+    private WebSocketErrorCode mapValidationCodeToErrorCode(String validationCode) {
+        return switch (validationCode) {
+            case "EMPTY_HOST_ID" -> WebSocketErrorCode.EMPTY_HOST_ID;
+            case "HOST_NOT_IN_WHITELIST" -> WebSocketErrorCode.HOST_ID_NOT_AUTHORIZED;
+            case "HOST_DISABLED" -> WebSocketErrorCode.HOST_ID_DISABLED;
+            case "HOST_EXPIRED" -> WebSocketErrorCode.HOST_ID_EXPIRED;
+            case "IP_NOT_ALLOWED" -> WebSocketErrorCode.IP_NOT_IN_WHITELIST;
+            case "IP_BLOCKED" -> WebSocketErrorCode.IP_IN_BLACKLIST;
+            default -> WebSocketErrorCode.UNKNOWN_ERROR;
+        };
+    }
+    
+    /**
+     * 格式化错误消息
+     */
+    private String formatErrorMessage(WebSocketErrorCode errorCode, String hostId, String ip, String originalMessage) {
+        return switch (errorCode) {
+            case HOST_ID_NOT_AUTHORIZED, HOST_ID_DISABLED -> errorCode.getFormattedMessage(hostId);
+            case IP_NOT_IN_WHITELIST -> errorCode.getFormattedMessage(ip, hostId);
+            case IP_IN_BLACKLIST -> errorCode.getFormattedMessage(ip, originalMessage);
+            default -> originalMessage;
         };
     }
 }

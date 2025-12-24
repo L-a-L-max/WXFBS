@@ -141,7 +141,7 @@ public class SysLoginService
                     PointsRuleCode.DAILY_LOGIN.getCode(), null);
             if (!pointsResult.isSuccess())
             {
-                log.info("Daily login points skipped for user {}, code={}, msg={}",
+                log.debug("Daily login points skipped for user {}, code={}, msg={}",
                         loginUser.getUserId(), pointsResult.getCode(), pointsResult.getMsg());
             }
         }

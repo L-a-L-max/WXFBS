@@ -23,6 +23,8 @@
         <!-- Spring Boot 3.3.x LTS 版本 -->
         <spring-boot.version>3.3.6</spring-boot.version>
         <fastjson.version>2.0.58</fastjson.version>
+        <!-- Engine 版本号（统一管理，会注入到 application.yml） -->
+        <engine.version>1.6.5</engine.version>
     </properties>
 
     <dependencyManagement>
@@ -112,7 +114,13 @@
     </dependencies>
 
     <build>
-        <finalName>wxfbsir-engine</finalName>
+        <finalName>wxfbsir-engine-${engine.version}</finalName>
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>true</filtering>
+            </resource>
+        </resources>
         <plugins>
             <!-- Maven 编译插件 -->
             <plugin>

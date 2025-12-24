@@ -19,7 +19,7 @@ import java.time.LocalDateTime;
  * 2. 验证主机ID是否已有连接（单连接限制）
  * 3. 验证IP是否在黑名单中
  * 4. 使用MyBatis Mapper操作数据库
- * 5. 集成Redis缓存提升性能
+ * 5. 直接查询数据库，不使用缓存
  * 6. 自动封禁频繁失败的IP
  *
  * @author wxfbsir
@@ -80,7 +80,7 @@ public class WhitelistService {
         }
 
         try {
-            // 1. 检查IP黑名单（带缓存）
+            // 1. 检查IP黑名单（直接查询数据库）
             ValidationResult ipResult = checkIpBlacklist(remoteIp);
             if (!ipResult.isValid()) {
                 return ipResult;
@@ -93,22 +93,24 @@ public class WhitelistService {
                 return ValidationResult.fail("EMPTY_HOST_ID", "主机ID不能为空，请向管理员申请主机ID");
             }
 
-            // 3. 查询白名单
+            // 3. 查询白名单（只查询未删除的记录 del_flag=0）
             WsHostWhitelist whitelist = whitelistMapper.selectByHostId(hostId);
             
+            // 3.1 检查是否存在（不存在或已被删除）
             if (whitelist == null) {
-                log.debug("[白名单] 未授权 - {}", hostId);
-                recordFailure(remoteIp, "HOST_NOT_IN_WHITELIST", "主机ID不在白名单: " + hostId);
+                log.warn("[白名单拒绝] 主机ID不存在或已被删除 - HostID: {}, IP: {}", hostId, remoteIp);
+                recordFailure(remoteIp, "HOST_NOT_IN_WHITELIST", "主机ID不在白名单或已被删除");
                 return ValidationResult.fail("HOST_NOT_IN_WHITELIST", 
-                    "主机ID [" + hostId + "] 未授权，请联系管理员添加到白名单");
+                    "主机ID [" + hostId + "] 未授权或已被移除，请联系管理员添加到白名单");
             }
 
-            // 4. 检查状态
+            // 3.2 检查状态（status=0 表示禁用）
             if (whitelist.getStatus() == null || whitelist.getStatus() != 1) {
-                log.debug("[白名单] 已禁用 - {}", hostId);
-                recordFailure(remoteIp, "HOST_DISABLED", "主机ID已禁用: " + hostId);
+                log.warn("[白名单拒绝] 主机ID已被禁用 - HostID: {}, Status: {}, IP: {}", 
+                    hostId, whitelist.getStatus(), remoteIp);
+                recordFailure(remoteIp, "HOST_DISABLED", "主机ID已禁用");
                 return ValidationResult.fail("HOST_DISABLED", 
-                    "主机ID [" + hostId + "] 已被禁用，请联系管理员");
+                    "主机ID [" + hostId + "] 已被管理员停用，请联系管理员启用后再连接");
             }
 
             // 5. 检查过期时间
@@ -142,7 +144,7 @@ public class WhitelistService {
             return ValidationResult.success();
 
         } catch (Exception e) {
-            log.error("[白名单] 验证异常 - HostID: {}, 错误: {}", hostId, e.getMessage());
+            log.error("[白名单] 验证异常 - HostID: {}, 错误: {}", hostId, e.getMessage(), e);
             return ValidationResult.fail("VALIDATION_ERROR", "白名单验证失败，请稍后重试");
         }
     }
@@ -182,6 +184,7 @@ public class WhitelistService {
                 return ValidationResult.success();
             }
             
+            // 查询生效中的黑名单（只查询 status=1 AND del_flag=0 且未过期的记录）
             WsIpBlacklist blacklist = blacklistMapper.selectActiveByIpAddress(remoteIp);
             
             if (blacklist != null) {
@@ -198,18 +201,27 @@ public class WhitelistService {
                 
                 // block_type: 1-临时封禁，2-永久封禁
                 if (blacklist.getBlockType() != null && blacklist.getBlockType() >= 1) {
-                    log.debug("[黑名单] 封禁 - {}", remoteIp);
+                    String blockTypeText = blacklist.getBlockType() == 2 ? "永久封禁" : "临时封禁";
                     String reason = blacklist.getBlockReason();
-                    return ValidationResult.fail("IP_BLOCKED", 
-                        "IP [" + remoteIp + "] 已被封禁" + (reason != null ? "，原因: " + reason : ""));
+                    
+                    log.warn("[黑名单拒绝] IP已被封禁 - IP: {}, 类型: {}, 原因: {}", 
+                        remoteIp, blockTypeText, reason);
+                    
+                    String message = "IP地址 [" + remoteIp + "] 已被" + blockTypeText;
+                    if (reason != null && !reason.trim().isEmpty()) {
+                        message += "，原因: " + reason;
+                    }
+                    message += "，请联系管理员解除封禁";
+                    
+                    return ValidationResult.fail("IP_BLOCKED", message);
                 }
             }
 
             return ValidationResult.success();
 
         } catch (Exception e) {
-            log.error("[黑名单] 检查异常 - IP: {}, 错误: {}", remoteIp, e.getMessage());
-            return ValidationResult.success(); // 查询异常时允许连接
+            log.error("[黑名单] 检查异常 - IP: {}, 错误: {}", remoteIp, e.getMessage(), e);
+            return ValidationResult.success(); // 查询异常时允许连接，避免误拦截
         }
     }
 
@@ -239,7 +251,7 @@ public class WhitelistService {
             log.info("[黑名单] 添加 - IP: {}, 原因: {}", ipAddress, blockReason);
 
         } catch (Exception e) {
-            log.error("[黑名单] 添加失败 - IP: {}, 错误: {}", ipAddress, e.getMessage());
+            log.error("[黑名单] 添加失败 - IP: {}, 错误: {}", ipAddress, e.getMessage(), e);
         }
     }
 

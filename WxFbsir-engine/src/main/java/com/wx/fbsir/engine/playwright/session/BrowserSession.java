@@ -114,11 +114,29 @@ public class BrowserSession implements AutoCloseable {
 
     /**
      * 是否已关闭
+     * <p>⚠️ 并发场景：
+     * <ul>
+     *   <li>场景1：多个线程同时调用destroy() → AtomicBoolean保证只执行一次</li>
+     *   <li>场景2：Session使用中，定时任务检测到超时关闭 → 需要原子性检查</li>
+     * </ul>
      */
     private final AtomicBoolean closed = new AtomicBoolean(false);
 
     /**
-     * 是否正在使用中
+     * 是否正在使用中（防止并发获取同一Session）
+     * <p>⚠️ 关键并发场景：
+     * <pre>
+     * 场景1：用户A同时打开2个标签页访问同一能力
+     *   线程1: acquire("userA", "baidu", ...) → 复用Session
+     *   线程2同时: acquire("userA", "baidu", ...) → 尝试复用
+     *   期望：线程1成功获取，线程2等待或创建新Session
+     *   实现：inUse.compareAndSet(false, true) 原子性检查
+     * 
+     * 场景2：Session使用完毕，但未归还
+     *   线程1使用完毕，但忘记调用release()
+     *   线程2尝试复用 → acquire()失败
+     *   保护：防止Session被多个线程同时使用
+     * </pre>
      */
     private final AtomicBoolean inUse = new AtomicBoolean(false);
 
@@ -133,7 +151,24 @@ public class BrowserSession implements AutoCloseable {
     private Runnable onClose;
     
     /**
+     * 页面锁清理回调（用于自动清理剪贴板锁和截图锁）
+     */
+    private java.util.function.Consumer<Page> onPageClose;
+    
+    /**
+     * Browser归还回调（用于归还Browser到全局池）
+     * <p>⚠️ 关键：仅临时会话需要归还Browser，持久化会话不需要
+     * <p>设计原理：
+     * <ul>
+     *   <li>持久化会话：Browser由Playwright内部管理，Context关闭时自动关闭Browser</li>
+     *   <li>临时会话：Browser从全局池获取，用完必须归还</li>
+     * </ul>
+     */
+    private java.util.function.Consumer<Browser> browserReleaseCallback;
+    
+    /**
      * 创建的页面计数（用于资源监控）
+     * <p>📊 用途：监控单个Session的资源使用，及时发现Page泄漏
      */
     private final AtomicInteger pageCreatedCount = new AtomicInteger(0);
     
@@ -211,6 +246,12 @@ public class BrowserSession implements AutoCloseable {
     }
 
     /**
+     * Page数量上限（防止泄漏导致OOM）
+     * <p>🔴 P0修复：限制单个Session最多创建10个Page
+     */
+    private static final int MAX_PAGES_PER_SESSION = 10;
+    
+    /**
      * 创建新页面
      * 
      * @return Page 新页面对象
@@ -218,6 +259,19 @@ public class BrowserSession implements AutoCloseable {
     public Page newPage() {
         checkNotClosed();
         touch();
+        
+        // 🔴 P0修复：检查Page数量上限，防止泄漏
+        int currentPageCount = context.pages().size();
+        if (currentPageCount >= MAX_PAGES_PER_SESSION) {
+            log.warn("[会话] Page数量已达上限 - 会话ID: {}, 当前: {}, 上限: {}, 自动关闭最旧的Page",
+                sessionId, currentPageCount, MAX_PAGES_PER_SESSION);
+            // 自动关闭最旧的Page（第一个）
+            List<Page> pages = context.pages();
+            if (!pages.isEmpty()) {
+                closePage(pages.get(0));
+            }
+        }
+        
         Page page = context.newPage();
         pageCreatedCount.incrementAndGet();
         log.debug("[会话] 创建新页面 - 会话ID: {}, 已创建页面数: {}", sessionId, pageCreatedCount.get());
@@ -236,12 +290,22 @@ public class BrowserSession implements AutoCloseable {
 
     /**
      * 关闭指定页面
+     * 自动调用页面锁清理回调（清理剪贴板锁和截图锁）
      * 
      * @param page 要关闭的页面
      */
     public void closePage(Page page) {
         if (page != null && !page.isClosed()) {
             try {
+                // 先调用页面锁清理回调
+                if (onPageClose != null) {
+                    try {
+                        onPageClose.accept(page);
+                    } catch (Exception e) {
+                        log.debug("[会话] 页面锁清理回调执行失败 - 会话ID: {}, 错误: {}", sessionId, e.getMessage());
+                    }
+                }
+                
                 page.close();
                 pageClosedCount.incrementAndGet();
                 log.debug("[会话] 关闭页面 - 会话ID: {}, 已关闭页面数: {}", sessionId, pageClosedCount.get());
@@ -339,6 +403,8 @@ public class BrowserSession implements AutoCloseable {
      * 
      * 资源释放顺序：Page -> BrowserContext -> Browser
      * 确保所有资源都被正确释放，不留下僵尸进程
+     * 
+     * 🔴 P0修复：检测Page泄漏并告警
      */
     public void destroy() {
         if (closed.compareAndSet(false, true)) {
@@ -350,6 +416,15 @@ public class BrowserSession implements AutoCloseable {
             
             log.debug("[会话] 开始销毁 - 会话ID: {}, 用户: {}, 实例ID: {}", sessionId, userId, instanceId);
             
+            // 🔴 P0修复：检测Page泄漏
+            int created = pageCreatedCount.get();
+            int closed = pageClosedCount.get();
+            int leaked = created - closed;
+            if (leaked > 3) {
+                log.warn("[会话] 检测到Page泄漏 - 会话ID: {}, 创建: {}, 关闭: {}, 泄漏: {}",
+                    sessionId, created, closed, leaked);
+            }
+            
             try {
                 // 第1步：关闭所有页面
                 try {
@@ -360,6 +435,7 @@ public class BrowserSession implements AutoCloseable {
                             if (!page.isClosed()) {
                                 page.close();
                                 closedPages++;
+                                pageClosedCount.incrementAndGet();
                             }
                         } catch (Exception e) {
                             log.debug("[会话] 关闭页面失败 - 会话ID: {}, 错误: {}", sessionId, e.getMessage());
@@ -380,16 +456,23 @@ public class BrowserSession implements AutoCloseable {
                     log.warn("[会话] 关闭上下文失败 - 会话ID: {}, 错误: {}", sessionId, e.getMessage());
                 }
                 
-                // 第4步：关闭 Browser（仅临时会话）
-                // 这是解决老项目线程遗留问题的关键！
-                if (browser != null) {
+                // 第4步：归还/关闭 Browser（仅临时会话）
+                if (browser != null && !persistent) {
                     try {
-                        if (browser.isConnected()) {
-                            browser.close();
+                        if (browserReleaseCallback != null) {
+                            // 归还到全局Browser池（性能优化）
+                            browserReleaseCallback.accept(browser);
+                            browserClosed = true;
+                            log.debug("[会话] Browser已归还到池 - 会话ID: {}", sessionId);
+                        } else {
+                            // 旧逻辑：直接关闭（兼容性）
+                            if (browser.isConnected()) {
+                                browser.close();
+                            }
+                            browserClosed = true;
                         }
-                        browserClosed = true;
                     } catch (Exception e) {
-                        log.warn("[会话] 关闭浏览器失败 - 会话ID: {}, 错误: {}", sessionId, e.getMessage());
+                        log.warn("[会话] Browser归还/关闭失败 - 会话ID: {}, 错误: {}", sessionId, e.getMessage());
                     }
                 }
                 
@@ -474,6 +557,22 @@ public class BrowserSession implements AutoCloseable {
 
     public void setOnClose(Runnable onClose) {
         this.onClose = onClose;
+    }
+    
+    /**
+     * 设置页面关闭回调（用于自动清理页面锁）
+     * 
+     * @param onPageClose 页面关闭时的回调，参数为被关闭的Page对象
+     */
+    public void setOnPageClose(java.util.function.Consumer<Page> onPageClose) {
+        this.onPageClose = onPageClose;
+    }
+    
+    /**
+     * 设置Browser归还回调
+     */
+    public void setBrowserReleaseCallback(java.util.function.Consumer<Browser> callback) {
+        this.browserReleaseCallback = callback;
     }
 
     /**

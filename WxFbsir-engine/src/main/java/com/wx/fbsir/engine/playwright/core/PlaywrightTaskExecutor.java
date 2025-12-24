@@ -140,7 +140,16 @@ public class PlaywrightTaskExecutor {
                         return t;
                     }
                 },
-                new ThreadPoolExecutor.CallerRunsPolicy() // 队列满时由调用线程执行
+                new ThreadPoolExecutor.AbortPolicy() {
+                    @Override
+                    public void rejectedExecution(Runnable r, ThreadPoolExecutor e) {
+                        // 友好拒绝：记录日志并抛出异常，由上层捕获并通知用户
+                        log.warn("[任务执行器] 任务被拒绝 - 线程池繁忙，活跃线程: {}/{}, 队列: {}/{}",
+                            e.getActiveCount(), e.getMaximumPoolSize(),
+                            e.getQueue().size(), config.getQueueCapacity());
+                        super.rejectedExecution(r, e);
+                    }
+                }
         );
 
         // 创建调度线程池
@@ -201,16 +210,13 @@ public class PlaywrightTaskExecutor {
         long startTime = System.currentTimeMillis();
         activeTaskCount.incrementAndGet();
         String taskKey = instanceId != null ? userId + ":" + sessionName + ":" + instanceId : userId + ":" + sessionName;
-        log.debug("[任务执行器] 开始执行 - 任务: {}", taskKey);
-        
         BrowserSession session = null;
         try {
             session = browserPool.acquire(userId, sessionName, instanceId, persistent, headless);
             T result = task.apply(session);
             completedTaskCount.incrementAndGet();
             long duration = System.currentTimeMillis() - startTime;
-            log.debug("[任务执行器] 执行完成 - 任务: {}, 耗时: {}ms, 页面: {}", 
-                taskKey, duration, session.getResourceLeakInfo());
+            log.debug("[任务执行器] 执行完成 - 任务: {}, 耗时: {}ms", taskKey, duration);
             return result;
         } catch (IllegalStateException e) {
             failedTaskCount.incrementAndGet();
@@ -230,7 +236,13 @@ public class PlaywrightTaskExecutor {
             // 确保会话被正确释放
             if (session != null) {
                 try {
-                    session.close();
+                    // 临时会话需要完全销毁（关闭浏览器实例）
+                    if (!persistent) {
+                        log.debug("[任务执行器] 销毁临时会话 - 任务: {}", taskKey);
+                        session.destroy();
+                    } else {
+                        session.close();
+                    }
                 } catch (Exception e) {
                     resourceLeakWarnings.incrementAndGet();
                     log.warn("[任务执行器] 会话关闭异常 - 任务: {}, 错误: {}", taskKey, e.getMessage());
@@ -291,16 +303,13 @@ public class PlaywrightTaskExecutor {
         return CompletableFuture.supplyAsync(() -> {
             long startTime = System.currentTimeMillis();
             activeTaskCount.incrementAndGet();
-            log.debug("[任务执行器] 异步任务开始 - 任务: {}", taskKey);
-            
             BrowserSession session = null;
             try {
                 session = browserPool.acquire(userId, sessionName, instanceId, persistent, headless);
                 T result = task.apply(session);
                 completedTaskCount.incrementAndGet();
                 long duration = System.currentTimeMillis() - startTime;
-                log.debug("[任务执行器] 异步任务完成 - 任务: {}, 耗时: {}ms, 页面: {}", 
-                    taskKey, duration, session.getResourceLeakInfo());
+                log.debug("[任务执行器] 异步任务完成 - 任务: {}, 耗时: {}ms", taskKey, duration);
                 return result;
             } catch (IllegalStateException e) {
                 failedTaskCount.incrementAndGet();
@@ -320,7 +329,13 @@ public class PlaywrightTaskExecutor {
                 // 确保会话被正确释放
                 if (session != null) {
                     try {
-                        session.close();
+                        // 临时会话需要完全销毁（关闭浏览器实例）
+                        if (!persistent) {
+                            log.debug("[任务执行器] 销毁临时会话 - 任务: {}", taskKey);
+                            session.destroy();
+                        } else {
+                            session.close();
+                        }
                     } catch (Exception e) {
                         resourceLeakWarnings.incrementAndGet();
                         log.warn("[任务执行器] 异步任务会话关闭异常 - 任务: {}, 错误: {}", taskKey, e.getMessage());

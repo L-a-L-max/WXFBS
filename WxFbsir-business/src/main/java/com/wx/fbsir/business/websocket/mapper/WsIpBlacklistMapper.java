@@ -16,6 +16,14 @@ import java.util.List;
 public interface WsIpBlacklistMapper {
 
     /**
+     * 根据ID查询黑名单
+     *
+     * @param id 主键ID
+     * @return 黑名单记录
+     */
+    WsIpBlacklist selectById(@Param("id") Long id);
+
+    /**
      * 根据IP地址查询黑名单
      *
      * @param ipAddress IP地址

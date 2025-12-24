@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<configuration scan="true" scanPeriod="30 seconds">
+<configuration scan="true" scanPeriod="30 seconds" debug="false">
+    
+    <!-- 抑制 Logback 启动日志 -->
+    <statusListener class="ch.qos.logback.core.status.NopStatusListener"/>
     
     <!-- 日志存放路径（相对于运行路径） -->
     <property name="LOG_PATH" value="./logs"/>
@@ -56,17 +59,33 @@
         <appender-ref ref="FILE"/>
     </appender>
     
-    <!-- 统一日志配置 -->
-    <root level="INFO">
-        <appender-ref ref="CONSOLE"/>
-        <appender-ref ref="ASYNC_FILE"/>
-        <appender-ref ref="ERROR_FILE"/>
-    </root>
+    <!-- 抑制框架和第三方库的冗余日志 -->
+    <logger name="org.springframework" level="WARN"/>
+    <logger name="org.springframework.boot" level="WARN"/>
+    <logger name="org.springframework.boot.logging" level="WARN"/>
+    <logger name="org.apache.catalina" level="WARN"/>
+    <logger name="org.apache.coyote" level="WARN"/>
+    <logger name="ch.qos.logback" level="WARN"/>
+    
+    <!-- 禁用系统检测的 DEBUG 日志 -->
+    <logger name="com.wx.fbsir.engine.playwright.util.SystemCapabilityDetector" level="WARN"/>
+    <!-- 禁用截图工具的 DEBUG 日志 -->
+    <logger name="com.wx.fbsir.engine.playwright.util.ScreenshotUtil" level="ERROR"/>
+    <!-- 禁用定时任务的 DEBUG 日志 -->
+    <logger name="com.wx.fbsir.engine.playwright.scheduler.PlaywrightScheduledTasks" level="WARN"/>
+    
     <!-- 业务代码使用 INFO 级别 -->
     <logger name="com.wx.fbsir.engine" level="INFO"/>
     <!-- WebSocket 客户端使用 INFO 级别 -->
     <logger name="com.wx.fbsir.engine.websocket.client" level="INFO"/>
     <!-- 消息路由使用 INFO 级别 -->
     <logger name="com.wx.fbsir.engine.websocket.handler" level="INFO"/>
+    
+    <!-- 统一日志配置 -->
+    <root level="INFO">
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="ASYNC_FILE"/>
+        <appender-ref ref="ERROR_FILE"/>
+    </root>
     
 </configuration>

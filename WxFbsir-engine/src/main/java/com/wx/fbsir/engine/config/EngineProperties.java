@@ -1,7 +1,5 @@
 package com.wx.fbsir.engine.config;
 
-import lombok.Getter;
-import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 import org.springframework.validation.annotation.Validated;
@@ -18,8 +16,6 @@ import jakarta.validation.constraints.NotBlank;
  * @author wxfbsir
  * &#064;date  2025-12-15
  */
-@Setter
-@Getter
 @Component
 @ConfigurationProperties(prefix = "wxfbsir.engine")
 @Validated
@@ -51,8 +47,48 @@ public class EngineProperties {
      * 重连配置
      */
     private ReconnectConfig reconnect = new ReconnectConfig();
-
-    // ========== Getter/Setter ==========
+    
+    // ========== Getters and Setters ==========
+    
+    public String getHostId() {
+        return hostId;
+    }
+    
+    public void setHostId(String hostId) {
+        this.hostId = hostId;
+    }
+    
+    public String getVersion() {
+        return version;
+    }
+    
+    public void setVersion(String version) {
+        this.version = version;
+    }
+    
+    public AdminConfig getAdmin() {
+        return admin;
+    }
+    
+    public void setAdmin(AdminConfig admin) {
+        this.admin = admin;
+    }
+    
+    public ConnectionConfig getConnection() {
+        return connection;
+    }
+    
+    public void setConnection(ConnectionConfig connection) {
+        this.connection = connection;
+    }
+    
+    public ReconnectConfig getReconnect() {
+        return reconnect;
+    }
+    
+    public void setReconnect(ReconnectConfig reconnect) {
+        this.reconnect = reconnect;
+    }
 
     /**
      * 主节点配置
@@ -64,11 +100,11 @@ public class EngineProperties {
          */
         @NotBlank(message = "主节点 WebSocket 地址不能为空")
         private String wsUrl = "ws://localhost:8080/ws/engine";
-
+        
         public String getWsUrl() {
             return wsUrl;
         }
-
+        
         public void setWsUrl(String wsUrl) {
             this.wsUrl = wsUrl;
         }
@@ -102,35 +138,35 @@ public class EngineProperties {
          * 默认5MB，支持大文本传输
          */
         private int maxMessageSize = 5 * 1024 * 1024;
-
+        
         public int getTimeout() {
             return timeout;
         }
-
+        
         public void setTimeout(int timeout) {
             this.timeout = timeout;
         }
-
+        
         public int getHeartbeatInterval() {
             return heartbeatInterval;
         }
-
+        
         public void setHeartbeatInterval(int heartbeatInterval) {
             this.heartbeatInterval = heartbeatInterval;
         }
-
+        
         public int getHeartbeatTimeout() {
             return heartbeatTimeout;
         }
-
+        
         public void setHeartbeatTimeout(int heartbeatTimeout) {
             this.heartbeatTimeout = heartbeatTimeout;
         }
-
+        
         public int getMaxMessageSize() {
             return maxMessageSize;
         }
-
+        
         public void setMaxMessageSize(int maxMessageSize) {
             this.maxMessageSize = maxMessageSize;
         }
@@ -167,43 +203,43 @@ public class EngineProperties {
          * 退避乘数
          */
         private double backoffMultiplier = 1.5;
-
+        
         public boolean isEnabled() {
             return enabled;
         }
-
+        
         public void setEnabled(boolean enabled) {
             this.enabled = enabled;
         }
-
+        
         public int getMaxRetries() {
             return maxRetries;
         }
-
+        
         public void setMaxRetries(int maxRetries) {
             this.maxRetries = maxRetries;
         }
-
+        
         public int getInitialDelay() {
             return initialDelay;
         }
-
+        
         public void setInitialDelay(int initialDelay) {
             this.initialDelay = initialDelay;
         }
-
+        
         public int getMaxDelay() {
             return maxDelay;
         }
-
+        
         public void setMaxDelay(int maxDelay) {
             this.maxDelay = maxDelay;
         }
-
+        
         public double getBackoffMultiplier() {
             return backoffMultiplier;
         }
-
+        
         public void setBackoffMultiplier(double backoffMultiplier) {
             this.backoffMultiplier = backoffMultiplier;
         }

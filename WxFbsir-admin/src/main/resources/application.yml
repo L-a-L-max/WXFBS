@@ -98,20 +98,29 @@ spring:
       database: ${WXFBSIR_REDIS_DATABASE:0}
       # 密码
       password: ${WXFBSIR_REDIS_PASSWORD:}
-      # 连接超时时间
-      timeout: 10s
+      # 连接超时时间（减少到5秒，快速失败）
+      timeout: 5s
+      # 客户端名称
+      client-name: wxfbsir-admin
       lettuce:
         pool:
-          # 连接池中的最小空闲连接（保持一定数量避免频繁创建）
-          min-idle: 5
+          # 连接池中的最小空闲连接（减少初始连接数）
+          min-idle: 2
           # 连接池中的最大空闲连接
-          max-idle: 20
+          max-idle: 10
           # 连接池的最大数据库连接数
-          max-active: 50
-          # 连接池最大阻塞等待时间（5秒超时，避免无限等待）
+          max-active: 20
+          # 连接池最大阻塞等待时间（减少到5秒，快速失败）
           max-wait: 5000ms
         # 关闭超时时间
-        shutdown-timeout: 100ms
+        shutdown-timeout: 2000ms
+        # 集群拓扑刷新配置（解决Redis重连慢的问题）
+        cluster:
+          refresh:
+            # 启用自适应拓扑刷新
+            adaptive: true
+            # 定期刷新间隔（60秒）
+            period: 60s
 
 # token配置
 token:

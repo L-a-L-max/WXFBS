@@ -94,9 +94,10 @@ public class PlaywrightManager {
     private volatile long lastZombieCleanupTime = 0;
     
     /**
-     * 僵尸进程清理间隔（10分钟）
+     * 僵尸进程清理间隔（5分钟）
+     * <p>🟡 P2修复：缩短清理间隔，及时回收僵尸进程
      */
-    private static final long ZOMBIE_CLEANUP_INTERVAL = 10 * 60 * 1000;
+    private static final long ZOMBIE_CLEANUP_INTERVAL = 5 * 60 * 1000;
 
     public PlaywrightManager(PlaywrightProperties properties) {
         this.properties = properties;

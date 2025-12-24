@@ -11,6 +11,7 @@ import org.springframework.stereotype.Component;
 
 import jakarta.annotation.PostConstruct;
 import java.util.*;
+import java.util.concurrent.RejectedExecutionException;
 
 /**
  * 消息处理管理器
@@ -71,8 +72,14 @@ public class EngineCapabilityManager {
             return;
         }
 
-        // 异步执行
-        taskExecutor.execute(() -> executeHandler(handler, message));
+        // 异步执行（捕获拒绝异常）
+        try {
+            taskExecutor.execute(() -> executeHandler(handler, message));
+        } catch (RejectedExecutionException e) {
+            // 线程池繁忙，友好提示用户稍后重试
+            log.warn("[{}] 任务被拒绝 - 系统繁忙，请稍后重试", type);
+            sendBusyError(message, type);
+        }
     }
 
     private void executeHandler(CapabilityRegistry.MessageHandler handler, EngineMessage message) {
@@ -124,6 +131,23 @@ public class EngineCapabilityManager {
         webSocketClientManager.sendMessage(response);
     }
 
+    private void sendBusyError(EngineMessage message, String type) {
+        if (webSocketClientManager == null || !webSocketClientManager.isConnected()) {
+            return;
+        }
+
+        EngineMessage response = EngineMessage.builder()
+            .type(MessageType.TASK_RESULT.getCode())
+            .userId(message.getUserId())
+            .payload("requestId", message.getPayloadValue("requestId"))
+            .payload("success", false)
+            .payload("errorCode", "SYSTEM_BUSY")
+            .payload("errorMessage", "系统繁忙，请稍后再试。当前任务队列已满，建议等待1-2分钟后重新尝试。")
+            .build();
+
+        webSocketClientManager.sendMessage(response);
+    }
+
     public List<Map<String, Object>> getCapabilityList() {
         return registry.getCapabilityList();
     }
@@ -142,4 +166,5 @@ public class EngineCapabilityManager {
     public void handleCapabilityRequest(EngineMessage message) {
         handleMessage(message);
     }
+    
 }

@@ -116,6 +116,7 @@ CREATE TABLE `ws_connection_log` (
     `duration_seconds` bigint DEFAULT NULL COMMENT '连接持续时间（秒，断开时计算）',
     `status` tinyint NOT NULL DEFAULT 0 COMMENT '状态：0-连接中，1-已注册，2-正常断开，3-异常断开，4-被拒绝（白名单），5-被拒绝（黑名单），6-被拒绝（重复连接），7-被管理员断开，8-主节点重启导致断开',
     `reject_reason` varchar(255) DEFAULT NULL COMMENT '拒绝/断开原因',
+    `error_code` varchar(10) DEFAULT NULL COMMENT '错误码（E1001-E9999：E1xxx认证错误，E2xxx授权错误，E3xxx连接错误，E4xxx系统错误）',
     `close_code` int DEFAULT NULL COMMENT 'WebSocket关闭状态码',
     `close_reason` varchar(255) DEFAULT NULL COMMENT '关闭原因',
     `message_sent` bigint DEFAULT 0 COMMENT '发送消息数（断开时统计）',
@@ -133,6 +134,7 @@ CREATE TABLE `ws_connection_log` (
     INDEX `idx_remote_ip` (`remote_ip`),
     INDEX `idx_connect_time` (`connect_time`),
     INDEX `idx_status` (`status`),
+    INDEX `idx_error_code` (`error_code`),
     INDEX `idx_del_flag` (`del_flag`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='WebSocket连接记录表';
 
@@ -198,3 +200,165 @@ WHERE w.del_flag = 0
 GROUP BY w.team_name, w.is_team;
 
 SET FOREIGN_KEY_CHECKS = 1;
+
+-- ========================================
+-- 主机管理模块 - 菜单权限配置
+-- 日期: 2025-12-23
+-- 说明: 添加主机管理一级菜单及其子菜单和按钮权限
+-- ========================================
+
+-- 一级菜单：主机管理（menu_id: 7，只有管理员和只读管理员可见）
+INSERT INTO sys_menu VALUES(
+    '7',                          -- menu_id
+    '主机管理',                    -- menu_name
+    '0',                          -- parent_id（顶级菜单）
+    '7',                          -- order_num
+    'host',                       -- path
+    NULL,                         -- component
+    '',                           -- query
+    '',                           -- route_name
+    1,                            -- is_frame
+    0,                            -- is_cache
+    'M',                          -- menu_type（M=目录）
+    '0',                          -- visible
+    '0',                          -- status
+    '',                           -- perms
+    'server',                     -- icon
+    'admin',                      -- create_by
+    sysdate(),                    -- create_time
+    '',                           -- update_by
+    NULL,                         -- update_time
+    '主机管理目录'                 -- remark
+);
+
+-- 二级菜单：主机ID白名单管理（menu_id: 123）
+INSERT INTO sys_menu VALUES(
+    '123',                        -- menu_id
+    '主机ID白名单',                -- menu_name
+    '7',                          -- parent_id（主机管理）
+    '1',                          -- order_num
+    'whitelist',                  -- path
+    'business/host/whitelist/index',  -- component
+    '',                           -- query
+    '',                           -- route_name
+    1,                            -- is_frame
+    0,                            -- is_cache
+    'C',                          -- menu_type（C=菜单）
+    '0',                          -- visible
+    '0',                          -- status
+    'business:host:whitelist:view',  -- perms
+    'list',                       -- icon
+    'admin',                      -- create_by
+    sysdate(),                    -- create_time
+    '',                           -- update_by
+    NULL,                         -- update_time
+    '主机ID白名单管理菜单'         -- remark
+);
+
+-- 二级菜单：IP黑名单管理（menu_id: 124）
+INSERT INTO sys_menu VALUES(
+    '124',                        -- menu_id
+    'IP黑名单',                    -- menu_name
+    '7',                          -- parent_id（主机管理）
+    '2',                          -- order_num
+    'blacklist',                  -- path
+    'business/host/blacklist/index',  -- component
+    '',                           -- query
+    '',                           -- route_name
+    1,                            -- is_frame
+    0,                            -- is_cache
+    'C',                          -- menu_type（C=菜单）
+    '0',                          -- visible
+    '0',                          -- status
+    'business:host:blacklist:view',  -- perms
+    'lock',                       -- icon
+    'admin',                      -- create_by
+    sysdate(),                    -- create_time
+    '',                           -- update_by
+    NULL,                         -- update_time
+    'IP黑名单管理菜单'             -- remark
+);
+
+-- 二级菜单：主机连接记录与在线列表（menu_id: 125）
+INSERT INTO sys_menu VALUES(
+    '125',                        -- menu_id
+    '连接记录与在线',              -- menu_name
+    '7',                          -- parent_id（主机管理）
+    '3',                          -- order_num
+    'connection',                 -- path
+    'business/host/connection/index',  -- component
+    '',                           -- query
+    '',                           -- route_name
+    1,                            -- is_frame
+    0,                            -- is_cache
+    'C',                          -- menu_type（C=菜单）
+    '0',                          -- visible
+    '0',                          -- status
+    'business:host:connection:view',  -- perms
+    'monitor',                    -- icon
+    'admin',                      -- create_by
+    sysdate(),                    -- create_time
+    '',                           -- update_by
+    NULL,                         -- update_time
+    '主机连接记录与在线列表管理菜单' -- remark
+);
+
+-- ========================================
+-- 按钮权限：主机ID白名单（menu_id: 1079-1083）
+-- ========================================
+INSERT INTO sys_menu VALUES('1079', '白名单查询', '123', '1', '#', '', '', '', 1, 0, 'F', '0', '0', 'business:host:whitelist:query', '#', 'admin', sysdate(), '', NULL, '');
+INSERT INTO sys_menu VALUES('1080', '白名单新增', '123', '2', '#', '', '', '', 1, 0, 'F', '0', '0', 'business:host:whitelist:add', '#', 'admin', sysdate(), '', NULL, '');
+INSERT INTO sys_menu VALUES('1081', '白名单修改', '123', '3', '#', '', '', '', 1, 0, 'F', '0', '0', 'business:host:whitelist:edit', '#', 'admin', sysdate(), '', NULL, '');
+INSERT INTO sys_menu VALUES('1082', '白名单删除', '123', '4', '#', '', '', '', 1, 0, 'F', '0', '0', 'business:host:whitelist:remove', '#', 'admin', sysdate(), '', NULL, '');
+INSERT INTO sys_menu VALUES('1083', '白名单导出', '123', '5', '#', '', '', '', 1, 0, 'F', '0', '0', 'business:host:whitelist:export', '#', 'admin', sysdate(), '', NULL, '');
+
+-- ========================================
+-- 按钮权限：IP黑名单（menu_id: 1084-1088）
+-- ========================================
+INSERT INTO sys_menu VALUES('1084', '黑名单查询', '124', '1', '#', '', '', '', 1, 0, 'F', '0', '0', 'business:host:blacklist:query', '#', 'admin', sysdate(), '', NULL, '');
+INSERT INTO sys_menu VALUES('1085', '黑名单新增', '124', '2', '#', '', '', '', 1, 0, 'F', '0', '0', 'business:host:blacklist:add', '#', 'admin', sysdate(), '', NULL, '');
+INSERT INTO sys_menu VALUES('1086', '黑名单修改', '124', '3', '#', '', '', '', 1, 0, 'F', '0', '0', 'business:host:blacklist:edit', '#', 'admin', sysdate(), '', NULL, '');
+INSERT INTO sys_menu VALUES('1087', '黑名单删除', '124', '4', '#', '', '', '', 1, 0, 'F', '0', '0', 'business:host:blacklist:remove', '#', 'admin', sysdate(), '', NULL, '');
+INSERT INTO sys_menu VALUES('1088', '黑名单导出', '124', '5', '#', '', '', '', 1, 0, 'F', '0', '0', 'business:host:blacklist:export', '#', 'admin', sysdate(), '', NULL, '');
+
+-- ========================================
+-- 按钮权限：连接记录与在线列表（menu_id: 1089-1092）
+-- ========================================
+INSERT INTO sys_menu VALUES('1089', '连接记录查询', '125', '1', '#', '', '', '', 1, 0, 'F', '0', '0', 'business:host:connection:query', '#', 'admin', sysdate(), '', NULL, '');
+INSERT INTO sys_menu VALUES('1090', '连接记录删除', '125', '2', '#', '', '', '', 1, 0, 'F', '0', '0', 'business:host:connection:remove', '#', 'admin', sysdate(), '', NULL, '');
+INSERT INTO sys_menu VALUES('1091', '在线主机查询', '125', '3', '#', '', '', '', 1, 0, 'F', '0', '0', 'business:host:online:query', '#', 'admin', sysdate(), '', NULL, '');
+INSERT INTO sys_menu VALUES('1092', '在线主机下线', '125', '4', '#', '', '', '', 1, 0, 'F', '0', '0', 'business:host:online:offline', '#', 'admin', sysdate(), '', NULL, '');
+
+-- ========================================
+-- 角色菜单关联：为管理员角色分配权限（role_id: 1=超级管理员, 2=管理员）
+-- ========================================
+
+-- 管理员拥有所有权限
+INSERT INTO sys_role_menu VALUES ('2', '7');    -- 主机管理目录
+INSERT INTO sys_role_menu VALUES ('2', '123');  -- 主机ID白名单
+INSERT INTO sys_role_menu VALUES ('2', '124');  -- IP黑名单
+INSERT INTO sys_role_menu VALUES ('2', '125');  -- 连接记录与在线
+INSERT INTO sys_role_menu VALUES ('2', '1079'); -- 白名单查询
+INSERT INTO sys_role_menu VALUES ('2', '1080'); -- 白名单新增
+INSERT INTO sys_role_menu VALUES ('2', '1081'); -- 白名单修改
+INSERT INTO sys_role_menu VALUES ('2', '1082'); -- 白名单删除
+INSERT INTO sys_role_menu VALUES ('2', '1083'); -- 白名单导出
+INSERT INTO sys_role_menu VALUES ('2', '1084'); -- 黑名单查询
+INSERT INTO sys_role_menu VALUES ('2', '1085'); -- 黑名单新增
+INSERT INTO sys_role_menu VALUES ('2', '1086'); -- 黑名单修改
+INSERT INTO sys_role_menu VALUES ('2', '1087'); -- 黑名单删除
+INSERT INTO sys_role_menu VALUES ('2', '1088'); -- 黑名单导出
+INSERT INTO sys_role_menu VALUES ('2', '1089'); -- 连接记录查询
+INSERT INTO sys_role_menu VALUES ('2', '1090'); -- 连接记录删除
+INSERT INTO sys_role_menu VALUES ('2', '1091'); -- 在线主机查询
+INSERT INTO sys_role_menu VALUES ('2', '1092'); -- 在线主机下线
+
+-- 只读管理员只拥有查询权限（role_id: 3=只读权限）
+INSERT INTO sys_role_menu VALUES ('3', '7');    -- 主机管理目录
+INSERT INTO sys_role_menu VALUES ('3', '123');  -- 主机ID白名单
+INSERT INTO sys_role_menu VALUES ('3', '124');  -- IP黑名单
+INSERT INTO sys_role_menu VALUES ('3', '125');  -- 连接记录与在线
+INSERT INTO sys_role_menu VALUES ('3', '1079'); -- 白名单查询
+INSERT INTO sys_role_menu VALUES ('3', '1084'); -- 黑名单查询
+INSERT INTO sys_role_menu VALUES ('3', '1089'); -- 连接记录查询
+INSERT INTO sys_role_menu VALUES ('3', '1091'); -- 在线主机查询

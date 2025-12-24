@@ -30,6 +30,11 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         FROM ws_host_whitelist
     </sql>
 
+    <select id="selectById" parameterType="Long" resultMap="WsHostWhitelistResult">
+        <include refid="selectWhitelistVo"/>
+        WHERE id = #{id}
+    </select>
+
     <select id="selectByHostId" parameterType="String" resultMap="WsHostWhitelistResult">
         <include refid="selectWhitelistVo"/>
         WHERE host_id = #{hostId} AND del_flag = 0

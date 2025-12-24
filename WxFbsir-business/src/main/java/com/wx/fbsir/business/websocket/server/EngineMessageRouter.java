@@ -32,9 +32,12 @@ public class EngineMessageRouter {
 
     private final Map<MessageType, MessageHandler> handlers = new ConcurrentHashMap<>();
     private final ClientMessageRouter clientMessageRouter;
+    private final com.wx.fbsir.business.websocket.controller.EngineRequestController engineRequestController;
 
-    public EngineMessageRouter(ClientMessageRouter clientMessageRouter) {
+    public EngineMessageRouter(ClientMessageRouter clientMessageRouter,
+                                com.wx.fbsir.business.websocket.controller.EngineRequestController engineRequestController) {
         this.clientMessageRouter = clientMessageRouter;
+        this.engineRequestController = engineRequestController;
     }
 
     @PostConstruct
@@ -71,7 +74,29 @@ public class EngineMessageRouter {
         String type = message.getType();
         String userId = message.getUserId();
         
-        // 如果消息包含 userId，转发给前端
+        log.debug("[消息路由] 收到消息 - 类型: {}, 用户: {}, EngineID: {}", 
+            type, userId, session.getEngineId());
+        
+        // 检查是否是单次返回结果（_RESULT后缀）
+        if (type != null && type.endsWith("_RESULT")) {
+            // 提取 requestId
+            String requestId = message.getPayloadValue("requestId");
+            if (requestId != null && !requestId.isEmpty()) {
+                // 转发给 EngineRequestController 完成请求
+                java.util.Map<String, Object> resultData = new java.util.HashMap<>();
+                
+                // 提取所有 payload 数据
+                if (message.getPayload() != null) {
+                    resultData.putAll(message.getPayload());
+                }
+                
+                engineRequestController.completeRequest(requestId, resultData);
+                log.debug("[消息路由] 完成HTTP请求 - 请求ID: {}, 类型: {}", requestId, type);
+                return;
+            }
+        }
+        
+        // 转发给客户端（如果有userId）
         if (userId != null && !userId.isEmpty()) {
             // 将 EngineMessage 转换为 JSON 字符串转发
             String jsonMessage = message.toJson();

@@ -36,6 +36,11 @@ public class EngineMessage implements Serializable {
     private String engineId;
 
     /**
+     * Engine 版本号
+     */
+    private String version;
+
+    /**
      * 用户ID（可选）
      */
     private String userId;
@@ -156,6 +161,14 @@ public class EngineMessage implements Serializable {
         this.engineId = engineId;
     }
 
+    public String getVersion() {
+        return version;
+    }
+
+    public void setVersion(String version) {
+        this.version = version;
+    }
+
     public String getUserId() {
         return userId;
     }
@@ -228,6 +241,11 @@ public class EngineMessage implements Serializable {
 
         public Builder engineId(String engineId) {
             this.message.setEngineId(engineId);
+            return this;
+        }
+
+        public Builder version(String version) {
+            this.message.setVersion(version);
             return this;
         }
 

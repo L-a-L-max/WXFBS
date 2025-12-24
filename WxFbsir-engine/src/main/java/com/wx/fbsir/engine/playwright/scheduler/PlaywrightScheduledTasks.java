@@ -49,6 +49,7 @@ public class PlaywrightScheduledTasks {
 
     /**
      * 清理过期截图（每小时执行）
+     * 支持失败重试，静默处理小问题
      */
     @Scheduled(fixedRate = 3600000)
     public void cleanupOldScreenshots() {
@@ -56,19 +57,29 @@ public class PlaywrightScheduledTasks {
             return;
         }
         
-        try {
-            int cleaned = screenshotUtil.cleanupOldScreenshots(24);
-            if (cleaned > 0) {
-                log.info("[定时任务] 清理过期截图完成 - 清理: {} 个文件", cleaned);
+        int maxRetries = 3;
+        for (int i = 0; i < maxRetries; i++) {
+            try {
+                int cleaned = screenshotUtil.cleanupOldScreenshots(24);
+                if (cleaned > 0) {
+                    log.debug("[定时任务] 清理截图成功 - 数量: {}", cleaned);
+                }
+                return; // 成功，退出
+            } catch (Exception e) {
+                if (i == maxRetries - 1) {
+                    // 最后一次失败才告警
+                    log.warn("[定时任务] 清理截图失败 - 已重试 {} 次: {}", maxRetries, e.getMessage());
+                } else {
+                    log.debug("[定时任务] 清理截图失败，重试中 ({}/{})", i + 1, maxRetries);
+                    try { Thread.sleep(1000); } catch (InterruptedException ie) { Thread.currentThread().interrupt(); }
+                }
             }
-        } catch (Exception e) {
-            log.error("[定时任务] 清理截图失败 - 错误类型: {}, 错误: {}", 
-                e.getClass().getSimpleName(), e.getMessage());
         }
     }
 
     /**
      * 清理僵尸进程（每10分钟执行）
+     * 支持失败重试，静默处理小问题
      */
     @Scheduled(fixedRate = 600000)
     public void cleanupZombieProcesses() {
@@ -76,11 +87,19 @@ public class PlaywrightScheduledTasks {
             return;
         }
         
-        try {
-            playwrightManager.cleanupZombieProcesses();
-        } catch (Exception e) {
-            log.error("[定时任务] 清理僵尸进程失败 - 错误类型: {}, 错误: {}", 
-                e.getClass().getSimpleName(), e.getMessage());
+        int maxRetries = 3;
+        for (int i = 0; i < maxRetries; i++) {
+            try {
+                playwrightManager.cleanupZombieProcesses();
+                return; // 成功，退出
+            } catch (Exception e) {
+                if (i == maxRetries - 1) {
+                    log.warn("[定时任务] 清理僵尸进程失败 - 已重试 {} 次: {}", maxRetries, e.getMessage());
+                } else {
+                    log.debug("[定时任务] 清理僵尸进程失败，重试中 ({}/{})", i + 1, maxRetries);
+                    try { Thread.sleep(1000); } catch (InterruptedException ie) { Thread.currentThread().interrupt(); }
+                }
+            }
         }
     }
 }

@@ -148,7 +148,7 @@ public class PlaywrightProperties {
     @PostConstruct
     public void initDynamicConfig() {
         if (!dynamicPerformance) {
-            log.info("[Playwright配置] 动态性能适配已禁用，使用配置文件中的固定值");
+            log.debug("[Playwright配置] 动态性能适配已禁用，使用配置文件中的固定值");
             return;
         }
 
@@ -158,22 +158,22 @@ public class PlaywrightProperties {
         // 如果配置值为默认值（0或负数表示使用动态值），则使用系统推荐值
         if (pool.maxSize <= 0) {
             pool.maxSize = SystemCapabilityDetector.calculateRecommendedPoolSize();
-            log.info("[Playwright配置] 动态设置浏览器池大小: {}", pool.maxSize);
+            log.debug("[Playwright配置] 动态设置浏览器池大小: {}", pool.maxSize);
         }
 
         if (threadPool.coreSize <= 0) {
             threadPool.coreSize = SystemCapabilityDetector.calculateRecommendedCoreThreads();
-            log.info("[Playwright配置] 动态设置核心线程数: {}", threadPool.coreSize);
+            log.debug("[Playwright配置] 动态设置核心线程数: {}", threadPool.coreSize);
         }
 
         if (threadPool.maxSize <= 0) {
             threadPool.maxSize = SystemCapabilityDetector.calculateRecommendedMaxThreads();
-            log.info("[Playwright配置] 动态设置最大线程数: {}", threadPool.maxSize);
+            log.debug("[Playwright配置] 动态设置最大线程数: {}", threadPool.maxSize);
         }
 
         if (threadPool.queueCapacity <= 0) {
             threadPool.queueCapacity = SystemCapabilityDetector.calculateRecommendedQueueCapacity();
-            log.info("[Playwright配置] 动态设置队列容量: {}", threadPool.queueCapacity);
+            log.debug("[Playwright配置] 动态设置队列容量: {}", threadPool.queueCapacity);
         }
 
         // 低性能系统优化
@@ -181,7 +181,7 @@ public class PlaywrightProperties {
             log.warn("[Playwright配置] 检测到低性能系统，启用资源节约模式");
             if (!browser.disableImages) {
                 browser.disableImages = true;
-                log.info("[Playwright配置] 自动禁用图片加载以节省资源");
+                log.debug("[Playwright配置] 自动禁用图片加载以节省资源");
             }
         }
     }
