@@ -83,7 +83,7 @@ WxFbsir-ui/src/api/business/content/dailyassistant.js
 
 ### 1. Fork主仓库
 
-1. 访问主仓库：`https://gitee.com/U3W-AI/WFBS`
+1. 访问主仓库：`https://gitee.com/U3W-AI/U3W-AI`
 2. 点击右上角"Fork"按钮，将项目Fork到自己的账号下
 3. Clone自己Fork的仓库到本地：
 ```bash
