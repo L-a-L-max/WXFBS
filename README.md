@@ -110,7 +110,7 @@ npm run dev
 
 ## 技术支持
 
-- **源码**: [https://gitee.com/U3W-AI/WFBS](https://gitee.com/U3W-AI/WFBS)
+- **源码**: [https://gitee.com/U3W-AI/U3W-AI](https://gitee.com/U3W-AI/U3W-AI)
 
 ## 许可证
 
