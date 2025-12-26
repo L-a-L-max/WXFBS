@@ -69,7 +69,7 @@
 ```bash
 # 1. 克隆项目
 git clone https://gitee.com/U3W-AI/U3W-AI.git
-cd WFBS
+cd U3W-AI
 
 # 2. 初始化数据库
 mysql -u root -p wxfbsir < sql/wxfbsir.sql
