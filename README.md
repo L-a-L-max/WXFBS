@@ -125,4 +125,4 @@ npm run dev
 - 若依源码：[https://gitee.com/y_project/RuoYi-Vue](https://gitee.com/y_project/RuoYi-Vue)
 
 
-文档更新日期：2025年12月22日 17：00  文档版本：1.1.5B
+文档更新日期：2025年12月26日 18：00  文档版本：1.1.5C
