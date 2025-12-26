@@ -68,7 +68,7 @@
 
 ```bash
 # 1. 克隆项目
-git clone https://gitee.com/U3W-AI/WFBS.git
+git clone https://gitee.com/U3W-AI/U3W-AI.git
 cd WFBS
 
 # 2. 初始化数据库
