@@ -40,23 +40,30 @@ public class AiChatService {
      * 发送消息到元器
      */
     public String sendMessage(String message, String sessionId) {
+        log.info("[元器请求] 开始处理 - sessionId: {}, message: {}", sessionId, message);
+        
         String targetUrl = yuanqiChatConfig.getTargetUrl();
         String token = yuanqiChatConfig.getToken();
         String encodingAesKey = yuanqiChatConfig.getEncodingAesKey();
         String corpId = yuanqiChatConfig.getCorpId();
         String agentId = yuanqiChatConfig.getAgentId();
 
+        log.info("[元器配置] targetUrl: {}", targetUrl);
+        log.info("[元器配置] corpId: {}, agentId: {}", corpId, agentId);
+
         try {
+            log.info("[加密处理] 开始初始化加密器");
             WXBizMsgCrypt crypt = new WXBizMsgCrypt(token, encodingAesKey, corpId);
+            log.info("[加密处理] 加密器初始化成功");
 
             long timestamp = System.currentTimeMillis() / 1000;
             long msgId = System.currentTimeMillis();
             String timestampStr = String.valueOf(timestamp);
             String nonce = generateNonce();
 
-            // 把sessionId嵌入消息内容，格式：[SID:xxx]实际消息
-            // 工作流可以从SYS.UserQuery中提取sessionId
+            // 构建消息内容
             String wrappedMessage = "[SID:" + sessionId + "]" + message;
+            log.info("[消息构建] 包装后消息: {}", wrappedMessage);
 
             // 构建企业微信XML格式消息
             String xmlMessage = String.format(
@@ -75,83 +82,69 @@ public class AiChatService {
                     msgId,
                     agentId != null ? agentId : "1000011"
             );
+            
+            log.info("[消息构建] XML消息构建完成，长度: {}", xmlMessage.length());
+            log.debug("[消息详情] XML内容: {}", xmlMessage);
 
             // AES加密
+            log.info("[加密处理] 开始AES加密");
             String encryptedXml = crypt.encryptMsg(xmlMessage, timestampStr, nonce);
+            log.info("[加密处理] 加密完成，密文长度: {}", encryptedXml.length());
+            
             String msgSignature = extractMsgSignature(encryptedXml);
+            log.info("[签名验证] 消息签名: {}", msgSignature);
 
             // 构建请求URL
             String requestUrl = targetUrl + "?msg_signature=" + msgSignature
                     + "&timestamp=" + timestampStr
                     + "&nonce=" + nonce;
 
-            log.info("[AI对话] 发送消息到元器 - sessionId: {}, message: {}", sessionId, message);
+            log.info("[HTTP请求] 准备发送 - URL: {}", requestUrl);
+            log.info("[HTTP请求] 请求体长度: {} bytes", encryptedXml.getBytes().length);
 
             // 发送HTTP请求
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_XML);
             HttpEntity<String> requestEntity = new HttpEntity<>(encryptedXml, headers);
 
+            log.info("[HTTP请求] 开始发送POST请求...");
+            long startTime = System.currentTimeMillis();
+            
             ResponseEntity<String> response = restTemplate.exchange(
                     requestUrl,
                     HttpMethod.POST,
                     requestEntity,
                     String.class
             );
+            
+            long elapsedTime = System.currentTimeMillis() - startTime;
+            log.info("[HTTP响应] 请求完成 - 耗时: {}ms, 状态码: {}", elapsedTime, response.getStatusCode().value());
 
             String result = response.getBody();
-            if (result == null) {
-                result = "";
+            if (result == null || result.isEmpty()) {
+                log.info("[HTTP响应] 元器返回空响应体，消息已成功发送");
+                return "消息已发送";
             }
 
-            log.info("[AI对话] 元器响应 - 状态码: {}, 响应长度: {}", response.getStatusCode().value(), result.length());
+            log.info("[HTTP响应] 响应体长度: {} bytes", result.length());
+            log.debug("[HTTP响应] 响应内容: {}", result);
 
-            if (result.isEmpty()) {
-                return "消息已发送，元器正在处理中...";
-            }
-
-            return parseYuanqiResponse(result, crypt, timestampStr, nonce);
+            // 元器通常只返回200状态码，不需要复杂解析
+            return "消息已发送";
+        } catch (org.springframework.web.client.HttpClientErrorException e) {
+            log.error("[HTTP错误] 客户端错误 - 状态码: {}, 错误信息: {}", e.getStatusCode(), e.getMessage());
+            log.error("[HTTP错误] 响应体: {}", e.getResponseBodyAsString());
+            return "发送失败：" + e.getStatusCode();
+        } catch (org.springframework.web.client.HttpServerErrorException e) {
+            log.error("[HTTP错误] 服务器错误 - 状态码: {}, 错误信息: {}", e.getStatusCode(), e.getMessage());
+            log.error("[HTTP错误] 响应体: {}", e.getResponseBodyAsString());
+            return "元器服务异常";
         } catch (Exception e) {
-            log.error("[AI对话] 发送消息失败", e);
-            return "抱歉，服务暂时不可用，请稍后重试";
+            log.error("[系统错误] 发送消息失败 - 异常类型: {}, 错误信息: {}", e.getClass().getName(), e.getMessage(), e);
+            return "系统异常：" + e.getMessage();
         }
     }
 
-    private String parseYuanqiResponse(String response, WXBizMsgCrypt crypt, String timestamp, String nonce) {
-        try {
-            if (response.contains("<Encrypt>")) {
-                String msgSignature = extractMsgSignature(response);
-                String decrypted = crypt.decryptMsg(msgSignature, timestamp, nonce, response);
-                return extractContent(decrypted);
-            }
-            return extractContent(response);
-        } catch (Exception e) {
-            log.warn("[AI对话] 响应解析失败: {}", e.getMessage());
-            if (response.contains("<Content>")) {
-                return extractContent(response);
-            }
-            return "收到响应，解析中...";
-        }
-    }
-
-    private String extractContent(String xml) {
-        try {
-            int start = xml.indexOf("<Content><![CDATA[");
-            int end = xml.indexOf("]]></Content>");
-            if (start != -1 && end > start) {
-                return xml.substring(start + 18, end);
-            }
-
-            start = xml.indexOf("<Content>");
-            end = xml.indexOf("</Content>");
-            if (start != -1 && end > start) {
-                return xml.substring(start + 9, end);
-            }
-        } catch (Exception e) {
-            log.warn("[AI对话] Content提取失败: {}", e.getMessage());
-        }
-        return "消息已发送";
-    }
 
     private String extractMsgSignature(String xml) {
         try {

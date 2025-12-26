@@ -33,25 +33,31 @@ public class ChatController {
      */
     @PostMapping("/send")
     public AjaxResult sendMessage(@RequestBody Map<String, Object> request) {
+        String sessionId = null;
         try {
             String message = (String) request.get("message");
-            String sessionId = (String) request.get("sessionId");
+            sessionId = (String) request.get("sessionId");
 
             if (sessionId == null || sessionId.isBlank()) {
                 sessionId = "user_" + System.currentTimeMillis();
             }
 
             if (message == null || message.trim().isEmpty()) {
+                log.warn("[AI对话] 消息为空 - sessionId: {}", sessionId);
                 return AjaxResult.error("消息不能为空");
             }
 
             log.info("[AI对话] 用户发送消息 - sessionId: {}, message: {}", sessionId, message);
 
             // 保存用户消息到数据库
+            log.info("[AI对话] 开始保存用户消息到数据库...");
             aiChatMessageService.saveUserMessage(sessionId, message);
+            log.info("[AI对话] 用户消息已保存到数据库");
 
             // 发送到元器
+            log.info("[AI对话] 开始转发消息到元器...");
             String reply = aiChatService.sendMessage(message, sessionId);
+            log.info("[AI对话] 元器请求完成，返回: {}", reply);
 
             return AjaxResult.success(Map.of(
                     "reply", reply,
@@ -59,7 +65,7 @@ public class ChatController {
             ));
 
         } catch (Exception e) {
-            log.error("[AI对话] 发送消息失败", e);
+            log.error("[AI对话] 发送消息失败 - sessionId: {}, 错误: {}", sessionId, e.getMessage(), e);
             return AjaxResult.error("发送失败: " + e.getMessage());
         }
     }

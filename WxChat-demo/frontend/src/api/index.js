@@ -8,7 +8,7 @@ const request = axios.create({
 // 请求拦截器
 request.interceptors.request.use(
   config => {
-    const token = sessionStorage.getItem('token')
+    const token = sessionStorage.getItem('token') || localStorage.getItem('token')
     if (token) {
       config.headers['Authorization'] = 'Bearer ' + token
     }
@@ -29,15 +29,6 @@ request.interceptors.response.use(
     return Promise.reject(error)
   }
 )
-
-// 企业微信认证
-export function handleOAuthCallback(code, state) {
-  return request({
-    url: '/auth/callback',
-    method: 'get',
-    params: { code, state }
-  })
-}
 
 // 发送消息
 export function sendMessage(data) {

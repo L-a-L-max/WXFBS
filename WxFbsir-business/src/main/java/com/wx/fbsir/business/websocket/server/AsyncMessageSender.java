@@ -181,11 +181,13 @@ public class AsyncMessageSender {
                 }
 
                 try {
-                    String json = task.message.toJson();
-                    session.sendMessage(new TextMessage(json));
+                    String json = task.toJson();
+                    if (json != null) {
+                        session.sendMessage(new TextMessage(json));
+                    }
                 } catch (Exception e) {
                     log.error("[异步发送] 消息发送失败 - SessionID: {}, 类型: {}, 错误: {}",
-                        sessionId, task.message.getType(), e.getMessage());
+                        sessionId, task.getType(), e.getMessage());
                 }
 
             } catch (InterruptedException e) {
@@ -230,13 +232,58 @@ public class AsyncMessageSender {
         return droppedMessageCount.get();
     }
 
+    /**
+     * 发送原始消息（字符串）
+     */
+    public boolean sendRawMessage(WebSocketSession session, String rawMessage) {
+        if (session == null || !session.isOpen() || rawMessage == null) {
+            return false;
+        }
+
+        String sessionId = session.getId();
+        BlockingQueue<MessageTask> queue = sessionQueues.computeIfAbsent(sessionId,
+            k -> new LinkedBlockingQueue<>(QUEUE_CAPACITY));
+
+        MessageTask task = new MessageTask(session, rawMessage);
+        if (!queue.offer(task)) {
+            droppedMessageCount.incrementAndGet();
+            log.warn("[异步发送] 队列已满，丢弃原始消息 - SessionID: {}", sessionId);
+            return false;
+        }
+
+        ensureSenderStarted(sessionId, queue);
+        return true;
+    }
+
     private static class MessageTask {
         final WebSocketSession session;
         final EngineMessage message;
+        final String rawMessage;
 
         MessageTask(WebSocketSession session, EngineMessage message) {
             this.session = session;
             this.message = message;
+            this.rawMessage = null;
+        }
+        
+        MessageTask(WebSocketSession session, String rawMessage) {
+            this.session = session;
+            this.message = null;
+            this.rawMessage = rawMessage;
+        }
+        
+        String toJson() {
+            if (rawMessage != null) {
+                return rawMessage;
+            }
+            return message != null ? message.toJson() : null;
+        }
+        
+        String getType() {
+            if (message != null) {
+                return message.getType();
+            }
+            return "RAW";
         }
     }
 }

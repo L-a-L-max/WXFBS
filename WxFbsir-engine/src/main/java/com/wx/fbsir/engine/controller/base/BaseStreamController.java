@@ -82,6 +82,122 @@ public abstract class BaseStreamController {
     }
 
     /**
+     * 🔥 标准化payload提取方法
+     * 
+     * 统一从EngineMessage中提取业务payload对象
+     * 
+     * 消息结构说明：
+     * Business层转发的消息结构为：
+     * {
+     *   "type": "CAPABILITY_TYPE",
+     *   "userId": "1",
+     *   "payload": {
+     *     "requestId": "xxx",
+     *     "userId": "1",
+     *     "sourceType": "WEBSOCKET",
+     *     "payload": {          // <-- 这是业务真正的payload
+     *       "query": "xxx",
+     *       "param1": "value1",
+     *       "param2": true
+     *     }
+     *   }
+     * }
+     * 
+     * 本方法提取内层的业务payload对象，返回JSONObject供能力方法解析
+     * 
+     * @param message Engine消息对象
+     * @return 业务payload的JSONObject，如果不存在或类型错误则返回null
+     */
+    protected com.alibaba.fastjson2.JSONObject extractPayload(EngineMessage message) {
+        try {
+            log.info("[Payload解析] 开始提取 - message.getPayload()所有key: {}", message.getPayload().keySet());
+            Object payloadObj = message.getPayloadValue("payload");
+            log.info("[Payload解析] 提取'payload'字段 - 值类型: {}, 值: {}", 
+                payloadObj != null ? payloadObj.getClass().getName() : "null",
+                payloadObj);
+            
+            if (payloadObj instanceof com.alibaba.fastjson2.JSONObject) {
+                com.alibaba.fastjson2.JSONObject result = (com.alibaba.fastjson2.JSONObject) payloadObj;
+                log.info("[Payload解析] ✅ 提取成功 - 包含字段: {}", result.keySet());
+                log.info("[Payload解析] ✅ 详细内容: {}", result.toJSONString());
+                return result;
+            } else {
+                log.warn("[Payload解析] payload不是JSONObject - 类型: {}", 
+                    payloadObj != null ? payloadObj.getClass().getName() : "null");
+                return null;
+            }
+        } catch (Exception e) {
+            log.error("[Payload解析] 提取失败", e);
+            return null;
+        }
+    }
+
+    /**
+     * 从payload中安全提取String字段
+     * 
+     * @param payload JSONObject
+     * @param key 字段名
+     * @return 字段值，不存在则返回null
+     */
+    protected String getStringFromPayload(com.alibaba.fastjson2.JSONObject payload, String key) {
+        if (payload == null) {
+            log.warn("[Payload解析] payload为null，无法提取字段: {}", key);
+            return null;
+        }
+        String value = payload.getString(key);
+        log.info("[Payload解析] 提取字段 '{}' - 值: {}", key, value);
+        return value;
+    }
+
+    /**
+     * 从payload中安全提取Boolean字段（支持Boolean和String类型）
+     * 
+     * @param payload JSONObject
+     * @param key 字段名
+     * @param defaultValue 默认值
+     * @return 布尔值
+     */
+    protected boolean getBooleanFromPayload(com.alibaba.fastjson2.JSONObject payload, String key, boolean defaultValue) {
+        if (payload == null) {
+            log.warn("[Payload解析] payload为null，返回默认值: {}", defaultValue);
+            return defaultValue;
+        }
+        
+        Object value = payload.get(key);
+        log.info("[Payload解析] 提取字段 '{}' - 值: {}, 类型: {}", 
+            key, value, value != null ? value.getClass().getSimpleName() : "null");
+        
+        if (value instanceof Boolean) {
+            log.info("[Payload解析] '{}' 解析为Boolean: {}", key, value);
+            return (Boolean) value;
+        } else if (value instanceof String) {
+            boolean result = Boolean.parseBoolean((String) value);
+            log.info("[Payload解析] '{}' 从String解析为Boolean: {}", key, result);
+            return result;
+        }
+        
+        log.warn("[Payload解析] '{}' 无法解析为Boolean，返回默认值: {}", key, defaultValue);
+        return defaultValue;
+    }
+
+    /**
+     * 从payload中安全提取Integer字段
+     * 
+     * @param payload JSONObject
+     * @param key 字段名
+     * @param defaultValue 默认值
+     * @return 整数值
+     */
+    protected int getIntFromPayload(com.alibaba.fastjson2.JSONObject payload, String key, int defaultValue) {
+        if (payload == null) {
+            return defaultValue;
+        }
+        
+        Integer value = payload.getInteger(key);
+        return value != null ? value : defaultValue;
+    }
+
+    /**
      * 开始流式任务（使用默认间隔5秒）
      * 
      * @param userId 用户ID
@@ -249,11 +365,12 @@ public abstract class BaseStreamController {
                     log.error("[StreamTask] 自动进度推送失败 - 用户: {}, 请求ID: {}, 错误: {}", 
                         userId, requestId, e.getMessage());
                 }
-            }, 0, intervalMillis, TimeUnit.MILLISECONDS);
+            }, intervalMillis, intervalMillis, TimeUnit.MILLISECONDS);
 
             log.debug("[StreamTask] 已启动自动进度推送 - 用户: {}, 请求ID: {}, 间隔: {}ms", 
                 userId, requestId, intervalMillis);
         }
+
 
         /**
          * 发送进度通知
@@ -276,10 +393,57 @@ public abstract class BaseStreamController {
         }
 
         /**
+         * 发送文本日志消息（参考老项目 logInfo.sendTaskLog）
+         * 
+         * 用于显示执行进度文本，如"页面加载完成"、"二维码加载中"等
+         * 前端会将这些日志添加到 progressLogs 数组中显示
+         * 
+         * @param message 日志消息内容
+         */
+        public void sendLog(String message) {
+            if (!isConnected()) {
+                return;
+            }
+
+            EngineMessage.Builder builder = EngineMessage.builder()
+                .type(MessageType.TASK_LOG.getCode())
+                .userId(userId)
+                .payload("requestId", requestId)
+                .payload("message", message)
+                .payload("timestamp", System.currentTimeMillis());
+
+            BaseStreamController.this.webSocketClientManager.sendMessage(builder.build());
+            log.debug("[StreamTask] 发送日志 - 用户: {}, 消息: {}", userId, message);
+        }
+
+        /**
+         * 发送截图消息
+         * 
+         * 用于发送截图URL，前端会将截图添加到 screenshots 数组中轮播显示
+         * 
+         * @param screenshotUrl 截图URL
+         */
+        public void sendScreenshot(String screenshotUrl) {
+            if (!isConnected() || screenshotUrl == null || screenshotUrl.isEmpty()) {
+                return;
+            }
+
+            EngineMessage.Builder builder = EngineMessage.builder()
+                .type(MessageType.TASK_SCREENSHOT.getCode())
+                .userId(userId)
+                .payload("requestId", requestId)
+                .payload("screenshotUrl", screenshotUrl)
+                .payload("timestamp", System.currentTimeMillis());
+
+            BaseStreamController.this.webSocketClientManager.sendMessage(builder.build());
+            log.debug("[StreamTask] 发送截图 - 用户: {}, URL: {}", userId, screenshotUrl);
+        }
+
+        /**
          * 发送进度通知（带额外数据）
          * 
          * @param message 进度消息
-         * @param extraData 额外数据（如截图链接）
+         * @param extraData 额外数据
          */
         public void sendProgress(String message, java.util.Map<String, Object> extraData) {
             if (!isConnected()) {
@@ -297,7 +461,7 @@ public abstract class BaseStreamController {
                 extraData.forEach(builder::payload);
             }
 
-            webSocketClientManager.sendMessage(builder.build());
+            BaseStreamController.this.webSocketClientManager.sendMessage(builder.build());
         }
 
         /**

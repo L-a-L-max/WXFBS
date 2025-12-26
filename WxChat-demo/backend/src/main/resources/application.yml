@@ -1,6 +1,6 @@
 # WxChat Demo 配置文件
 server:
-  port: 8080
+  port: 8083
   servlet:
     context-path: /api
 
@@ -11,9 +11,9 @@ spring:
   # 数据库配置
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:3306/wxchat-demo?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=false&serverTimezone=GMT%2B8&allowPublicKeyRetrieval=true
-    username: wxchat-demo
-    password: password
+    url: jdbc:mysql://127.0.0.1:3306/demo?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=false&serverTimezone=GMT%2B8&allowPublicKeyRetrieval=true
+    username: root
+    password: root
 
 # MyBatis配置
 mybatis:
@@ -21,25 +21,30 @@ mybatis:
   type-aliases-package: com.demo.wxchat.domain
   configuration:
     map-underscore-to-camel-case: true
-    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
 
-# 企业微信配置
+# 企业微信配置（用于调用企业微信API，如获取用户信息等）
 wework:
-  corp-id: corp-id
-  agent-id: agent-id
-  agent-secret: agent-secret
+  corp-id:
+  agent-id:
+  agent-secret:
 
-# 元器AI配置
+# 元器AI配置（用于发送消息到元器平台）
 yuanqi:
-  chat:
-    token: yuanqi-token
-    encoding-aes-key: yuanqi-encoding-aes-key
-    corp-id: yuanqi-corp-id
-    agent-id: yuanqi-agent-id
-    # 元器企业微信通道地址（发送消息到这里）channelId需要替换为实际值
-    target-url: https://yuanqi.tencent.com/api/v2/channel/callback/wecom/message/{channelId}
+  # 消息加密Token
+  token:
+  # AES加密密钥（43位）
+  encoding-aes-key:
+  # 元器回调地址（需要替换实际的channelId）
+  target-url: https://yuanqi.tencent.com/api/v2/channel/callback/wecom/message/{channelId}
+  # 模拟企业微信发送消息时使用的企业ID和应用ID（用于构造消息体）
+  # 如果与上面wework配置相同，可以留空，系统会自动使用wework的配置
+  # 正常不需要考虑配置下面两个
+  corp-id:
+  agent-id:
 
 # 日志配置
 logging:
   level:
-    com.demo.wxchat: debug
+    com.demo.wxchat: info
+    org.springframework.web: warn
+    com.zaxxer.hikari: warn

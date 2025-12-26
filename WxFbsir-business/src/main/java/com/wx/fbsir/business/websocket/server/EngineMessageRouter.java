@@ -77,28 +77,58 @@ public class EngineMessageRouter {
         log.debug("[消息路由] 收到消息 - 类型: {}, 用户: {}, EngineID: {}", 
             type, userId, session.getEngineId());
         
+        // 🔴 关键修复：根据请求来源区分响应目标
+        // 提取 requestId 和 sourceType
+        String requestId = message.getPayloadValue("requestId");
+        String sourceType = message.getPayloadValue("sourceType");
+        
+        log.debug("[消息路由] 请求来源: {}, 请求ID: {}", sourceType, requestId);
+        
         // 检查是否是单次返回结果（_RESULT后缀）
-        if (type != null && type.endsWith("_RESULT")) {
-            // 提取 requestId
-            String requestId = message.getPayloadValue("requestId");
-            if (requestId != null && !requestId.isEmpty()) {
-                // 转发给 EngineRequestController 完成请求
+        boolean isResultMessage = type != null && type.endsWith("_RESULT");
+        if (isResultMessage && requestId != null && !requestId.isEmpty()) {
+            // 根据来源类型路由
+            if ("HTTP".equals(sourceType)) {
+                // HTTP 请求 → 仅完成 HTTP 响应
                 java.util.Map<String, Object> resultData = new java.util.HashMap<>();
-                
-                // 提取所有 payload 数据
                 if (message.getPayload() != null) {
                     resultData.putAll(message.getPayload());
                 }
-                
                 engineRequestController.completeRequest(requestId, resultData);
-                log.debug("[消息路由] 完成HTTP请求 - 请求ID: {}, 类型: {}", requestId, type);
+                log.info("[消息路由] HTTP响应 - 请求ID: {}, 类型: {}", requestId, type);
+                return; // 不转发给 WebSocket
+                
+            } else if ("WEBSOCKET".equals(sourceType)) {
+                // WebSocket 请求 → 仅转发给 WebSocket 客户端
+                if (userId != null && !userId.isEmpty()) {
+                    String jsonMessage = message.toJson();
+                    clientMessageRouter.routeToClient(userId, jsonMessage);
+                    log.info("[消息路由] WebSocket响应 - 请求ID: {}, 类型: {}, 用户: {}", 
+                        requestId, type, userId);
+                    return;
+                }
+            } else {
+                // 未知来源或旧版本消息，兼容处理（双路转发）
+                log.warn("[消息路由] 未知来源类型: {}, 请求ID: {}, 执行兼容路由", sourceType, requestId);
+                
+                // 尝试完成 HTTP 请求
+                java.util.Map<String, Object> resultData = new java.util.HashMap<>();
+                if (message.getPayload() != null) {
+                    resultData.putAll(message.getPayload());
+                }
+                engineRequestController.completeRequest(requestId, resultData);
+                
+                // 尝试转发给 WebSocket
+                if (userId != null && !userId.isEmpty()) {
+                    String jsonMessage = message.toJson();
+                    clientMessageRouter.routeToClient(userId, jsonMessage);
+                }
                 return;
             }
         }
         
-        // 转发给客户端（如果有userId）
+        // 非 _RESULT 消息（进度消息等），正常转发给客户端
         if (userId != null && !userId.isEmpty()) {
-            // 将 EngineMessage 转换为 JSON 字符串转发
             String jsonMessage = message.toJson();
             clientMessageRouter.routeToClient(userId, jsonMessage);
             log.debug("[消息路由] 转发到前端 - 类型: {}, 用户: {}", type, userId);

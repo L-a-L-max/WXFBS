@@ -105,22 +105,15 @@ function getWeWorkLogin() {
 
 // 初始化
 onMounted(() => {
+  // 使用企业微信登录信息
   const login = getWeWorkLogin()
   if (login && login.weWorkUserId) {
     sessionId.value = login.weWorkUserId
-    localStorage.setItem('ai_chat_session_id', sessionId.value)
-    return
+    localStorage.setItem('sessionId', sessionId.value)
+  } else {
+    // 未登录，跳转到登录页
+    window.location.href = '/'
   }
-
-  // 兜底：没有企微登录信息时，继续使用本地存储或随机值
-  const stored = localStorage.getItem('ai_chat_session_id')
-  if (stored && stored.trim()) {
-    sessionId.value = stored
-    return
-  }
-
-  sessionId.value = 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6)
-  localStorage.setItem('ai_chat_session_id', sessionId.value)
 })
 
 // 清理
@@ -151,21 +144,11 @@ const sendMessageHandler = async () => {
       sessionId: sessionId.value
     })
 
-    if (res.code === 200 && res.data) {
-      const reply = res.data.reply
-      // 如果是异步处理中的提示，开始轮询
-      if (reply && reply.includes('正在处理')) {
-        pollCount = 0
-        startPolling()
-      } else if (reply) {
-        // 直接有回复
-        addAiMessage(reply)
-        isLoading.value = false
-      } else {
-        // 没有回复，开始轮询
-        pollCount = 0
-        startPolling()
-      }
+    if (res.code === 200) {
+      // 发送成功后，立即开始轮询获取AI回复
+      // 不显示"消息已发送"这样的中间状态
+      pollCount = 0
+      startPolling()
     } else {
       ElMessage.error(res.msg || '发送失败')
       isLoading.value = false

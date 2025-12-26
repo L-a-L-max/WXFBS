@@ -5,17 +5,12 @@
         <el-icon :size="64" color="#667eea"><ChatDotRound /></el-icon>
       </div>
       <h1>WxChat Demo</h1>
-      <p class="desc">企业微信登录 + 元器AI对话回显</p>
+      <p class="desc">企业微信登录 + 元器AI对话</p>
       
       <div class="actions">
         <el-button type="primary" size="large" @click="loginWithWeWork">
           <el-icon><Connection /></el-icon>
           企业微信登录
-        </el-button>
-        
-        <el-button size="large" @click="goToChat">
-          <el-icon><ChatLineSquare /></el-icon>
-          直接体验对话
         </el-button>
       </div>
       
@@ -27,19 +22,11 @@
 </template>
 
 <script setup>
-import { useRouter } from 'vue-router'
-import { ChatDotRound, Connection, ChatLineSquare } from '@element-plus/icons-vue'
-
-const router = useRouter()
+import { ChatDotRound, Connection } from '@element-plus/icons-vue'
 
 function loginWithWeWork() {
   // 跳转到企业微信OAuth授权
-  const teamId = 1  // 默认团队ID
-  window.location.href = `/api/auth/authorize?teamId=${teamId}`
-}
-
-function goToChat() {
-  router.push('/chat')
+  window.location.href = `/api/auth/authorize`
 }
 </script>
 

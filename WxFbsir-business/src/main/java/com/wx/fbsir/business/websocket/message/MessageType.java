@@ -3,37 +3,12 @@ package com.wx.fbsir.business.websocket.message;
 /**
  * WebSocket 消息类型枚举
  * 
- * 设计原则：
- * 1. 业务消息在上，系统消息在下
- * 2. 每个消息类型必须有对应的Controller处理
- * 3. 消息类型与CapabilityRegistry注册一致
- * 
- * 添加新消息类型的步骤：
- * 步骤1：在下方业务消息区添加枚举（参考PLAYWRIGHT_TEST示例）
- * 步骤2：在Engine模块创建Controller类（参考PlaywrightTestController）
- * 步骤3：在CapabilityRegistry注册处理器（stream或once）
- * 步骤4：更新测试文档，添加请求/响应示例
- * 
- * 示例：
- * <pre>
- * // 1. 流式输出消息（多次返回）
- * PLAYWRIGHT_TEST("PLAYWRIGHT_TEST", "Playwright测试"),  // 请求
- * TASK_PROGRESS("TASK_PROGRESS", "任务进度"),        // 响应（多次）
- * TASK_RESULT("TASK_RESULT", "任务结果"),            // 响应（最终）
- * 
- * // 2. 单次返回消息
- * HEALTH_CHECK("HEALTH_CHECK", "健康检查"),          // 请求
- * HEALTH_CHECK_RESULT("", ""),                        // 响应（自动生成，无需定义）
- * </pre>
- *
- * @author wxfbsir
- * @date 2025-12-15
+ * 说明：由Engine处理的业务功能，需在CapabilityRegistry注册
  */
 public enum MessageType {
 
     // ==========================================================================
     // 业务消息（Business Messages）
-    // 说明：由Engine处理的业务功能，需在CapabilityRegistry注册
     // ==========================================================================
     
     /**
@@ -55,39 +30,38 @@ public enum MessageType {
      * 健康检查
      * 
      * 请求消息：
-     * - HEALTH_CHECK: 健康检查请求（由前端发起）
+     * - HEALTH_CHECK: 健康检查请求
      * 
      * 响应消息：
-     * - HEALTH_CHECK_RESULT: 健康数据（由Engine返回）
+     * - HEALTH_CHECK_RESULT: 健康数据
      */
     HEALTH_CHECK("HEALTH_CHECK", "健康检查"),
     
-    /**
-     * 简单流式示例
-     * 
-     * 用于演示流式输出的完整流程，新手学习参考
-     * 
-     * 请求消息：
-     * - SIMPLE_STREAM_DEMO: 简单流式示例请求（由前端发起）
-     * 
-     * 响应消息：
-     * - TASK_PROGRESS: 任务进度（多次）
-     * - TASK_RESULT: 任务结果（一次）
-     */
+    /** 简单流式示例 | 新手学习参考 */
     SIMPLE_STREAM_DEMO("SIMPLE_STREAM_DEMO", "简单流式示例"),
+    
+    /** DeepSeek登录检测 | once() | 请求: {"type":"DEEPSEEK_CHECK_LOGIN","engineId":"engine-001"} */
+    DEEPSEEK_CHECK_LOGIN("DEEPSEEK_CHECK_LOGIN", "DeepSeek登录检测"),
+    
+    /** DeepSeek扫码登录 | stream() | 请求: {"type":"DEEPSEEK_SCAN_LOGIN","engineId":"engine-001"} */
+    DEEPSEEK_SCAN_LOGIN("DEEPSEEK_SCAN_LOGIN", "DeepSeek扫码登录"),
+    
+    /** DeepSeek AI咨询 | stream() | 请求: {"type":"DEEPSEEK_QUERY","engineId":"engine-001","payload":{"query":"你好"}} */
+    DEEPSEEK_AI_CONSULT("DEEPSEEK_AI_CONSULT", "DeepSeek AI咨询"),
     
     // ---------- 通用响应消息 ----------
     
-    /**
-     * 任务进度通知（由Engine主动发送）
-     * 用于流式输出的中间进度反馈
-     */
+    /** 任务日志 | Engine主动发送 | 执行状态文本消息 | 前端显示在 progressLogs 中 */
+    TASK_LOG("TASK_LOG", "任务日志"),
+    
+    /** 任务截图 | Engine主动发送 | 截图URL消息 | 前端显示在 screenshots 轮播区 */
+    TASK_SCREENSHOT("TASK_SCREENSHOT", "任务截图"),
+    
+    /** 任务进度通知 | Engine主动发送 | 流式输出中间进度 | 已废弃，请使用 TASK_LOG */
+    @Deprecated
     TASK_PROGRESS("TASK_PROGRESS", "任务进度"),
     
-    /**
-     * 任务结果（由Engine主动发送）
-     * 用于流式输出的最终结果
-     */
+    /** 任务结果 | Engine主动发送 | 流式输出最终结果 */
     TASK_RESULT("TASK_RESULT", "任务结果"),
     
     // ==========================================================================

@@ -311,6 +311,27 @@ public class EngineSessionManager {
     }
 
     /**
+     * 发送原始消息给指定 Engine（直接转发，不做任何处理）
+     *
+     * @param engineId Engine ID
+     * @param rawMessage 原始消息字符串
+     * @return 是否发送成功
+     */
+    public boolean sendRawMessage(String engineId, String rawMessage) {
+        EngineSession session = getSessionByEngineId(engineId);
+        if (session == null || !session.isValid()) {
+            log.warn("[会话管理] 发送原始消息失败，会话不存在或无效 - EngineID: {}", engineId);
+            return false;
+        }
+
+        boolean queued = asyncMessageSender.sendRawMessage(session.getSession(), rawMessage);
+        if (queued) {
+            session.incrementMessageSent();
+        }
+        return queued;
+    }
+
+    /**
      * 广播消息给所有已注册的 Engine
      *
      * @param message 消息对象

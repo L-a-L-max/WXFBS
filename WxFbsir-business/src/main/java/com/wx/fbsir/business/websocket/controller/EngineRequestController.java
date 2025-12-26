@@ -133,6 +133,9 @@ public class EngineRequestController {
         // 添加 requestId 到 payload
         payload.put("requestId", requestId);
         
+        // 🔴 关键修复：标记请求来源为 HTTP
+        payload.put("sourceType", "HTTP");
+        
         // 添加所有 payload 字段
         for (Map.Entry<String, Object> entry : payload.entrySet()) {
             builder.payload(entry.getKey(), entry.getValue());

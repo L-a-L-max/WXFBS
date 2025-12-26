@@ -66,6 +66,11 @@ public class EngineMessage implements Serializable {
     private Map<String, String> metadata;
 
     /**
+     * 原始JSON字符串（用于绕过fastjson2的Map序列化问题）
+     */
+    private transient String rawJson;
+
+    /**
      * 默认构造器
      */
     public EngineMessage() {
@@ -93,10 +98,21 @@ public class EngineMessage implements Serializable {
             return null;
         }
         try {
-            return JSON.parseObject(json, EngineMessage.class);
+            EngineMessage msg = JSON.parseObject(json, EngineMessage.class);
+            if (msg != null) {
+                msg.rawJson = json;  // 保存原始JSON
+            }
+            return msg;
         } catch (Exception e) {
             return null;
         }
+    }
+
+    /**
+     * 获取原始JSON字符串
+     */
+    public String getRawJson() {
+        return rawJson;
     }
 
     /**

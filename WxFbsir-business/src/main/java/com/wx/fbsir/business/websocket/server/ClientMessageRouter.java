@@ -87,27 +87,18 @@ public class ClientMessageRouter {
             log.info("[Router] 已生成requestId: {} - 用户: {}, 类型: {}, 目标: {}", 
                 requestId, userId, type, engineId);
             
-            // ━━━━━━━━━━ 构建并发送消息 ━━━━━━━━━━
-            // 确保消息包含必要字段
+            // ━━━━━━━━━━ 直接转发原始消息 ━━━━━━━━━━
+            // 只添加必要字段，将原始消息完整转发给Engine
             json.put("userId", userId);
             json.put("sourceClientId", clientId);
+            json.put("sourceType", "WEBSOCKET");
             
-            // 构建 EngineMessage，将 JSON 中的所有字段作为 payload
-            com.wx.fbsir.business.websocket.message.EngineMessage.Builder builder = 
-                com.wx.fbsir.business.websocket.message.EngineMessage.builder()
-                    .type(type)
-                    .engineId(engineId)
-                    .userId(userId);
-            
-            // 将 JSON 的所有字段添加到 payload（包括新生成的requestId）
-            for (String key : json.keySet()) {
-                builder.payload(key, json.get(key));
-            }
-            
-            com.wx.fbsir.business.websocket.message.EngineMessage engineMessage = builder.build();
+            // 直接发送修改后的JSON字符串给Engine
+            String messageToSend = json.toJSONString();
+            log.debug("[Router] 转发原始消息: {}", messageToSend);
             
             // 发送消息到Engine
-            boolean sent = engineSessionManager.sendMessage(engineId, engineMessage);
+            boolean sent = engineSessionManager.sendRawMessage(engineId, messageToSend);
             if (!sent) {
                 sendError(clientId, type, "SEND_FAILED", "消息发送失败，Engine可能已离线");
                 log.warn("[Router] 发送失败: {} -> {} (用户: {}, 请求ID: {})", type, engineId, userId, requestId);

@@ -3,7 +3,7 @@
     <el-card class="entry-card">
       <div class="loading-content">
         <el-icon class="loading-icon" :size="48"><Loading /></el-icon>
-        <p>企业微信登录中...</p>
+        <p>正在跳转到企业微信授权...</p>
       </div>
     </el-card>
   </div>
@@ -11,56 +11,13 @@
 
 <script setup>
 import { onMounted } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { ElMessage } from 'element-plus'
 import { Loading } from '@element-plus/icons-vue'
-import { handleOAuthCallback } from '../api'
 
-const route = useRoute()
-const router = useRouter()
-
-onMounted(async () => {
-  const teamId = Number(route.query.teamId || route.query.state || 1)
-  const code = route.query.code
-
-  // 如果没有code，跳转到授权页面
-  if (!code) {
-    const currentUrl = window.location.origin + window.location.pathname + window.location.search
-    window.location.href = `/api/auth/authorize?teamId=${teamId}&redirect=${encodeURIComponent(currentUrl)}`
-    return
-  }
-
-  try {
-    const res = await handleOAuthCallback(code, teamId)
-    
-    if (res.code === 200 && res.data) {
-      const login = res.data
-      
-      // 存储token
-      sessionStorage.setItem('token', login.token)
-      
-      // 存储登录信息
-      sessionStorage.setItem('wework_login', JSON.stringify({
-        teamId: login.teamId || teamId,
-        weWorkUserId: login.weWorkUserId,
-        groupChatId: login.groupChatId,
-        memberName: login.memberName,
-        inGroup: login.inGroup
-      }))
-      
-      ElMessage.success('登录成功')
-      
-      // 跳转到对话页面
-      router.push('/chat')
-    } else {
-      ElMessage.error(res.msg || '登录失败')
-      router.push('/')
-    }
-  } catch (e) {
-    console.error('企业微信登录失败', e)
-    ElMessage.error('企业微信登录失败: ' + (e.message || '未知错误'))
-    router.push('/')
-  }
+onMounted(() => {
+  // 直接跳转到授权接口
+  // 后端会处理回调并返回HTML页面自动跳转
+  const currentUrl = window.location.origin + '/api/auth/callback'
+  window.location.href = `/api/auth/authorize?redirect=${encodeURIComponent(currentUrl)}`
 })
 </script>
 
