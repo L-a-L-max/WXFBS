@@ -87,7 +87,7 @@ WxFbsir-ui/src/api/business/content/dailyassistant.js
 2. 点击右上角"Fork"按钮，将项目Fork到自己的账号下
 3. Clone自己Fork的仓库到本地：
 ```bash
-git clone https://gitee.com/your-username/WFBS.git
+git clone https://gitee.com/U3W-AI/U3W-AI.git
 cd WFBS
 ```
 
@@ -95,14 +95,14 @@ cd WFBS
 
 ```bash
 # 添加主仓库为上游仓库
-git remote add upstream https://gitee.com/U3W-AI/WFBS.git
+git remote add upstream https://gitee.com/U3W-AI/U3W-AI.git
 
 # 查看远程仓库
 git remote -v
-# origin    https://gitee.com/your-username/WFBS.git (fetch)
-# origin    https://gitee.com/your-username/WFBS.git (push)
-# upstream  https://gitee.com/U3W-AI/WFBS.git (fetch)
-# upstream  https://gitee.com/U3W-AI/WFBS.git (push)
+# origin    https://gitee.com/your-username/U3W-AI.git (fetch)
+# origin    https://gitee.com/your-username/U3W-AI.git (push)
+# upstream  https://gitee.com/U3W-AI/U3W-AI.git (fetch)
+# upstream  https://gitee.com/U3W-AI/U3W-AI.git (push)
 ```
 
 ### 3. 同步主仓库更新
@@ -515,5 +515,5 @@ git push origin --delete feature/your-feature-name
 
 ---
 
-**最后更新**: 2025-12-23  
+**最后更新**: 2025-12-26 
 **维护者**: WxFbsir Team
