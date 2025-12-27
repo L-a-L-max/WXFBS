@@ -2,7 +2,7 @@
 
 > **目标读者**: 所有需要提交代码和发起Pull Request的开发者  
 > **文档用途**: 规范Fork仓库、分支管理、Commit格式、PR提交流程  
-> **更新日期**: 2025-12-23
+> **更新日期**: 2025-12-28
 
 ---
 
@@ -88,7 +88,7 @@ WxFbsir-ui/src/api/business/content/dailyassistant.js
 3. Clone自己Fork的仓库到本地：
 ```bash
 git clone https://gitee.com/U3W-AI/U3W-AI.git
-cd WFBS
+cd U3W-AI
 ```
 
 ### 2. 添加上游仓库
@@ -111,17 +111,17 @@ git remote -v
 (也可以直接在gitee打开自己的fork仓库中点击刷新）：
 
 ```bash
-# 切换到主分支
-git checkout master
+# 切换到福帮手分支
+git checkout fbsir
 
 # 拉取上游仓库更新
 git fetch upstream
 
 # 合并上游更新
-git merge upstream/master
+git merge upstream/fbsir
 
 # 推送到自己的远程仓库
-git push origin master
+git push origin fbsir
 ```
 
 ### 4. 创建功能分支
@@ -477,7 +477,7 @@ CREATE TABLE IF NOT EXISTS `daily_article` (
 ```bash
 # 1. 同步主仓库最新代码
 git fetch upstream
-git merge upstream/master
+git merge upstream/fbsir
 
 # 2. 解决冲突
 # 手动编辑冲突文件，保留正确的代码
@@ -515,5 +515,5 @@ git push origin --delete feature/your-feature-name
 
 ---
 
-**最后更新**: 2025-12-26 
+**最后更新**: 2025-12-28 
 **维护者**: WxFbsir Team
