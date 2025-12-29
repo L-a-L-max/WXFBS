@@ -1,6 +1,7 @@
 package com.wx.fbsir.business.websocket.server;
 
 import com.alibaba.fastjson2.JSON;
+import com.alibaba.fastjson2.JSONException;
 import com.alibaba.fastjson2.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,10 +39,11 @@ public class ClientMessageRouter {
      * 核心职责：
      * 1. 强制生成requestId（确保全链路追踪）
      * 2. 验证Engine可用性和能力
-     * 3. 转发消息到指定Engine
+     * 3. 【透明转发】完整保留payload字段，Admin不做任何处理
      * 
      * ⚠️ 必须在请求中指定 engineId，不支持自动选择
      * ⚠️ requestId由后端强制生成，前端传递的requestId会被忽略
+     * ⚠️ payload字段完全透传，Admin不解析、不修改、不验证
      */
     public void routeToEngine(String clientId, String rawMessage) {
         try {
@@ -76,39 +78,53 @@ public class ClientMessageRouter {
             }
             
             // ━━━━━━━━━━ 强制生成requestId（安全核心）━━━━━━━━━━
-            // 1. 移除前端可能传递的requestId（防止伪造）
             json.remove("requestId");
-            
-            // 2. 使用RequestIdGenerator生成唯一requestId
             String requestId = com.wx.fbsir.business.websocket.util.RequestIdGenerator.generate(userId, type);
             json.put("requestId", requestId);
             
-            // 3. 记录requestId生成日志（方便追踪）
-            log.info("[Router] 已生成requestId: {} - 用户: {}, 类型: {}, 目标: {}", 
-                requestId, userId, type, engineId);
-            
-            // ━━━━━━━━━━ 直接转发原始消息 ━━━━━━━━━━
-            // 只添加必要字段，将原始消息完整转发给Engine
+            // ━━━━━━━━━━ 添加路由必要字段，完整保留payload ━━━━━━━━━━
             json.put("userId", userId);
             json.put("sourceClientId", clientId);
             json.put("sourceType", "WEBSOCKET");
             
             // 直接发送修改后的JSON字符串给Engine
             String messageToSend = json.toJSONString();
-            log.debug("[Router] 转发原始消息: {}", messageToSend);
             
             // 发送消息到Engine
             boolean sent = engineSessionManager.sendRawMessage(engineId, messageToSend);
             if (!sent) {
                 sendError(clientId, type, "SEND_FAILED", "消息发送失败，Engine可能已离线");
-                log.warn("[Router] 发送失败: {} -> {} (用户: {}, 请求ID: {})", type, engineId, userId, requestId);
+                log.error("[Router] 发送失败: {} -> {} (用户: {}, 请求ID: {})", type, engineId, userId, requestId);
             } else {
                 log.debug("[Router] 转发到 Engine: {} -> {} (用户: {}, 请求ID: {})", type, engineId, userId, requestId);
             }
             
+        } catch (JSONException e) {
+            // JSON解析错误 - 友好提示
+            log.error("========================================");
+            log.error("[Admin路由] ❌ JSON解析失败");
+            log.error("[原始消息] {}", rawMessage);
+            log.error("[错误原因] {}", e.getMessage());
+            log.error("========================================");
+            
+            // 构建友好的错误消息
+            String friendlyMessage = "JSON格式错误，请检查：\n" +
+                "1. 是否有多余的换行符或空格\n" +
+                "2. 是否有未转义的特殊字符\n" +
+                "3. 是否缺少引号或逗号\n" +
+                "原始错误: " + e.getMessage();
+            
+            sendError(clientId, "ERROR", "JSON_PARSE_ERROR", friendlyMessage);
+            
         } catch (Exception e) {
-            log.error("[Router] 处理客户端消息失败", e);
-            sendError(clientId, "ERROR", "PARSE_ERROR", "消息解析失败");
+            // 其他错误
+            log.error("========================================");
+            log.error("[Admin路由] ❌ 处理客户端消息失败");
+            log.error("[原始消息] {}", rawMessage);
+            log.error("[错误详情]", e);
+            log.error("========================================");
+            
+            sendError(clientId, "ERROR", "PROCESS_ERROR", "消息处理失败: " + e.getMessage());
         }
     }
 

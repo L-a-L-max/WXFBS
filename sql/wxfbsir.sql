@@ -222,6 +222,7 @@ insert into sys_menu values('122',   '粉丝管理', '6', '3', 'points-fans', 'b
 insert into sys_menu values('123', '主机ID白名单', '7', '1', 'whitelist', 'business/host/whitelist/index', '', '', 1, 0, 'C', '0', '0', 'business:host:whitelist:view', 'list', 'admin', sysdate(), '', null, '主机ID白名单管理菜单');
 insert into sys_menu values('124', 'IP黑名单', '7', '2', 'blacklist', 'business/host/blacklist/index', '', '', 1, 0, 'C', '0', '0', 'business:host:blacklist:view', 'lock', 'admin', sysdate(), '', null, 'IP黑名单管理菜单');
 insert into sys_menu values('125', '连接记录与在线', '7', '3', 'connection', 'business/host/connection/index', '', '', 1, 0, 'C', '0', '0', 'business:host:connection:view', 'monitor', 'admin', sysdate(), '', null, '主机连接记录与在线列表管理菜单');
+insert into sys_menu values('126', 'WebSocket调试', '7', '4', 'debug', 'business/debug/index', '', '', 1, 0, 'C', '0', '0', 'business:debug:view', 'bug', 'admin', sysdate(), '', null, 'WebSocket调试工具，用于开发测试');
 -- 三级菜单（ID范围：500-999）
 insert into sys_menu values('500',  '操作日志', '108', '1', 'operlog',    'monitor/operlog/index',    '', '', 1, 0, 'C', '0', '0', 'monitor:operlog:list',    'form',          'admin', sysdate(), '', null, '操作日志菜单');
 insert into sys_menu values('501',  '登录日志', '108', '2', 'logininfor', 'monitor/logininfor/index', '', '', 1, 0, 'C', '0', '0', 'monitor:logininfor:list', 'logininfor',    'admin', sysdate(), '', null, '登录日志菜单');
@@ -340,6 +341,11 @@ insert into sys_menu values('1089', '连接记录查询', '125', '1', '', '', ''
 insert into sys_menu values('1090', '连接记录删除', '125', '2', '', '', '', '', 1, 0, 'F', '0', '0', 'business:host:connection:remove', '#', 'admin', sysdate(), '', null, '');
 insert into sys_menu values('1091', '在线主机查询', '125', '3', '', '', '', '', 1, 0, 'F', '0', '0', 'business:host:online:query', '#', 'admin', sysdate(), '', null, '');
 insert into sys_menu values('1092', '在线主机下线', '125', '4', '', '', '', '', 1, 0, 'F', '0', '0', 'business:host:online:offline', '#', 'admin', sysdate(), '', null, '');
+-- WebSocket调试按钮(parent_id=126)
+insert into sys_menu values('1093', '调试工具查看', '126', '1', '#', '', '', '', 1, 0, 'F', '0', '0', 'business:debug:query', '#', 'admin', sysdate(), '', null, '');
+insert into sys_menu values('1094', '发送消息', '126', '2', '#', '', '', '', 1, 0, 'F', '0', '0', 'business:debug:send', '#', 'admin', sysdate(), '', null, '');
+insert into sys_menu values('1095', '清空消息', '126', '3', '#', '', '', '', 1, 0, 'F', '0', '0', 'business:debug:clear', '#', 'admin', sysdate(), '', null, '');
+insert into sys_menu values('1096', '导出日志', '126', '4', '#', '', '', '', 1, 0, 'F', '0', '0', 'business:debug:export', '#', 'admin', sysdate(), '', null, '');
 
 
 -- ----------------------------
@@ -532,6 +538,12 @@ insert into sys_role_menu values ('2', '1089'); -- 连接记录查询
 insert into sys_role_menu values ('2', '1090'); -- 连接记录删除
 insert into sys_role_menu values ('2', '1091'); -- 在线主机查询
 insert into sys_role_menu values ('2', '1092'); -- 在线主机下线
+-- 按钮权限-WebSocket调试
+insert into sys_role_menu values ('2', '126');  -- WebSocket调试
+insert into sys_role_menu values ('2', '1093'); -- 调试工具查看
+insert into sys_role_menu values ('2', '1094'); -- 发送消息
+insert into sys_role_menu values ('2', '1095'); -- 清空消息
+insert into sys_role_menu values ('2', '1096'); -- 导出日志
 -- 只读权限角色（ID=3）拥有内容管理的全部权限，系统管理等模块只有查询权限
 -- 一级菜单
 insert into sys_role_menu values ('3', '1');    -- 内容管理

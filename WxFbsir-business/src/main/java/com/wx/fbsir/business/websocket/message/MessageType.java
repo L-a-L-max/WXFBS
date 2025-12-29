@@ -11,44 +11,28 @@ public enum MessageType {
     // 业务消息（Business Messages）
     // ==========================================================================
     
-    /**
-     * Playwright自动化测试（流式输出）
-     * 
-     * Controller: PlaywrightTestController
-     * 注册方式: stream() - 支持多次进度返回
-     * 
-     * 请求示例：
-     * {"type":"PLAYWRIGHT_TEST","engineId":"engine-001","payload":{"requestId":"xxx"}}
-     * 
-     * 响应消息：
-     * - TASK_PROGRESS: 进度通知（多次）
-     * - TASK_RESULT: 最终结果（一次）
-     */
-    PLAYWRIGHT_TEST("PLAYWRIGHT_TEST", "Playwright测试"),
-    
-    /**
-     * 健康检查
-     * 
-     * 请求消息：
-     * - HEALTH_CHECK: 健康检查请求
-     * 
-     * 响应消息：
-     * - HEALTH_CHECK_RESULT: 健康数据
-     */
+    /** 健康检查 | Controller: HealthCheckController | once() | 请求: {"type":"HEALTH_CHECK","engineId":"engine-001"} */
     HEALTH_CHECK("HEALTH_CHECK", "健康检查"),
     
-    /** 简单流式示例 | 新手学习参考 */
-    SIMPLE_STREAM_DEMO("SIMPLE_STREAM_DEMO", "简单流式示例"),
+    // ---------- 演示能力（Demo Capabilities） ----------
     
-    /** DeepSeek登录检测 | once() | 请求: {"type":"DEEPSEEK_CHECK_LOGIN","engineId":"engine-001"} */
-    DEEPSEEK_CHECK_LOGIN("DEEPSEEK_CHECK_LOGIN", "DeepSeek登录检测"),
+    /** 百度热搜抓取演示 | Controller: BaiduHotSearchDemoController | stream() | 流式输出完整示例 | 请求: {"type":"BAIDU_HOT_SEARCH_DEMO","engineId":"engine-001","payload":{"clickIndex":0,"needScreenshot":true}} */
+    BAIDU_HOT_SEARCH_DEMO("BAIDU_HOT_SEARCH_DEMO", "百度热搜抓取演示"),
     
-    /** DeepSeek扫码登录 | stream() | 请求: {"type":"DEEPSEEK_SCAN_LOGIN","engineId":"engine-001"} */
-    DEEPSEEK_SCAN_LOGIN("DEEPSEEK_SCAN_LOGIN", "DeepSeek扫码登录"),
+    /** 简单健康检查演示 | Controller: SimpleHealthCheckDemoController | once() | 单次输出完整示例 | 请求: {"type":"SIMPLE_HEALTH_CHECK_DEMO","engineId":"engine-001","payload":{"includeDetails":true}} */
+    SIMPLE_HEALTH_CHECK_DEMO("SIMPLE_HEALTH_CHECK_DEMO", "简单健康检查演示"),
     
-    /** DeepSeek AI咨询 | stream() | 请求: {"type":"DEEPSEEK_QUERY","engineId":"engine-001","payload":{"query":"你好"}} */
-    DEEPSEEK_AI_CONSULT("DEEPSEEK_AI_CONSULT", "DeepSeek AI咨询"),
+    // ---------- AI能力（AI Capabilities） ----------
     
+//    /** DeepSeek登录检测 | Controller: DeepSeekController | once() | 请求: {"type":"DEEPSEEK_CHECK_LOGIN","engineId":"engine-001"} */
+//    DEEPSEEK_CHECK_LOGIN("DEEPSEEK_CHECK_LOGIN", "DeepSeek登录检测"),
+//
+//    /** DeepSeek扫码登录 | Controller: DeepSeekController | stream() | 请求: {"type":"DEEPSEEK_SCAN_LOGIN","engineId":"engine-001"} */
+//    DEEPSEEK_SCAN_LOGIN("DEEPSEEK_SCAN_LOGIN", "DeepSeek扫码登录"),
+//
+//    /** DeepSeek AI咨询 | Controller: DeepSeekController | stream() | 请求: {"type":"DEEPSEEK_QUERY","engineId":"engine-001","payload":{"query":"你好"}} */
+//    DEEPSEEK_AI_CONSULT("DEEPSEEK_AI_CONSULT", "DeepSeek AI咨询"),
+//
     // ---------- 通用响应消息 ----------
     
     /** 任务日志 | Engine主动发送 | 执行状态文本消息 | 前端显示在 progressLogs 中 */
