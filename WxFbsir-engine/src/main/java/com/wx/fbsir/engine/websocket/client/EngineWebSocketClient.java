@@ -201,12 +201,16 @@ public class EngineWebSocketClient extends WebSocketClient {
             
             // 业务消息交给处理器
             if (messageHandler != null) {
+                String requestId = engineMessage.getPayloadValue("requestId");
+                log.debug("[Engine] 收到消息: {} - 用户: {}, 请求ID: {}", 
+                    engineMessage.getType(), engineMessage.getUserId(), requestId);
                 messageHandler.accept(engineMessage);
             }
             
         } catch (Exception e) {
             log.error("[WebSocket] 消息处理异常 - 错误类型: {}, 错误信息: {}", 
                 e.getClass().getSimpleName(), e.getMessage());
+            log.info("========================================");
         }
     }
 

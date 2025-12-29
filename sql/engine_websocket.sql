@@ -302,6 +302,11 @@ INSERT INTO sys_menu VALUES(
     NULL,                         -- update_time
     '主机连接记录与在线列表管理菜单' -- remark
 );
+-- ========================================
+-- 菜单：WebSocket调试工具（menu_id: 126，父菜单: 7-主机管理）
+-- ========================================
+INSERT INTO sys_menu VALUES('126', 'WebSocket调试', '7', '4', 'debug', 'business/debug/index', '', '', 1, 0, 'C', '0', '0', 'business:debug:view', 'bug', 'admin', sysdate(), '', NULL, 'WebSocket调试工具，用于开发测试');
+
 
 -- ========================================
 -- 按钮权限：主机ID白名单（menu_id: 1079-1083）
@@ -311,6 +316,7 @@ INSERT INTO sys_menu VALUES('1080', '白名单新增', '123', '2', '#', '', '', 
 INSERT INTO sys_menu VALUES('1081', '白名单修改', '123', '3', '#', '', '', '', 1, 0, 'F', '0', '0', 'business:host:whitelist:edit', '#', 'admin', sysdate(), '', NULL, '');
 INSERT INTO sys_menu VALUES('1082', '白名单删除', '123', '4', '#', '', '', '', 1, 0, 'F', '0', '0', 'business:host:whitelist:remove', '#', 'admin', sysdate(), '', NULL, '');
 INSERT INTO sys_menu VALUES('1083', '白名单导出', '123', '5', '#', '', '', '', 1, 0, 'F', '0', '0', 'business:host:whitelist:export', '#', 'admin', sysdate(), '', NULL, '');
+
 
 -- ========================================
 -- 按钮权限：IP黑名单（menu_id: 1084-1088）
@@ -328,6 +334,27 @@ INSERT INTO sys_menu VALUES('1089', '连接记录查询', '125', '1', '#', '', '
 INSERT INTO sys_menu VALUES('1090', '连接记录删除', '125', '2', '#', '', '', '', 1, 0, 'F', '0', '0', 'business:host:connection:remove', '#', 'admin', sysdate(), '', NULL, '');
 INSERT INTO sys_menu VALUES('1091', '在线主机查询', '125', '3', '#', '', '', '', 1, 0, 'F', '0', '0', 'business:host:online:query', '#', 'admin', sysdate(), '', NULL, '');
 INSERT INTO sys_menu VALUES('1092', '在线主机下线', '125', '4', '#', '', '', '', 1, 0, 'F', '0', '0', 'business:host:online:offline', '#', 'admin', sysdate(), '', NULL, '');
+
+-- ========================================
+-- 按钮权限：WebSocket调试工具（menu_id: 1093-1096）
+-- ========================================
+INSERT INTO sys_menu VALUES('1093', '调试工具查看', '126', '1', '#', '', '', '', 1, 0, 'F', '0', '0', 'business:debug:query', '#', 'admin', sysdate(), '', NULL, '');
+INSERT INTO sys_menu VALUES('1094', '发送消息', '126', '2', '#', '', '', '', 1, 0, 'F', '0', '0', 'business:debug:send', '#', 'admin', sysdate(), '', NULL, '');
+INSERT INTO sys_menu VALUES('1095', '清空消息', '126', '3', '#', '', '', '', 1, 0, 'F', '0', '0', 'business:debug:clear', '#', 'admin', sysdate(), '', NULL, '');
+INSERT INTO sys_menu VALUES('1096', '导出日志', '126', '4', '#', '', '', '', 1, 0, 'F', '0', '0', 'business:debug:export', '#', 'admin', sysdate(), '', NULL, '');
+
+-- ========================================
+-- 角色菜单关联：为开发者角色分配权限
+-- 说明：只有角色1（超级管理员）和角色2（管理员）有权限
+-- ========================================
+
+
+-- 角色2：管理员（拥有所有权限）
+INSERT INTO sys_role_menu VALUES ('2', '126');  -- WebSocket调试工具
+INSERT INTO sys_role_menu VALUES ('2', '1093'); -- 调试工具查看
+INSERT INTO sys_role_menu VALUES ('2', '1094'); -- 发送消息
+INSERT INTO sys_role_menu VALUES ('2', '1095'); -- 清空消息
+INSERT INTO sys_role_menu VALUES ('2', '1096'); -- 导出日志
 
 -- ========================================
 -- 角色菜单关联：为管理员角色分配权限（role_id: 1=超级管理员, 2=管理员）

@@ -1,27 +1,378 @@
 # 🎭 Playwright 框架完整指南
 
 > **目标读者**: 需要使用Playwright实现浏览器自动化任务的Engine端开发者  
-> **文档用途**: 详细讲解浏览器池管理、会话复用、资源监控等核心机制  
-> **更新日期**: 2025-12-28
+> **文档用途**: 从快速入门到深入精通，全面讲解Playwright框架
 
 ---
 
-## 📑 目录导航
+## 📖 如何使用本文档
 
-### ⭐⭐⭐ 必读章节（核心架构）
-1. [框架概述](#1-框架概述) - 理解整体架构和核心特性
-2. [核心组件详解](#2-核心组件详解) - 浏览器池和会话管理
-3. [使用指南](#3-使用指南) - 快速开始使用Playwright
+### 🚀 快速入门（10分钟）
 
-### ⭐⭐ 进阶章节（开发必读）
-4. [配置说明](#4-配置说明) - 配置参数详解
-5. [资源管理与监控](#5-资源管理与监控) - 防止内存泄漏
-6. [最佳实践](#6-最佳实践) - 开发规范和技巧
+**如果你是新手开发者，想快速使用Playwright**，请阅读：
+- [第0章：快速入门 - 10分钟学会Playwright](#0-快速入门---10分钟学会playwright) ⭐⭐⭐
 
-### ⭐ 参考章节（按需查阅）
-7. [代码文件结构](#7-代码文件结构) - 文件组织结构
-8. [业务示例](#8-业务示例) - 实际使用案例
-9. [常见问题](#9-常见问题) - 疑难解答
+### 🎓 框架精通（深入学习）
+
+**如果你需要深入理解架构或优化性能**，请按顺序阅读：
+1. [第1章：框架概述](#1-框架概述) - 理解整体架构
+2. [第2章：核心组件详解](#2-核心组件详解) - 浏览器池和会话管理
+3. [第5章：资源管理与监控](#5-资源管理与监控) - 防止内存泄漏
+4. [第6章：最佳实践](#6-最佳实践) - 开发规范和技巧
+
+### 📚 参考手册（按需查阅）
+
+遇到问题时查阅：
+- [第9章：常见问题](#9-常见问题) - 疑难解答
+- [6.4 登录信息保存与复用](#64-登录信息保存与复用) - 会话持久化
+- [附录A：截图上传完整示例](#附录a截图上传完整示例) - 截图功能
+
+---
+
+## 📑 完整目录
+
+### 第0章：快速入门 ⭐⭐⭐ 新手必读
+- [0.1 第一个Playwright任务](#01-第一个playwright任务)
+- [0.2 常用操作示例](#02-常用操作示例)
+- [0.3 会话管理要点](#03-会话管理要点)
+- [0.4 常见错误处理](#04-常见错误处理)
+
+### 第1-9章：框架精通
+1. [框架概述](#1-框架概述)
+2. [核心组件详解](#2-核心组件详解)
+3. [使用指南](#3-使用指南)
+4. [配置说明](#4-配置说明)
+5. [资源管理与监控](#5-资源管理与监控)
+6. [最佳实践](#6-最佳实践)
+7. [代码文件结构](#7-代码文件结构)
+8. [业务示例](#8-业务示例)
+9. [常见问题](#9-常见问题)
+
+### 附录：实用参考
+- [附录A：截图上传完整示例](#附录a截图上传完整示例)
+- [附录B：完整演示代码](#附录b完整演示代码)
+
+---
+
+## 0. 快速入门 - 10分钟学会Playwright
+
+### 0.1 第一个Playwright任务
+
+#### 最简单的示例（打开网页）
+
+```java
+package com.wx.fbsir.engine.controller.business;
+
+import com.microsoft.playwright.Page;
+import com.wx.fbsir.engine.capability.annotation.StreamCapability;
+import com.wx.fbsir.engine.capability.base.StreamTaskHelper;
+import com.wx.fbsir.engine.playwright.pool.BrowserPoolManager;
+import com.wx.fbsir.engine.playwright.session.BrowserSession;
+import com.wx.fbsir.engine.websocket.message.EngineMessage;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+
+/**
+ * 我的第一个Playwright任务
+ */
+@Controller
+public class MyFirstPlaywrightController extends StreamTaskHelper {
+    
+    @Autowired
+    private BrowserPoolManager browserPool;
+    
+    @StreamCapability(type = "MY_FIRST_BROWSER_TASK", description = "我的第一个浏览器任务")
+    public void handleTask(EngineMessage message) {
+        String userId = message.getUserId();
+        String requestId = message.getPayloadValue("requestId");
+        
+        StreamTask task = startStreamTask(userId, requestId);
+        BrowserSession session = null;
+        
+        try {
+            task.sendLog("正在启动浏览器...");
+            
+            // 🔥 关键：获取浏览器会话
+            session = browserPool.acquirePersistent(userId, "my_task", false);
+            Page page = session.getOrCreatePage();
+            
+            task.sendLog("正在打开网页...");
+            
+            // 打开网页
+            page.navigate("https://www.baidu.com");
+            
+            // 获取标题
+            String title = page.title();
+            task.sendLog("页面标题: " + title);
+            
+            // 返回结果
+            Map<String, Object> result = new HashMap<>();
+            result.put("title", title);
+            result.put("url", page.url());
+            
+            task.sendSuccess("任务完成", result);
+            
+        } catch (Exception e) {
+            task.sendError("任务失败: " + e.getMessage());
+        } finally {
+            task.stop();
+            
+            // 🔥 关键：必须释放会话
+            if (session != null) {
+                session.destroy();
+            }
+        }
+    }
+}
+```
+
+**测试命令**:
+```bash
+{"type": "MY_FIRST_BROWSER_TASK", "engineId": "engine-001", "payload": {}}
+```
+
+---
+
+### 0.2 常用操作示例
+
+#### 操作1：点击元素
+
+```java
+// 点击按钮
+page.click("#submit-button");
+
+// 等待元素出现后点击
+page.waitForSelector("#submit-button");
+page.click("#submit-button");
+
+// 点击文本内容
+page.click("text=登录");
+```
+
+#### 操作2：输入文本
+
+```java
+// 输入文本
+page.fill("#username", "myusername");
+page.fill("#password", "mypassword");
+
+// 清空后输入
+page.locator("#search").clear();
+page.locator("#search").fill("搜索内容");
+```
+
+#### 操作3：等待页面加载
+
+```java
+// 等待网络空闲
+page.waitForLoadState(LoadState.NETWORKIDLE);
+
+// 等待DOM加载完成
+page.waitForLoadState(LoadState.DOMCONTENTLOADED);
+
+// 等待特定元素出现
+page.waitForSelector("#content");
+
+// 等待指定时间
+page.waitForTimeout(2000); // 等待2秒
+```
+
+#### 操作4：获取元素内容
+
+```java
+// 获取文本内容
+String text = page.locator("#title").textContent();
+
+// 获取属性值
+String href = page.locator("a").getAttribute("href");
+
+// 获取所有匹配元素
+List<String> items = page.locator(".item").allTextContents();
+```
+
+#### 操作5：截图
+
+```java
+@Autowired
+private ScreenshotUtil screenshotUtil;
+
+@Autowired
+private ScreenshotUploadClient uploadClient;
+
+// 截图并上传
+Path screenshotPath = screenshotUtil.capture(page, "my_screenshot");
+byte[] imageBytes = Files.readAllBytes(screenshotPath);
+
+ScreenshotUploadClient.UploadResult result = uploadClient.uploadScreenshot(
+    userId, 
+    "screenshot", 
+    imageBytes
+);
+
+String screenshotUrl = result.getUrl();
+task.sendScreenshot(screenshotUrl);
+```
+
+---
+
+### 0.3 会话管理要点
+
+#### 持久化会话 vs 临时会话
+
+**持久化会话**（推荐，保存登录状态）:
+```java
+// 会话数据保存在磁盘，下次自动加载
+session = browserPool.acquirePersistent(userId, "session_name", false);
+
+// 数据保存位置：./data/playwright/session_name/{userId}/
+// 包含：Cookies、LocalStorage、SessionStorage等
+```
+
+**临时会话**（无痕模式）:
+```java
+// 会话数据不保存，关闭后清空
+session = browserPool.acquireTemporary("task_id");
+```
+
+#### 会话命名规范
+
+**按业务场景命名**:
+```java
+// 好的命名
+session = browserPool.acquirePersistent(userId, "baidu_search", false);
+session = browserPool.acquirePersistent(userId, "taobao_shopping", false);
+session = browserPool.acquirePersistent(userId, "wechat_article", false);
+
+// 不好的命名
+session = browserPool.acquirePersistent(userId, "session1", false);
+session = browserPool.acquirePersistent(userId, "temp", false);
+```
+
+#### 必须释放会话
+
+**✅ 正确做法**:
+```java
+BrowserSession session = null;
+try {
+    session = browserPool.acquirePersistent(userId, "task", false);
+    // 使用会话...
+} finally {
+    if (session != null) {
+        session.destroy(); // 🔥 必须调用
+    }
+}
+```
+
+**❌ 错误做法**:
+```java
+// 错误：忘记释放会话
+session = browserPool.acquirePersistent(userId, "task", false);
+// 使用会话...
+// 忘记调用 session.destroy()
+```
+
+---
+
+### 0.4 常见错误处理
+
+#### 错误1：元素未找到
+
+**问题**:
+```java
+page.click("#button"); // TimeoutError: Timeout 30000ms exceeded
+```
+
+**解决**:
+```java
+// 方案1：增加等待时间
+page.waitForSelector("#button", new Page.WaitForSelectorOptions().setTimeout(60000));
+page.click("#button");
+
+// 方案2：检查元素是否存在
+if (page.locator("#button").count() > 0) {
+    page.click("#button");
+} else {
+    log.warn("按钮不存在");
+}
+```
+
+#### 错误2：页面加载超时
+
+**问题**:
+```java
+page.navigate("https://example.com"); // TimeoutError
+```
+
+**解决**:
+```java
+// 增加超时时间
+page.navigate("https://example.com", 
+    new Page.NavigateOptions().setTimeout(60000));
+
+// 或者不等待加载完成
+page.navigate("https://example.com", 
+    new Page.NavigateOptions().setWaitUntil(WaitUntilState.DOMCONTENTLOADED));
+```
+
+#### 错误3：会话未释放导致文件锁
+
+**问题**:
+```
+用户数据目录已被使用
+```
+
+**解决**:
+```java
+// 确保在finally中释放
+try {
+    session = browserPool.acquirePersistent(userId, "task", false);
+    // ...
+} finally {
+    if (session != null) {
+        session.destroy(); // 释放文件锁
+    }
+}
+```
+
+#### 错误4：并发访问导致元素状态异常
+
+**问题**:
+```
+Element is not attached to the DOM
+```
+
+**解决**:
+```java
+// 重新获取元素
+for (int i = 0; i < 3; i++) {
+    try {
+        page.click("#button");
+        break;
+    } catch (PlaywrightException e) {
+        if (i == 2) throw e;
+        page.waitForTimeout(1000);
+    }
+}
+```
+
+---
+
+### 0.5 完整示例参考
+
+**位置**: `WxFbsir-engine/src/main/java/com/wx/fbsir/engine/controller/demo/`
+
+**文件**:
+- `BaiduHotSearchDemoController.java` - 完整的浏览器自动化示例
+  - 打开网页
+  - 抓取数据
+  - 点击链接
+  - 截图上传
+  - 会话管理
+
+**深入学习**:
+- [第6章：最佳实践](#6-最佳实践) - 开发规范
+- [附录A：截图上传完整示例](#附录a截图上传完整示例) - 截图功能
+- [6.4 登录信息保存与复用](#64-登录信息保存与复用) - 会话持久化
 
 ---
 
@@ -73,6 +424,7 @@
 | ✅ **实例隔离** | 支持单用户多浏览器实例（instanceId） |
 | ✅ **剪贴板隔离** | 每页面独立锁，防止并发冲突 |
 | ✅ **截图隔离** | 每页面独立锁，防止并发冲突 |
+| ✅ **截图上传** | 自动上传到Admin服务器，获取访问URL |
 | ✅ **资源监控** | 创建/销毁计数，泄漏检测告警 |
 | ✅ **僵尸进程清理** | 定时清理残留的 Chrome 进程 |
 | ✅ **动态配置** | 根据系统硬件自动计算最优参数 |
@@ -535,6 +887,369 @@ public class MultiInstanceService {
 }
 ```
 
+### 6.4 登录信息保存与复用 ⭐⭐⭐
+
+#### 6.4.1 持久化会话原理
+
+框架使用Playwright的 `userDataDir` 功能实现登录信息的持久化保存：
+
+**保存的数据**：
+- ✅ Cookies（会话Cookie和持久Cookie）
+- ✅ LocalStorage
+- ✅ SessionStorage
+- ✅ IndexedDB
+- ✅ Service Workers
+- ✅ Cache Storage
+
+**存储位置**：
+```
+./data/playwright/{sessionName}/{userId}/
+```
+
+例如：
+- 百度会话：`./data/playwright/baidu_demo/user-001/`
+- 淘宝会话：`./data/playwright/taobao/user-001/`
+- 微信会话：`./data/playwright/wechat/user-001/`
+
+#### 6.4.2 基本使用示例
+
+```java
+@Controller
+public class LoginDemoController extends StreamTaskHelper {
+    
+    @Autowired
+    private BrowserPoolManager browserPool;
+    
+    @StreamCapability(type = "LOGIN_DEMO", description = "登录演示")
+    public void handleLogin(EngineMessage message) {
+        String userId = message.getUserId();
+        StreamTask task = startStreamTask(userId, requestId);
+        
+        BrowserSession session = null;
+        try {
+            // 🔥 关键：使用持久化会话
+            // 第一次调用：创建新会话，需要手动登录
+            // 后续调用：自动加载登录状态，无需重新登录
+            session = browserPool.acquirePersistent(userId, "my_website", false);
+            Page page = session.getOrCreatePage();
+            
+            // 打开网站
+            page.navigate("https://example.com");
+            
+            // 检查是否已登录
+            if (isLoggedIn(page)) {
+                task.sendLog("已登录，直接使用");
+                // 执行业务逻辑...
+            } else {
+                task.sendLog("未登录，需要登录");
+                // 执行登录逻辑...
+                performLogin(page);
+                task.sendLog("登录成功");
+            }
+            
+            // 执行业务操作...
+            
+            task.sendSuccess("任务完成", resultData);
+            
+        } finally {
+            task.stop();
+            if (session != null) {
+                // 🔥 重要：销毁会话，释放文件锁
+                // 登录信息已自动保存到磁盘
+                session.destroy();
+            }
+        }
+    }
+    
+    private boolean isLoggedIn(Page page) {
+        // 检查登录状态的逻辑
+        // 例如：检查特定元素是否存在
+        return page.locator(".user-avatar").count() > 0;
+    }
+    
+    private void performLogin(Page page) {
+        // 执行登录操作
+        page.fill("#username", "myusername");
+        page.fill("#password", "mypassword");
+        page.click("#login-button");
+        page.waitForLoadState(LoadState.NETWORKIDLE);
+    }
+}
+```
+
+#### 6.4.3 完整示例：DeepSeek登录保存
+
+参考 `DeepSeekController.java` 的实现：
+
+```java
+@Controller
+public class DeepSeekController extends StreamTaskHelper {
+    
+    @Autowired
+    private BrowserPoolManager browserPool;
+    
+    @Autowired
+    private DeepSeekUtil deepSeekUtil;
+    
+    // 检查登录状态
+    @OnceCapability(type = "DEEPSEEK_CHECK_LOGIN", description = "检查DeepSeek登录状态")
+    public void handleCheckLogin(EngineMessage message) {
+        String userId = message.getUserId();
+        String requestId = message.getPayloadValue("requestId");
+        
+        BrowserSession session = null;
+        try {
+            // 获取持久化会话
+            session = browserPool.acquirePersistent(userId, "deepseek", false);
+            String loginStatus = deepSeekUtil.checkLoginStatus(session.getOrCreatePage(), true);
+            boolean isLoggedIn = !"false".equals(loginStatus);
+            
+            Map<String, Object> resultData = new HashMap<>();
+            resultData.put("isLoggedIn", isLoggedIn);
+            resultData.put("userName", isLoggedIn ? loginStatus : null);
+            
+            sendResult(userId, requestId, resultData);
+            
+        } finally {
+            if (session != null) {
+                // 完全销毁会话，释放文件锁
+                // 登录状态已保存在：./data/playwright/deepseek/{userId}/
+                session.destroy();
+            }
+        }
+    }
+    
+    // 扫码登录
+    @StreamCapability(type = "DEEPSEEK_SCAN_LOGIN", description = "DeepSeek扫码登录")
+    public void handleScanLogin(EngineMessage message) {
+        String userId = message.getUserId();
+        String requestId = message.getPayloadValue("requestId");
+        
+        StreamTask task = startStreamTask(userId, requestId);
+        BrowserSession session = null;
+        
+        try {
+            task.sendLog("正在打开DeepSeek登录页面...");
+            
+            // 获取持久化会话
+            session = browserPool.acquirePersistent(userId, "deepseek", false);
+            Page page = session.getOrCreatePage();
+            
+            // 导航到登录页
+            deepSeekUtil.navigateToLoginPage(page);
+            
+            // 截图二维码
+            String qrCodeUrl = captureAndUpload(page, userId, "deepseek_qrcode");
+            task.sendScreenshot(qrCodeUrl);
+            
+            // 等待登录成功
+            task.sendLog("等待扫码登录...");
+            boolean loginSuccess = waitForLogin(page, task);
+            
+            if (loginSuccess) {
+                task.sendLog("登录成功！");
+                // 🔥 登录信息已自动保存到：./data/playwright/deepseek/{userId}/
+                // 下次调用时会自动加载，无需重新登录
+                task.sendSuccess("登录成功", resultData);
+            } else {
+                task.sendError("登录超时");
+            }
+            
+        } finally {
+            task.stop();
+            if (session != null) {
+                // 销毁会话，释放文件锁
+                session.destroy();
+            }
+        }
+    }
+}
+```
+
+#### 6.4.4 文件锁问题处理
+
+**问题**：持久化会话使用 `userDataDir`，Chromium会对目录加锁，如果不正确释放会导致下次无法使用。
+
+**解决方案**：
+
+1. **必须调用 `session.destroy()`**
+```java
+try {
+    session = browserPool.acquirePersistent(userId, "session_name", false);
+    // 使用会话...
+} finally {
+    if (session != null) {
+        // 🔥 重要：完全销毁会话，释放文件锁
+        session.destroy();
+    }
+}
+```
+
+2. **`session.destroy()` 执行的操作**：
+   - 关闭所有Page页面
+   - 关闭BrowserContext上下文
+   - 关闭Browser浏览器实例
+   - **释放用户数据目录的文件锁**
+   - 从池中移除会话记录
+
+3. **登录数据已自动保存**：
+   - Playwright会在关闭前自动将Cookies等数据写入磁盘
+   - 下次调用 `acquirePersistent()` 时会自动加载
+   - 无需手动保存
+
+#### 6.4.5 会话隔离策略
+
+**按用户隔离**：
+```java
+// 用户A的百度会话
+session = browserPool.acquirePersistent("user-001", "baidu", false);
+// 数据保存在：./data/playwright/baidu/user-001/
+
+// 用户B的百度会话
+session = browserPool.acquirePersistent("user-002", "baidu", false);
+// 数据保存在：./data/playwright/baidu/user-002/
+```
+
+**按业务场景隔离**：
+```java
+// 同一用户的不同网站会话
+session1 = browserPool.acquirePersistent("user-001", "baidu", false);
+session2 = browserPool.acquirePersistent("user-001", "taobao", false);
+session3 = browserPool.acquirePersistent("user-001", "wechat", false);
+
+// 数据分别保存在：
+// ./data/playwright/baidu/user-001/
+// ./data/playwright/taobao/user-001/
+// ./data/playwright/wechat/user-001/
+```
+
+**按实例隔离**（高级用法）：
+```java
+// 同一用户同一网站的多个账号
+session1 = browserPool.acquirePersistent("user-001", "baidu", "account1", false);
+session2 = browserPool.acquirePersistent("user-001", "baidu", "account2", false);
+
+// 数据分别保存在：
+// ./data/playwright/baidu/user-001/account1/
+// ./data/playwright/baidu/user-001/account2/
+```
+
+#### 6.4.6 最佳实践
+
+**✅ 推荐做法**：
+
+1. **使用有意义的会话名称**
+```java
+// 好
+session = browserPool.acquirePersistent(userId, "taobao_shopping", false);
+session = browserPool.acquirePersistent(userId, "wechat_article", false);
+
+// 不好
+session = browserPool.acquirePersistent(userId, "session1", false);
+session = browserPool.acquirePersistent(userId, "temp", false);
+```
+
+2. **检查登录状态后再操作**
+```java
+session = browserPool.acquirePersistent(userId, "website", false);
+Page page = session.getOrCreatePage();
+
+if (!isLoggedIn(page)) {
+    // 需要登录
+    performLogin(page);
+}
+
+// 执行业务操作
+```
+
+3. **长时间操作定期touch**
+```java
+session = browserPool.acquirePersistent(userId, "website", false);
+try {
+    for (int i = 0; i < 100; i++) {
+        // 防止会话超时
+        session.touch();
+        
+        // 执行操作
+        doSomething();
+    }
+} finally {
+    session.destroy();
+}
+```
+
+**❌ 避免的做法**：
+
+1. **不要忘记调用 destroy()**
+```java
+// 错误：会导致文件锁泄漏
+session = browserPool.acquirePersistent(userId, "website", false);
+// 使用会话...
+// 忘记调用 session.destroy()
+```
+
+2. **不要在异常时不释放会话**
+```java
+// 错误：异常时会话未释放
+session = browserPool.acquirePersistent(userId, "website", false);
+doSomething();  // 可能抛异常
+session.destroy();  // 异常时不会执行
+
+// 正确：使用 finally
+try {
+    session = browserPool.acquirePersistent(userId, "website", false);
+    doSomething();
+} finally {
+    if (session != null) session.destroy();
+}
+```
+
+3. **不要混用临时会话和持久化会话**
+```java
+// 错误：登录信息会丢失
+session = browserPool.acquireTemporary("task-001");  // 临时会话
+performLogin(page);  // 登录
+session.destroy();  // 登录信息丢失
+
+// 正确：使用持久化会话
+session = browserPool.acquirePersistent(userId, "website", false);
+performLogin(page);  // 登录
+session.destroy();  // 登录信息已保存
+```
+
+#### 6.4.7 故障排查
+
+**问题1：提示"用户数据目录已被使用"**
+
+原因：上次会话未正确释放文件锁
+
+解决：
+```bash
+# 1. 停止所有相关进程
+ps aux | grep chromium | grep -v grep | awk '{print $2}' | xargs kill -9
+
+# 2. 删除锁文件
+rm -rf ./data/playwright/*/*/SingletonLock
+
+# 3. 重启应用
+```
+
+**问题2：登录信息丢失**
+
+原因：使用了临时会话或未正确保存
+
+解决：
+- 确保使用 `acquirePersistent()` 而不是 `acquireTemporary()`
+- 确保调用了 `session.destroy()` 让Playwright保存数据
+
+**问题3：多个用户登录信息混乱**
+
+原因：userId或sessionName使用不当
+
+解决：
+- 确保每个用户使用唯一的 userId
+- 确保不同业务场景使用不同的 sessionName
+
 ---
 
 ## 七、工具类使用
@@ -914,16 +1629,212 @@ taskkill /F /IM chrome.exe
 
 ---
 
-*文档版本: v1.0.0C*  
-*更新日期: 2025-12-28*
+## 附录A：截图上传完整示例
+
+### A.1 截图上传流程
+
+框架提供了完整的截图上传功能，可以将Playwright截图自动上传到Admin服务器并获取访问URL。
+
+### A.2 核心组件
+
+**ScreenshotUtil** - 截图工具类
+- 提供页面截图功能
+- 支持全页面截图和元素截图
+- 线程安全，每页面独立锁
+
+**ScreenshotUploadClient** - 截图上传客户端
+- 自动上传到Admin服务器
+- 返回可访问的URL
+- 支持HTTP multipart上传
+
+### A.3 使用示例
+
+#### 基础截图并上传
+
+```java
+@Controller
+public class MyController extends StreamTaskHelper {
+    
+    @Autowired
+    private ScreenshotUtil screenshotUtil;
+    
+    @Autowired
+    private ScreenshotUploadClient uploadClient;
+    
+    @StreamCapability(type = "MY_TASK", description = "我的任务")
+    public void handleTask(EngineMessage message) {
+        String userId = message.getUserId();
+        StreamTask task = startStreamTask(userId, requestId);
+        
+        try {
+            // 1. 截图到临时文件
+            Path screenshotPath = screenshotUtil.capture(page, "screenshot_name");
+            
+            // 2. 读取为字节数组
+            byte[] imageBytes = Files.readAllBytes(screenshotPath);
+            
+            // 3. 上传到Admin服务器
+            ScreenshotUploadClient.UploadResult result = uploadClient.uploadScreenshot(
+                userId,           // 用户ID
+                "my_screenshot",  // 文件名（可选）
+                imageBytes        // 图片字节数组
+            );
+            
+            // 4. 获取URL
+            String screenshotUrl = result.getUrl();
+            
+            // 5. 推送到前端
+            task.sendScreenshot(screenshotUrl);
+            
+        } finally {
+            task.stop();
+        }
+    }
+}
+```
+
+#### 完整示例（参考BaiduHotSearchDemoController）
+
+```java
+// 截图并上传
+if (needScreenshot) {
+    task.sendLog("正在截图...");
+    
+    // 截图到临时文件
+    Path screenshotPath = screenshotUtil.capture(
+        page, 
+        String.format("baidu_hot_%d_%s", clickIndex, requestId)
+    );
+    
+    task.sendLog("截图完成，正在上传...");
+    
+    // 读取截图文件为字节数组
+    byte[] imageBytes = java.nio.file.Files.readAllBytes(screenshotPath);
+    
+    // 上传到图片服务器
+    ScreenshotUploadClient.UploadResult uploadResult = uploadClient.uploadScreenshot(
+        userId, 
+        String.format("baidu_hot_%d", clickIndex), 
+        imageBytes
+    );
+    
+    String screenshotUrl = uploadResult.getUrl();
+    task.sendLog("图片上传成功: " + screenshotUrl);
+    
+    // 推送截图URL到前端
+    task.sendScreenshot(screenshotUrl);
+    
+    // 保存到业务数据
+    targetItem.put("screenshotUrl", screenshotUrl);
+}
+```
+
+### A.4 ScreenshotUtil API
+
+#### capture() - 截图到文件
+
+```java
+// 基础截图
+Path path = screenshotUtil.capture(page, "screenshot_name");
+
+// 全页面截图（包括滚动区域）
+Path path = screenshotUtil.capture(page, "screenshot_name", true);
+```
+
+#### captureAsBase64() - 截图返回Base64
+
+```java
+String base64 = screenshotUtil.captureAsBase64(page);
+```
+
+#### captureElementAsBase64() - 截取元素
+
+```java
+String base64 = screenshotUtil.captureElementAsBase64(page, "#qrcode");
+```
+
+### A.5 ScreenshotUploadClient API
+
+#### uploadScreenshot() - 上传截图
+
+```java
+ScreenshotUploadClient.UploadResult result = uploadClient.uploadScreenshot(
+    String userId,      // 用户ID
+    String fileName,    // 文件名（可选，不含扩展名）
+    byte[] imageBytes   // 图片字节数组
+);
+
+// 获取结果
+String url = result.getUrl();           // 图片URL
+String fileName = result.getFileName(); // 文件名
+boolean success = result.isSuccess();   // 是否成功
+String message = result.getMessage();   // 错误信息（失败时）
+```
+
+### A.6 注意事项
+
+1. **线程安全**: ScreenshotUtil 使用每页面独立锁，支持并发截图
+2. **超时时间**: 截图锁等待超时30秒
+3. **文件清理**: 临时截图文件在上传后可以删除
+4. **URL格式**: 返回的URL格式为 `http://localhost:8080/profile/engine/{userId}/{date}/filename.png`
+5. **错误处理**: 上传失败时 `result.isSuccess()` 返回 false，通过 `result.getMessage()` 获取错误信息
+
 ---
 
+## 附录B：完整演示代码
+
+框架提供了两个完整的演示Controller，展示了所有核心功能的使用方法：
+
+### B.1 BaiduHotSearchDemoController - 流式输出完整示例
+
+**位置**: `WxFbsir-engine/src/main/java/com/wx/fbsir/engine/controller/demo/BaiduHotSearchDemoController.java`
+
+**演示内容**:
+- ✅ Playwright自动化（打开百度、抓取热搜、点击链接）
+- ✅ 流式输出（多次TASK_LOG推送进度）
+- ✅ 截图上传（TASK_SCREENSHOT推送图片）
+- ✅ 数据提取（返回热搜榜单和点击结果）
+- ✅ 会话管理（持久化会话、资源清理）
+- ✅ 异常处理（完整的错误处理）
+
+**测试命令**:
+```bash
+{"type": "BAIDU_HOT_SEARCH_DEMO", "engineId": "engine-001", "payload": {"clickIndex": 0, "needScreenshot": true}}
+```
+
+### B.2 SimpleHealthCheckDemoController - 单次输出完整示例
+
+**位置**: `WxFbsir-engine/src/main/java/com/wx/fbsir/engine/controller/demo/SimpleHealthCheckDemoController.java`
+
+**演示内容**:
+- ✅ 单次返回（不继承StreamTaskHelper）
+- ✅ 参数提取（从payload中提取参数）
+- ✅ 数据封装（构建结构化返回数据）
+- ✅ 消息发送（使用EngineMessage.builder()）
+- ✅ 异常处理（完整的错误处理）
+
+**测试命令**:
+```bash
+{"type": "SIMPLE_HEALTH_CHECK_DEMO", "engineId": "engine-001", "payload": {"includeDetails": true}}
+```
+
+### B.3 演示能力使用指南
+
+**位置**: `WxFbsir-engine/src/main/java/com/wx/fbsir/engine/controller/demo/README.md`
+
+该文档包含：
+- 两个Controller的详细说明
+- 客户端调用示例
+- 返回数据格式
+- 单次返回 vs 流式返回对比
+- 开发新能力的步骤指南
+- 最佳实践建议
+
+---
 
 **维护者**: WxFbsir Team
 
 ## 📚 相关文档
 
 - [快速上手指南](./快速上手指南.md) - 新手入门必读
-- [WebSocket通信完整指南](./WebSocket通信完整指南.md) - WebSocket通信机制
-- [WebSocket测试指南](./WebSocket测试指南.md) - 测试方法和工具
 - [代码规范](./代码规范.md) - 代码编写规范

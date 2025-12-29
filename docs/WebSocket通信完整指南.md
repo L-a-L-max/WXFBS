@@ -1,28 +1,409 @@
 # 🔌 WebSocket 通信完整指南
 
-> **目标读者**: 需要深入理解Admin与Engine间WebSocket通信机制的后端开发者和架构师  
-> **文档用途**: 详细讲解消息协议、连接管理、心跳机制等核心架构设计  
-> **更新日期**: 2025-12-28
+> **目标读者**: 需要开发Engine能力或深入理解WebSocket通信机制的后端开发者  
+> **文档用途**: 从快速入门到深入精通，全面讲解WebSocket通信架构
 
 ---
 
-## 📑 目录导航
+## 📖 如何使用本文档
 
-### ⭐⭐⭐ 必读章节（核心架构）
-1. [架构概述](#1-架构概述) - 理解整体架构和核心特性
-2. [消息协议](#2-消息协议) - 消息格式和类型定义
-3. [通信流程详解](#3-通信流程详解) - 完整的消息交互流程
+### 🚀 快速入门（5分钟）
 
-### ⭐⭐ 进阶章节（开发必读）
-4. [Admin端实现](#4-admin端实现) - 主节点开发指南
-5. [Engine端实现](#5-engine端实现) - 副节点开发指南
-6. [配置说明](#6-配置说明) - 配置参数详解
+**如果你是新手开发者，想快速实现一个能力**，请阅读：
+- [第0章：快速入门 - 5分钟实现你的第一个能力](#0-快速入门---5分钟实现你的第一个能力) ⭐⭐⭐
 
-### ⭐ 参考章节（按需查阅）
-7. [代码文件结构](#7-代码文件结构) - 文件组织结构
-8. [业务示例](#8-业务示例) - 实际使用案例
-9. [故障排除](#9-故障排除) - 常见问题解决
-10. [API快速参考](#10-api快速参考) - 常用API列表
+### 🎓 框架精通（深入学习）
+
+**如果你需要深入理解架构或解决复杂问题**，请按顺序阅读：
+1. [第1章：架构概述](#1-架构概述) - 理解整体架构
+2. [第2章：消息协议](#2-消息协议) - 消息格式定义
+3. [第3章：通信流程详解](#3-通信流程详解) - 完整交互流程
+4. [第12章：流式输出 vs 单次输出](#12-流式输出-vs-单次输出完整指南) - 选择合适的实现方式
+
+### 📚 参考手册（按需查阅）
+
+遇到问题时查阅：
+- [第9章：故障排除](#9-故障排除) - 常见问题解决
+- [第10章：API快速参考](#10-api快速参考) - API速查表
+- [第11章：Payload处理指南](#11-payload处理指南) - 参数处理
+
+---
+
+## 📑 完整目录
+
+### 第0章：快速入门 ⭐⭐⭐ 新手必读
+- [0.1 开发第一个能力的完整步骤](#01-开发第一个能力的完整步骤)
+- [0.2 单次输出能力示例](#02-单次输出能力示例)
+- [0.3 流式输出能力示例](#03-流式输出能力示例)
+- [0.4 常见问题](#04-常见问题)
+
+### 第1-11章：框架精通
+1. [架构概述](#1-架构概述)
+2. [消息协议](#2-消息协议)
+3. [通信流程详解](#3-通信流程详解)
+4. [Admin端实现](#4-admin端实现)
+5. [Engine端实现](#5-engine端实现)
+6. [配置说明](#6-配置说明)
+7. [代码文件结构](#7-代码文件结构)
+8. [业务示例](#8-业务示例)
+9. [故障排除](#9-故障排除)
+10. [API快速参考](#10-api快速参考)
+11. [Payload处理指南](#11-payload处理指南)
+
+### 第12章：开发指南 ⭐⭐⭐ 开发必读
+- [12. 流式输出 vs 单次输出完整指南](#12-流式输出-vs-单次输出完整指南)
+
+---
+
+## 0. 快速入门 - 5分钟实现你的第一个能力
+
+### 0.1 开发第一个能力的完整步骤
+
+#### 步骤1：确定能力类型
+
+**单次输出**（推荐新手）：
+- 任务执行时间 < 5秒
+- 不需要推送中间进度
+- 示例：健康检查、数据查询、简单计算
+
+**流式输出**（适合复杂任务）：
+- 任务执行时间 > 5秒
+- 需要推送中间进度、日志、截图
+- 示例：网页抓取、AI对话、批量处理
+
+#### 步骤2：在Engine创建Controller
+
+**位置**: `WxFbsir-engine/src/main/java/com/wx/fbsir/engine/controller/`
+
+**目录结构**:
+```
+controller/
+├── demo/           # 演示示例（可参考）
+│   ├── BaiduHotSearchDemoController.java      # 流式输出示例
+│   ├── SimpleHealthCheckDemoController.java   # 单次输出示例
+│   └── README.md                              # 演示说明
+├── ai/             # AI相关能力
+│   └── DeepSeekController.java
+└── business/       # 业务能力
+    └── YourController.java                    # 你的新能力
+```
+
+#### 步骤3：编写Controller代码
+
+**单次输出示例**（完整可运行）：
+
+```java
+package com.wx.fbsir.engine.controller.business;
+
+import com.wx.fbsir.engine.capability.annotation.OnceCapability;
+import com.wx.fbsir.engine.websocket.message.EngineMessage;
+import com.wx.fbsir.engine.websocket.util.WebSocketSender;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+
+import java.util.HashMap;
+import java.util.Map;
+
+/**
+ * 我的第一个能力
+ */
+@Controller
+public class MyFirstController {
+    
+    private static final Logger log = LoggerFactory.getLogger(MyFirstController.class);
+    
+    @Autowired
+    private WebSocketSender webSocketSender;
+    
+    /**
+     * 处理请求（单次返回）
+     * 
+     * @param message 请求消息
+     */
+    @OnceCapability(
+        type = "MY_FIRST_CAPABILITY",
+        description = "我的第一个能力"
+    )
+    public void handleRequest(EngineMessage message) {
+        // 1. 提取参数
+        String userId = message.getUserId();
+        String requestId = message.getPayloadValue("requestId");
+        String name = message.getPayloadValue("name");
+        
+        log.info("[我的能力] 收到请求 - 用户: {}, 参数: {}", userId, name);
+        
+        try {
+            // 2. 执行业务逻辑
+            String result = "Hello, " + (name != null ? name : "World") + "!";
+            
+            // 3. 构建返回数据
+            Map<String, Object> resultData = new HashMap<>();
+            resultData.put("message", result);
+            resultData.put("timestamp", System.currentTimeMillis());
+            
+            // 4. 发送成功响应
+            EngineMessage response = EngineMessage.builder()
+                .type("TASK_RESULT")
+                .userId(userId)
+                .payload("requestId", requestId)
+                .payload("success", true)
+                .payload("data", resultData)
+                .build();
+            
+            webSocketSender.sendToAdmin(response);
+            
+            log.info("[我的能力] 处理完成 - 用户: {}", userId);
+            
+        } catch (Exception e) {
+            log.error("[我的能力] 处理失败 - 用户: {}, 错误: {}", userId, e.getMessage(), e);
+            
+            // 发送错误响应
+            EngineMessage errorResponse = EngineMessage.builder()
+                .type("TASK_RESULT")
+                .userId(userId)
+                .payload("requestId", requestId)
+                .payload("success", false)
+                .payload("error", e.getMessage())
+                .build();
+            
+            webSocketSender.sendToAdmin(errorResponse);
+        }
+    }
+}
+```
+
+#### 步骤4：测试你的能力
+
+**使用websocat测试**:
+```bash
+# 1. 连接到Admin
+websocat ws://localhost:8080/ws/client
+
+# 2. 发送测试消息（单行JSON）
+{"type": "MY_FIRST_CAPABILITY", "engineId": "engine-001", "payload": {"name": "张三"}}
+
+# 3. 查看返回结果
+{
+  "type": "TASK_RESULT",
+  "userId": "1",
+  "payload": {
+    "requestId": "xxx",
+    "success": true,
+    "data": {
+      "message": "Hello, 张三!",
+      "timestamp": 1735459200000
+    }
+  }
+}
+```
+
+#### 步骤5：注意事项
+
+**✅ 必须做的**:
+1. Controller类必须添加 `@Controller` 注解
+2. 方法必须添加 `@OnceCapability` 或 `@StreamCapability` 注解
+3. 方法必须是 `public void`
+4. 方法参数必须是 `EngineMessage message`
+5. 必须发送响应消息（成功或失败）
+6. 为业务封装的工具类放在 `utils`下
+
+**❌ 不要做的**:
+1. 不要修改Admin端代码（只在Engine端开发）
+2. 不要忘记添加异常处理
+3. 不要忘记添加日志
+4. 不要在WxFbsir-engine中直接操作数据库（数据传回admin进行存储）
+
+**📁 文件放置位置**:
+- Controller: `WxFbsir-engine/src/main/java/com/wx/fbsir/engine/controller/business/`
+- Service: `WxFbsir-engine/src/main/java/com/wx/fbsir/engine/service/`
+- Utils: `WxFbsir-engine/src/main/java/com/wx/fbsir/engine/utils/`
+
+---
+
+### 0.2 单次输出能力示例
+
+完整示例请参考：`controller/demo/SimpleHealthCheckDemoController.java`
+
+**特点**:
+- ✅ 不继承任何基类
+- ✅ 使用 `@OnceCapability` 注解
+- ✅ 直接构建 `EngineMessage` 发送
+- ✅ 适合快速返回的任务
+
+**调用示例**:
+```bash
+{"type": "SIMPLE_HEALTH_CHECK_DEMO", "engineId": "engine-001", "payload": {"includeDetails": true}}
+```
+
+---
+
+### 0.3 流式输出能力示例
+
+完整示例请参考：`controller/demo/BaiduHotSearchDemoController.java`
+
+**特点**:
+- ✅ 继承 `StreamTaskHelper`
+- ✅ 使用 `@StreamCapability` 注解
+- ✅ 使用 `StreamTask` 推送进度
+- ✅ 适合长时间运行的任务
+
+**核心代码**:
+```java
+@Controller
+public class MyStreamController extends StreamTaskHelper {
+    
+    @StreamCapability(type = "MY_STREAM_TASK", description = "我的流式任务")
+    public void handleTask(EngineMessage message) {
+        String userId = message.getUserId();
+        String requestId = message.getPayloadValue("requestId");
+        
+        // 创建流式任务
+        StreamTask task = startStreamTask(userId, requestId);
+        
+        try {
+            // 推送进度
+            task.sendLog("开始处理...");
+            
+            // 执行业务逻辑
+            doSomething();
+            
+            task.sendLog("处理中...");
+            
+            // 推送截图（如果需要）
+            task.sendScreenshot("https://example.com/screenshot.png");
+            
+            // 发送最终结果
+            Map<String, Object> result = new HashMap<>();
+            result.put("status", "success");
+            task.sendSuccess("任务完成", result);
+            
+        } catch (Exception e) {
+            task.sendError("任务失败: " + e.getMessage());
+        } finally {
+            task.stop();
+        }
+    }
+}
+```
+
+**调用示例**:
+```bash
+{"type": "MY_STREAM_TASK", "engineId": "engine-001", "payload": {}}
+```
+
+---
+
+### 0.4 常见问题
+
+#### Q1: 如何调试参数传递？
+
+在方法开头添加调试代码：
+```java
+@OnceCapability(type = "MY_CAPABILITY", description = "我的能力")
+public void handleRequest(EngineMessage message) {
+    // 调试代码：查看完整消息和Payload
+    System.out.println("完整消息: " + message);
+    System.out.println("Payload内容: " + message.getPayload());
+    
+    // 正式代码...
+}
+```
+
+#### Q2: 如何封装业务工具类？
+
+**位置**: `WxFbsir-engine/src/main/java/com/wx/fbsir/engine/utils/`
+
+**示例**:
+```java
+package com.wx.fbsir.engine.utils;
+
+import org.springframework.stereotype.Component;
+
+@Component
+public class MyBusinessUtils {
+    
+    public String processData(String input) {
+        // 业务逻辑
+        return "processed: " + input;
+    }
+}
+```
+
+**使用**:
+```java
+@Controller
+public class MyController {
+    
+    @Autowired
+    private MyBusinessUtil myBusinessUtil;
+    
+    @OnceCapability(type = "MY_CAPABILITY", description = "我的能力")
+    public void handleRequest(EngineMessage message) {
+        String result = myBusinessUtil.processData("test");
+        // ...
+    }
+}
+```
+
+#### Q3: 如何使用Playwright自动化？
+
+参考 `BaiduHotSearchDemoController.java` 的完整示例：
+
+```java
+@Autowired
+private BrowserPoolManager browserPool;
+
+@StreamCapability(type = "MY_BROWSER_TASK", description = "浏览器任务")
+public void handleTask(EngineMessage message) {
+    String userId = message.getUserId();
+    BrowserSession session = null;
+    
+    try {
+        // 获取浏览器会话
+        session = browserPool.acquirePersistent(userId, "my_task", false);
+        Page page = session.getOrCreatePage();
+        
+        // 打开网页
+        page.navigate("https://example.com");
+        
+        // 执行操作
+        page.click("#button");
+        
+        // ...
+        
+    } finally {
+        if (session != null) {
+            session.destroy(); // 必须释放会话
+        }
+    }
+}
+```
+
+#### Q4: 能力类型（type）命名规范
+
+**推荐命名**:
+- 业务能力：`BUSINESS_XXX`（如 `BUSINESS_ORDER_QUERY`）
+- AI能力：`AI_XXX`（如 `AI_CHAT`）
+- 爬虫能力：`CRAWLER_XXX`（如 `CRAWLER_NEWS`）
+- 工具能力：`TOOL_XXX`（如 `TOOL_IMAGE_PROCESS`）
+
+**避免命名**:
+- ❌ 使用中文
+- ❌ 使用特殊字符
+- ❌ 过长的名称（建议 < 30字符）
+
+#### Q5: 如何查看完整示例？
+
+**演示代码位置**:
+- 单次输出：`controller/demo/SimpleHealthCheckDemoController.java`
+- 流式输出：`controller/demo/BaiduHotSearchDemoController.java`
+- 使用说明：`controller/demo/README.md`
+
+**深入学习**:
+- [第12章：流式输出 vs 单次输出完整指南](#12-流式输出-vs-单次输出完整指南)
+- [Playwright框架完整指南](./Playwright框架完整指南.md)
 
 ---
 
@@ -236,7 +617,7 @@ WxFbsir-engine/src/main/java/com/wx/fbsir/engine/websocket/
 ### 3.2 主节点 (WxFbsir-admin)
 
 ```
-WxFbsir-admin/.../websocket/
+WxFbsir-business/.../websocket/
 │
 ├── server/
 │   ├── EngineWebSocketHandler.java    # WebSocket 处理器
@@ -1486,5 +1867,730 @@ wxfbsir:
 
 ---
 
-*文档版本: v1.0.0B*  
-*更新日期: 2025-12-28*
+## 11. Payload处理指南
+
+### 11.1 消息体结构
+
+所有业务消息使用统一的 `EngineMessage` 格式，其中 `payload` 字段用于承载业务数据：
+
+```json
+{
+  "type": "YOUR_MESSAGE_TYPE",
+  "engineId": "engine-001",
+  "payload": {
+    "requestId": "自动生成",
+    "userId": "自动添加",
+    "sourceType": "自动添加",
+    "sourceClientId": "自动添加",
+    "你的业务字段1": "值1",
+    "你的业务字段2": {...},
+    "你的业务字段3": [...]
+  }
+}
+```
+
+### 11.2 Admin透明转发机制
+
+**核心原则**：Admin主节点**不处理、不解析、不修改** payload中的业务数据，完全透传给Engine。
+
+**Admin自动添加的字段**（仅这4个）：
+- `requestId`: 后端生成的唯一请求ID
+- `userId`: 从Token解析的用户ID
+- `sourceType`: 请求来源类型（WEBSOCKET/HTTP）
+- `sourceClientId`: 客户端ID
+
+**你可以在payload中放置**：
+- ✅ 任意复杂的嵌套对象（Map）
+- ✅ 任意数组/列表（List）
+- ✅ 基础类型（String, Number, Boolean）
+- ✅ 任意深度的嵌套结构
+
+### 11.3 Engine端提取Payload数据
+
+#### 示例1：提取基础类型
+
+```java
+@OnceCapability(type = "SIMPLE_TASK", description = "简单任务")
+public void handleSimpleTask(EngineMessage request) {
+    // 提取String
+    String taskName = request.getPayloadValue("taskName");
+    
+    // 提取Integer
+    Integer priority = request.getPayloadValue("priority");
+    
+    // 提取Boolean
+    Boolean enabled = request.getPayloadValue("enabled");
+    
+    log.info("任务: {}, 优先级: {}, 启用: {}", taskName, priority, enabled);
+}
+```
+
+**客户端发送**：
+```json
+{"type":"SIMPLE_TASK","engineId":"engine-001","payload":{"taskName":"测试任务","priority":1,"enabled":true}}
+```
+
+#### 示例2：提取嵌套对象
+
+```java
+@OnceCapability(type = "NESTED_TASK", description = "嵌套对象")
+public void handleNestedTask(EngineMessage request) {
+    // 提取嵌套Map
+    @SuppressWarnings("unchecked")
+    Map<String, Object> user = (Map<String, Object>) request.getPayloadValue("user");
+    
+    if (user != null) {
+        String userId = (String) user.get("id");
+        String userName = (String) user.get("name");
+        
+        // 提取更深层的嵌套
+        @SuppressWarnings("unchecked")
+        Map<String, Object> settings = (Map<String, Object>) user.get("settings");
+        if (settings != null) {
+            String theme = (String) settings.get("theme");
+            log.info("用户: {}, 主题: {}", userName, theme);
+        }
+    }
+}
+```
+
+**客户端发送**：
+```json
+{"type":"NESTED_TASK","engineId":"engine-001","payload":{"user":{"id":"user123","name":"张三","settings":{"theme":"dark","language":"zh-CN"}}}}
+```
+
+#### 示例3：提取数组/列表
+
+```java
+@OnceCapability(type = "BATCH_TASK", description = "批量任务")
+public void handleBatchTask(EngineMessage request) {
+    // 提取List
+    @SuppressWarnings("unchecked")
+    List<Map<String, Object>> items = (List<Map<String, Object>>) 
+        request.getPayloadValue("items");
+    
+    if (items != null) {
+        for (Map<String, Object> item : items) {
+            Integer id = (Integer) item.get("id");
+            String name = (String) item.get("name");
+            log.info("处理项目: {} - {}", id, name);
+        }
+    }
+}
+```
+
+**客户端发送**：
+```json
+{"type":"BATCH_TASK","engineId":"engine-001","payload":{"items":[{"id":1,"name":"Item 1"},{"id":2,"name":"Item 2"}]}}
+```
+
+#### 示例4：复杂混合结构
+
+```java
+@OnceCapability(type = "COMPLEX_TASK", description = "复杂结构")
+public void handleComplexTask(EngineMessage request) {
+    // 提取配置对象
+    @SuppressWarnings("unchecked")
+    Map<String, Object> config = (Map<String, Object>) 
+        request.getPayloadValue("config");
+    
+    // 提取过滤器列表
+    @SuppressWarnings("unchecked")
+    List<Map<String, Object>> filters = (List<Map<String, Object>>) 
+        request.getPayloadValue("filters");
+    
+    // 提取元数据中的标签数组
+    @SuppressWarnings("unchecked")
+    Map<String, Object> metadata = (Map<String, Object>) 
+        request.getPayloadValue("metadata");
+    if (metadata != null) {
+        @SuppressWarnings("unchecked")
+        List<String> tags = (List<String>) metadata.get("tags");
+        log.info("标签: {}", String.join(", ", tags));
+    }
+}
+```
+
+**客户端发送**：
+```json
+{"type":"COMPLEX_TASK","engineId":"engine-001","payload":{"config":{"timeout":30000,"retry":true},"filters":[{"field":"status","value":"active"}],"metadata":{"tags":["tag1","tag2"]}}}
+```
+
+### 11.4 完整的能力实现模板
+
+```java
+@Component
+@Controller
+public class MyCapability {
+
+    private static final Logger log = LoggerFactory.getLogger(MyCapability.class);
+    private final WebSocketSender webSocketSender;
+
+    public MyCapability(WebSocketSender webSocketSender) {
+        this.webSocketSender = webSocketSender;
+    }
+
+    @OnceCapability(type = "MY_TASK", description = "我的任务")
+    public void handleMyTask(EngineMessage request) {
+        try {
+            // 1. 提取payload数据
+            String param1 = request.getPayloadValue("param1");
+            
+            @SuppressWarnings("unchecked")
+            Map<String, Object> param2 = (Map<String, Object>) 
+                request.getPayloadValue("param2");
+            
+            // 2. 处理业务逻辑
+            Object result = processBusinessLogic(param1, param2);
+            
+            // 3. 构建响应
+            EngineMessage response = EngineMessage.builder()
+                .type("MY_TASK_RESULT")
+                .userId(request.getUserId())
+                .engineId(request.getEngineId())
+                .payload("success", true)
+                .payload("result", result)
+                .build();
+            
+            // 4. 发送响应
+            webSocketSender.send(response);
+            
+        } catch (Exception e) {
+            log.error("[MyCapability] 处理失败", e);
+            sendError(request, "处理失败: " + e.getMessage());
+        }
+    }
+    
+    private void sendError(EngineMessage request, String errorMessage) {
+        EngineMessage response = EngineMessage.builder()
+            .type(request.getType() + "_RESULT")
+            .userId(request.getUserId())
+            .engineId(request.getEngineId())
+            .payload("success", false)
+            .payload("error", errorMessage)
+            .build();
+        
+        webSocketSender.send(response);
+    }
+    
+    private Object processBusinessLogic(String param1, Map<String, Object> param2) {
+        // 你的业务逻辑
+        return "result";
+    }
+}
+```
+
+### 11.5 WebSocket测试命令
+
+使用 `websocat` 工具测试（一行JSON格式）：
+
+```bash
+# 简单测试
+echo '{"type":"YOUR_TYPE","engineId":"engine-001","payload":{"param1":"value1"}}' | websocat "ws://localhost:8080/ws/client?clientType=web&token=${TOKEN}"
+
+# 复杂嵌套测试
+echo '{"type":"YOUR_TYPE","engineId":"engine-001","payload":{"user":{"id":"123","name":"张三"},"items":[{"id":1}]}}' | websocat "ws://localhost:8080/ws/client?clientType=web&token=${TOKEN}"
+```
+
+### 11.6 最佳实践
+
+#### ✅ 推荐做法
+
+1. **使用类型安全的提取**
+```java
+@SuppressWarnings("unchecked")
+Map<String, Object> data = (Map<String, Object>) request.getPayloadValue("data");
+```
+
+2. **空值检查**
+```java
+if (data != null && !data.isEmpty()) {
+    // 处理数据
+}
+```
+
+3. **异常处理**
+```java
+try {
+    // 业务逻辑
+} catch (Exception e) {
+    log.error("处理失败", e);
+    sendError(request, e.getMessage());
+}
+```
+
+4. **日志记录关键信息**
+```java
+String requestId = request.getPayloadValue("requestId");
+log.info("[{}] 开始处理", requestId);
+```
+
+#### ❌ 避免的做法
+
+1. **不要在Admin修改payload**
+   - Admin只负责转发，不要添加业务字段
+
+2. **不要硬编码字段名**
+```java
+// 不好
+String value = (String) payload.get("field1");
+
+// 好
+String value = request.getPayloadValue("field1");
+```
+
+3. **不要忽略类型转换异常**
+```java
+// 不好
+Integer value = (Integer) request.getPayloadValue("count");
+
+// 好
+try {
+    Integer value = (Integer) request.getPayloadValue("count");
+} catch (ClassCastException e) {
+    log.error("类型转换失败", e);
+}
+```
+
+### 11.7 完整示例代码
+
+参考文件：`WxFbsir-engine/src/main/java/com/wx/fbsir/engine/controller/PayloadExampleController.java`
+
+该文件包含了所有常见payload处理场景的完整示例代码。
+
+### 11.8 代码组织结构
+
+Engine端代码组织遵循以下原则：
+
+**`capability/` 包** - 能力框架核心
+- `capability/annotation/` - 能力注解定义（`@OnceCapability`, `@StreamCapability`）
+- `capability/base/` - 基础工具类（`StreamTaskHelper` - 流式任务辅助工具）
+- `CapabilityRegistry.java` - 能力注册器
+- `EngineCapabilityManager.java` - 能力管理器
+
+**`controller/` 包** - 业务能力实现
+- `controller/demo/` - 演示能力（完整示例）
+  - `BaiduHotSearchDemoController.java` - 百度热搜抓取演示（流式输出完整示例）
+  - `SimpleHealthCheckDemoController.java` - 简单健康检查演示（单次输出完整示例）
+  - `README.md` - 演示能力使用指南
+- `PayloadExampleController.java` - Payload处理示例
+- `HealthCheckController.java` - 健康检查能力（单次返回）
+
+**设计原则**：
+- ✅ `capability/` 存放框架代码（注解、工具类、管理器）
+- ✅ `controller/` 存放业务能力实现（所有业务Controller）
+- ✅ 所有业务能力类使用 `@Controller` + `@OnceCapability` 或 `@StreamCapability` 注解
+- ✅ 流式任务可选择继承 `StreamTaskHelper` 获得流式能力（非必须）
+- ✅ 简单任务（如 `HealthCheckController`）直接注入 `WebSocketClientManager` 即可
+
+---
+
+## 12. 流式输出 vs 单次输出完整指南
+
+### 12.1 概念对比
+
+| 特性 | 单次输出 | 流式输出 |
+|------|---------|---------|
+| **基类** | 不继承 | 继承 `StreamTaskHelper` |
+| **注解** | `@OnceCapability` | `@StreamCapability` |
+| **注入** | `WebSocketClientManager` | 自动注入（继承获得） |
+| **消息数量** | 1次 TASK_RESULT | 多次 TASK_LOG/TASK_SCREENSHOT + 1次 TASK_RESULT |
+| **适用场景** | 快速返回（<5秒） | 长时间运行（>5秒） |
+| **进度推送** | ❌ 不支持 | ✅ 支持 |
+| **截图推送** | ❌ 不支持 | ✅ 支持 |
+| **心跳机制** | ❌ 不支持 | ✅ 可选支持 |
+| **资源管理** | 简单 | 需要在 finally 中调用 `task.stop()` |
+
+### 12.2 消息类型说明
+
+#### 12.2.1 TASK_LOG - 任务日志
+
+**用途**: 推送任务执行进度的文本日志
+
+**发送时机**: 任务执行中（多次）
+
+**前端显示**: 显示在 progressLogs 数组中
+
+**消息格式**:
+```json
+{
+  "type": "TASK_LOG",
+  "userId": "1",
+  "payload": {
+    "requestId": "xxx",
+    "message": "正在打开百度首页...",
+    "timestamp": 1766989918872
+  }
+}
+```
+
+**使用示例**:
+```java
+task.sendLog("正在启动浏览器...");
+task.sendLog("浏览器启动成功");
+task.sendLog("正在打开百度首页...");
+```
+
+#### 12.2.2 TASK_SCREENSHOT - 任务截图
+
+**用途**: 推送截图URL
+
+**发送时机**: 任务执行中（多次）
+
+**前端显示**: 显示在 screenshots 轮播区
+
+**消息格式**:
+```json
+{
+  "type": "TASK_SCREENSHOT",
+  "userId": "1",
+  "payload": {
+    "requestId": "xxx",
+    "screenshotUrl": "http://localhost:8080/profile/engine/1/2025/12/29/screenshot.png",
+    "timestamp": 1766989926651
+  }
+}
+```
+
+**使用示例**:
+```java
+// 截图并上传
+Path screenshotPath = screenshotUtil.capture(page, "screenshot_name");
+byte[] imageBytes = Files.readAllBytes(screenshotPath);
+ScreenshotUploadClient.UploadResult result = uploadClient.uploadScreenshot(userId, "file_name", imageBytes);
+
+// 推送截图URL
+task.sendScreenshot(result.getUrl());
+```
+
+#### 12.2.3 TASK_PROGRESS - 任务进度（已废弃）
+
+**状态**: ⚠️ 已废弃，请使用 TASK_LOG
+
+**原因**: TASK_LOG 更灵活，可以携带任意文本信息
+
+#### 12.2.4 TASK_RESULT - 任务结果
+
+**用途**: 推送最终结果（成功或失败）
+
+**发送时机**: 任务结束时（1次）
+
+**前端显示**: 根据 success 字段显示成功或失败
+
+**成功消息格式**:
+```json
+{
+  "type": "TASK_RESULT",
+  "userId": "1",
+  "payload": {
+    "requestId": "xxx",
+    "success": true,
+    "message": "任务完成",
+    "data": {
+      // 业务数据
+    },
+    "timestamp": 1766989926652
+  }
+}
+```
+
+**失败消息格式**:
+```json
+{
+  "type": "TASK_RESULT",
+  "userId": "1",
+  "payload": {
+    "requestId": "xxx",
+    "success": false,
+    "errorCode": "TASK_ERROR",
+    "errorMessage": "任务失败: xxx",
+    "timestamp": 1766989926652
+  }
+}
+```
+
+### 12.3 单次输出完整示例
+
+**适用场景**: 数据查询、状态检查、参数验证等快速返回的任务
+
+**示例**: SimpleHealthCheckDemoController
+
+```java
+@Controller
+public class SimpleHealthCheckDemoController {
+    
+    @Autowired
+    @Lazy
+    private WebSocketClientManager webSocketClientManager;
+    
+    @OnceCapability(
+        type = "SIMPLE_HEALTH_CHECK_DEMO",
+        description = "简单健康检查演示",
+        timeout = 30000L
+    )
+    public void handleHealthCheck(EngineMessage message) {
+        String userId = message.getUserId();
+        String requestId = message.getPayloadValue("requestId");
+        
+        // 提取业务参数（带默认值）
+        Boolean includeDetails = message.getPayloadValue("includeDetails");
+        if (includeDetails == null) includeDetails = false;
+        
+        try {
+            // 执行业务逻辑
+            Map<String, Object> resultData = new HashMap<>();
+            resultData.put("status", "healthy");
+            resultData.put("hardware", getHardwareInfo());
+            
+            // 发送成功结果
+            sendSuccessResult(userId, requestId, resultData);
+            
+        } catch (Exception e) {
+            // 发送错误结果
+            sendErrorResult(userId, requestId, "系统异常: " + e.getMessage());
+        }
+    }
+    
+    private void sendSuccessResult(String userId, String requestId, Map<String, Object> data) {
+        EngineMessage result = EngineMessage.builder()
+            .type("TASK_RESULT")
+            .userId(userId)
+            .payload("requestId", requestId)
+            .payload("success", true)
+            .payload("data", data)
+            .payload("timestamp", System.currentTimeMillis())
+            .build();
+        
+        webSocketClientManager.sendMessage(result);
+    }
+    
+    private void sendErrorResult(String userId, String requestId, String errorMessage) {
+        EngineMessage result = EngineMessage.builder()
+            .type("TASK_RESULT")
+            .userId(userId)
+            .payload("requestId", requestId)
+            .payload("success", false)
+            .payload("errorCode", "TASK_ERROR")
+            .payload("errorMessage", errorMessage)
+            .payload("timestamp", System.currentTimeMillis())
+            .build();
+        
+        webSocketClientManager.sendMessage(result);
+    }
+}
+```
+
+**客户端调用**:
+```json
+{"type": "SIMPLE_HEALTH_CHECK_DEMO", "engineId": "engine-001", "payload": {"includeDetails": true}}
+```
+
+**返回消息**:
+```json
+{
+  "type": "TASK_RESULT",
+  "payload": {
+    "requestId": null,
+    "success": true,
+    "data": {
+      "status": "healthy",
+      "hardware": {...},
+      "performance": {...}
+    }
+  }
+}
+```
+
+### 12.4 流式输出完整示例
+
+**适用场景**: 爬虫任务、AI对话、文件处理、浏览器自动化等长时间运行的任务
+
+**示例**: BaiduHotSearchDemoController
+
+```java
+@Controller
+public class BaiduHotSearchDemoController extends StreamTaskHelper {
+    
+    @Autowired
+    private BrowserPoolManager browserPool;
+    
+    @Autowired
+    private ScreenshotUtil screenshotUtil;
+    
+    @Autowired
+    private ScreenshotUploadClient uploadClient;
+    
+    @StreamCapability(
+        type = "BAIDU_HOT_SEARCH_DEMO",
+        description = "百度热搜抓取演示",
+        progressInterval = 3000  // 每3秒自动推送心跳（可选）
+    )
+    public void handleBaiduHotSearch(EngineMessage message) {
+        String userId = message.getUserId();
+        String requestId = message.getPayloadValue("requestId");
+        
+        // 提取业务参数
+        Integer clickIndex = message.getPayloadValue("clickIndex");
+        if (clickIndex == null) clickIndex = 0;
+        
+        Boolean needScreenshot = message.getPayloadValue("needScreenshot");
+        if (needScreenshot == null) needScreenshot = true;
+        
+        // 创建流式任务
+        StreamTask task = startStreamTask(userId, requestId);
+        
+        BrowserSession session = null;
+        
+        try {
+            // 推送进度日志
+            task.sendLog("正在启动浏览器...");
+            
+            // 获取浏览器会话
+            session = browserPool.acquirePersistent(userId, "baidu_demo", false);
+            Page page = session.getOrCreatePage();
+            
+            task.sendLog("浏览器启动成功");
+            task.sendLog("正在打开百度首页...");
+            
+            // 打开百度首页
+            page.navigate("https://www.baidu.com");
+            page.waitForLoadState(LoadState.NETWORKIDLE);
+            
+            task.sendLog("百度首页加载完成");
+            task.sendLog("正在抓取热搜榜数据...");
+            
+            // 抓取热搜数据
+            List<Map<String, Object>> hotSearchList = extractHotSearch(page);
+            
+            task.sendLog(String.format("成功抓取 %d 条热搜数据", hotSearchList.size()));
+            
+            // 点击指定热搜
+            if (clickIndex >= 0 && clickIndex < hotSearchList.size()) {
+                Map<String, Object> targetItem = hotSearchList.get(clickIndex);
+                String targetTitle = (String) targetItem.get("title");
+                
+                task.sendLog(String.format("正在点击第 %d 条热搜: %s", clickIndex + 1, targetTitle));
+                
+                // 点击并等待加载
+                clickHotSearch(page, clickIndex);
+                
+                task.sendLog("页面加载完成");
+                
+                // 截图并上传
+                if (needScreenshot) {
+                    task.sendLog("正在截图...");
+                    
+                    Path screenshotPath = screenshotUtil.capture(page, "baidu_hot_" + clickIndex);
+                    
+                    task.sendLog("截图完成，正在上传...");
+                    
+                    byte[] imageBytes = Files.readAllBytes(screenshotPath);
+                    ScreenshotUploadClient.UploadResult uploadResult = uploadClient.uploadScreenshot(
+                        userId, 
+                        "baidu_hot_" + clickIndex, 
+                        imageBytes
+                    );
+                    
+                    String screenshotUrl = uploadResult.getUrl();
+                    task.sendLog("图片上传成功: " + screenshotUrl);
+                    
+                    // 推送截图
+                    task.sendScreenshot(screenshotUrl);
+                    
+                    targetItem.put("screenshotUrl", screenshotUrl);
+                }
+            }
+            
+            // 构建返回数据
+            Map<String, Object> resultData = new HashMap<>();
+            resultData.put("hotSearchList", hotSearchList);
+            resultData.put("totalCount", hotSearchList.size());
+            resultData.put("timestamp", System.currentTimeMillis());
+            
+            // 发送最终结果
+            task.sendSuccess("热搜抓取完成", resultData);
+            
+        } catch (Exception e) {
+            log.error("[百度热搜演示] 任务失败", e);
+            task.sendError("任务执行失败: " + e.getMessage());
+            
+        } finally {
+            // 停止StreamTask
+            task.stop();
+            
+            // 释放浏览器会话
+            if (session != null) {
+                session.destroy();
+            }
+        }
+    }
+}
+```
+
+**客户端调用**:
+```json
+{"type": "BAIDU_HOT_SEARCH_DEMO", "engineId": "engine-001", "payload": {"clickIndex": 0, "needScreenshot": true}}
+```
+
+**返回消息流程**:
+
+1. **TASK_LOG** (多次):
+```json
+{"type": "TASK_LOG", "payload": {"message": "正在启动浏览器..."}}
+{"type": "TASK_LOG", "payload": {"message": "浏览器启动成功"}}
+{"type": "TASK_LOG", "payload": {"message": "正在打开百度首页..."}}
+{"type": "TASK_LOG", "payload": {"message": "百度首页加载完成"}}
+{"type": "TASK_LOG", "payload": {"message": "成功抓取 10 条热搜数据"}}
+{"type": "TASK_LOG", "payload": {"message": "正在截图..."}}
+{"type": "TASK_LOG", "payload": {"message": "图片上传成功: http://..."}}
+```
+
+2. **TASK_SCREENSHOT** (可选):
+```json
+{
+  "type": "TASK_SCREENSHOT",
+  "payload": {
+    "screenshotUrl": "http://localhost:8080/profile/engine/1/2025/12/29/screenshot.png"
+  }
+}
+```
+
+3. **TASK_RESULT** (1次):
+```json
+{
+  "type": "TASK_RESULT",
+  "payload": {
+    "success": true,
+    "message": "热搜抓取完成",
+    "data": {
+      "hotSearchList": [...],
+      "totalCount": 10
+    }
+  }
+}
+```
+
+### 12.5 如何选择实现方式
+
+#### 使用单次输出当：
+
+- ✅ 任务执行时间 < 5秒
+- ✅ 不需要向前端推送进度
+- ✅ 只需要返回最终结果
+- ✅ 例如：数据查询、状态检查、参数验证
+
+#### 使用流式输出当：
+
+- ✅ 任务执行时间 > 5秒
+- ✅ 需要向前端推送进度日志
+- ✅ 需要推送截图或其他中间结果
+- ✅ 例如：爬虫任务、AI对话、文件处理、浏览器自动化
+
+### 12.6 完整演示代码
+
+详细的演示代码和使用指南请参考：
+
+- `WxFbsir-engine/src/main/java/com/wx/fbsir/engine/controller/demo/BaiduHotSearchDemoController.java` - 流式输出完整示例
+- `WxFbsir-engine/src/main/java/com/wx/fbsir/engine/controller/demo/SimpleHealthCheckDemoController.java` - 单次输出完整示例
+- `WxFbsir-engine/src/main/java/com/wx/fbsir/engine/controller/demo/README.md` - 演示能力使用指南
+
