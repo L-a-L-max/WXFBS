@@ -183,3 +183,15 @@ aes:
     # 此密钥用于加密敏感数据（如公众号AppID、AppSecret等）
     # 密钥复杂度：包含大小写字母、数字、特殊符号，长度64位
     key: ${WXFBSIR_AES_SECRET_KEY:WxFbsir2025SecretKey@#$%^&*()}
+
+# Gitee OAuth配置
+gitee:
+  oauth:
+    # OAuth Client ID（生产环境建议使用环境变量：GITEE_OAUTH_CLIENT_ID）
+    client-id: ${GITEE_OAUTH_CLIENT_ID:3a23e90ade84f73066584d7ac5f929ff191972261cac08c8d60d8e40558d8d01}
+    # OAuth Client Secret（生产环境建议使用环境变量：GITEE_OAUTH_CLIENT_SECRET）
+    client-secret: ${GITEE_OAUTH_CLIENT_SECRET:a6d0b0bd0bcc91f110a0e883c08c6a1d2b10ce961d596fd9a8085e0342867508}
+    # OAuth回调地址（与Gitee应用配置保持一致）
+    callback-url: ${GITEE_OAUTH_CALLBACK_URL:http://localhost:8080/auth}
+    # 前端地址（OAuth完成后跳转）
+    frontend-url: ${GITEE_OAUTH_FRONTEND_URL:http://localhost}
