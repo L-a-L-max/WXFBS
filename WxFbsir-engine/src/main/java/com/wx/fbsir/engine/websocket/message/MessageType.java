@@ -17,14 +17,19 @@ public enum MessageType {
     // 说明：由Engine处理的业务功能，需在CapabilityRegistry注册
     // ==========================================================================
     
-    /** Playwright测试 | Controller: PlaywrightTestController | stream() | 请求: {"type":"PLAYWRIGHT_TEST","engineId":"engine-001"} */
-    PLAYWRIGHT_TEST("PLAYWRIGHT_TEST", "Playwright测试"),
-    
     /** 健康检查 | Controller: HealthCheckController | once() | 请求: {"type":"HEALTH_CHECK","engineId":"engine-001"} */
     HEALTH_CHECK("HEALTH_CHECK", "健康检查"),
     
-    /** 简单流式示例 | Controller: SimpleStreamController | stream() | 新手学习参考 */
-    SIMPLE_STREAM_DEMO("SIMPLE_STREAM_DEMO", "简单流式示例"),
+    // ---------- 演示能力（Demo Capabilities） ----------
+    
+    /** 百度热搜抓取演示 | Controller: BaiduHotSearchDemoController | stream() | 流式输出完整示例 | 请求: {"type":"BAIDU_HOT_SEARCH_DEMO","engineId":"engine-001","payload":{"clickIndex":0,"needScreenshot":true}} */
+    BAIDU_HOT_SEARCH_DEMO("BAIDU_HOT_SEARCH_DEMO", "百度热搜抓取演示"),
+    
+    /** 简单健康检查演示 | Controller: SimpleHealthCheckDemoController | once() | 单次输出完整示例 | 请求: {"type":"SIMPLE_HEALTH_CHECK_DEMO","engineId":"engine-001","payload":{"includeDetails":true}} */
+    SIMPLE_HEALTH_CHECK_DEMO("SIMPLE_HEALTH_CHECK_DEMO", "简单健康检查演示"),
+    
+    // ---------- AI能力（AI Capabilities） ----------
+    
     
 //    /** DeepSeek登录检测 | Controller: DeepSeekController | once() | 请求: {"type":"DEEPSEEK_CHECK_LOGIN","engineId":"engine-001"} */
 //    DEEPSEEK_CHECK_LOGIN("DEEPSEEK_CHECK_LOGIN", "DeepSeek登录检测"),

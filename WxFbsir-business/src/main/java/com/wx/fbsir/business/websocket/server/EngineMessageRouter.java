@@ -58,9 +58,10 @@ public class EngineMessageRouter {
     }
 
     /**
-     * 路由 Engine 消息
+     * 路由 Engine 消息（完整转发payload）
      * 
      * 所有 Engine 发来的业务响应都会转发给对应的前端用户
+     * Admin不对payload做任何处理，完整透传
      *
      * @param session 会话对象
      * @param message 消息对象
@@ -74,15 +75,13 @@ public class EngineMessageRouter {
         String type = message.getType();
         String userId = message.getUserId();
         
-        log.debug("[消息路由] 收到消息 - 类型: {}, 用户: {}, EngineID: {}", 
-            type, userId, session.getEngineId());
-        
         // 🔴 关键修复：根据请求来源区分响应目标
         // 提取 requestId 和 sourceType
         String requestId = message.getPayloadValue("requestId");
         String sourceType = message.getPayloadValue("sourceType");
         
-        log.debug("[消息路由] 请求来源: {}, 请求ID: {}", sourceType, requestId);
+        log.debug("[Router] 收到Engine响应: {} - 类型: {}, 用户: {}, 请求ID: {}", 
+            session.getEngineId(), type, userId, requestId);
         
         // 检查是否是单次返回结果（_RESULT后缀）
         boolean isResultMessage = type != null && type.endsWith("_RESULT");
@@ -95,21 +94,20 @@ public class EngineMessageRouter {
                     resultData.putAll(message.getPayload());
                 }
                 engineRequestController.completeRequest(requestId, resultData);
-                log.info("[消息路由] HTTP响应 - 请求ID: {}, 类型: {}", requestId, type);
+                log.debug("[Router] HTTP响应完成 - 请求ID: {}, 类型: {}", requestId, type);
                 return; // 不转发给 WebSocket
                 
             } else if ("WEBSOCKET".equals(sourceType)) {
-                // WebSocket 请求 → 仅转发给 WebSocket 客户端
+                // WebSocket 请求 → 仅转发给 WebSocket 客户端（完整转发payload）
                 if (userId != null && !userId.isEmpty()) {
                     String jsonMessage = message.toJson();
                     clientMessageRouter.routeToClient(userId, jsonMessage);
-                    log.info("[消息路由] WebSocket响应 - 请求ID: {}, 类型: {}, 用户: {}", 
-                        requestId, type, userId);
+                    log.debug("[Router] WebSocket响应已转发 - 请求ID: {}, 类型: {}", requestId, type);
                     return;
                 }
             } else {
                 // 未知来源或旧版本消息，兼容处理（双路转发）
-                log.warn("[消息路由] 未知来源类型: {}, 请求ID: {}, 执行兼容路由", sourceType, requestId);
+                log.warn("[Router] 未知来源类型: {}, 请求ID: {}, 执行兼容路由", sourceType, requestId);
                 
                 // 尝试完成 HTTP 请求
                 java.util.Map<String, Object> resultData = new java.util.HashMap<>();
@@ -131,7 +129,7 @@ public class EngineMessageRouter {
         if (userId != null && !userId.isEmpty()) {
             String jsonMessage = message.toJson();
             clientMessageRouter.routeToClient(userId, jsonMessage);
-            log.debug("[消息路由] 转发到前端 - 类型: {}, 用户: {}", type, userId);
+            log.debug("[Router] 转发进度消息: {} - 用户: {}", type, userId);
             return;
         }
         
