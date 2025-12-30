@@ -11,11 +11,17 @@ import com.wx.fbsir.business.gitee.domain.GiteeCreateRequest;
 import com.wx.fbsir.business.gitee.util.GiteeOauthUtil;
 import com.wx.fbsir.common.annotation.Anonymous;
 import com.wx.fbsir.common.core.domain.AjaxResult;
+import java.util.Collections;
+
+import com.wx.fbsir.business.gitee.service.GiteeTokenService;
 import com.wx.fbsir.common.core.domain.entity.SysUser;
-import com.wx.fbsir.common.enums.UserStatus;
-import com.wx.fbsir.common.utils.SecurityUtils;
-import com.wx.fbsir.common.utils.uuid.IdUtils;
+import com.wx.fbsir.common.core.domain.model.LoginUser;
 import com.wx.fbsir.common.core.redis.RedisCache;
+import com.wx.fbsir.common.enums.UserStatus;
+import com.wx.fbsir.common.utils.DateUtils;
+import com.wx.fbsir.common.utils.SecurityUtils;
+import com.wx.fbsir.common.utils.ip.IpUtils;
+import com.wx.fbsir.common.utils.uuid.IdUtils;
 import com.wx.fbsir.system.service.ISysUserService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -53,6 +59,9 @@ public class GiteeLoginController {
 
     @Autowired
     private RedisCache redisCache;
+
+    @Autowired
+    private GiteeTokenService giteeTokenService;
 
     @Anonymous
     @GetMapping("/gitlogin")
@@ -116,8 +125,11 @@ public class GiteeLoginController {
                 if (boundUser != null
                     && !UserStatus.DELETED.getCode().equals(boundUser.getDelFlag())
                     && !UserStatus.DISABLE.getCode().equals(boundUser.getStatus())) {
-                    log.info("Gitee OAuth: bound user found, redirecting to login");
-                    response.sendRedirect(buildFrontendBoundRedirect(boundUsername));
+                    LoginUser loginUser = new LoginUser(boundUser.getUserId(), boundUser.getDeptId(), boundUser, Collections.emptySet());
+                    String oauthToken = giteeTokenService.createToken(loginUser);
+                    userService.updateLoginInfo(boundUser.getUserId(), IpUtils.getIpAddr(), DateUtils.getNowDate());
+                    log.info("Gitee OAuth: bound user found, redirecting with token");
+                    response.sendRedirect(buildFrontendOauthRedirect(oauthToken));
                     return;
                 }
             }
@@ -216,10 +228,10 @@ public class GiteeLoginController {
         return result;
     }
 
-    private String buildFrontendBoundRedirect(String username) {
+    private String buildFrontendOauthRedirect(String token) {
         String base = normalizeFrontendUrl(frontendUrl);
-        String encodedUsername = URLEncoder.encode(username, StandardCharsets.UTF_8);
-        return base + "/login?redirect=/index&giteeBound=1&giteeUsername=" + encodedUsername;
+        String encodedToken = URLEncoder.encode(token, StandardCharsets.UTF_8);
+        return base + "/login?redirect=/index&oauthToken=" + encodedToken;
     }
 
     private String buildFrontendBindRedirect(String bindToken) {
