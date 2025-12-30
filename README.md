@@ -1,5 +1,5 @@
 <h1 align="center" style="margin: 30px 0 30px; font-weight: bold;">微信福帮手</h1>
-<h4 align="center">助力创业团队深耕微信生态AI机遇</h4>
+<h4 align="center">助力中小团队深耕微信生态AI机遇</h4>
 <p align="center">
 	<a href="https://gitee.com/U3W-AI/RuoYi-Vue"><img src="https://img.shields.io/badge/WxFbsir-v1.1.6-brightgreen.svg"></a>
 	<a href="https://www.fbsir.com"><img src="https://img.shields.io/badge/website-www.fbsir.com-blue.svg"></a>
@@ -10,19 +10,17 @@
 ## 项目简介
 
 
-项目定位：AI赋能的微信生态运营工具，帮助中小团队高效运营公众号、社群、企业微信等流量矩阵，助力实现微信生态的内容资产智能化。
+项目定位：AI赋能的微信生态运营工具，帮助中小团队高效运营公众号、社群、企业微信等流量矩阵，助力实现微信生态资产智能化。
 
 🎯 **核心价值主张**
 
 目标用户：专注于微信生态运营的中小团队
 
-技术基础：基于腾讯元器智能体开发平台及RuoYi等开源框架进行整合开发
-
 核心使命：通过AI技术降低微信生态内容创作和运营的门槛，提升运营效率
 
-✨ **项目特色亮点**
+✨ **当前已上线：日更助手特色亮点**
 
-作为AI赋能的微信生态工具，项目具备以下核心特色：
+作为AI赋能的微信生态工具，日更助手具备以下核心特色：
 
 **多模型协同生成能力**
 
@@ -50,6 +48,8 @@
 项目采用异步处理架构，实现后台异步调用AI生成，前端轮询获取状态，确保用户体验的流畅性。
 
 同时集成Swagger API文档自动生成，提升开发效率。
+
+PlayWright应用及WebSocket集成框架，将RPA与AI一炉同炼，为智能资产的挖掘提供更多创意空间。
 
 🌟 **项目愿景**
 
@@ -114,17 +114,9 @@ npm run dev
 
 - **源码**: [https://gitee.com/U3W-AI/U3W-AI](https://gitee.com/U3W-AI/U3W-AI)
 
-## 许可证
-
-本项目采用 MIT 许可证，详情请查看 [LICENSE](LICENSE) 文件。
-
 ---
 
-**感谢若依团队提供的优秀开源框架！**
-
-本项目的后台管理系统基于 **若依(RuoYi)** 框架进行二次开发，感谢若依团队提供的优秀开源框架。
-- 若依官网：[http://ruoyi.vip](http://ruoyi.vip)
-- 若依源码：[https://gitee.com/y_project/RuoYi-Vue](https://gitee.com/y_project/RuoYi-Vue)
+本项目后台管理系统基于 **若依(RuoYi)** 框架进行二次开发，感谢若依团队提供的优秀开源框架。
 
 
-文档更新日期：2025年12月29日 18：00  文档版本：1.1.6
+文档更新日期：2025年12月30日 9：30  文档版本：1.1.6B
