@@ -159,6 +159,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
  			<if test="pwdUpdateDate != null">pwd_update_date,</if>
  			<if test="createBy != null and createBy != ''">create_by,</if>
  			<if test="remark != null and remark != ''">remark,</if>
+            <if test="points != null and points != ''">points,</if>
  			create_time
  		)values(
  			<if test="userId != null and userId != ''">#{userId},</if>
@@ -174,6 +175,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
  			<if test="pwdUpdateDate != null">#{pwdUpdateDate},</if>
  			<if test="createBy != null and createBy != ''">#{createBy},</if>
  			<if test="remark != null and remark != ''">#{remark},</if>
+            <if test="points != null and points != ''">#{points},</if>
  			sysdate()
  		)
 	</insert>
