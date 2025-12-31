@@ -2,6 +2,9 @@ package com.wx.fbsir.business.gitee.util;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.http.HttpEntity;
@@ -16,6 +19,9 @@ public final class GiteeOauthUtil {
     public static final String AUTHORIZE_URL = "https://gitee.com/oauth/authorize";
     public static final String TOKEN_URL = "https://gitee.com/oauth/token";
     public static final String USER_URL = "https://gitee.com/api/v5/user";
+    public static final String USER_ISSUES_URL = "https://gitee.com/api/v5/user/issues";
+    public static final String USER_REPOS_URL = "https://gitee.com/api/v5/user/repos";
+    public static final String NOTIFICATIONS_URL = "https://gitee.com/api/v5/notifications/threads";
 
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
@@ -28,6 +34,16 @@ public final class GiteeOauthUtil {
             + "?response_type=code"
             + "&client_id=" + clientId
             + "&redirect_uri=" + encoded;
+    }
+
+    public static String buildAuthorizeUrl(String clientId, String callbackUrl, String state) {
+        String encoded = URLEncoder.encode(callbackUrl, StandardCharsets.UTF_8);
+        String encodedState = URLEncoder.encode(state, StandardCharsets.UTF_8);
+        return AUTHORIZE_URL
+            + "?response_type=code"
+            + "&client_id=" + clientId
+            + "&redirect_uri=" + encoded
+            + "&state=" + encodedState;
     }
 
     public static GiteeOauthToken exchangeCodeForToken(String clientId, String clientSecret, String callbackUrl, String code)
@@ -86,6 +102,61 @@ public final class GiteeOauthUtil {
         profile.setAvatarUrl(jsonNode.has("avatar_url") ? jsonNode.get("avatar_url").asText() : "");
         profile.setEmail(jsonNode.has("email") ? jsonNode.get("email").asText() : "");
         return profile;
+    }
+
+    public static JsonNode fetchUserProfileJson(String accessToken) throws Exception {
+        return fetchJson(USER_URL, accessToken, Collections.emptyMap());
+    }
+
+    public static JsonNode fetchUserRepos(String accessToken, Map<String, String> params) throws Exception {
+        return fetchJson(USER_REPOS_URL, accessToken, params);
+    }
+
+    public static JsonNode fetchUserIssues(String accessToken, Map<String, String> params) throws Exception {
+        Map<String, String> resolvedParams = new LinkedHashMap<>();
+        if (params != null && !params.isEmpty()) {
+            resolvedParams.putAll(params);
+        }
+        resolvedParams.put("filter", "all");
+        resolvedParams.put("state", "all");
+        return fetchJson(USER_ISSUES_URL, accessToken, resolvedParams);
+    }
+
+    public static JsonNode fetchNotifications(String accessToken, Map<String, String> params) throws Exception {
+        return fetchJson(NOTIFICATIONS_URL, accessToken, params);
+    }
+
+    private static JsonNode fetchJson(String baseUrl, String accessToken, Map<String, String> params) throws Exception {
+        RestTemplate restTemplate = new RestTemplate();
+        String url = buildUrl(baseUrl, accessToken, params);
+        String response = restTemplate.getForObject(url, String.class);
+        if (response == null || response.isBlank()) {
+            throw new Exception("gitee响应为空");
+        }
+        return OBJECT_MAPPER.readTree(response);
+    }
+
+    private static String buildUrl(String baseUrl, String accessToken, Map<String, String> params) {
+        StringBuilder builder = new StringBuilder();
+        builder.append(baseUrl);
+        builder.append("?access_token=").append(URLEncoder.encode(accessToken, StandardCharsets.UTF_8));
+        if (params != null && !params.isEmpty()) {
+            for (Map.Entry<String, String> entry : params.entrySet()) {
+                String key = entry.getKey();
+                String value = entry.getValue();
+                if (key == null || key.isBlank() || value == null) {
+                    continue;
+                }
+                if ("access_token".equalsIgnoreCase(key)) {
+                    continue;
+                }
+                builder.append("&")
+                    .append(URLEncoder.encode(key, StandardCharsets.UTF_8))
+                    .append("=")
+                    .append(URLEncoder.encode(value, StandardCharsets.UTF_8));
+            }
+        }
+        return builder.toString();
     }
 
     public static final class GiteeOauthToken {

@@ -5,9 +5,11 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.TimeUnit;
 
+import com.wx.fbsir.business.gitee.domain.GiteeAuthState;
 import com.wx.fbsir.business.gitee.domain.GiteeBindInfo;
 import com.wx.fbsir.business.gitee.domain.GiteeBindRequest;
 import com.wx.fbsir.business.gitee.domain.GiteeCreateRequest;
+import com.wx.fbsir.business.gitee.util.GiteeCacheKeyUtil;
 import com.wx.fbsir.business.gitee.util.GiteeOauthUtil;
 import com.wx.fbsir.common.annotation.Anonymous;
 import com.wx.fbsir.common.core.domain.AjaxResult;
@@ -41,6 +43,8 @@ public class GiteeLoginController {
     private static final String BIND_TOKEN_KEY_PREFIX = "gitee:bind:token:";
     private static final String BIND_USER_KEY_PREFIX = "gitee:bind:user:";
     private static final int BIND_TOKEN_EXPIRE_MINUTES = 10;
+    private static final int ACCESS_TOKEN_EXPIRE_DAYS = 30;
+    private static final String DEFAULT_PROFILE_REDIRECT = "/user/profile/gitee";
 
     @Value("${gitee.oauth.client-id:}")
     private String clientId;
@@ -83,15 +87,26 @@ public class GiteeLoginController {
     @GetMapping("/auth")
     public void auth(HttpServletRequest request, HttpServletResponse response) throws IOException {
         log.info("Gitee OAuth callback received, code={}, error={}", request.getParameter("code"), request.getParameter("error"));
+        GiteeAuthState authState = null;
         try {
             String error = request.getParameter("error");
+            String state = request.getParameter("state");
+            authState = getAuthState(state);
             if (StringUtils.isNotBlank(error)) {
+                if (authState != null) {
+                    redirectWithProfileError(response, authState.getRedirect(), "gitee授权失败: " + error);
+                    return;
+                }
                 redirectWithError(response, "gitee授权失败: " + error);
                 return;
             }
 
             String code = request.getParameter("code");
             if (StringUtils.isBlank(code)) {
+                if (authState != null) {
+                    redirectWithProfileError(response, authState.getRedirect(), "缺少授权码");
+                    return;
+                }
                 redirectWithError(response, "缺少授权码");
                 return;
             }
@@ -115,7 +130,16 @@ public class GiteeLoginController {
             log.info("Gitee OAuth: fetching user profile");
             GiteeOauthUtil.GiteeUserProfile profile = GiteeOauthUtil.fetchUserProfile(token.getAccessToken());
             if (StringUtils.isBlank(profile.getId())) {
+                if (authState != null) {
+                    redirectWithProfileError(response, authState.getRedirect(), "gitee用户信息不完整");
+                    return;
+                }
                 redirectWithError(response, "gitee用户信息不完整");
+                return;
+            }
+
+            if (authState != null) {
+                handleProfileAuthorization(response, authState, profile, token);
                 return;
             }
 
@@ -128,6 +152,7 @@ public class GiteeLoginController {
                     LoginUser loginUser = new LoginUser(boundUser.getUserId(), boundUser.getDeptId(), boundUser, Collections.emptySet());
                     String oauthToken = giteeTokenService.createToken(loginUser);
                     userService.updateLoginInfo(boundUser.getUserId(), IpUtils.getIpAddr(), DateUtils.getNowDate());
+                    saveAccessToken(boundUser.getUserId(), token);
                     log.info("Gitee OAuth: bound user found, redirecting with token");
                     response.sendRedirect(buildFrontendOauthRedirect(oauthToken));
                     return;
@@ -150,6 +175,10 @@ public class GiteeLoginController {
             response.sendRedirect(buildFrontendBindRedirect(bindToken));
         } catch (Exception ex) {
             log.error("Gitee OAuth callback failed", ex);
+            if (authState != null) {
+                redirectWithProfileError(response, authState.getRedirect(), ex.getMessage());
+                return;
+            }
             redirectWithError(response, ex.getMessage());
         }
     }
@@ -185,6 +214,7 @@ public class GiteeLoginController {
 
         redisCache.setCacheObject(getBindUserKey(bindInfo.getGiteeId()), user.getUserName());
         redisCache.deleteObject(getBindTokenKey(request.getBindToken()));
+        saveAccessToken(user.getUserId(), bindInfo.getAccessToken());
 
         return AjaxResult.success();
     }
@@ -221,6 +251,7 @@ public class GiteeLoginController {
 
         redisCache.setCacheObject(getBindUserKey(bindInfo.getGiteeId()), user.getUserName());
         redisCache.deleteObject(getBindTokenKey(request.getBindToken()));
+        saveAccessToken(user.getUserId(), bindInfo.getAccessToken());
 
         AjaxResult result = AjaxResult.success();
         result.put("username", user.getUserName());
@@ -260,6 +291,86 @@ public class GiteeLoginController {
                 // ignore secondary failure
             }
         }
+    }
+
+    private void handleProfileAuthorization(HttpServletResponse response,
+                                            GiteeAuthState authState,
+                                            GiteeOauthUtil.GiteeUserProfile profile,
+                                            GiteeOauthUtil.GiteeOauthToken token) throws IOException {
+        if (authState.getUserId() == null) {
+            redirectWithProfileError(response, authState.getRedirect(), "授权用户信息失效");
+            return;
+        }
+        SysUser user = userService.selectUserById(authState.getUserId());
+        if (user == null) {
+            redirectWithProfileError(response, authState.getRedirect(), "用户不存在");
+            return;
+        }
+        redisCache.setCacheObject(getBindUserKey(profile.getId()), user.getUserName());
+        saveAccessToken(user.getUserId(), token);
+        response.sendRedirect(buildFrontendProfileRedirect(authState.getRedirect(), null));
+    }
+
+    private void redirectWithProfileError(HttpServletResponse response, String redirect, String message) {
+        log.warn("Gitee OAuth profile error: {}", message);
+        try {
+            response.sendRedirect(buildFrontendProfileRedirect(redirect, message));
+        } catch (IOException ex) {
+            log.error("Gitee OAuth profile redirect failed", ex);
+            try {
+                response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                response.setContentType("text/plain;charset=UTF-8");
+                response.getWriter().write(message);
+            } catch (IOException ignore) {
+                // ignore secondary failure
+            }
+        }
+    }
+
+    private String buildFrontendProfileRedirect(String redirect, String errorMessage) {
+        String base = normalizeFrontendUrl(frontendUrl);
+        String path = StringUtils.isNotBlank(redirect) ? redirect : DEFAULT_PROFILE_REDIRECT;
+        String separator = path.contains("?") ? "&" : "?";
+        if (StringUtils.isBlank(errorMessage)) {
+            return base + path + separator + "giteeAuth=success";
+        }
+        String encodedMessage = URLEncoder.encode(errorMessage, StandardCharsets.UTF_8);
+        return base + path + separator + "giteeError=" + encodedMessage;
+    }
+
+    private GiteeAuthState getAuthState(String state) {
+        if (StringUtils.isBlank(state)) {
+            return null;
+        }
+        GiteeAuthState authState = redisCache.getCacheObject(GiteeCacheKeyUtil.getAuthStateKey(state));
+        if (authState != null) {
+            redisCache.deleteObject(GiteeCacheKeyUtil.getAuthStateKey(state));
+        }
+        return authState;
+    }
+
+    private void saveAccessToken(Long userId, GiteeOauthUtil.GiteeOauthToken token) {
+        if (userId == null || token == null || StringUtils.isBlank(token.getAccessToken())) {
+            return;
+        }
+        if (token.getExpiresIn() > 0) {
+            int ttlSeconds = token.getExpiresIn() > Integer.MAX_VALUE
+                ? Integer.MAX_VALUE
+                : (int) token.getExpiresIn();
+            redisCache.setCacheObject(GiteeCacheKeyUtil.getAccessTokenKey(userId),
+                token.getAccessToken(), ttlSeconds, TimeUnit.SECONDS);
+        } else {
+            redisCache.setCacheObject(GiteeCacheKeyUtil.getAccessTokenKey(userId),
+                token.getAccessToken(), ACCESS_TOKEN_EXPIRE_DAYS, TimeUnit.DAYS);
+        }
+    }
+
+    private void saveAccessToken(Long userId, String accessToken) {
+        if (userId == null || StringUtils.isBlank(accessToken)) {
+            return;
+        }
+        redisCache.setCacheObject(GiteeCacheKeyUtil.getAccessTokenKey(userId),
+            accessToken, ACCESS_TOKEN_EXPIRE_DAYS, TimeUnit.DAYS);
     }
 
     private String normalizeFrontendUrl(String url) {

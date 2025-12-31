@@ -55,6 +55,9 @@
                   <el-tab-pane label="修改密码" name="resetPwd">
                      <resetPwd />
                   </el-tab-pane>
+                  <el-tab-pane label="Gitee" name="gitee">
+                     <giteeProfile />
+                  </el-tab-pane>
                   <el-tab-pane label="公众号配置" name="officeAccount">
                      <officeAccountConfig />
                   </el-tab-pane>
@@ -70,6 +73,7 @@ import userAvatar from "./userAvatar"
 import userInfo from "./userInfo"
 import resetPwd from "./resetPwd"
 import officeAccountConfig from "./officeAccountConfig"
+import giteeProfile from "@/views/business/gitee/giteeProfile"
 import { getUserProfile } from "@/api/system/user"
 
 const route = useRoute()
