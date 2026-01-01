@@ -1,13 +1,14 @@
-package com.wx.fbsir.framework.business.potentialeye.service;
+package com.wx.fbsir.business.potentialeye.service.impl;
 
+import cn.hutool.core.util.ObjectUtil;
 import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONObject;
 import com.wx.fbsir.business.potentialeye.config.WeWorkConfig;
+import com.wx.fbsir.business.potentialeye.domain.SysUserWx;
 import com.wx.fbsir.business.potentialeye.domain.WeWorkLoginResult;
+import com.wx.fbsir.business.potentialeye.service.ISysUserWxService;
 import com.wx.fbsir.common.core.domain.entity.SysUser;
 import com.wx.fbsir.common.core.domain.model.LoginUser;
-import com.wx.fbsir.common.utils.SecurityUtils;
-import com.wx.fbsir.framework.web.service.TokenService;
 import com.wx.fbsir.system.service.ISysUserService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,7 +43,10 @@ public class WeWorkAuthService {
     private ISysUserService userService;
 
     @Autowired
-    private TokenService tokenService;
+    private WxTokenService wxTokenService;
+
+    @Autowired
+    private ISysUserWxService userWxService;
 
     /**
      * 构建OAuth授权URL
@@ -73,37 +77,32 @@ public class WeWorkAuthService {
             // 获取access_token
             String accessToken = getAccessToken();
             log.info("[企业微信授权] 获取access_token成功");
-            
+
             // 通过code获取用户ID
             String weWorkUserId = getUserIdByCode(accessToken, code);
             log.info("[企业微信授权] 获取用户ID成功 - userId: {}", weWorkUserId);
+            // 构建返回结果
+            WeWorkLoginResult result = new WeWorkLoginResult();
+            result.setWeWorkUserId(weWorkUserId);
             //判断当前用户是否存在
-            SysUser user = userService.selectUserByUserName(weWorkUserId);
+            SysUserWx userWx = userWxService.selectUserWxBySessionId(weWorkUserId);
+            if (ObjectUtil.isNull(userWx)) {
+                log.warn("未找到session_id对应的微信用户信息: {}", weWorkUserId);
+                return result;
+            }
+            SysUser user = userService.selectUserById(userWx.getUserId());
             if (Objects.isNull(user)) {
-                //获取用户详细信息
-                String url = WEWORK_API_BASE + "/user/get?access_token=" + accessToken + "&USERID=" + weWorkUserId;
-                ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
-                JSONObject jsonObject = JSON.parseObject(response.getBody());
-                //创建普通的用户
-                user = new SysUser();
-                user.setUserName(weWorkUserId);
-                user.setNickName(jsonObject.getString("name")!=null?jsonObject.getString("name"):weWorkUserId);
-                user.setPoints(1000); //设置初始用户登录后的积分
-                user.setPassword(SecurityUtils.encryptPassword("123456")); //密码加密处理
-                user.setCreateBy(weWorkUserId);
-                user.setCreateTime(new Date());
-                userService.insertUser(user);
+                log.warn("找到微信用户但未找到对应的系统用户: wxId={}, userId={}",
+                        userWx.getWxId(), userWx.getUserId());
+                return result;
             }
             //创建ruoyi登录的token信息
             LoginUser loginUser = new LoginUser();
             loginUser.setUserId(user.getUserId());
             loginUser.setLoginTime(new Date().getTime());
             loginUser.setUser(user);
-            String token = tokenService.createToken(loginUser);
-            // 构建返回结果
-            WeWorkLoginResult result = new WeWorkLoginResult();
+            String token = wxTokenService.createToken(loginUser);
             result.setToken(token);
-            result.setWeWorkUserId(weWorkUserId);
             log.info("[企业微信授权] 授权成功 - userId: {}, token: {}", weWorkUserId, result.getToken());
             return result;
         } catch (Exception e) {

@@ -259,7 +259,7 @@ const startPolling = () => {
         isLoading.value = false
       }
     }
-  }, 20000)
+  }, 10000)
 }
 
 // 添加AI消息

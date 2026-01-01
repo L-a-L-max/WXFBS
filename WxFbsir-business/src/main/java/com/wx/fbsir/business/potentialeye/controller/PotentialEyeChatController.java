@@ -1,4 +1,4 @@
-package com.wx.fbsir.framework.business.potentialeye.controller;
+package com.wx.fbsir.business.potentialeye.controller;
 
 import cn.hutool.core.util.ObjectUtil;
 import com.wx.fbsir.business.point.service.IPointsService;
@@ -6,14 +6,14 @@ import com.wx.fbsir.business.potentialeye.domain.ChatFile;
 import com.wx.fbsir.business.potentialeye.domain.ChatMessage;
 import com.wx.fbsir.business.potentialeye.service.IChatFileService;
 import com.wx.fbsir.business.potentialeye.service.IChatMessageService;
+import com.wx.fbsir.business.potentialeye.service.impl.WxTokenService;
 import com.wx.fbsir.common.annotation.Anonymous;
 import com.wx.fbsir.common.config.WxFbsirConfig;
 import com.wx.fbsir.common.core.domain.AjaxResult;
 import com.wx.fbsir.common.core.domain.model.LoginUser;
 import com.wx.fbsir.common.core.redis.RedisCache;
 import com.wx.fbsir.common.utils.file.FileUploadUtils;
-import com.wx.fbsir.framework.business.potentialeye.utils.PotentialEyeChatUtil;
-import com.wx.fbsir.framework.web.service.TokenService;
+import com.wx.fbsir.business.potentialeye.utils.PotentialEyeChatUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,7 +34,7 @@ public class PotentialEyeChatController {
     private static final Logger log = LoggerFactory.getLogger(PotentialEyeChatController.class);
 
     @Autowired
-    private TokenService tokenService;
+    private WxTokenService wxTokenService;
 
     @Autowired
     private IPointsService pointsService;
@@ -60,7 +60,7 @@ public class PotentialEyeChatController {
                            @RequestParam(value = "sessionId", required = false) String sessionId,
                            @RequestParam(value = "files", required = false) MultipartFile[] files) {
 
-        LoginUser loginUser = tokenService.getLoginUser(request);
+        LoginUser loginUser = wxTokenService.getLoginUser(request);
         if (loginUser == null) {
             return AjaxResult.error("未登录");
         }
@@ -213,19 +213,6 @@ public class PotentialEyeChatController {
             }
         }
     }
-
-
-//    /**
-//     * 上传文件到OSS
-//     */
-//    private List<ChatFile> uploadFiles(MultipartFile[] files) {
-//        try {
-//            return aliyunOss.uploadFilesToChatFileList(files, "files");
-//        } catch (Exception e) {
-//            log.error("[潜力眼对话] 文件上传失败", e);
-//            return null;
-//        }
-//    }
 
     /**
      * 计算所需积分

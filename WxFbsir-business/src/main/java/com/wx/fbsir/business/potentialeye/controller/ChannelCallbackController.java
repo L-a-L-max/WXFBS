@@ -1,10 +1,10 @@
-package com.wx.fbsir.framework.business.potentialeye.controller;
+package com.wx.fbsir.business.potentialeye.controller;
 
 
 import com.wx.fbsir.business.potentialeye.config.YuanqiChatConfig;
 import com.wx.fbsir.business.potentialeye.utils.WXBizMsgCrypt;
 import com.wx.fbsir.common.annotation.Anonymous;
-import com.wx.fbsir.framework.business.potentialeye.utils.PotentialEyeChatUtil;
+import com.wx.fbsir.business.potentialeye.utils.PotentialEyeChatUtil;
 import com.wx.fbsir.system.service.ISysUserService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

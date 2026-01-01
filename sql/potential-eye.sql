@@ -17,6 +17,7 @@
 SET NAMES utf8mb4;
 SET FOREIGN_KEY_CHECKS = 0;
 
+--  对话信息存储表
 -- ----------------------------
 -- Table structure for chat_file
 -- ----------------------------
@@ -55,5 +56,25 @@ CREATE TABLE `chat_message`  (
 -- ----------------------------
 -- Records of chat_message
 -- ----------------------------
+
+SET FOREIGN_KEY_CHECKS = 1;
+
+-- 企业微信登陆表，用于记录sessionId
+-- ----------------------------
+-- Table structure for sys_user_wx
+-- ----------------------------
+DROP TABLE IF EXISTS `sys_user_wx`;
+CREATE TABLE `sys_user_wx`  (
+                                `wx_id` bigint NOT NULL AUTO_INCREMENT COMMENT '企业登录表ID',
+                                `session_id` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '登录用户的session_id',
+                                `user_id` bigint NULL DEFAULT NULL COMMENT '关联的用户id',
+                                PRIMARY KEY (`wx_id`) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 10 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = Dynamic;
+
+-- ----------------------------
+-- Records of sys_user_wx
+-- ----------------------------
+INSERT INTO `sys_user_wx` VALUES (8, 'CuoWuQiuJie', 125);
+INSERT INTO `sys_user_wx` VALUES (9, 'DuHongChao', 126);
 
 SET FOREIGN_KEY_CHECKS = 1;

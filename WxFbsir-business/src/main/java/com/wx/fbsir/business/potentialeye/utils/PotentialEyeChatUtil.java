@@ -1,10 +1,8 @@
-package com.wx.fbsir.framework.business.potentialeye.utils;
+package com.wx.fbsir.business.potentialeye.utils;
 
 import com.wx.fbsir.business.potentialeye.config.YuanqiChatConfig;
 import com.wx.fbsir.business.potentialeye.domain.ChatMessage;
-import com.wx.fbsir.business.potentialeye.service.IChatFileService;
 import com.wx.fbsir.business.potentialeye.service.IChatMessageService;
-import com.wx.fbsir.business.potentialeye.utils.WXBizMsgCrypt;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,9 +28,6 @@ public class PotentialEyeChatUtil {
 
     @Autowired
     private IChatMessageService chatMessageService;
-
-    @Autowired
-    private IChatFileService chatFileService;
 
     private final RestTemplate restTemplate;
 
