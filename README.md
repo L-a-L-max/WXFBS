@@ -1,7 +1,7 @@
 <h1 align="center" style="margin: 30px 0 30px; font-weight: bold;">微信福帮手</h1>
 <h4 align="center">助力中小团队深耕微信生态AI机遇</h4>
 <p align="center">
-	<a href="https://gitee.com/U3W-AI/RuoYi-Vue"><img src="https://img.shields.io/badge/WxFbsir-v1.1.7-brightgreen.svg"></a>
+	<a href="https://gitee.com/U3W-AI/RuoYi-Vue"><img src="https://img.shields.io/badge/WxFbsir-v1.1.8-brightgreen.svg"></a>
 	<a href="https://www.fbsir.com"><img src="https://img.shields.io/badge/website-www.fbsir.com-blue.svg"></a>
 </p>
 
@@ -51,9 +51,14 @@ PlayWright应用及WebSocket集成框架，将RPA与AI一炉同炼，为人机�
 历史记录管理：保存所有生成文章，支持查看、编辑和删除
 
 
+### ✨ **特色模块之Gitee用户能力分析**
+
+支持Gitee用户在首页授权登录，并通过gitee拉取接口，拉取在开源社区的参与情况数据，进行用户画像和能力分析。
+
+
 ### ✨ **特色模块之潜力眼（内测）**
 
-基于元器工作流智能，调用工作流实现对话式简历分析功能，支持简历上传和解析，支持企业微信侧以工作台应用模式进行双向对话。
+基于元器工作流智能体，实现简历分析功能，支持简历上传和解析，支持企业微信侧以工作台应用模式进行双向对话。
 
 
 ## 快速开始
@@ -119,4 +124,4 @@ npm run dev
 本项目后台管理系统基于 **若依(RuoYi)** 框架进行二次开发，感谢若依团队提供的优秀开源框架。
 
 
-文档更新日期：2026年1月2日 12：20  文档版本：1.1.7B
+文档更新日期：2026年1月2日 21：00  文档版本：1.1.8
