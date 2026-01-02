@@ -30,7 +30,7 @@
 
 同时集成Swagger API文档自动生成，提升开发效率。
 
-PlayWright应用及WebSocket集成框架，将RPA与AI一炉同炼，为智能资产的挖掘提供更多创意空间。
+PlayWright应用及WebSocket集成框架，将RPA与AI一炉同炼，为人机协同和智能资产的挖掘提供更多创意空间。
 
 
 ### ✨ **特色模块之日更助手**
