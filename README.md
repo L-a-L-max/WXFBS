@@ -1,5 +1,5 @@
-<h1 align="center" style="margin: 30px 0 30px; font-weight: bold;">微信福帮手</h1>
-<h4 align="center">助力中小团队深耕微信生态AI机遇</h4>
+<h1 align="center" style="margin: 30px 0 30px; font-weight: bold;">福帮手</h1>
+<h4 align="center">助力中小团队深耕AI机遇</h4>
 <p align="center">
 	<a href="https://gitee.com/U3W-AI/RuoYi-Vue"><img src="https://img.shields.io/badge/WxFbsir-v1.1.8-brightgreen.svg"></a>
 	<a href="https://www.fbsir.com"><img src="https://img.shields.io/badge/website-www.fbsir.com-blue.svg"></a>
@@ -10,7 +10,7 @@
 ## 项目简介
 
 
-项目定位：以AI赋能团队建设，推动智能原生企业更快涌现。微信福帮手WxFBSir，福润百业，智生万象。
+项目定位：以AI赋能团队建设，推动智能原生企业更快涌现。福帮手FBSir，福润百业，智生万象。
 
 ## 系统特色
 
@@ -35,7 +35,6 @@ PlayWright应用及WebSocket集成框架，将RPA与AI一炉同炼，为人机�
 
 ### ✨ **特色模块之日更助手**
 
-作为AI赋能的微信生态工具，日更助手具备以下核心特色：
 
 **多模型协同生成能力**
 
@@ -124,4 +123,4 @@ npm run dev
 本项目后台管理系统基于 **若依(RuoYi)** 框架进行二次开发，感谢若依团队提供的优秀开源框架。
 
 
-文档更新日期：2026年1月2日 21：00  文档版本：1.1.8
+文档更新日期：2026年1月3日 6：30  文档版本：1.1.8B
