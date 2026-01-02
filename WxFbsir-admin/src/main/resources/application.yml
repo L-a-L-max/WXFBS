@@ -32,6 +32,7 @@ wxfbsir:
       session-cleanup-interval: 60
       # 消息队列最大大小
       message-queue-size: 10000
+  domain: https://你的域名
 
 # 开发环境配置
 server:
@@ -183,3 +184,22 @@ aes:
     # 此密钥用于加密敏感数据（如公众号AppID、AppSecret等）
     # 密钥复杂度：包含大小写字母、数字、特殊符号，长度64位
     key: ${WXFBSIR_AES_SECRET_KEY:WxFbsir2025SecretKey@#$%^&*()}
+# 企业微信配置（用于调用企业微信API，如获取用户信息等）
+wework:
+  corp-id: #你的企业ID
+  agent-id: #你的应用AgentId【主应用】
+  agent-secret: # 你的应用Secret 【主应用】
+
+# 元器AI配置（用于发送消息到元器平台）
+yuanqi:
+  # 消息加密Token
+  token: #元器提供的Token
+  # AES加密密钥（43位）
+  encoding-aes-key: # 元器提供的EncodingAESKey
+  # 元器回调地址（需要替换实际的channelId）
+  target-url: https://yuanqi.tencent.com/api/v2/channel/callback/wecom/message/{channelId} # 企业微信通道发布后的/message/后面的数字
+  # 模拟企业微信发送消息时使用的企业ID和应用ID（用于构造消息体）
+  # 如果与上面wework配置相同，可以留空，系统会自动使用wework的配置
+  # 正常不需要考虑配置下面两个
+  corp-id: #你的企业ID
+  agent-id: #你的应用AgentId【副应用】
