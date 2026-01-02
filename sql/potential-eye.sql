@@ -71,10 +71,4 @@ CREATE TABLE `sys_user_wx`  (
                                 PRIMARY KEY (`wx_id`) USING BTREE
 ) ENGINE = InnoDB AUTO_INCREMENT = 10 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = Dynamic;
 
--- ----------------------------
--- Records of sys_user_wx
--- ----------------------------
-INSERT INTO `sys_user_wx` VALUES (8, 'CuoWuQiuJie', 125);
-INSERT INTO `sys_user_wx` VALUES (9, 'DuHongChao', 126);
-
 SET FOREIGN_KEY_CHECKS = 1;
