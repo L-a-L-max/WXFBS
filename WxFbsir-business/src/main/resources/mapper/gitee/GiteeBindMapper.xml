@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.wx.fbsir.business.gitee.mapper.GiteeBindMapper">
+
+    <resultMap id="GiteeBindResult" type="com.wx.fbsir.business.gitee.domain.GiteeBind">
+        <id property="bindId" column="bind_id"/>
+        <result property="userId" column="user_id"/>
+        <result property="giteeUserId" column="gitee_user_id"/>
+        <result property="giteeUsername" column="gitee_username"/>
+        <result property="giteeAvatar" column="gitee_avatar"/>
+        <result property="bindTime" column="bind_time"/>
+    </resultMap>
+
+    <select id="selectByGiteeUserId" parameterType="String" resultMap="GiteeBindResult">
+        SELECT bind_id, user_id, gitee_user_id, gitee_username, gitee_avatar, bind_time
+        FROM gitee_bind
+        WHERE gitee_user_id = #{giteeUserId}
+    </select>
+
+    <select id="selectByUserId" parameterType="Long" resultMap="GiteeBindResult">
+        SELECT bind_id, user_id, gitee_user_id, gitee_username, gitee_avatar, bind_time
+        FROM gitee_bind
+        WHERE user_id = #{userId}
+    </select>
+
+    <select id="selectByUserIds" resultMap="GiteeBindResult">
+        SELECT bind_id, user_id, gitee_user_id, gitee_username, gitee_avatar, bind_time
+        FROM gitee_bind
+        WHERE user_id IN
+        <foreach collection="userIds" item="userId" open="(" separator="," close=")">
+            #{userId}
+        </foreach>
+    </select>
+
+    <select id="countAll" resultType="int">
+        SELECT COUNT(1)
+        FROM gitee_bind
+    </select>
+
+    <select id="countNewBindByRange" resultType="int">
+        SELECT COUNT(1)
+        FROM gitee_bind
+        WHERE bind_time &gt;= #{startTime}
+        AND bind_time &lt; #{endTime}
+    </select>
+
+    <insert id="insertGiteeBind" parameterType="com.wx.fbsir.business.gitee.domain.GiteeBind" useGeneratedKeys="true" keyProperty="bindId">
+        INSERT INTO gitee_bind (
+            user_id,
+            gitee_user_id,
+            gitee_username,
+            gitee_avatar,
+            bind_time
+        ) VALUES (
+            #{userId},
+            #{giteeUserId},
+            #{giteeUsername},
+            #{giteeAvatar},
+            #{bindTime}
+        )
+    </insert>
+
+    <update id="updateGiteeBind" parameterType="com.wx.fbsir.business.gitee.domain.GiteeBind">
+        UPDATE gitee_bind
+        SET user_id = #{userId},
+            gitee_user_id = #{giteeUserId},
+            gitee_username = #{giteeUsername},
+            gitee_avatar = #{giteeAvatar},
+            bind_time = #{bindTime}
+        WHERE bind_id = #{bindId}
+    </update>
+
+    <delete id="deleteByUserId" parameterType="Long">
+        DELETE FROM gitee_bind
+        WHERE user_id = #{userId}
+    </delete>
+
+</mapper>
