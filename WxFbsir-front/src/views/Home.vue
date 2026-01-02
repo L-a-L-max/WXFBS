@@ -5,7 +5,7 @@
         <el-icon :size="64" color="#667eea"><ChatDotRound /></el-icon>
       </div>
       <h1>潜力眼</h1>
-      <p class="desc">潜力眼-HR智能助手</p>
+      <p class="desc">潜力眼【内测】</p>
       
       <div class="actions">
         <el-button type="primary" size="large" @click="loginWithWeWork">

@@ -4,7 +4,7 @@
     <div class="chat-header">
       <div class="header-content">
         <el-icon class="header-icon"><ChatDotRound /></el-icon>
-        <span class="header-title">潜力眼-HR智能助手</span>
+        <span class="header-title">潜力眼【内测】</span>
       </div>
       <div class="header-info">
         <span>会话ID: {{ sessionId }}</span>
@@ -16,7 +16,7 @@
       <!-- 欢迎消息 -->
       <div v-if="messages.length === 0" class="welcome-message">
         <el-icon class="welcome-icon"><ChatLineSquare /></el-icon>
-        <h3>你好！潜力眼-HR智能助手</h3>
+        <h3>你好！潜力眼【内测】</h3>
         <p>有什么可以帮助你的？</p>
       </div>
 

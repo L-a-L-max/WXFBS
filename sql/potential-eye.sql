@@ -17,7 +17,7 @@
 SET NAMES utf8mb4;
 SET FOREIGN_KEY_CHECKS = 0;
 
---  对话信息存储表
+--  文件存储表
 -- ----------------------------
 -- Table structure for chat_file
 -- ----------------------------
@@ -35,7 +35,7 @@ CREATE TABLE `chat_file`  (
 -- ----------------------------
 -- Records of chat_file
 -- ----------------------------
-
+-- 对话信息存储表
 -- ----------------------------
 -- Table structure for chat_message
 -- ----------------------------

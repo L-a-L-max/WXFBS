@@ -1,7 +1,7 @@
 {
   "name": "WxFbsir-potential-eye-front",
   "version": "1.0.0",
-  "description": "潜力眼-HR智能助手",
+  "description": "潜力眼【内测】",
   "type": "module",
   "scripts": {
     "dev": "vite",
