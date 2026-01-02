@@ -29,6 +29,14 @@
           >
             一键刷新
           </el-button>
+          <el-button
+            type="danger"
+            :disabled="!authorized"
+            :loading="unbinding"
+            @click="handleUnbind"
+          >
+            解除绑定
+          </el-button>
         </div>
       </template>
     </el-alert>
@@ -92,6 +100,26 @@
         <div class="gitee-card-header">
           <span>授权用户仓库</span>
           <div class="gitee-card-actions">
+            <el-select
+              v-model="repoVisibility"
+              size="small"
+              class="gitee-filter"
+              placeholder="可见性"
+            >
+              <el-option label="全部可见性" value="all" />
+              <el-option label="公开" value="public" />
+              <el-option label="私有" value="private" />
+            </el-select>
+            <el-select
+              v-model="repoPerPage"
+              size="small"
+              class="gitee-filter"
+              placeholder="每页数量"
+            >
+              <el-option label="20/页" :value="20" />
+              <el-option label="50/页" :value="50" />
+              <el-option label="100/页" :value="100" />
+            </el-select>
             <el-input
               v-model="repoKeyword"
               placeholder="搜索仓库"
@@ -111,22 +139,139 @@
         </div>
       </template>
       <el-table v-if="filteredRepos.length" :data="filteredRepos" stripe>
-        <el-table-column label="仓库" min-width="220">
+        <el-table-column min-width="220">
+          <template #header>
+            <div class="gitee-column-header">
+              <span>仓库</span>
+              <span class="gitee-sort-icons">
+                <el-icon
+                  :class="getRepoSortClass('full_name', 'asc')"
+                  @click.stop="setRepoSort('full_name', 'asc')"
+                >
+                  <CaretTop />
+                </el-icon>
+                <el-icon
+                  :class="getRepoSortClass('full_name', 'desc')"
+                  @click.stop="setRepoSort('full_name', 'desc')"
+                >
+                  <CaretBottom />
+                </el-icon>
+              </span>
+            </div>
+          </template>
           <template #default="{ row }">
             <el-link :href="row.html_url" target="_blank">{{ row.full_name || row.name }}</el-link>
             <div class="gitee-muted">{{ row.description || "暂无描述" }}</div>
           </template>
         </el-table-column>
-        <el-table-column label="语言" width="120">
+        <el-table-column width="120">
+          <template #header>
+            <div class="gitee-column-header">
+              <span>语言</span>
+              <span class="gitee-sort-icons">
+                <el-icon
+                  :class="getRepoSortClass('language', 'asc')"
+                  @click.stop="setRepoSort('language', 'asc')"
+                >
+                  <CaretTop />
+                </el-icon>
+                <el-icon
+                  :class="getRepoSortClass('language', 'desc')"
+                  @click.stop="setRepoSort('language', 'desc')"
+                >
+                  <CaretBottom />
+                </el-icon>
+              </span>
+            </div>
+          </template>
           <template #default="{ row }">
             <el-tag v-if="row.language" size="small" effect="plain">{{ row.language }}</el-tag>
             <span v-else>—</span>
           </template>
         </el-table-column>
-        <el-table-column label="Star" width="90" prop="stargazers_count" />
-        <el-table-column label="Fork" width="90" prop="forks_count" />
-        <el-table-column label="Watch" width="90" prop="watchers_count" />
-        <el-table-column label="更新时间" width="180">
+        <el-table-column width="90" prop="stargazers_count">
+          <template #header>
+            <div class="gitee-column-header">
+              <span>Star</span>
+              <span class="gitee-sort-icons">
+                <el-icon
+                  :class="getRepoSortClass('stargazers_count', 'asc')"
+                  @click.stop="setRepoSort('stargazers_count', 'asc')"
+                >
+                  <CaretTop />
+                </el-icon>
+                <el-icon
+                  :class="getRepoSortClass('stargazers_count', 'desc')"
+                  @click.stop="setRepoSort('stargazers_count', 'desc')"
+                >
+                  <CaretBottom />
+                </el-icon>
+              </span>
+            </div>
+          </template>
+        </el-table-column>
+        <el-table-column width="90" prop="forks_count">
+          <template #header>
+            <div class="gitee-column-header">
+              <span>Fork</span>
+              <span class="gitee-sort-icons">
+                <el-icon
+                  :class="getRepoSortClass('forks_count', 'asc')"
+                  @click.stop="setRepoSort('forks_count', 'asc')"
+                >
+                  <CaretTop />
+                </el-icon>
+                <el-icon
+                  :class="getRepoSortClass('forks_count', 'desc')"
+                  @click.stop="setRepoSort('forks_count', 'desc')"
+                >
+                  <CaretBottom />
+                </el-icon>
+              </span>
+            </div>
+          </template>
+        </el-table-column>
+        <el-table-column width="90" prop="watchers_count">
+          <template #header>
+            <div class="gitee-column-header">
+              <span>Watch</span>
+              <span class="gitee-sort-icons">
+                <el-icon
+                  :class="getRepoSortClass('watchers_count', 'asc')"
+                  @click.stop="setRepoSort('watchers_count', 'asc')"
+                >
+                  <CaretTop />
+                </el-icon>
+                <el-icon
+                  :class="getRepoSortClass('watchers_count', 'desc')"
+                  @click.stop="setRepoSort('watchers_count', 'desc')"
+                >
+                  <CaretBottom />
+                </el-icon>
+              </span>
+            </div>
+          </template>
+        </el-table-column>
+        <el-table-column width="180">
+          <template #header>
+            <div class="gitee-column-header">
+              <span>更新时间</span>
+              <span class="gitee-sort-icons">
+                <el-icon
+                  :class="getRepoSortClass('updated_at', 'asc')"
+                  @click.stop="setRepoSort('updated_at', 'asc')"
+                >
+                  <CaretTop />
+                </el-icon>
+                <el-icon
+                  :class="getRepoSortClass('updated_at', 'desc')"
+                  @click.stop="setRepoSort('updated_at', 'desc')"
+                >
+                  <CaretBottom />
+                </el-icon>
+              </span>
+            </div>
+          </template>
           <template #default="{ row }">{{ formatTime(row.updated_at) }}</template>
         </el-table-column>
       </el-table>
@@ -138,6 +283,45 @@
         <div class="gitee-card-header">
           <span>授权用户 Issues</span>
           <div class="gitee-card-actions">
+            <el-select
+              v-model="issueFilter"
+              size="small"
+              class="gitee-filter"
+              placeholder="筛选范围"
+            >
+              <el-option label="我负责的" value="assigned" />
+              <el-option label="我创建的" value="created" />
+              <el-option label="全部" value="all" />
+            </el-select>
+            <el-select
+              v-model="issueState"
+              size="small"
+              class="gitee-filter"
+              placeholder="状态"
+            >
+              <el-option label="全部" value="all" />
+              <el-option label="开启" value="open" />
+              <el-option label="进行中" value="progressing" />
+              <el-option label="关闭" value="closed" />
+              <el-option label="拒绝" value="rejected" />
+            </el-select>
+            <el-input
+              v-model="issueLabels"
+              placeholder="标签（用逗号分隔）"
+              size="small"
+              clearable
+              class="gitee-filter-wide"
+            />
+            <el-select
+              v-model="issuePerPage"
+              size="small"
+              class="gitee-filter"
+              placeholder="每页数量"
+            >
+              <el-option label="20/页" :value="20" />
+              <el-option label="50/页" :value="50" />
+              <el-option label="100/页" :value="100" />
+            </el-select>
             <el-input
               v-model="issueKeyword"
               placeholder="搜索 Issue"
@@ -157,23 +341,99 @@
         </div>
       </template>
       <el-table v-if="filteredIssues.length" :data="filteredIssues" stripe>
-        <el-table-column label="标题" min-width="240">
+        <el-table-column min-width="240">
+          <template #header>
+            <div class="gitee-column-header">
+              <span>标题</span>
+              <span class="gitee-sort-icons">
+                <el-icon
+                  :class="getIssueSortClass('title', 'asc')"
+                  @click.stop="setIssueSort('title', 'asc')"
+                >
+                  <CaretTop />
+                </el-icon>
+                <el-icon
+                  :class="getIssueSortClass('title', 'desc')"
+                  @click.stop="setIssueSort('title', 'desc')"
+                >
+                  <CaretBottom />
+                </el-icon>
+              </span>
+            </div>
+          </template>
           <template #default="{ row }">
             <el-link :href="row.html_url" target="_blank">{{ row.title }}</el-link>
             <div class="gitee-muted">{{ row.repository?.full_name || "—" }}</div>
           </template>
         </el-table-column>
-        <el-table-column label="状态" width="120">
+        <el-table-column width="120">
+          <template #header>
+            <div class="gitee-column-header">
+              <span>状态</span>
+              <span class="gitee-sort-icons">
+                <el-icon
+                  :class="getIssueSortClass('state', 'asc')"
+                  @click.stop="setIssueSort('state', 'asc')"
+                >
+                  <CaretTop />
+                </el-icon>
+                <el-icon
+                  :class="getIssueSortClass('state', 'desc')"
+                  @click.stop="setIssueSort('state', 'desc')"
+                >
+                  <CaretBottom />
+                </el-icon>
+              </span>
+            </div>
+          </template>
           <template #default="{ row }">
             <el-tag size="small" effect="plain">
               {{ row.issue_state_detail?.title || row.state || "未知" }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="更新时间" width="180">
+        <el-table-column width="180">
+          <template #header>
+            <div class="gitee-column-header">
+              <span>更新时间</span>
+              <span class="gitee-sort-icons">
+                <el-icon
+                  :class="getIssueSortClass('updated_at', 'asc')"
+                  @click.stop="setIssueSort('updated_at', 'asc')"
+                >
+                  <CaretTop />
+                </el-icon>
+                <el-icon
+                  :class="getIssueSortClass('updated_at', 'desc')"
+                  @click.stop="setIssueSort('updated_at', 'desc')"
+                >
+                  <CaretBottom />
+                </el-icon>
+              </span>
+            </div>
+          </template>
           <template #default="{ row }">{{ formatTime(row.updated_at) }}</template>
         </el-table-column>
-        <el-table-column label="创建时间" width="180">
+        <el-table-column width="180">
+          <template #header>
+            <div class="gitee-column-header">
+              <span>创建时间</span>
+              <span class="gitee-sort-icons">
+                <el-icon
+                  :class="getIssueSortClass('created_at', 'asc')"
+                  @click.stop="setIssueSort('created_at', 'asc')"
+                >
+                  <CaretTop />
+                </el-icon>
+                <el-icon
+                  :class="getIssueSortClass('created_at', 'desc')"
+                  @click.stop="setIssueSort('created_at', 'desc')"
+                >
+                  <CaretBottom />
+                </el-icon>
+              </span>
+            </div>
+          </template>
           <template #default="{ row }">{{ formatTime(row.created_at) }}</template>
         </el-table-column>
       </el-table>
@@ -185,6 +445,46 @@
         <div class="gitee-card-header">
           <span>授权用户通知</span>
           <div class="gitee-card-actions">
+            <el-select
+              v-model="noticeUnread"
+              size="small"
+              class="gitee-filter"
+              placeholder="未读状态"
+            >
+              <el-option label="全部" value="all" />
+              <el-option label="仅未读" value="true" />
+              <el-option label="仅已读" value="false" />
+            </el-select>
+            <el-select
+              v-model="noticeParticipating"
+              size="small"
+              class="gitee-filter"
+              placeholder="参与状态"
+            >
+              <el-option label="全部" value="all" />
+              <el-option label="仅参与" value="true" />
+              <el-option label="未参与" value="false" />
+            </el-select>
+            <el-select
+              v-model="noticeType"
+              size="small"
+              class="gitee-filter"
+              placeholder="通知类型"
+            >
+              <el-option label="全部" value="all" />
+              <el-option label="事件通知" value="event" />
+              <el-option label="@通知" value="referer" />
+            </el-select>
+            <el-select
+              v-model="noticePerPage"
+              size="small"
+              class="gitee-filter"
+              placeholder="每页数量"
+            >
+              <el-option label="20/页" :value="20" />
+              <el-option label="50/页" :value="50" />
+              <el-option label="100/页" :value="100" />
+            </el-select>
             <el-input
               v-model="noticeKeyword"
               placeholder="搜索通知"
@@ -233,7 +533,8 @@
 </template>
 
 <script setup name="GiteeProfile">
-import { ElMessage } from "element-plus"
+import { ElMessage, ElMessageBox } from "element-plus"
+import { CaretBottom, CaretTop } from "@element-plus/icons-vue"
 import { parseTime } from "@/utils/WxFbsir"
 import {
   getGiteeStatus,
@@ -241,7 +542,8 @@ import {
   fetchGiteeProfile,
   fetchGiteeRepos,
   fetchGiteeIssues,
-  fetchGiteeNotifications
+  fetchGiteeNotifications,
+  unbindGitee
 } from "@/api/business/gitee/profile"
 
 const redirectPath = "/user/profile/gitee"
@@ -252,10 +554,25 @@ const notifications = ref([])
 
 const authorized = ref(false)
 const authorizing = ref(false)
+const unbinding = ref(false)
 
 const repoKeyword = ref("")
 const issueKeyword = ref("")
 const noticeKeyword = ref("")
+const repoVisibility = ref("all")
+const repoSort = ref("updated_at")
+const repoDirection = ref("desc")
+const repoPerPage = ref(50)
+const issueFilter = ref("created")
+const issueState = ref("all")
+const issueLabels = ref("")
+const issueSort = ref("created_at")
+const issueDirection = ref("desc")
+const issuePerPage = ref(50)
+const noticeUnread = ref("all")
+const noticeParticipating = ref("all")
+const noticeType = ref("all")
+const noticePerPage = ref(50)
 
 const loadingProfile = ref(false)
 const loadingRepos = ref(false)
@@ -265,35 +582,41 @@ const loadingAll = ref(false)
 
 const filteredRepos = computed(() => {
   const keyword = repoKeyword.value.trim().toLowerCase()
-  if (!keyword) {
-    return repos.value
-  }
-  return repos.value.filter(repo => {
-    return (repo.full_name || repo.name || "").toLowerCase().includes(keyword)
-  })
+  const filtered = keyword
+    ? repos.value.filter(repo => {
+        return (repo.full_name || repo.name || "").toLowerCase().includes(keyword)
+      })
+    : repos.value
+  return sortRepos(filtered)
 })
 
 const filteredIssues = computed(() => {
   const keyword = issueKeyword.value.trim().toLowerCase()
-  if (!keyword) {
-    return issues.value
-  }
-  return issues.value.filter(issue => {
-    const title = issue.title || ""
-    const repo = issue.repository?.full_name || ""
-    return `${title} ${repo}`.toLowerCase().includes(keyword)
-  })
+  const filtered = keyword
+    ? issues.value.filter(issue => {
+        const title = issue.title || ""
+        const repo = issue.repository?.full_name || ""
+        return `${title} ${repo}`.toLowerCase().includes(keyword)
+      })
+    : issues.value
+  return sortIssues(filtered)
 })
 
 const filteredNotifications = computed(() => {
   const keyword = noticeKeyword.value.trim().toLowerCase()
-  if (!keyword) {
-    return notifications.value
-  }
   return notifications.value.filter(notice => {
     const content = notice.content || ""
     const repo = notice.repository?.full_name || ""
-    return `${content} ${repo}`.toLowerCase().includes(keyword)
+    if (keyword && !`${content} ${repo}`.toLowerCase().includes(keyword)) {
+      return false
+    }
+    if (noticeType.value !== "all" && notice.type !== noticeType.value) {
+      return false
+    }
+    if (noticeUnread.value !== "all" && String(Boolean(notice.unread)) !== noticeUnread.value) {
+      return false
+    }
+    return true
   })
 })
 
@@ -305,6 +628,118 @@ function formatTime(value) {
 function handleError(error, fallback) {
   const message = error?.response?.data?.message || error?.message || fallback
   ElMessage.error(message)
+}
+
+function setIssueSort(field, direction) {
+  issueSort.value = field
+  issueDirection.value = direction
+}
+
+function getIssueSortClass(field, direction) {
+  return [
+    "gitee-sort-icon",
+    issueSort.value === field && issueDirection.value === direction ? "is-active" : ""
+  ]
+}
+
+function sortIssues(list) {
+  const key = issueSort.value
+  const direction = issueDirection.value === "asc" ? 1 : -1
+  if (!key) {
+    return list
+  }
+  return [...list].sort((a, b) => {
+    const left = getIssueSortValue(a, key)
+    const right = getIssueSortValue(b, key)
+    if (left === right) {
+      return 0
+    }
+    if (left == null) {
+      return 1
+    }
+    if (right == null) {
+      return -1
+    }
+    if (typeof left === "number" && typeof right === "number") {
+      return (left - right) * direction
+    }
+    return String(left).localeCompare(String(right)) * direction
+  })
+}
+
+function getIssueSortValue(issue, key) {
+  if (!issue) {
+    return ""
+  }
+  if (key === "title") {
+    return issue.title || ""
+  }
+  if (key === "state") {
+    return issue.issue_state_detail?.title || issue.state || ""
+  }
+  if (key === "updated_at") {
+    return Date.parse(issue.updated_at || "") || 0
+  }
+  if (key === "created_at") {
+    return Date.parse(issue.created_at || "") || 0
+  }
+  return issue[key] ?? ""
+}
+
+function setRepoSort(field, direction) {
+  repoSort.value = field
+  repoDirection.value = direction
+}
+
+function getRepoSortClass(field, direction) {
+  return [
+    "gitee-sort-icon",
+    repoSort.value === field && repoDirection.value === direction ? "is-active" : ""
+  ]
+}
+
+function sortRepos(list) {
+  const key = repoSort.value
+  const direction = repoDirection.value === "asc" ? 1 : -1
+  if (!key) {
+    return list
+  }
+  return [...list].sort((a, b) => {
+    const left = getRepoSortValue(a, key)
+    const right = getRepoSortValue(b, key)
+    if (left === right) {
+      return 0
+    }
+    if (left == null) {
+      return 1
+    }
+    if (right == null) {
+      return -1
+    }
+    if (typeof left === "number" && typeof right === "number") {
+      return (left - right) * direction
+    }
+    return String(left).localeCompare(String(right)) * direction
+  })
+}
+
+function getRepoSortValue(repo, key) {
+  if (!repo) {
+    return ""
+  }
+  if (key === "full_name") {
+    return repo.full_name || repo.name || ""
+  }
+  if (key === "language") {
+    return repo.language || ""
+  }
+  if (key === "updated_at") {
+    return Date.parse(repo.updated_at || "") || 0
+  }
+  if (key === "stargazers_count" || key === "forks_count" || key === "watchers_count") {
+    return Number(repo[key] ?? 0)
+  }
+  return repo[key] ?? ""
 }
 
 function clearData() {
@@ -366,7 +801,21 @@ async function fetchRepos() {
   }
   loadingRepos.value = true
   try {
-    const res = await fetchGiteeRepos({ sort: "updated", per_page: 50 })
+    const params = {
+      per_page: repoPerPage.value
+    }
+    const apiSort = getRepoApiSort(repoSort.value)
+    if (apiSort) {
+      params.sort = apiSort
+      params.direction = repoDirection.value
+    }
+    if (repoVisibility.value !== "all") {
+      params.visibility = repoVisibility.value
+    }
+    if (repoKeyword.value.trim()) {
+      params.q = repoKeyword.value.trim()
+    }
+    const res = await fetchGiteeRepos(params)
     const data = res.data
     repos.value = Array.isArray(data) ? data : []
   } catch (error) {
@@ -376,13 +825,36 @@ async function fetchRepos() {
   }
 }
 
+function getRepoApiSort(field) {
+  const map = {
+    full_name: "full_name",
+    updated_at: "updated",
+    created_at: "created",
+    pushed_at: "pushed"
+  }
+  return map[field] || ""
+}
+
 async function fetchIssues() {
   if (!authorized.value) {
     return
   }
   loadingIssues.value = true
   try {
-    const res = await fetchGiteeIssues({ state: "all", per_page: 50 })
+    const params = {
+      filter: issueFilter.value,
+      state: issueState.value,
+      per_page: issuePerPage.value
+    }
+    const apiSort = getIssueApiSort(issueSort.value)
+    if (apiSort) {
+      params.sort = apiSort
+      params.direction = issueDirection.value
+    }
+    if (issueLabels.value.trim()) {
+      params.labels = issueLabels.value.trim()
+    }
+    const res = await fetchGiteeIssues(params)
     const data = res.data
     issues.value = Array.isArray(data) ? data : []
   } catch (error) {
@@ -392,13 +864,33 @@ async function fetchIssues() {
   }
 }
 
+function getIssueApiSort(field) {
+  const map = {
+    created_at: "created",
+    updated_at: "updated"
+  }
+  return map[field] || ""
+}
+
 async function fetchNotifications() {
   if (!authorized.value) {
     return
   }
   loadingNotices.value = true
   try {
-    const res = await fetchGiteeNotifications({ per_page: 50 })
+    const params = {
+      per_page: noticePerPage.value
+    }
+    if (noticeUnread.value !== "all") {
+      params.unread = noticeUnread.value
+    }
+    if (noticeParticipating.value !== "all") {
+      params.participating = noticeParticipating.value
+    }
+    if (noticeType.value !== "all") {
+      params.type = noticeType.value
+    }
+    const res = await fetchGiteeNotifications(params)
     const data = res.data
     if (data && Array.isArray(data.list)) {
       notifications.value = data.list
@@ -431,6 +923,36 @@ async function handleRefreshAll() {
   }
 }
 
+async function handleUnbind() {
+  if (!authorized.value) {
+    return
+  }
+  try {
+    await ElMessageBox.confirm(
+      "解除绑定会清除已授权的 Gitee 信息，后续需重新授权才能使用相关功能。是否继续？",
+      "解除绑定",
+      {
+        confirmButtonText: "确认解除",
+        cancelButtonText: "取消",
+        type: "warning"
+      }
+    )
+  } catch (error) {
+    return
+  }
+  unbinding.value = true
+  try {
+    await unbindGitee()
+    authorized.value = false
+    clearData()
+    ElMessage.success("已解除绑定")
+  } catch (error) {
+    handleError(error, "解除绑定失败")
+  } finally {
+    unbinding.value = false
+  }
+}
+
 async function loadStatus() {
   try {
     const res = await getGiteeStatus()
@@ -444,6 +966,34 @@ async function loadStatus() {
     authorizing.value = false
   }
 }
+
+watch([repoVisibility, repoPerPage], () => {
+  if (!authorized.value || loadingRepos.value) {
+    return
+  }
+  fetchRepos()
+})
+
+watch([
+  issueFilter,
+  issueState,
+  issueSort,
+  issueDirection,
+  issueLabels,
+  issuePerPage
+], () => {
+  if (!authorized.value || loadingIssues.value) {
+    return
+  }
+  fetchIssues()
+})
+
+watch([noticeUnread, noticeParticipating, noticeType, noticePerPage], () => {
+  if (!authorized.value || loadingNotices.value) {
+    return
+  }
+  fetchNotifications()
+})
 
 onMounted(async () => {
   const route = useRoute()
@@ -544,8 +1094,39 @@ onMounted(async () => {
   flex-wrap: wrap;
 }
 
+.gitee-column-header {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.gitee-sort-icons {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 2px;
+  cursor: pointer;
+}
+
+.gitee-sort-icon {
+  font-size: 12px;
+  color: #c0c4cc;
+  line-height: 1;
+}
+
+.gitee-sort-icon.is-active {
+  color: #409eff;
+}
+
 .gitee-search-input {
   width: 200px;
+}
+
+.gitee-filter {
+  width: 140px;
+}
+
+.gitee-filter-wide {
+  width: 220px;
 }
 
 .gitee-muted {

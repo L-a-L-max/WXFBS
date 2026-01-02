@@ -2,16 +2,25 @@ package com.wx.fbsir.business.gitee.util;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.time.OffsetDateTime;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.function.Supplier;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
+import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
 
 public final class GiteeOauthUtil {
@@ -24,6 +33,9 @@ public final class GiteeOauthUtil {
     public static final String NOTIFICATIONS_URL = "https://gitee.com/api/v5/notifications/threads";
 
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+    private static final int CONNECT_TIMEOUT_MS = 3000;
+    private static final int READ_TIMEOUT_MS = 8000;
+    private static final int MAX_RETRIES = 1;
 
     private GiteeOauthUtil() {
     }
@@ -48,7 +60,7 @@ public final class GiteeOauthUtil {
 
     public static GiteeOauthToken exchangeCodeForToken(String clientId, String clientSecret, String callbackUrl, String code)
         throws Exception {
-        RestTemplate restTemplate = new RestTemplate();
+        RestTemplate restTemplate = createRestTemplate();
         MultiValueMap<String, String> form = new LinkedMultiValueMap<>();
         form.add("grant_type", "authorization_code");
         form.add("code", code);
@@ -60,7 +72,7 @@ public final class GiteeOauthUtil {
         headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
         HttpEntity<MultiValueMap<String, String>> entity = new HttpEntity<>(form, headers);
 
-        String response = restTemplate.postForObject(TOKEN_URL, entity, String.class);
+        String response = executeWithRetry(() -> restTemplate.postForObject(TOKEN_URL, entity, String.class));
         if (response == null || response.isBlank()) {
             throw new Exception("gitee token响应为空");
         }
@@ -117,8 +129,24 @@ public final class GiteeOauthUtil {
         if (params != null && !params.isEmpty()) {
             resolvedParams.putAll(params);
         }
-        resolvedParams.put("filter", "all");
-        resolvedParams.put("state", "all");
+        String filter = resolvedParams.get("filter");
+        if (filter == null || filter.isBlank()) {
+            filter = "assigned";
+            resolvedParams.put("filter", filter);
+        }
+        String state = resolvedParams.get("state");
+        if (state == null || state.isBlank()) {
+            resolvedParams.put("state", "open");
+        }
+        if ("all".equalsIgnoreCase(filter)) {
+            Map<String, String> assignedParams = new LinkedHashMap<>(resolvedParams);
+            assignedParams.put("filter", "assigned");
+            Map<String, String> createdParams = new LinkedHashMap<>(resolvedParams);
+            createdParams.put("filter", "created");
+            JsonNode assigned = fetchJson(USER_ISSUES_URL, accessToken, assignedParams);
+            JsonNode created = fetchJson(USER_ISSUES_URL, accessToken, createdParams);
+            return mergeIssueResults(assigned, created, resolvedParams);
+        }
         return fetchJson(USER_ISSUES_URL, accessToken, resolvedParams);
     }
 
@@ -127,13 +155,34 @@ public final class GiteeOauthUtil {
     }
 
     private static JsonNode fetchJson(String baseUrl, String accessToken, Map<String, String> params) throws Exception {
-        RestTemplate restTemplate = new RestTemplate();
+        RestTemplate restTemplate = createRestTemplate();
         String url = buildUrl(baseUrl, accessToken, params);
-        String response = restTemplate.getForObject(url, String.class);
+        String response = executeWithRetry(() -> restTemplate.getForObject(url, String.class));
         if (response == null || response.isBlank()) {
             throw new Exception("gitee响应为空");
         }
         return OBJECT_MAPPER.readTree(response);
+    }
+
+    private static RestTemplate createRestTemplate() {
+        SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
+        factory.setConnectTimeout(CONNECT_TIMEOUT_MS);
+        factory.setReadTimeout(READ_TIMEOUT_MS);
+        return new RestTemplate(factory);
+    }
+
+    private static String executeWithRetry(Supplier<String> request) throws Exception {
+        int attempt = 0;
+        while (true) {
+            try {
+                return request.get();
+            } catch (ResourceAccessException ex) {
+                if (attempt >= MAX_RETRIES) {
+                    throw ex;
+                }
+                attempt += 1;
+            }
+        }
     }
 
     private static String buildUrl(String baseUrl, String accessToken, Map<String, String> params) {
@@ -157,6 +206,95 @@ public final class GiteeOauthUtil {
             }
         }
         return builder.toString();
+    }
+
+    private static JsonNode mergeIssueResults(JsonNode first, JsonNode second, Map<String, String> params) {
+        if (first == null || !first.isArray()) {
+            return first;
+        }
+        if (second == null || !second.isArray()) {
+            return first;
+        }
+        ArrayNode merged = OBJECT_MAPPER.createArrayNode();
+        Set<String> seen = new HashSet<>();
+        addUniqueIssues(merged, seen, first);
+        addUniqueIssues(merged, seen, second);
+        List<JsonNode> list = new ArrayList<>();
+        merged.forEach(list::add);
+        sortIssues(list, params);
+        int limit = parseInt(params == null ? null : params.get("per_page"));
+        ArrayNode result = OBJECT_MAPPER.createArrayNode();
+        int count = limit > 0 ? Math.min(limit, list.size()) : list.size();
+        for (int i = 0; i < count; i++) {
+            result.add(list.get(i));
+        }
+        return result;
+    }
+
+    private static void addUniqueIssues(ArrayNode target, Set<String> seen, JsonNode source) {
+        for (JsonNode issue : source) {
+            String id = issue.has("id") ? issue.get("id").asText() : null;
+            if (id != null && !id.isBlank()) {
+                if (seen.add(id)) {
+                    target.add(issue);
+                }
+            } else {
+                target.add(issue);
+            }
+        }
+    }
+
+    private static void sortIssues(List<JsonNode> list, Map<String, String> params) {
+        if (list.isEmpty() || params == null) {
+            return;
+        }
+        String sort = params.get("sort");
+        if (sort == null || sort.isBlank()) {
+            return;
+        }
+        String key = null;
+        if ("created".equalsIgnoreCase(sort)) {
+            key = "created_at";
+        } else if ("updated".equalsIgnoreCase(sort) || "updated_at".equalsIgnoreCase(sort)) {
+            key = "updated_at";
+        }
+        if (key == null) {
+            return;
+        }
+        String direction = params.get("direction");
+        final int multiplier = "asc".equalsIgnoreCase(direction) ? 1 : -1;
+        final String sortKey = key;
+        list.sort((left, right) -> {
+            long leftTime = parseIssueTime(left, sortKey);
+            long rightTime = parseIssueTime(right, sortKey);
+            return Long.compare(leftTime, rightTime) * multiplier;
+        });
+    }
+
+    private static long parseIssueTime(JsonNode issue, String key) {
+        if (issue == null || key == null) {
+            return 0L;
+        }
+        String value = issue.has(key) ? issue.get(key).asText() : "";
+        if (value == null || value.isBlank()) {
+            return 0L;
+        }
+        try {
+            return OffsetDateTime.parse(value).toInstant().toEpochMilli();
+        } catch (Exception ex) {
+            return 0L;
+        }
+    }
+
+    private static int parseInt(String value) {
+        if (value == null || value.isBlank()) {
+            return 0;
+        }
+        try {
+            return Integer.parseInt(value.trim());
+        } catch (NumberFormatException ex) {
+            return 0;
+        }
     }
 
     public static final class GiteeOauthToken {

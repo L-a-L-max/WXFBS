@@ -92,21 +92,6 @@
               <span class="social-text">使用 Gitee 登录</span>
               <span v-if="lastUsedProvider === 'gitee'" class="social-badge">上次使用</span>
             </button>
-            <button class="social-btn" type="button" @click="setLastUsed('github')">
-              <span class="social-icon github">GH</span>
-              <span class="social-text">使用 GitHub 登录</span>
-              <span v-if="lastUsedProvider === 'github'" class="social-badge">上次使用</span>
-            </button>
-            <button class="social-btn" type="button" @click="setLastUsed('google')">
-              <span class="social-icon google">G</span>
-              <span class="social-text">使用 Google 登录</span>
-              <span v-if="lastUsedProvider === 'google'" class="social-badge">上次使用</span>
-            </button>
-            <button class="social-btn" type="button" @click="setLastUsed('sso')">
-              <span class="social-icon sso">S</span>
-              <span class="social-text">使用 SSO 登录</span>
-              <span v-if="lastUsedProvider === 'sso'" class="social-badge">上次使用</span>
-            </button>
           </div>
           <div class="login-tip">
             <span>已有账号？</span>
@@ -461,12 +446,6 @@ function setLastUsed(provider) {
   font-weight: 700;
   color: #ffffff;
   background: #111827;
-}
-.social-icon.google {
-  background: #ea4335;
-}
-.social-icon.sso {
-  background: #3b82f6;
 }
 .social-icon.gitee {
   background: #c71d23;

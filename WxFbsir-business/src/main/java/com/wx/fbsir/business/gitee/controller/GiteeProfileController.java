@@ -6,6 +6,7 @@ import java.util.concurrent.TimeUnit;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.wx.fbsir.business.gitee.domain.GiteeAuthState;
+import com.wx.fbsir.business.gitee.mapper.GiteeBindMapper;
 import com.wx.fbsir.business.gitee.util.GiteeCacheKeyUtil;
 import com.wx.fbsir.business.gitee.util.GiteeOauthUtil;
 import com.wx.fbsir.common.core.domain.AjaxResult;
@@ -18,6 +19,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -37,6 +39,9 @@ public class GiteeProfileController {
 
     @Autowired
     private RedisCache redisCache;
+
+    @Autowired
+    private GiteeBindMapper giteeBindMapper;
 
     @GetMapping("/status")
     public AjaxResult status() {
@@ -125,6 +130,17 @@ public class GiteeProfileController {
             log.error("获取Gitee通知失败", ex);
             return AjaxResult.error(ex.getMessage());
         }
+    }
+
+    @PostMapping("/unbind")
+    public AjaxResult unbind() {
+        Long userId = SecurityUtils.getUserId();
+        if (userId == null) {
+            return AjaxResult.error("未获取到用户信息");
+        }
+        redisCache.deleteObject(GiteeCacheKeyUtil.getAccessTokenKey(userId));
+        giteeBindMapper.deleteByUserId(userId);
+        return AjaxResult.success();
     }
 
     private String getAccessToken() {

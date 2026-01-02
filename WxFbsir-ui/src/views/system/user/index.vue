@@ -63,6 +63,21 @@
               <el-table-column label="用户昵称" align="center" key="nickName" prop="nickName" v-if="columns.nickName.visible" :show-overflow-tooltip="true" />
               <el-table-column label="部门" align="center" key="deptName" prop="dept.deptName" v-if="columns.deptName.visible" :show-overflow-tooltip="true" />
               <el-table-column label="手机号码" align="center" key="phonenumber" prop="phonenumber" v-if="columns.phonenumber.visible" width="120" />
+              <el-table-column label="Gitee绑定" align="center" key="giteeBind" v-if="columns.giteeBind.visible" width="140">
+                <template #default="scope">
+                  <el-tag v-if="scope.row.giteeBound" type="success">已绑定</el-tag>
+                  <el-tag v-else type="info">未绑定</el-tag>
+                  <div v-if="scope.row.giteeUsername">{{ scope.row.giteeUsername }}</div>
+                </template>
+              </el-table-column>
+              <el-table-column label="评测结果" align="center" key="giteeReport" v-if="columns.giteeReport.visible" width="140">
+                <template #default="scope">
+                  <span v-if="scope.row.giteeLevel">
+                    {{ scope.row.giteeLevel }}<span v-if="scope.row.giteeScore !== null">({{ scope.row.giteeScore }})</span>
+                  </span>
+                  <span v-else>未评测</span>
+                </template>
+              </el-table-column>
               <el-table-column label="状态" align="center" key="status" v-if="columns.status.visible">
                 <template #default="scope">
                   <el-switch
@@ -215,6 +230,7 @@
 
 <script setup name="User">
 import { getToken } from "@/utils/auth"
+import request from "@/utils/request"
 import useAppStore from '@/store/modules/app'
 import { changeUserStatus, listUser, resetUserPwd, delUser, getUser, updateUser, addUser, deptTreeSelect } from "@/api/system/user"
 import { Splitpanes, Pane } from "splitpanes"
@@ -263,6 +279,8 @@ const columns = ref({
   nickName: { label: '用户昵称', visible: true },
   deptName: { label: '部门', visible: true },
   phonenumber: { label: '手机号码', visible: true },
+  giteeBind: { label: 'Gitee绑定', visible: true },
+  giteeReport: { label: '评测结果', visible: true },
   status: { label: '状态', visible: true },
   createTime: { label: '创建时间', visible: true }
 })
@@ -304,8 +322,16 @@ function getList() {
   loading.value = true
   listUser(proxy.addDateRange(queryParams.value, dateRange.value)).then(res => {
     loading.value = false
-    userList.value = res.rows
+    userList.value = res.rows.map(row => ({
+      ...row,
+      giteeBound: false,
+      giteeUsername: "",
+      giteeScore: null,
+      giteeLevel: "",
+      giteeReportTime: ""
+    }))
     total.value = res.total
+    fetchGiteeSummary(userList.value)
   })
 }
 
@@ -419,6 +445,41 @@ function handleResetPwd(row) {
       proxy.$modal.msgSuccess("修改成功，新密码是：" + value)
     })
   }).catch(() => {})
+}
+
+function applyGiteeSummary(summaryList) {
+  const summaryMap = {}
+  summaryList.forEach(item => {
+    if (item && item.userId != null) {
+      summaryMap[item.userId] = item
+    }
+  })
+  userList.value.forEach(row => {
+    const summary = summaryMap[row.userId]
+    row.giteeBound = !!summary?.giteeBound
+    row.giteeUsername = summary?.giteeUsername || ""
+    row.giteeScore = summary?.totalScore ?? null
+    row.giteeLevel = summary?.totalLevel || ""
+    row.giteeReportTime = summary?.reportTime || ""
+  })
+}
+
+async function fetchGiteeSummary(rows) {
+  const userIds = rows.map(row => row.userId).filter(id => id != null)
+  if (!userIds.length) {
+    return
+  }
+  try {
+    const res = await request({
+      url: "/business/gitee/admin/user-summary",
+      method: "post",
+      data: { userIds }
+    })
+    const summaryList = Array.isArray(res.data) ? res.data : []
+    applyGiteeSummary(summaryList)
+  } catch (error) {
+    // ignore summary failure to avoid blocking the list
+  }
 }
 
 /** 选择条数  */

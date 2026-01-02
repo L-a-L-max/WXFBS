@@ -6,9 +6,11 @@ import java.nio.charset.StandardCharsets;
 import java.util.concurrent.TimeUnit;
 
 import com.wx.fbsir.business.gitee.domain.GiteeAuthState;
+import com.wx.fbsir.business.gitee.domain.GiteeBind;
 import com.wx.fbsir.business.gitee.domain.GiteeBindInfo;
 import com.wx.fbsir.business.gitee.domain.GiteeBindRequest;
 import com.wx.fbsir.business.gitee.domain.GiteeCreateRequest;
+import com.wx.fbsir.business.gitee.mapper.GiteeBindMapper;
 import com.wx.fbsir.business.gitee.util.GiteeCacheKeyUtil;
 import com.wx.fbsir.business.gitee.util.GiteeOauthUtil;
 import com.wx.fbsir.common.annotation.Anonymous;
@@ -41,7 +43,6 @@ import org.springframework.web.bind.annotation.RestController;
 public class GiteeLoginController {
     private static final Logger log = LoggerFactory.getLogger(GiteeLoginController.class);
     private static final String BIND_TOKEN_KEY_PREFIX = "gitee:bind:token:";
-    private static final String BIND_USER_KEY_PREFIX = "gitee:bind:user:";
     private static final int BIND_TOKEN_EXPIRE_MINUTES = 10;
     private static final int ACCESS_TOKEN_EXPIRE_DAYS = 30;
     private static final String DEFAULT_PROFILE_REDIRECT = "/user/profile/gitee";
@@ -66,6 +67,9 @@ public class GiteeLoginController {
 
     @Autowired
     private GiteeTokenService giteeTokenService;
+
+    @Autowired
+    private GiteeBindMapper giteeBindMapper;
 
     @Anonymous
     @GetMapping("/gitlogin")
@@ -143,12 +147,13 @@ public class GiteeLoginController {
                 return;
             }
 
-            String boundUsername = redisCache.getCacheObject(getBindUserKey(profile.getId()));
-            if (StringUtils.isNotBlank(boundUsername)) {
-                SysUser boundUser = userService.selectUserByUserName(boundUsername);
+            GiteeBind bind = giteeBindMapper.selectByGiteeUserId(profile.getId());
+            if (bind != null) {
+                SysUser boundUser = userService.selectUserById(bind.getUserId());
                 if (boundUser != null
                     && !UserStatus.DELETED.getCode().equals(boundUser.getDelFlag())
                     && !UserStatus.DISABLE.getCode().equals(boundUser.getStatus())) {
+                    upsertBind(boundUser.getUserId(), profile.getId(), profile.getLogin(), profile.getName(), profile.getAvatarUrl());
                     LoginUser loginUser = new LoginUser(boundUser.getUserId(), boundUser.getDeptId(), boundUser, Collections.emptySet());
                     String oauthToken = giteeTokenService.createToken(loginUser);
                     userService.updateLoginInfo(boundUser.getUserId(), IpUtils.getIpAddr(), DateUtils.getNowDate());
@@ -157,6 +162,8 @@ public class GiteeLoginController {
                     response.sendRedirect(buildFrontendOauthRedirect(oauthToken));
                     return;
                 }
+                redirectWithError(response, "绑定账号已不可用，请联系管理员");
+                return;
             }
 
             String bindToken = IdUtils.fastUUID();
@@ -197,6 +204,9 @@ public class GiteeLoginController {
         if (bindInfo == null) {
             return AjaxResult.error("绑定信息已过期，请重新授权");
         }
+        if (StringUtils.isBlank(bindInfo.getGiteeId())) {
+            return AjaxResult.error("gitee用户信息不完整");
+        }
 
         SysUser user = userService.selectUserByUserName(request.getUsername());
         if (user == null) {
@@ -212,7 +222,12 @@ public class GiteeLoginController {
             return AjaxResult.error("账号或密码错误");
         }
 
-        redisCache.setCacheObject(getBindUserKey(bindInfo.getGiteeId()), user.getUserName());
+        try {
+            upsertBind(user.getUserId(), bindInfo);
+        } catch (IllegalStateException ex) {
+            return AjaxResult.error(ex.getMessage());
+        }
+
         redisCache.deleteObject(getBindTokenKey(request.getBindToken()));
         saveAccessToken(user.getUserId(), bindInfo.getAccessToken());
 
@@ -229,6 +244,14 @@ public class GiteeLoginController {
         GiteeBindInfo bindInfo = redisCache.getCacheObject(getBindTokenKey(request.getBindToken()));
         if (bindInfo == null) {
             return AjaxResult.error("绑定信息已过期，请重新授权");
+        }
+        if (StringUtils.isBlank(bindInfo.getGiteeId())) {
+            return AjaxResult.error("gitee用户信息不完整");
+        }
+
+        GiteeBind existingBind = giteeBindMapper.selectByGiteeUserId(bindInfo.getGiteeId());
+        if (existingBind != null) {
+            return AjaxResult.error("该Gitee账号已绑定其他用户");
         }
 
         SysUser user = new SysUser();
@@ -249,7 +272,11 @@ public class GiteeLoginController {
             return AjaxResult.error("创建用户失败");
         }
 
-        redisCache.setCacheObject(getBindUserKey(bindInfo.getGiteeId()), user.getUserName());
+        try {
+            upsertBind(user.getUserId(), bindInfo);
+        } catch (IllegalStateException ex) {
+            return AjaxResult.error(ex.getMessage());
+        }
         redisCache.deleteObject(getBindTokenKey(request.getBindToken()));
         saveAccessToken(user.getUserId(), bindInfo.getAccessToken());
 
@@ -306,7 +333,12 @@ public class GiteeLoginController {
             redirectWithProfileError(response, authState.getRedirect(), "用户不存在");
             return;
         }
-        redisCache.setCacheObject(getBindUserKey(profile.getId()), user.getUserName());
+        try {
+            upsertBind(user.getUserId(), profile.getId(), profile.getLogin(), profile.getName(), profile.getAvatarUrl());
+        } catch (IllegalStateException ex) {
+            redirectWithProfileError(response, authState.getRedirect(), ex.getMessage());
+            return;
+        }
         saveAccessToken(user.getUserId(), token);
         response.sendRedirect(buildFrontendProfileRedirect(authState.getRedirect(), null));
     }
@@ -384,12 +416,8 @@ public class GiteeLoginController {
         return BIND_TOKEN_KEY_PREFIX + token;
     }
 
-    private String getBindUserKey(String giteeId) {
-        return BIND_USER_KEY_PREFIX + giteeId;
-    }
-
     private String buildUniqueUsername(String baseUsername) {
-        String candidate = "gitee_" + baseUsername;
+        String candidate = baseUsername;
         if (userService.selectUserByUserName(candidate) == null) {
             return candidate;
         }
@@ -401,5 +429,52 @@ public class GiteeLoginController {
             }
         }
         return candidate + "_" + IdUtils.fastSimpleUUID().substring(0, 6);
+    }
+
+    private void upsertBind(Long userId, GiteeBindInfo bindInfo) {
+        if (bindInfo == null) {
+            return;
+        }
+        upsertBind(userId, bindInfo.getGiteeId(), bindInfo.getLogin(), bindInfo.getName(), bindInfo.getAvatarUrl());
+    }
+
+    private void upsertBind(Long userId, String giteeId, String login, String name, String avatar) {
+        if (userId == null || StringUtils.isBlank(giteeId)) {
+            return;
+        }
+        GiteeBind existingByGitee = giteeBindMapper.selectByGiteeUserId(giteeId);
+        if (existingByGitee != null && !userId.equals(existingByGitee.getUserId())) {
+            throw new IllegalStateException("该Gitee账号已绑定其他用户");
+        }
+        GiteeBind existingByUser = giteeBindMapper.selectByUserId(userId);
+        if (existingByUser != null && !StringUtils.equals(existingByUser.getGiteeUserId(), giteeId)) {
+            throw new IllegalStateException("该账号已绑定其他Gitee账号");
+        }
+
+        GiteeBind bind = existingByUser != null ? existingByUser : existingByGitee;
+        if (bind == null) {
+            bind = new GiteeBind();
+        }
+        bind.setUserId(userId);
+        bind.setGiteeUserId(giteeId);
+        bind.setGiteeUsername(resolveGiteeUsername(login, name, giteeId));
+        bind.setGiteeAvatar(StringUtils.defaultString(avatar));
+        bind.setBindTime(DateUtils.getNowDate());
+
+        if (bind.getBindId() == null) {
+            giteeBindMapper.insertGiteeBind(bind);
+        } else {
+            giteeBindMapper.updateGiteeBind(bind);
+        }
+    }
+
+    private String resolveGiteeUsername(String login, String name, String giteeId) {
+        if (StringUtils.isNotBlank(login)) {
+            return login;
+        }
+        if (StringUtils.isNotBlank(name)) {
+            return name;
+        }
+        return giteeId;
     }
 }

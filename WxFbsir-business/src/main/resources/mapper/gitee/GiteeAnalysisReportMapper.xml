@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.wx.fbsir.business.gitee.mapper.GiteeAnalysisReportMapper">
+
+    <resultMap id="GiteeAnalysisReportResult" type="com.wx.fbsir.business.gitee.domain.GiteeAnalysisReport">
+        <id property="reportId" column="report_id"/>
+        <result property="userId" column="user_id"/>
+        <result property="profileScore" column="profile_score"/>
+        <result property="profileLevel" column="profile_level"/>
+        <result property="communityScore" column="community_score"/>
+        <result property="communityLevel" column="community_level"/>
+        <result property="techScore" column="tech_score"/>
+        <result property="techLevel" column="tech_level"/>
+        <result property="totalScore" column="total_score"/>
+        <result property="totalLevel" column="total_level"/>
+        <result property="reportTime" column="report_time"/>
+    </resultMap>
+
+    <insert id="insertGiteeAnalysisReport" parameterType="com.wx.fbsir.business.gitee.domain.GiteeAnalysisReport" useGeneratedKeys="true" keyProperty="reportId">
+        INSERT INTO gitee_analysis_report (
+            user_id,
+            profile_score,
+            profile_level,
+            community_score,
+            community_level,
+            tech_score,
+            tech_level,
+            total_score,
+            total_level,
+            report_time
+        ) VALUES (
+            #{userId},
+            #{profileScore},
+            #{profileLevel},
+            #{communityScore},
+            #{communityLevel},
+            #{techScore},
+            #{techLevel},
+            #{totalScore},
+            #{totalLevel},
+            #{reportTime}
+        )
+    </insert>
+
+    <select id="selectLatestByUserIds" resultMap="GiteeAnalysisReportResult">
+        SELECT r.report_id, r.user_id, r.profile_score, r.profile_level,
+               r.community_score, r.community_level, r.tech_score, r.tech_level,
+               r.total_score, r.total_level, r.report_time
+        FROM gitee_analysis_report r
+        INNER JOIN (
+            SELECT user_id, MAX(report_id) AS max_id
+            FROM gitee_analysis_report
+            WHERE user_id IN
+            <foreach collection="userIds" item="userId" open="(" separator="," close=")">
+                #{userId}
+            </foreach>
+            GROUP BY user_id
+        ) latest
+        ON r.user_id = latest.user_id
+        AND r.report_id = latest.max_id
+    </select>
+
+    <select id="countByRange" resultType="int">
+        SELECT COUNT(1)
+        FROM gitee_analysis_report
+        WHERE report_time &gt;= #{startTime}
+        AND report_time &lt; #{endTime}
+    </select>
+
+    <select id="countDistinctUserByRange" resultType="int">
+        SELECT COUNT(DISTINCT user_id)
+        FROM gitee_analysis_report
+        WHERE report_time &gt;= #{startTime}
+        AND report_time &lt; #{endTime}
+    </select>
+
+    <select id="selectScoreDistributionByRange" resultType="com.wx.fbsir.business.gitee.domain.GiteeScoreRangeCount">
+        SELECT
+            CASE
+                WHEN total_score IS NULL THEN '未评分'
+                WHEN total_score &lt; 60 THEN '0-59'
+                WHEN total_score &lt; 70 THEN '60-69'
+                WHEN total_score &lt; 80 THEN '70-79'
+                WHEN total_score &lt; 90 THEN '80-89'
+                ELSE '90-100'
+            END AS scoreRange,
+            COUNT(1) AS userCount
+        FROM gitee_analysis_report
+        WHERE report_time &gt;= #{startTime}
+        AND report_time &lt; #{endTime}
+        GROUP BY scoreRange
+        ORDER BY CASE scoreRange
+            WHEN '0-59' THEN 1
+            WHEN '60-69' THEN 2
+            WHEN '70-79' THEN 3
+            WHEN '80-89' THEN 4
+            WHEN '90-100' THEN 5
+            ELSE 6
+        END
+    </select>
+
+</mapper>
