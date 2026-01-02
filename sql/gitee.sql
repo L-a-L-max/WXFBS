@@ -1,5 +1,5 @@
 -- ----------------------------
--- 2.1、Gitee绑定表
+-- 1、Gitee绑定表
 -- ----------------------------
 drop table if exists gitee_bind;
 create table gitee_bind (
@@ -30,7 +30,7 @@ end$$
 delimiter ;
 
 -- ----------------------------
--- 2.2、Gitee评测报告表
+-- 2、Gitee评测报告表
 -- ----------------------------
 drop table if exists gitee_analysis_report;
 create table gitee_analysis_report (
@@ -51,7 +51,7 @@ create table gitee_analysis_report (
 ) engine=innodb comment = 'Gitee评测报告表';
 
 -- ----------------------------
--- 2.3、Gitee模块使用统计报表
+-- 3、Gitee模块使用统计报表
 -- ----------------------------
 drop table if exists gitee_usage_report;
 create table gitee_usage_report (
@@ -68,3 +68,43 @@ create table gitee_usage_report (
   unique key uk_gitee_usage_date (report_date),
   key idx_gitee_usage_date (report_date)
 ) engine=innodb comment = 'Gitee模块使用统计报表';
+
+-- ----------------------------
+-- 4、菜单权限表
+-- ----------------------------
+-- ----------------------------
+-- 初始化-菜单信息表数据
+-- ----------------------------
+-- 菜单ID规划说明（统一规划，便于扩展和维护）：
+-- ┌─────────────┬──────────┬─────────────────────────────────────┐
+-- │ 菜单层级    │ ID范围   │ 说明                                │
+-- ├─────────────┼──────────┼─────────────────────────────────────┤
+-- │ 一级菜单    │ 1-99     │ 顶级目录（如：内容管理、系统管理）  │
+-- │ 二级菜单    │ 100-499  │ 功能页面（系统100-117，业务118起）  │
+-- │ 三级菜单    │ 500-999  │ 子页面/子功能                       │
+-- │ 按钮权限    │ 1000+    │ 按钮级操作（系统1000-1060，业务1061起）│
+-- └─────────────┴──────────┴─────────────────────────────────────┘
+--
+-- 业务模块ID分配：
+--   二级菜单：118=日更助手, 119=发布记录, 120-199预留
+--   按钮权限：1061-1080=日更助手, 1081-1100=发布记录, 1101+预留
+--
+-- 权限标识命名规范：模块:功能:操作
+--   业务模块：business:daily:*, business:publish:*, business:wechat:*
+--   系统模块：system:*, monitor:*, tool:*
+-- ----------------------------
+-- 一级菜单（ID: 1-99）
+insert into sys_menu values('8', 'gitee管理', '0', '8', 'gitee', null, '', '', 1, 0, 'M', '0', '0', '', 'gitee', 'admin', sysdate(), '', null, 'gitee管理目录');
+-- 二级菜单（ID范围：100-499）
+-- 内容管理子菜单（parent_id=1，业务功能从118开始）
+insert into sys_menu values('127',  '使用统计', '8',   '1', 'usage-report', 'business/gitee/giteeUsageReport', '', '', 1, 0, 'C', '0', '0', 'business:gitee:usage:list', 'chart', 'admin', sysdate(), '', null, 'Gitee模块使用统计菜单');
+insert into sys_menu values('128',  'gitee分析', '8',  '2', 'gitee-analysis', 'business/gitee/giteeAnalysis', '', '', 1, 0, 'C', '0', '0', 'business:gitee:analysis:view', 'chart', 'admin', sysdate(), '', null, 'Gitee分析菜单');
+
+-- ----------------------------
+-- 5、积分统计表
+-- ----------------------------
+-- ----------------------------
+-- 初始化积分规则数据
+-- ----------------------------
+INSERT INTO `wx_points_rule` (`rule_code`, `rule_name`, `points_value`, `limit_type`, `limit_value`, `max_amount`, `status`, `sort_order`, `remark`, `create_by`, `create_time`) VALUES
+('GITEE_ANALYSIS', 'gitee分析', -1, '2', NULL, NULL, '0', 2, 'gitee分析', 'admin', NOW());
