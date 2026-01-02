@@ -15,7 +15,8 @@ wxfbsir:
   # 域名配置（用于拼接完整URL）
   # 开发环境示例：http://localhost:8080
   # 生产环境建议使用环境变量：WXFBSIR_DOMAIN
-  domain: ${WXFBSIR_DOMAIN:http://localhost:8080}
+  # domain: ${WXFBSIR_DOMAIN:http://localhost:8080}
+  domain: https://你的域名
   websocket: # 是否启用 WebSocket 服务
       enabled: true
       # WebSocket 端点路径
@@ -32,7 +33,6 @@ wxfbsir:
       session-cleanup-interval: 60
       # 消息队列最大大小
       message-queue-size: 10000
-  domain: https://你的域名
 
 # 开发环境配置
 server:
