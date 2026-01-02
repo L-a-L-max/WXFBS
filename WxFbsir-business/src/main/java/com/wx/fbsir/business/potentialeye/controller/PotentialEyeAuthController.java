@@ -65,8 +65,6 @@ public class PotentialEyeAuthController {
                     scheme = request.getScheme();
                 }
                 String host = request.getHeader("Host");
-                //if (host.equals("localhost:8080")) host = "43.139.254.160:8080";
-                if (host.equals("localhost:8080") || host.equals("73327d6b.r9.vip.cpolar.cn")) host = "mcs.u3w.com"; //本地启动需要配置
                 redirectUri = scheme + "://" + host + "/api/auth/callback";
             }
 

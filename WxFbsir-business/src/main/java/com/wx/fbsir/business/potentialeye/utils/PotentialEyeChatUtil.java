@@ -117,9 +117,6 @@ public class PotentialEyeChatUtil {
 
             // 构建请求URL
             String requestUrl = buildRequestUrl(targetUrl, msgSignature, timestampStr, nonce);
-
-            System.out.println(requestUrl);
-
             // 构建请求实体
             HttpEntity<String> requestEntity = buildSimpleRequestEntity(encryptedXml);
 

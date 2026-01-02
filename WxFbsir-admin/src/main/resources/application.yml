@@ -32,7 +32,6 @@ wxfbsir:
       session-cleanup-interval: 60
       # 消息队列最大大小
       message-queue-size: 10000
-  domain: https://你的域名
 
 # 开发环境配置
 server:
