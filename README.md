@@ -1,7 +1,7 @@
 <h1 align="center" style="margin: 30px 0 30px; font-weight: bold;">微信福帮手</h1>
 <h4 align="center">助力中小团队深耕微信生态AI机遇</h4>
 <p align="center">
-	<a href="https://gitee.com/U3W-AI/RuoYi-Vue"><img src="https://img.shields.io/badge/WxFbsir-v1.1.6-brightgreen.svg"></a>
+	<a href="https://gitee.com/U3W-AI/RuoYi-Vue"><img src="https://img.shields.io/badge/WxFbsir-v1.1.7-brightgreen.svg"></a>
 	<a href="https://www.fbsir.com"><img src="https://img.shields.io/badge/website-www.fbsir.com-blue.svg"></a>
 </p>
 
@@ -10,22 +10,7 @@
 ## 项目简介
 
 
-项目定位：AI赋能的微信生态运营工具，帮助中小团队高效运营公众号、社群、企业微信等流量矩阵，助力实现微信生态资产智能化。
-
-🎯 **核心价值主张**
-
-目标用户：专注于微信生态运营的中小团队
-
-核心使命：通过AI技术降低微信生态内容创作和运营的门槛，提升运营效率
-
-
-
-🌟 **项目愿景**
-
-通过AI技术赋能微信生态运营，为中小团队提供一站式的智能化内容创作和管理解决方案，降低运营成本，提升内容质量，助力团队在微信生态中建立竞争优势。
-
-
-
+项目定位：以AI赋能团队建设，推动智能原生企业更快涌现。微信福帮手WxFBSir，福润百业，智生万象。
 
 ## 系统特色
 
@@ -45,7 +30,7 @@
 
 同时集成Swagger API文档自动生成，提升开发效率。
 
-PlayWright应用及WebSocket集成框架，将RPA与AI一炉同炼，为智能资产的挖掘提供更多创意空间。
+PlayWright应用及WebSocket集成框架，将RPA与AI一炉同炼，为人机协同和智能资产的挖掘提供更多创意空间。
 
 
 ### ✨ **特色模块之日更助手**
@@ -64,6 +49,11 @@ PlayWright应用及WebSocket集成框架，将RPA与AI一炉同炼，为智能�
 公众号投递：一键投递优化后文章到微信公众号草稿箱
 
 历史记录管理：保存所有生成文章，支持查看、编辑和删除
+
+
+### ✨ **特色模块之潜力眼（内测）**
+
+基于元器工作流智能，调用工作流实现对话式简历分析功能，支持简历上传和解析，支持企业微信侧以工作台应用模式进行双向对话。
 
 
 ## 快速开始
@@ -129,4 +119,4 @@ npm run dev
 本项目后台管理系统基于 **若依(RuoYi)** 框架进行二次开发，感谢若依团队提供的优秀开源框架。
 
 
-文档更新日期：2025年12月30日 9：30  文档版本：1.1.6B
+文档更新日期：2026年1月2日 12：20  文档版本：1.1.7B
