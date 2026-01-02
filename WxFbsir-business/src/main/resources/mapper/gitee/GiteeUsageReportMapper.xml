@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.wx.fbsir.business.gitee.mapper.GiteeUsageReportMapper">
+
+    <resultMap id="GiteeUsageReportResult" type="com.wx.fbsir.business.gitee.domain.GiteeUsageReport">
+        <id property="reportId" column="report_id"/>
+        <result property="reportDate" column="report_date"/>
+        <result property="newBindCount" column="new_bind_count"/>
+        <result property="dailyEvaluationCount" column="daily_evaluation_count"/>
+        <result property="dailyActiveUserCount" column="daily_active_user_count"/>
+        <result property="totalBindCount" column="total_bind_count"/>
+        <result property="scoreDistribution" column="score_distribution"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateTime" column="update_time"/>
+    </resultMap>
+
+    <select id="selectByReportDate" resultMap="GiteeUsageReportResult">
+        SELECT report_id, report_date, new_bind_count, daily_evaluation_count,
+               daily_active_user_count, total_bind_count, score_distribution,
+               create_time, update_time
+        FROM gitee_usage_report
+        WHERE report_date = #{reportDate}
+    </select>
+
+    <select id="selectGiteeUsageReportList" parameterType="com.wx.fbsir.business.gitee.domain.GiteeUsageReport" resultMap="GiteeUsageReportResult">
+        SELECT report_id, report_date, new_bind_count, daily_evaluation_count,
+               daily_active_user_count, total_bind_count, score_distribution,
+               create_time, update_time
+        FROM gitee_usage_report
+        <where>
+            <if test="reportDate != null">
+                AND report_date = #{reportDate}
+            </if>
+            <if test="params.beginTime != null and params.endTime != null">
+                AND report_date &gt;= #{params.beginTime}
+                AND report_date &lt;= #{params.endTime}
+            </if>
+        </where>
+        ORDER BY report_date DESC
+    </select>
+
+    <insert id="insertGiteeUsageReport" parameterType="com.wx.fbsir.business.gitee.domain.GiteeUsageReport" useGeneratedKeys="true" keyProperty="reportId">
+        INSERT INTO gitee_usage_report (
+            report_date,
+            new_bind_count,
+            daily_evaluation_count,
+            daily_active_user_count,
+            total_bind_count,
+            score_distribution,
+            create_time
+        ) VALUES (
+            #{reportDate},
+            #{newBindCount},
+            #{dailyEvaluationCount},
+            #{dailyActiveUserCount},
+            #{totalBindCount},
+            #{scoreDistribution},
+            #{createTime}
+        )
+    </insert>
+
+    <update id="updateGiteeUsageReport" parameterType="com.wx.fbsir.business.gitee.domain.GiteeUsageReport">
+        UPDATE gitee_usage_report
+        SET report_date = #{reportDate},
+            new_bind_count = #{newBindCount},
+            daily_evaluation_count = #{dailyEvaluationCount},
+            daily_active_user_count = #{dailyActiveUserCount},
+            total_bind_count = #{totalBindCount},
+            score_distribution = #{scoreDistribution},
+            update_time = #{updateTime}
+        WHERE report_id = #{reportId}
+    </update>
+
+</mapper>
