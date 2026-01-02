@@ -65,7 +65,6 @@ public class PotentialEyeAuthController {
                     scheme = request.getScheme();
                 }
                 String host = request.getHeader("Host");
-                if (host.equals("localhost:8080")) host = "43.139.254.160:8080";
                 redirectUri = scheme + "://" + host + "/api/auth/callback";
             }
 
