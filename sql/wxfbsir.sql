@@ -68,6 +68,77 @@ create table sys_user (
 ) engine=innodb auto_increment=100 comment = '用户信息表';
 
 -- ----------------------------
+-- 2.1、Gitee绑定表
+-- ----------------------------
+drop table if exists gitee_bind;
+create table gitee_bind (
+  bind_id           bigint(20)      not null auto_increment    comment '绑定ID',
+  user_id           bigint(20)      not null                   comment '用户ID',
+  gitee_user_id     varchar(64)     not null                   comment 'Gitee用户ID',
+  gitee_username    varchar(100)    not null                   comment 'Gitee用户名',
+  gitee_avatar      varchar(255)    default ''                 comment 'Gitee头像',
+  bind_time         datetime                                   comment '绑定时间',
+  primary key (bind_id),
+  unique key uk_gitee_bind_user (user_id),
+  unique key uk_gitee_bind_gitee (gitee_user_id),
+  key idx_gitee_bind_user (user_id),
+  constraint fk_gitee_bind_user foreign key (user_id) references sys_user (user_id) on delete cascade
+) engine=innodb comment = 'Gitee绑定表';
+
+-- 删除用户时同步清理Gitee绑定（软删场景）
+drop trigger if exists trg_sys_user_gitee_bind_cleanup;
+delimiter $$
+create trigger trg_sys_user_gitee_bind_cleanup
+after update on sys_user
+for each row
+begin
+  if old.del_flag <> '2' and new.del_flag = '2' then
+    delete from gitee_bind where user_id = new.user_id;
+  end if;
+end$$
+delimiter ;
+
+-- ----------------------------
+-- 2.2、Gitee评测报告表
+-- ----------------------------
+drop table if exists gitee_analysis_report;
+create table gitee_analysis_report (
+  report_id         bigint(20)      not null auto_increment    comment '报告ID',
+  user_id           bigint(20)      not null                   comment '用户ID',
+  profile_score     int(10)         default null               comment '形象评分',
+  profile_level     varchar(10)     default ''                 comment '形象等级',
+  community_score   int(10)         default null               comment '社区评分',
+  community_level   varchar(10)     default ''                 comment '社区等级',
+  tech_score        int(10)         default null               comment '技术评分',
+  tech_level        varchar(10)     default ''                 comment '技术等级',
+  total_score       int(10)         default null               comment '综合评分',
+  total_level       varchar(10)     default ''                 comment '综合等级',
+  report_time       datetime                                   comment '评测时间',
+  primary key (report_id),
+  key idx_gitee_report_user (user_id),
+  constraint fk_gitee_report_user foreign key (user_id) references sys_user (user_id)
+) engine=innodb comment = 'Gitee评测报告表';
+
+-- ----------------------------
+-- 2.3、Gitee模块使用统计报表
+-- ----------------------------
+drop table if exists gitee_usage_report;
+create table gitee_usage_report (
+  report_id               bigint(20)      not null auto_increment    comment '报表ID',
+  report_date             date            not null                   comment '统计日期',
+  new_bind_count          int(10)         default 0                  comment '当日新增绑定用户数',
+  daily_evaluation_count  int(10)         default 0                  comment '当日评测总次数',
+  daily_active_user_count int(10)         default 0                  comment '当日活跃评测用户数',
+  total_bind_count        int(10)         default 0                  comment '累计绑定用户数',
+  score_distribution      text                                      comment '评分区间分布(JSON)',
+  create_time             datetime                                  comment '创建时间',
+  update_time             datetime                                  comment '更新时间',
+  primary key (report_id),
+  unique key uk_gitee_usage_date (report_date),
+  key idx_gitee_usage_date (report_date)
+) engine=innodb comment = 'Gitee模块使用统计报表';
+
+-- ----------------------------
 -- 初始化-用户信息表数据
 -- ----------------------------
 insert into sys_user values(1,  103, 'admin', '管理员', '00', '', '', '0', '', '$2a$10$7JB720yubVSZvUI0rEqK/.VqGOZTH.ulu33dHOiBE8ByOhJIrdAu2', '0', '0', '127.0.0.1', sysdate(), sysdate(), 'admin', sysdate(), '', null, '超级管理员',0);
@@ -189,10 +260,13 @@ insert into sys_menu values('3', '系统监控', '0', '3', 'monitor',          n
 insert into sys_menu values('4', '系统工具', '0', '4', 'tool',             null, '', '', 1, 0, 'M', '0', '0', '', 'tool',     'admin', sysdate(), '', null, '系统工具目录');
 insert into sys_menu values('6', '积分管理', '0', '6', 'points', null, '', '', 1, 0, 'M', '0', '0', '', 'money', 'admin', sysdate(), '', null, '积分管理目录');
 insert into sys_menu values('7', '主机管理', '0', '7', 'host', null, '', '', 1, 0, 'M', '0', '0', '', 'server', 'admin', sysdate(), '', null, '主机管理目录');
+insert into sys_menu values('8', 'gitee管理', '0', '8', 'gitee', null, '', '', 1, 0, 'M', '0', '0', '', 'gitee', 'admin', sysdate(), '', null, 'gitee管理目录');
 -- 二级菜单（ID范围：100-499）
 -- 内容管理子菜单（parent_id=1，业务功能从118开始）
 insert into sys_menu values('118',  '日更助手', '1',   '1', 'daily-assistant', 'business/content/dailyassistant/index', '', '', 1, 0, 'C', '0', '0', 'business:daily:view',     'edit',          'admin', sysdate(), '', null, '日更助手菜单');
 insert into sys_menu values('119',  '发布记录', '1',   '2', 'publish-record',  'business/content/publishrecord/index',  '', '', 1, 0, 'C', '0', '0', 'business:publish:list',   'documentation', 'admin', sysdate(), '', null, '公众号发布记录菜单');
+insert into sys_menu values('127',  '使用统计', '8',   '1', 'usage-report', 'business/gitee/giteeUsageReport', '', '', 1, 0, 'C', '0', '0', 'business:gitee:usage:list', 'chart', 'admin', sysdate(), '', null, 'Gitee模块使用统计菜单');
+insert into sys_menu values('128',  'gitee分析', '8',  '2', 'gitee-analysis', 'business/gitee/giteeAnalysis', '', '', 1, 0, 'C', '0', '0', 'business:gitee:analysis:view', 'chart', 'admin', sysdate(), '', null, 'Gitee分析菜单');
 -- 系统管理子菜单（parent_id=2）
 insert into sys_menu values('100',  '用户管理', '2',   '1', 'user',       'system/user/index',        '', '', 1, 0, 'C', '0', '0', 'system:user:list',        'user',          'admin', sysdate(), '', null, '用户管理菜单');
 insert into sys_menu values('101',  '角色管理', '2',   '2', 'role',       'system/role/index',        '', '', 1, 0, 'C', '0', '0', 'system:role:list',        'peoples',       'admin', sysdate(), '', null, '角色管理菜单');

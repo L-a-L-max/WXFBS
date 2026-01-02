@@ -45,3 +45,25 @@ export function fetchGiteeNotifications(params = {}) {
     params
   })
 }
+
+export function unbindGitee() {
+  return request({
+    url: "/business/gitee/unbind",
+    method: "post"
+  })
+}
+
+export function reevaluateGiteeAnalysis() {
+  return request({
+    url: "/business/gitee/analysis/reevaluate",
+    method: "post"
+  })
+}
+
+export function saveGiteeAnalysisReport(data) {
+  return request({
+    url: "/business/gitee/analysis/report",
+    method: "post",
+    data
+  })
+}
