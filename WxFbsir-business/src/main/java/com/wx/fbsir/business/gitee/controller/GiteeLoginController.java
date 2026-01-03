@@ -87,17 +87,13 @@ public class GiteeLoginController {
     @Anonymous
     @GetMapping("/gitlogin")
     public void gitlogin(HttpServletRequest request, HttpServletResponse response) throws IOException {
-        String resolvedClientId = StringUtils.isNotBlank(clientId)
-            ? clientId
-            : GiteeOauthUtil.DEFAULT_CLIENT_ID;
-
-        if (StringUtils.isBlank(resolvedClientId)) {
+        if (StringUtils.isBlank(clientId)) {
             response.sendError(HttpServletResponse.SC_BAD_REQUEST, "gitee clientId未配置");
             return;
         }
 
         String resolvedCallbackUrl = resolveCallbackUrl(request);
-        String authorizeUrl = GiteeOauthUtil.buildAuthorizeUrl(resolvedClientId, resolvedCallbackUrl);
+        String authorizeUrl = GiteeOauthUtil.buildAuthorizeUrl(clientId, resolvedCallbackUrl);
         response.sendRedirect(authorizeUrl);
     }
 
@@ -136,10 +132,7 @@ public class GiteeLoginController {
                 return;
             }
 
-            String resolvedClientId = StringUtils.isNotBlank(clientId)
-                ? clientId
-                : GiteeOauthUtil.DEFAULT_CLIENT_ID;
-            if (StringUtils.isBlank(resolvedClientId)) {
+            if (StringUtils.isBlank(clientId)) {
                 redirectWithError(response, "gitee clientId未配置");
                 return;
             }
@@ -151,7 +144,7 @@ public class GiteeLoginController {
             String resolvedCallbackUrl = resolveCallbackUrl(request);
             log.info("Gitee OAuth: exchanging code for token");
             GiteeOauthUtil.GiteeOauthToken token = GiteeOauthUtil.exchangeCodeForToken(
-                resolvedClientId, clientSecret, resolvedCallbackUrl, code);
+                clientId, clientSecret, resolvedCallbackUrl, code);
 
             log.info("Gitee OAuth: fetching user profile");
             GiteeOauthUtil.GiteeUserProfile profile = GiteeOauthUtil.fetchUserProfile(token.getAccessToken());

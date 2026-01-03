@@ -73,10 +73,7 @@ public class GiteeProfileController {
     @GetMapping("/authorize")
     public AjaxResult authorize(@RequestParam(value = "redirect", required = false) String redirect,
                                 HttpServletRequest request) {
-        String resolvedClientId = StringUtils.isNotBlank(clientId)
-            ? clientId
-            : GiteeOauthUtil.DEFAULT_CLIENT_ID;
-        if (StringUtils.isBlank(resolvedClientId)) {
+        if (StringUtils.isBlank(clientId)) {
             return AjaxResult.error("gitee clientId未配置");
         }
 
@@ -89,7 +86,7 @@ public class GiteeProfileController {
             AUTH_STATE_EXPIRE_MINUTES, TimeUnit.MINUTES);
 
         String resolvedCallbackUrl = resolveCallbackUrl(request);
-        String authorizeUrl = GiteeOauthUtil.buildAuthorizeUrl(resolvedClientId, resolvedCallbackUrl, state);
+        String authorizeUrl = GiteeOauthUtil.buildAuthorizeUrl(clientId, resolvedCallbackUrl, state);
         Map<String, Object> data = Map.of("url", authorizeUrl);
         return AjaxResult.success(data);
     }
