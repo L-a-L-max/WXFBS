@@ -5,19 +5,36 @@ import java.util.Date;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
 
+/**
+ * Gitee评测报告对象 gitee_analysis_report
+ *
+ * @author wxfbsir
+ * @date 2026-01-03
+ */
 public class GiteeAnalysisReport implements Serializable {
     private static final long serialVersionUID = 1L;
 
+    /** 报告ID */
     private Long reportId;
+    /** 用户ID */
     private Long userId;
+    /** 资料维度评分 */
     private Integer profileScore;
+    /** 资料维度等级 */
     private String profileLevel;
+    /** 社区维度评分 */
     private Integer communityScore;
+    /** 社区维度等级 */
     private String communityLevel;
+    /** 技术维度评分 */
     private Integer techScore;
+    /** 技术维度等级 */
     private String techLevel;
+    /** 总评分 */
     private Integer totalScore;
+    /** 总等级 */
     private String totalLevel;
+    /** 报告时间 */
     private Date reportTime;
 
     public Long getReportId() {

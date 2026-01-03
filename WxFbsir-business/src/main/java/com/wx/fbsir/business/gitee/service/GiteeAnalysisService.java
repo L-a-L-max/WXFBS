@@ -31,6 +31,12 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
+/**
+ * Gitee分析评测Service
+ *
+ * @author wxfbsir
+ * @date 2026-01-03
+ */
 @Service
 public class GiteeAnalysisService {
     private static final Logger log = LoggerFactory.getLogger(GiteeAnalysisService.class);
@@ -55,12 +61,19 @@ public class GiteeAnalysisService {
         this.restTemplate = new RestTemplate(factory);
     }
 
+    /**
+     * 重新评测当前用户的Gitee数据
+     *
+     * @param userId 用户ID
+     * @return 评测结果
+     */
     public Map<String, Object> reevaluate(Long userId) {
         String token = redisCache.getCacheObject(GiteeCacheKeyUtil.getAccessTokenKey(userId));
         if (!StringUtils.hasText(token)) {
             throw new RuntimeException("请先完成Gitee授权");
         }
 
+        // 拉取Gitee数据并构建摘要，避免直接传递大量原始信息
         JsonNode profile = fetchProfile(token);
         JsonNode repos = fetchRepos(token);
         JsonNode issues = fetchIssues(token);
@@ -76,6 +89,7 @@ public class GiteeAnalysisService {
         String appId = resolveAnalysisAgentId(config);
         String apiEndpoint = StringUtils.hasText(config.getApiEndpoint()) ? config.getApiEndpoint() : DEFAULT_API_ENDPOINT;
 
+        // 调用智能体生成评测结果，并解析落库
         String content = callYuanqi(apiEndpoint, appKey, appId, String.valueOf(userId), summary);
         Map<String, Object> analysis = parseAnalysisContent(content);
         saveAnalysisReport(userId, analysis);
@@ -176,6 +190,7 @@ public class GiteeAnalysisService {
             forks += repoForks;
             stars += repoStars;
             watchers += repoWatchers;
+            // 只保留展示需要的字段，避免详情过多
             Map<String, Object> item = new LinkedHashMap<>();
             item.put("name", text(repo, "full_name"));
             item.put("description", text(repo, "description"));
@@ -213,6 +228,7 @@ public class GiteeAnalysisService {
             } else if ("closed".equalsIgnoreCase(state)) {
                 closed += 1;
             }
+            // 只保留部分近期Issue用于摘要展示
             if (recent.size() < 6) {
                 Map<String, Object> item = new LinkedHashMap<>();
                 item.put("title", text(issue, "title"));
@@ -229,6 +245,12 @@ public class GiteeAnalysisService {
         return stats;
     }
 
+    /**
+     * 保存Gitee评测报告
+     *
+     * @param userId 用户ID
+     * @param analysis 评测结果
+     */
     public void saveAnalysisReport(Long userId, Map<String, Object> analysis) {
         if (userId == null || analysis == null || analysis.isEmpty()) {
             return;
@@ -313,6 +335,7 @@ public class GiteeAnalysisService {
         HttpEntity<Map<String, Object>> request = new HttpEntity<>(body, headers);
 
         try {
+            // 请求超时或参数错误时抛出明确异常，便于前端提示
             log.info("调用腾讯元器 - assistantId: {}, userId: {}, endpoint: {}", appId, userId, apiEndpoint);
             ResponseEntity<String> response = restTemplate.exchange(apiEndpoint, HttpMethod.POST, request, String.class);
             if (!response.getStatusCode().is2xxSuccessful()) {

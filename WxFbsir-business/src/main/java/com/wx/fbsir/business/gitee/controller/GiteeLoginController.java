@@ -39,6 +39,12 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
+/**
+ * Gitee OAuth登录与绑定Controller
+ *
+ * @author wxfbsir
+ * @date 2026-01-03
+ */
 @RestController
 public class GiteeLoginController {
     private static final Logger log = LoggerFactory.getLogger(GiteeLoginController.class);
@@ -71,6 +77,13 @@ public class GiteeLoginController {
     @Autowired
     private GiteeBindMapper giteeBindMapper;
 
+    /**
+     * 跳转到Gitee授权页面
+     *
+     * @param request 请求
+     * @param response 响应
+     * @throws IOException 重定向异常
+     */
     @Anonymous
     @GetMapping("/gitlogin")
     public void gitlogin(HttpServletRequest request, HttpServletResponse response) throws IOException {
@@ -88,6 +101,13 @@ public class GiteeLoginController {
         response.sendRedirect(authorizeUrl);
     }
 
+    /**
+     * Gitee OAuth回调处理
+     *
+     * @param request 请求
+     * @param response 响应
+     * @throws IOException 响应异常
+     */
     @Anonymous
     @GetMapping("/auth")
     public void auth(HttpServletRequest request, HttpServletResponse response) throws IOException {
@@ -145,6 +165,7 @@ public class GiteeLoginController {
             }
 
             if (authState != null) {
+                // 个人中心授权绑定入口：绑定结果回写到profile页面
                 handleProfileAuthorization(response, authState, profile, token);
                 return;
             }
@@ -155,6 +176,7 @@ public class GiteeLoginController {
                 if (boundUser != null
                     && !UserStatus.DELETED.getCode().equals(boundUser.getDelFlag())
                     && !UserStatus.DISABLE.getCode().equals(boundUser.getStatus())) {
+                    // 已绑定且账号可用：直接登录并签发token
                     upsertBind(boundUser.getUserId(), profile.getId(), profile.getLogin(), profile.getName(), profile.getAvatarUrl());
                     LoginUser loginUser = new LoginUser(boundUser.getUserId(), boundUser.getDeptId(), boundUser, Collections.emptySet());
                     String oauthToken = giteeTokenService.createToken(loginUser);
@@ -168,6 +190,7 @@ public class GiteeLoginController {
                 return;
             }
 
+            // 未绑定：生成临时绑定令牌，前端引导登录/注册后绑定
             String bindToken = IdUtils.fastUUID();
             GiteeBindInfo bindInfo = new GiteeBindInfo();
             bindInfo.setGiteeId(profile.getId());
@@ -192,6 +215,12 @@ public class GiteeLoginController {
         }
     }
 
+    /**
+     * 绑定已存在账号到Gitee授权信息
+     *
+     * @param request 绑定请求
+     * @return 操作结果
+     */
     @Anonymous
     @PostMapping("/gitee/bind")
     public AjaxResult bindGitee(@RequestBody GiteeBindRequest request) {
@@ -225,6 +254,7 @@ public class GiteeLoginController {
         }
 
         try {
+            // 校验绑定关系冲突（同一Gitee或同一用户不能重复绑定）
             upsertBind(user.getUserId(), bindInfo);
         } catch (IllegalStateException ex) {
             return AjaxResult.error(ex.getMessage());
@@ -236,6 +266,12 @@ public class GiteeLoginController {
         return AjaxResult.success();
     }
 
+    /**
+     * 基于Gitee授权创建新账号并绑定
+     *
+     * @param request 创建请求
+     * @return 创建结果
+     */
     @Anonymous
     @PostMapping("/gitee/create")
     public AjaxResult createGiteeUser(@RequestBody GiteeCreateRequest request) {
@@ -275,6 +311,7 @@ public class GiteeLoginController {
         }
 
         try {
+            // 创建用户成功后立即建立绑定关系
             upsertBind(user.getUserId(), bindInfo);
         } catch (IllegalStateException ex) {
             return AjaxResult.error(ex.getMessage());

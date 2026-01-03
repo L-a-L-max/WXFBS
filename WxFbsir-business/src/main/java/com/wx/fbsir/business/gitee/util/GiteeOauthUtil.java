@@ -23,6 +23,12 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
 
+/**
+ * Gitee OAuth工具类
+ *
+ * @author wxfbsir
+ * @date 2026-01-03
+ */
 public final class GiteeOauthUtil {
     public static final String DEFAULT_CLIENT_ID = "57d5b862a86bt";
     public static final String AUTHORIZE_URL = "https://gitee.com/oauth/authorize";
@@ -40,6 +46,13 @@ public final class GiteeOauthUtil {
     private GiteeOauthUtil() {
     }
 
+    /**
+     * 构建Gitee授权URL
+     *
+     * @param clientId 客户端ID
+     * @param callbackUrl 回调地址
+     * @return 授权地址
+     */
     public static String buildAuthorizeUrl(String clientId, String callbackUrl) {
         String encoded = URLEncoder.encode(callbackUrl, StandardCharsets.UTF_8);
         return AUTHORIZE_URL
@@ -48,6 +61,14 @@ public final class GiteeOauthUtil {
             + "&redirect_uri=" + encoded;
     }
 
+    /**
+     * 构建带state的Gitee授权URL
+     *
+     * @param clientId 客户端ID
+     * @param callbackUrl 回调地址
+     * @param state state参数
+     * @return 授权地址
+     */
     public static String buildAuthorizeUrl(String clientId, String callbackUrl, String state) {
         String encoded = URLEncoder.encode(callbackUrl, StandardCharsets.UTF_8);
         String encodedState = URLEncoder.encode(state, StandardCharsets.UTF_8);
@@ -58,6 +79,16 @@ public final class GiteeOauthUtil {
             + "&state=" + encodedState;
     }
 
+    /**
+     * 通过授权码换取访问令牌
+     *
+     * @param clientId 客户端ID
+     * @param clientSecret 客户端密钥
+     * @param callbackUrl 回调地址
+     * @param code 授权码
+     * @return 访问令牌信息
+     * @throws Exception 调用异常
+     */
     public static GiteeOauthToken exchangeCodeForToken(String clientId, String clientSecret, String callbackUrl, String code)
         throws Exception {
         RestTemplate restTemplate = createRestTemplate();
@@ -94,6 +125,13 @@ public final class GiteeOauthUtil {
         return token;
     }
 
+    /**
+     * 获取用户基本信息（对象）
+     *
+     * @param accessToken 访问令牌
+     * @return 用户信息
+     * @throws Exception 调用异常
+     */
     public static GiteeUserProfile fetchUserProfile(String accessToken) throws Exception {
         RestTemplate restTemplate = new RestTemplate();
         String url = USER_URL + "?access_token=" + URLEncoder.encode(accessToken, StandardCharsets.UTF_8);
@@ -116,14 +154,37 @@ public final class GiteeOauthUtil {
         return profile;
     }
 
+    /**
+     * 获取用户基本信息（JSON）
+     *
+     * @param accessToken 访问令牌
+     * @return JSON结果
+     * @throws Exception 调用异常
+     */
     public static JsonNode fetchUserProfileJson(String accessToken) throws Exception {
         return fetchJson(USER_URL, accessToken, Collections.emptyMap());
     }
 
+    /**
+     * 获取用户仓库列表
+     *
+     * @param accessToken 访问令牌
+     * @param params 查询参数
+     * @return JSON结果
+     * @throws Exception 调用异常
+     */
     public static JsonNode fetchUserRepos(String accessToken, Map<String, String> params) throws Exception {
         return fetchJson(USER_REPOS_URL, accessToken, params);
     }
 
+    /**
+     * 获取用户Issue列表
+     *
+     * @param accessToken 访问令牌
+     * @param params 查询参数
+     * @return JSON结果
+     * @throws Exception 调用异常
+     */
     public static JsonNode fetchUserIssues(String accessToken, Map<String, String> params) throws Exception {
         Map<String, String> resolvedParams = new LinkedHashMap<>();
         if (params != null && !params.isEmpty()) {
@@ -139,6 +200,7 @@ public final class GiteeOauthUtil {
             resolvedParams.put("state", "open");
         }
         if ("all".equalsIgnoreCase(filter)) {
+            // Gitee接口不支持filter=all，拆分为assigned/created后合并
             Map<String, String> assignedParams = new LinkedHashMap<>(resolvedParams);
             assignedParams.put("filter", "assigned");
             Map<String, String> createdParams = new LinkedHashMap<>(resolvedParams);
@@ -150,6 +212,14 @@ public final class GiteeOauthUtil {
         return fetchJson(USER_ISSUES_URL, accessToken, resolvedParams);
     }
 
+    /**
+     * 获取用户通知
+     *
+     * @param accessToken 访问令牌
+     * @param params 查询参数
+     * @return JSON结果
+     * @throws Exception 调用异常
+     */
     public static JsonNode fetchNotifications(String accessToken, Map<String, String> params) throws Exception {
         return fetchJson(NOTIFICATIONS_URL, accessToken, params);
     }
@@ -217,10 +287,12 @@ public final class GiteeOauthUtil {
         }
         ArrayNode merged = OBJECT_MAPPER.createArrayNode();
         Set<String> seen = new HashSet<>();
+        // 去重合并Issue列表，避免重复展示
         addUniqueIssues(merged, seen, first);
         addUniqueIssues(merged, seen, second);
         List<JsonNode> list = new ArrayList<>();
         merged.forEach(list::add);
+        // 按请求的排序规则排序，并按分页参数截断
         sortIssues(list, params);
         int limit = parseInt(params == null ? null : params.get("per_page"));
         ArrayNode result = OBJECT_MAPPER.createArrayNode();
@@ -297,6 +369,9 @@ public final class GiteeOauthUtil {
         }
     }
 
+    /**
+     * Gitee OAuth令牌对象
+     */
     public static final class GiteeOauthToken {
         private String accessToken;
         private String tokenType;
@@ -366,6 +441,9 @@ public final class GiteeOauthUtil {
         }
     }
 
+    /**
+     * Gitee用户资料对象
+     */
     public static final class GiteeUserProfile {
         private String id;
         private String login;
