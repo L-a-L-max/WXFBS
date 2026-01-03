@@ -30,7 +30,6 @@ import org.springframework.web.client.RestTemplate;
  * @date 2026-01-03
  */
 public final class GiteeOauthUtil {
-    public static final String DEFAULT_CLIENT_ID = "57d5b862a86bt";
     public static final String AUTHORIZE_URL = "https://gitee.com/oauth/authorize";
     public static final String TOKEN_URL = "https://gitee.com/oauth/token";
     public static final String USER_URL = "https://gitee.com/api/v5/user";
