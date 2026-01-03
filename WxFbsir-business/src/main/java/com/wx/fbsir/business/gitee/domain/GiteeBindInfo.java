@@ -2,16 +2,30 @@ package com.wx.fbsir.business.gitee.domain;
 
 import java.io.Serializable;
 
+/**
+ * Gitee授权绑定信息对象
+ *
+ * @author wxfbsir
+ * @date 2026-01-03
+ */
 public class GiteeBindInfo implements Serializable {
     private static final long serialVersionUID = 1L;
 
+    /** Gitee用户ID */
     private String giteeId;
+    /** 登录名 */
     private String login;
+    /** 昵称 */
     private String name;
+    /** 头像地址 */
     private String avatarUrl;
+    /** 邮箱 */
     private String email;
+    /** 访问令牌 */
     private String accessToken;
+    /** 令牌类型 */
     private String tokenType;
+    /** 令牌创建时间 */
     private Long createdAt;
 
     public String getGiteeId() {

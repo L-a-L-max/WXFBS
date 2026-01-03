@@ -5,14 +5,26 @@ import java.util.Date;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
 
+/**
+ * Gitee绑定关系对象 gitee_bind
+ *
+ * @author wxfbsir
+ * @date 2026-01-03
+ */
 public class GiteeBind implements Serializable {
     private static final long serialVersionUID = 1L;
 
+    /** 绑定ID */
     private Long bindId;
+    /** 用户ID */
     private Long userId;
+    /** Gitee用户ID */
     private String giteeUserId;
+    /** Gitee用户名 */
     private String giteeUsername;
+    /** Gitee头像 */
     private String giteeAvatar;
+    /** 绑定时间 */
     private Date bindTime;
 
     public Long getBindId() {

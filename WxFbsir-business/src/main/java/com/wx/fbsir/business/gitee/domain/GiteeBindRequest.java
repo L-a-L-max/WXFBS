@@ -1,8 +1,17 @@
 package com.wx.fbsir.business.gitee.domain;
 
+/**
+ * Gitee账号绑定请求对象
+ *
+ * @author wxfbsir
+ * @date 2026-01-03
+ */
 public class GiteeBindRequest {
+    /** 绑定令牌 */
     private String bindToken;
+    /** 账号用户名 */
     private String username;
+    /** 账号密码 */
     private String password;
 
     public String getBindToken() {

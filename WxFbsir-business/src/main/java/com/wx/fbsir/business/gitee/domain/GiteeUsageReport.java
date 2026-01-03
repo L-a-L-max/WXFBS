@@ -7,27 +7,40 @@ import java.util.Date;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
 
+/**
+ * Gitee使用统计对象 gitee_usage_report
+ *
+ * @author wxfbsir
+ * @date 2026-01-03
+ */
 public class GiteeUsageReport extends BaseEntity {
     private static final long serialVersionUID = 1L;
 
+    /** 报表ID */
     private Long reportId;
 
+    /** 统计日期 */
     @JsonFormat(pattern = "yyyy-MM-dd")
     @Excel(name = "统计日期", dateFormat = "yyyy-MM-dd")
     private Date reportDate;
 
+    /** 当日新增绑定用户数 */
     @Excel(name = "当日新增绑定用户数")
     private Integer newBindCount;
 
+    /** 当日评测总次数 */
     @Excel(name = "当日评测总次数")
     private Integer dailyEvaluationCount;
 
+    /** 当日活跃评测用户数 */
     @Excel(name = "当日活跃评测用户数")
     private Integer dailyActiveUserCount;
 
+    /** 累计绑定用户数 */
     @Excel(name = "累计绑定用户数")
     private Integer totalBindCount;
 
+    /** 评分区间分布（JSON） */
     @Excel(name = "评分区间分布")
     private String scoreDistribution;
 
