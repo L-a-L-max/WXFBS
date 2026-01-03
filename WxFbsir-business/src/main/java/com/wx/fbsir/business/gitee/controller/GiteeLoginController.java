@@ -53,7 +53,7 @@ public class GiteeLoginController {
     @Value("${gitee.oauth.client-secret:}")
     private String clientSecret;
 
-    @Value("${gitee.oauth.callback-url:http://localhost:8080/auth}")
+    @Value("${gitee.oauth.callback-url:}")
     private String callbackUrl;
 
     @Value("${gitee.oauth.frontend-url:http://localhost}")
@@ -73,7 +73,7 @@ public class GiteeLoginController {
 
     @Anonymous
     @GetMapping("/gitlogin")
-    public void gitlogin(HttpServletResponse response) throws IOException {
+    public void gitlogin(HttpServletRequest request, HttpServletResponse response) throws IOException {
         String resolvedClientId = StringUtils.isNotBlank(clientId)
             ? clientId
             : GiteeOauthUtil.DEFAULT_CLIENT_ID;
@@ -83,7 +83,8 @@ public class GiteeLoginController {
             return;
         }
 
-        String authorizeUrl = GiteeOauthUtil.buildAuthorizeUrl(resolvedClientId, callbackUrl);
+        String resolvedCallbackUrl = resolveCallbackUrl(request);
+        String authorizeUrl = GiteeOauthUtil.buildAuthorizeUrl(resolvedClientId, resolvedCallbackUrl);
         response.sendRedirect(authorizeUrl);
     }
 
@@ -127,9 +128,10 @@ public class GiteeLoginController {
                 return;
             }
 
+            String resolvedCallbackUrl = resolveCallbackUrl(request);
             log.info("Gitee OAuth: exchanging code for token");
             GiteeOauthUtil.GiteeOauthToken token = GiteeOauthUtil.exchangeCodeForToken(
-                resolvedClientId, clientSecret, callbackUrl, code);
+                resolvedClientId, clientSecret, resolvedCallbackUrl, code);
 
             log.info("Gitee OAuth: fetching user profile");
             GiteeOauthUtil.GiteeUserProfile profile = GiteeOauthUtil.fetchUserProfile(token.getAccessToken());
@@ -318,6 +320,29 @@ public class GiteeLoginController {
                 // ignore secondary failure
             }
         }
+    }
+
+    private String resolveCallbackUrl(HttpServletRequest request) {
+        if (StringUtils.isNotBlank(callbackUrl)) {
+            return callbackUrl;
+        }
+        String scheme = request.getHeader("X-Forwarded-Proto");
+        if (StringUtils.isBlank(scheme)) {
+            scheme = request.getScheme();
+        }
+        String host = request.getHeader("Host");
+        if (StringUtils.isBlank(host)) {
+            host = request.getServerName();
+            int port = request.getServerPort();
+            if (port > 0 && port != 80 && port != 443) {
+                host = host + ":" + port;
+            }
+        }
+        String contextPath = request.getContextPath();
+        String path = (contextPath == null || contextPath.isBlank())
+            ? "/auth"
+            : contextPath + "/auth";
+        return scheme + "://" + host + path;
     }
 
     private void handleProfileAuthorization(HttpServletResponse response,

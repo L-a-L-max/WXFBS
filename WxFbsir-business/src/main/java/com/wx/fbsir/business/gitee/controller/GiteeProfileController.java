@@ -23,6 +23,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import jakarta.servlet.http.HttpServletRequest;
 
 @RestController
 @RequestMapping("/business/gitee")
@@ -34,7 +35,7 @@ public class GiteeProfileController {
     @Value("${gitee.oauth.client-id:}")
     private String clientId;
 
-    @Value("${gitee.oauth.callback-url:http://localhost:8080/auth}")
+    @Value("${gitee.oauth.callback-url:}")
     private String callbackUrl;
 
     @Autowired
@@ -52,7 +53,8 @@ public class GiteeProfileController {
     }
 
     @GetMapping("/authorize")
-    public AjaxResult authorize(@RequestParam(value = "redirect", required = false) String redirect) {
+    public AjaxResult authorize(@RequestParam(value = "redirect", required = false) String redirect,
+                                HttpServletRequest request) {
         String resolvedClientId = StringUtils.isNotBlank(clientId)
             ? clientId
             : GiteeOauthUtil.DEFAULT_CLIENT_ID;
@@ -67,7 +69,8 @@ public class GiteeProfileController {
         redisCache.setCacheObject(GiteeCacheKeyUtil.getAuthStateKey(state), authState,
             AUTH_STATE_EXPIRE_MINUTES, TimeUnit.MINUTES);
 
-        String authorizeUrl = GiteeOauthUtil.buildAuthorizeUrl(resolvedClientId, callbackUrl, state);
+        String resolvedCallbackUrl = resolveCallbackUrl(request);
+        String authorizeUrl = GiteeOauthUtil.buildAuthorizeUrl(resolvedClientId, resolvedCallbackUrl, state);
         Map<String, Object> data = Map.of("url", authorizeUrl);
         return AjaxResult.success(data);
     }
@@ -147,6 +150,29 @@ public class GiteeProfileController {
         Long userId = SecurityUtils.getUserId();
         String token = redisCache.getCacheObject(GiteeCacheKeyUtil.getAccessTokenKey(userId));
         return StringUtils.isBlank(token) ? null : token;
+    }
+
+    private String resolveCallbackUrl(HttpServletRequest request) {
+        if (StringUtils.isNotBlank(callbackUrl)) {
+            return callbackUrl;
+        }
+        String scheme = request.getHeader("X-Forwarded-Proto");
+        if (StringUtils.isBlank(scheme)) {
+            scheme = request.getScheme();
+        }
+        String host = request.getHeader("Host");
+        if (StringUtils.isBlank(host)) {
+            host = request.getServerName();
+            int port = request.getServerPort();
+            if (port > 0 && port != 80 && port != 443) {
+                host = host + ":" + port;
+            }
+        }
+        String contextPath = request.getContextPath();
+        String path = (contextPath == null || contextPath.isBlank())
+            ? "/auth"
+            : contextPath + "/auth";
+        return scheme + "://" + host + path;
     }
 
     private String normalizeRedirect(String redirect) {
