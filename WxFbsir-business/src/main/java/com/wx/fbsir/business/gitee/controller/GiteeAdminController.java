@@ -33,6 +33,12 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import java.time.LocalDate;
 
+/**
+ * Gitee后台管理Controller
+ *
+ * @author wxfbsir
+ * @date 2026-01-03
+ */
 @RestController
 @RequestMapping("/business/gitee/admin")
 public class GiteeAdminController extends BaseController {
@@ -46,6 +52,12 @@ public class GiteeAdminController extends BaseController {
     @Autowired
     private GiteeUsageReportService giteeUsageReportService;
 
+    /**
+     * 批量查询用户Gitee绑定与评测摘要
+     *
+     * @param request 用户ID列表
+     * @return 用户摘要集合
+     */
     @PostMapping("/user-summary")
     public AjaxResult userSummary(@RequestBody GiteeUserSummaryRequest request) {
         if (request == null || CollectionUtils.isEmpty(request.getUserIds())) {
@@ -89,6 +101,12 @@ public class GiteeAdminController extends BaseController {
         return AjaxResult.success(result);
     }
 
+    /**
+     * 查询Gitee模块使用统计列表
+     *
+     * @param report 统计筛选条件
+     * @return 分页列表
+     */
     @GetMapping("/usage-report/list")
     public TableDataInfo listUsageReports(GiteeUsageReport report) {
         startPage();
@@ -96,6 +114,12 @@ public class GiteeAdminController extends BaseController {
         return getDataTable(list);
     }
 
+    /**
+     * 导出Gitee模块使用统计报表
+     *
+     * @param response 响应
+     * @param report 统计筛选条件
+     */
     @Log(title = "Gitee模块使用统计", businessType = BusinessType.EXPORT)
     @PostMapping("/usage-report/export")
     public void exportUsageReports(HttpServletResponse response, GiteeUsageReport report) {
@@ -104,6 +128,12 @@ public class GiteeAdminController extends BaseController {
         util.exportExcel(response, list, "Gitee模块使用统计报表");
     }
 
+    /**
+     * 手动生成指定日期的Gitee使用统计
+     *
+     * @param reportDate 统计日期（默认昨天）
+     * @return 操作结果
+     */
     @PostMapping("/usage-report/generate")
     public AjaxResult generateUsageReport(@RequestParam(value = "reportDate", required = false)
                                           @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate reportDate) {

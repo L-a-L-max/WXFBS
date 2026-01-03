@@ -19,6 +19,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+/**
+ * Gitee登录Token服务
+ *
+ * @author wxfbsir
+ * @date 2026-01-03
+ */
 @Component
 public class GiteeTokenService {
     protected static final long MILLIS_SECOND = 1000;
@@ -33,6 +39,12 @@ public class GiteeTokenService {
     @Autowired
     private RedisCache redisCache;
 
+    /**
+     * 创建登录Token并写入缓存
+     *
+     * @param loginUser 登录用户
+     * @return JWT Token
+     */
     public String createToken(LoginUser loginUser) {
         String token = IdUtils.fastUUID();
         loginUser.setToken(token);

@@ -23,7 +23,14 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import jakarta.servlet.http.HttpServletRequest;
 
+/**
+ * Gitee授权资料Controller
+ *
+ * @author wxfbsir
+ * @date 2026-01-03
+ */
 @RestController
 @RequestMapping("/business/gitee")
 public class GiteeProfileController {
@@ -34,7 +41,7 @@ public class GiteeProfileController {
     @Value("${gitee.oauth.client-id:}")
     private String clientId;
 
-    @Value("${gitee.oauth.callback-url:http://localhost:8080/auth}")
+    @Value("${gitee.oauth.callback-url:}")
     private String callbackUrl;
 
     @Autowired
@@ -43,6 +50,11 @@ public class GiteeProfileController {
     @Autowired
     private GiteeBindMapper giteeBindMapper;
 
+    /**
+     * 查询当前用户授权状态
+     *
+     * @return 授权状态
+     */
     @GetMapping("/status")
     public AjaxResult status() {
         Long userId = SecurityUtils.getUserId();
@@ -51,8 +63,16 @@ public class GiteeProfileController {
         return AjaxResult.success(data);
     }
 
+    /**
+     * 获取授权跳转链接
+     *
+     * @param redirect 授权完成后的跳转路径
+     * @param request 请求
+     * @return 授权链接
+     */
     @GetMapping("/authorize")
-    public AjaxResult authorize(@RequestParam(value = "redirect", required = false) String redirect) {
+    public AjaxResult authorize(@RequestParam(value = "redirect", required = false) String redirect,
+                                HttpServletRequest request) {
         String resolvedClientId = StringUtils.isNotBlank(clientId)
             ? clientId
             : GiteeOauthUtil.DEFAULT_CLIENT_ID;
@@ -60,6 +80,7 @@ public class GiteeProfileController {
             return AjaxResult.error("gitee clientId未配置");
         }
 
+        // 生成并缓存state，防止CSRF并记录授权后的跳转地址
         String state = IdUtils.fastUUID();
         GiteeAuthState authState = new GiteeAuthState();
         authState.setUserId(SecurityUtils.getUserId());
@@ -67,11 +88,17 @@ public class GiteeProfileController {
         redisCache.setCacheObject(GiteeCacheKeyUtil.getAuthStateKey(state), authState,
             AUTH_STATE_EXPIRE_MINUTES, TimeUnit.MINUTES);
 
-        String authorizeUrl = GiteeOauthUtil.buildAuthorizeUrl(resolvedClientId, callbackUrl, state);
+        String resolvedCallbackUrl = resolveCallbackUrl(request);
+        String authorizeUrl = GiteeOauthUtil.buildAuthorizeUrl(resolvedClientId, resolvedCallbackUrl, state);
         Map<String, Object> data = Map.of("url", authorizeUrl);
         return AjaxResult.success(data);
     }
 
+    /**
+     * 获取当前用户的Gitee资料
+     *
+     * @return 用户资料
+     */
     @GetMapping("/profile")
     public AjaxResult profile() {
         String token = getAccessToken();
@@ -87,6 +114,12 @@ public class GiteeProfileController {
         }
     }
 
+    /**
+     * 获取用户仓库列表
+     *
+     * @param params 查询参数
+     * @return 仓库数据
+     */
     @GetMapping("/repos")
     public AjaxResult repos(@RequestParam Map<String, String> params) {
         String token = getAccessToken();
@@ -102,6 +135,12 @@ public class GiteeProfileController {
         }
     }
 
+    /**
+     * 获取用户Issue列表
+     *
+     * @param params 查询参数
+     * @return Issue数据
+     */
     @GetMapping("/issues")
     public AjaxResult issues(@RequestParam Map<String, String> params) {
         String token = getAccessToken();
@@ -117,6 +156,12 @@ public class GiteeProfileController {
         }
     }
 
+    /**
+     * 获取用户通知列表
+     *
+     * @param params 查询参数
+     * @return 通知数据
+     */
     @GetMapping("/notifications")
     public AjaxResult notifications(@RequestParam Map<String, String> params) {
         String token = getAccessToken();
@@ -132,12 +177,18 @@ public class GiteeProfileController {
         }
     }
 
+    /**
+     * 解除当前用户Gitee绑定
+     *
+     * @return 操作结果
+     */
     @PostMapping("/unbind")
     public AjaxResult unbind() {
         Long userId = SecurityUtils.getUserId();
         if (userId == null) {
             return AjaxResult.error("未获取到用户信息");
         }
+        // 同步清理授权token与绑定关系
         redisCache.deleteObject(GiteeCacheKeyUtil.getAccessTokenKey(userId));
         giteeBindMapper.deleteByUserId(userId);
         return AjaxResult.success();
@@ -147,6 +198,29 @@ public class GiteeProfileController {
         Long userId = SecurityUtils.getUserId();
         String token = redisCache.getCacheObject(GiteeCacheKeyUtil.getAccessTokenKey(userId));
         return StringUtils.isBlank(token) ? null : token;
+    }
+
+    private String resolveCallbackUrl(HttpServletRequest request) {
+        if (StringUtils.isNotBlank(callbackUrl)) {
+            return callbackUrl;
+        }
+        String scheme = request.getHeader("X-Forwarded-Proto");
+        if (StringUtils.isBlank(scheme)) {
+            scheme = request.getScheme();
+        }
+        String host = request.getHeader("Host");
+        if (StringUtils.isBlank(host)) {
+            host = request.getServerName();
+            int port = request.getServerPort();
+            if (port > 0 && port != 80 && port != 443) {
+                host = host + ":" + port;
+            }
+        }
+        String contextPath = request.getContextPath();
+        String path = (contextPath == null || contextPath.isBlank())
+            ? "/auth"
+            : contextPath + "/auth";
+        return scheme + "://" + host + path;
     }
 
     private String normalizeRedirect(String redirect) {
