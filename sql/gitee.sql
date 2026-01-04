@@ -101,7 +101,17 @@ insert into sys_menu values('127',  '使用统计', '8',   '1', 'usage-report', 
 insert into sys_menu values('128',  'gitee分析', '8',  '2', 'gitee-analysis', 'business/gitee/giteeAnalysis', '', '', 1, 0, 'C', '0', '0', 'business:gitee:analysis:view', 'chart', 'admin', sysdate(), '', null, 'Gitee分析菜单');
 
 -- ----------------------------
--- 5、积分统计表
+-- 5、角色和菜单关联表  角色1-N菜单
+-- ----------------------------
+-- ----------------------------
+-- 初始化-角色和菜单关联表数据
+-- ----------------------------
+-- 普通用户角色（ID=10）新增gitee分析浏览权限
+insert into sys_role_menu values ('10', '8');
+insert into sys_role_menu values ('10', '128');
+
+-- ----------------------------
+-- 6、积分统计表
 -- ----------------------------
 -- ----------------------------
 -- 初始化积分规则数据

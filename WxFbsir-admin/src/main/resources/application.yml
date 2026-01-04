@@ -207,10 +207,10 @@ yuanqi:
 gitee:
   oauth:
     # OAuth Client ID（生产环境建议使用环境变量：GITEE_OAUTH_CLIENT_ID）
-    client-id: ${GITEE_OAUTH_CLIENT_ID:}
+    client-id: ${GITEE_OAUTH_CLIENT_ID:138682a874b81a5b540461666f97bb673ee027fbc5febbb9f06b6ac8c6272d3e}
     # OAuth Client Secret（生产环境建议使用环境变量：GITEE_OAUTH_CLIENT_SECRET）
-    client-secret: ${GITEE_OAUTH_CLIENT_SECRET:}
+    client-secret: ${GITEE_OAUTH_CLIENT_SECRET:e18fe36e52b524a7ba7f5fe976c1c9d3af6480f10310ca5a74c11687980abcb1}
     # 前端地址（OAuth完成后跳转）
-    frontend-url: ${GITEE_OAUTH_FRONTEND_URL:}
+    frontend-url: ${GITEE_OAUTH_FRONTEND_URL:http://localhost:80}
     # OAuth回调地址（与Gitee应用配置保持一致）
-    callback-url: ${GITEE_OAUTH_CALLBACK_URL:}
+    callback-url: ${GITEE_OAUTH_CALLBACK_URL:http://localhost:8080/auth}
