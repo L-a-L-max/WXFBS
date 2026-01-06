@@ -38,7 +38,7 @@ wxfbsir:
     # 主节点 WebSocket 连接配置
     admin:
       # 主节点 WebSocket 地址
-      ws-url: ws://localhost:8080/ws/engine
+      ws-url: wss://wx.fbsir.com/fbsir/ws/engine
       
     # 连接配置
     connection:

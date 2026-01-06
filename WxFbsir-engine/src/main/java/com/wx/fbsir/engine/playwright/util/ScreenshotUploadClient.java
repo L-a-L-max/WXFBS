@@ -45,17 +45,42 @@ public class ScreenshotUploadClient {
 
     @PostConstruct
     public void init() {
-        // 从WebSocket URL推导HTTP URL
+        // 从WebSocket URL推导HTTP URL，保留路径前缀
         String wsUrl = properties.getAdmin().getWsUrl();
         // ws://localhost:8080/ws/engine -> http://localhost:8080
-        // wss://example.com/ws/engine -> https://example.com
+        // wss://wx.fbsir.com/fbsir/ws/engine -> https://wx.fbsir.com/fbsir
+        
+        String protocol;
+        String urlWithoutProtocol;
+        
         if (wsUrl.startsWith("ws://")) {
-            adminBaseUrl = "http://" + wsUrl.substring(5).split("/")[0];
+            protocol = "http://";
+            urlWithoutProtocol = wsUrl.substring(5); // 移除 "ws://"
         } else if (wsUrl.startsWith("wss://")) {
-            adminBaseUrl = "https://" + wsUrl.substring(6).split("/")[0];
+            protocol = "https://";
+            urlWithoutProtocol = wsUrl.substring(6); // 移除 "wss://"
         } else {
             adminBaseUrl = "http://localhost:8080";
+            log.info("[截图上传] 初始化完成 - Admin地址: {}", adminBaseUrl);
+            return;
         }
+        
+        // 移除WebSocket特定的路径部分 (/ws/engine)
+        // 例如: wx.fbsir.com/fbsir/ws/engine -> wx.fbsir.com/fbsir
+        int wsPathIndex = urlWithoutProtocol.indexOf("/ws/");
+        if (wsPathIndex > 0) {
+            // 保留 /ws/ 之前的所有路径
+            adminBaseUrl = protocol + urlWithoutProtocol.substring(0, wsPathIndex);
+        } else {
+            // 如果没有 /ws/ 路径，只保留域名
+            int firstSlash = urlWithoutProtocol.indexOf('/');
+            if (firstSlash > 0) {
+                adminBaseUrl = protocol + urlWithoutProtocol.substring(0, firstSlash);
+            } else {
+                adminBaseUrl = protocol + urlWithoutProtocol;
+            }
+        }
+        
         log.info("[截图上传] 初始化完成 - Admin地址: {}", adminBaseUrl);
     }
 
