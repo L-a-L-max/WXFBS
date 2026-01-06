@@ -394,7 +394,7 @@ public class EngineWebSocketHandler extends TextWebSocketHandler {
         String sessionId = session.getId();
         String hostId = message.getEngineId();
         
-        log.debug("[WebSocket] 注销 - {}", hostId);
+        log.debug("[WebSocket] Engine主动注销 - HostID: {}", hostId);
         
         // 标记为主动注销，在afterConnectionClosed中会检查这个标记
         EngineSession engineSession = sessionManager.getSession(sessionId);
@@ -402,9 +402,7 @@ public class EngineWebSocketHandler extends TextWebSocketHandler {
             engineSession.markAsNormalClose();
         }
         
-        // 不在这里更新数据库，等待afterConnectionClosed统一处理
-        sessionManager.removeSession(sessionId);
-        
+        // 注意：不在此处移除session，由afterConnectionClosed统一处理断开逻辑
         return true;
     }
 
@@ -454,24 +452,13 @@ public class EngineWebSocketHandler extends TextWebSocketHandler {
         String friendlyReason = getFriendlyErrorReason(exception);
         log.error("[WebSocket] 传输错误 - SessionID: {}, 原因: {}", sessionId, friendlyReason);
         
-        // 获取会话信息，记录统计并清理
+        // 记录错误到会话信息，会话清理由afterConnectionClosed统一处理
         EngineSession engineSession = sessionManager.getSession(sessionId);
         if (engineSession != null) {
             engineSession.recordError(friendlyReason);
-            
-            if (engineSession.getEngineId() != null && !engineSession.getEngineId().startsWith("pending-")) {
-                // 断开时统一写入统计信息
-                connectionLogService.updateDisconnectedWithStats(
-                    sessionId, null, friendlyReason,
-                    ConnectionLogService.STATUS_ABNORMAL_CLOSE,
-                    engineSession.getMessageSent(), engineSession.getMessageReceived(),
-                    engineSession.getHeartbeatCount(), engineSession.getErrorCount(),
-                    friendlyReason
-                );
-            }
         }
         
-        sessionManager.removeSession(sessionId);
+        // 注意：不在此处移除session，由afterConnectionClosed统一处理断开逻辑
     }
 
     @Override
@@ -480,44 +467,50 @@ public class EngineWebSocketHandler extends TextWebSocketHandler {
         
         // 获取会话信息，记录统计并清理
         EngineSession engineSession = sessionManager.getSession(sessionId);
-        if (engineSession != null && engineSession.getEngineId() != null 
-            && !engineSession.getEngineId().startsWith("pending-")) {
+        if (engineSession == null) {
+            log.debug("[Engine] 会话不存在，可能已被清理 - SessionID: {}", sessionId);
+            sessionManager.removeSession(sessionId);
+            return;
+        }
+        
+        String engineId = engineSession.getEngineId();
+        
+        // 只有已注册的有效连接断开时才更新数据库状态
+        if (engineId != null && !engineId.startsWith("pending-") 
+            && engineSession.getStatus() == EngineSession.SessionStatus.REGISTERED) {
             
-            // 只有已注册的连接断开时才更新状态，已被拒绝的连接不更新
-            if (engineSession.getStatus() == EngineSession.SessionStatus.REGISTERED) {
-                // 根据状态码判断断开类型和原因
-                int dbStatus;
-                String closeReason = getFriendlyCloseReason(status, engineSession.getLastError());
-                
-                if (status.getCode() == 4007) {
-                    // 管理员断开
-                    dbStatus = ConnectionLogService.STATUS_ADMIN_DISCONNECT;
-                } else if (engineSession.isNormalClose()) {
-                    // 正常断开：只有Engine主动注销才算正常断开
-                    dbStatus = ConnectionLogService.STATUS_NORMAL_CLOSE;
-                    closeReason = "主动注销";
-                } else {
-                    // 其他情况都算异常断开
-                    dbStatus = ConnectionLogService.STATUS_ABNORMAL_CLOSE;
-                }
-                
-                // 断开时统一写入统计信息（在线状态由 sessionManager 内存管理）
-                connectionLogService.updateDisconnectedWithStats(
+            // 根据状态码判断断开类型和原因
+            int dbStatus;
+            String closeReason = getFriendlyCloseReason(status, engineSession.getLastError());
+            
+            if (status.getCode() == 4007) {
+                dbStatus = ConnectionLogService.STATUS_ADMIN_DISCONNECT;
+            } else if (engineSession.isNormalClose()) {
+                dbStatus = ConnectionLogService.STATUS_NORMAL_CLOSE;
+                closeReason = "主动注销";
+            } else {
+                dbStatus = ConnectionLogService.STATUS_ABNORMAL_CLOSE;
+            }
+            
+            // 同步更新数据库状态
+            try {
+                connectionLogService.updateDisconnectedWithStatsSync(
                     sessionId, status.getCode(), closeReason, dbStatus,
                     engineSession.getMessageSent(), engineSession.getMessageReceived(),
                     engineSession.getHeartbeatCount(), engineSession.getErrorCount(),
                     engineSession.getLastError()
                 );
                 
-                log.info("[Engine] ========================================");
-                log.info("[Engine] 主机 {} 已断开 - {}", engineSession.getEngineId(), closeReason);
-                log.info("[Engine] ========================================");
-            } else {
-                // 已被拒绝的连接，不更新状态，保持原有的拒绝状态
-                log.debug("[Engine] 已拒绝的连接断开，不更新状态 - SessionID: {}", sessionId);
+                log.info("[Engine] 主机 {} 已断开 - {}", engineId, closeReason);
+            } catch (Exception e) {
+                log.error("[Engine] 更新连接记录失败 - SessionID: {}, 错误: {}", sessionId, e.getMessage());
             }
+        } else {
+            log.debug("[Engine] 跳过数据库更新 - EngineID: {}, Status: {}", 
+                engineId, engineSession.getStatus());
         }
         
+        // 清理会话
         sessionManager.removeSession(sessionId);
     }
 
