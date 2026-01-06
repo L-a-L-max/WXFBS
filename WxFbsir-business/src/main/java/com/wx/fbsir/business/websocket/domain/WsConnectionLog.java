@@ -42,6 +42,9 @@ public class WsConnectionLog implements Serializable {
     private Integer delFlag;
     private LocalDateTime createTime;
     private LocalDateTime updateTime;
+    
+    // 临时字段：实时在线状态（不存储到数据库，仅用于前端显示）
+    private transient String onlineStatus;
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
@@ -101,4 +104,6 @@ public class WsConnectionLog implements Serializable {
     public void setCreateTime(LocalDateTime createTime) { this.createTime = createTime; }
     public LocalDateTime getUpdateTime() { return updateTime; }
     public void setUpdateTime(LocalDateTime updateTime) { this.updateTime = updateTime; }
+    public String getOnlineStatus() { return onlineStatus; }
+    public void setOnlineStatus(String onlineStatus) { this.onlineStatus = onlineStatus; }
 }

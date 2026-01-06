@@ -1,6 +1,7 @@
 package com.wx.fbsir.business.websocket.controller;
 
 import java.util.List;
+import java.util.stream.Collectors;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -14,6 +15,7 @@ import com.wx.fbsir.common.core.domain.AjaxResult;
 import com.wx.fbsir.common.enums.BusinessType;
 import com.wx.fbsir.business.websocket.domain.WsConnectionLog;
 import com.wx.fbsir.business.websocket.mapper.WsConnectionLogMapper;
+import com.wx.fbsir.business.websocket.server.EngineSessionManager;
 import com.wx.fbsir.common.core.page.TableDataInfo;
 
 /**
@@ -28,6 +30,9 @@ public class ConnectionLogController extends BaseController
 {
     @Autowired
     private WsConnectionLogMapper wsConnectionLogMapper;
+    
+    @Autowired
+    private EngineSessionManager sessionManager;
 
     @PreAuthorize("@ss.hasPermi('business:host:connection:query')")
     @GetMapping("/list")
@@ -35,7 +40,21 @@ public class ConnectionLogController extends BaseController
     {
         startPage();
         List<WsConnectionLog> list = wsConnectionLogMapper.selectList(wsConnectionLog);
-        return getDataTable(list);
+        
+        // 增强：为每条记录添加实时在线状态
+        List<WsConnectionLog> enhancedList = list.stream().map(log -> {
+            // 检查该主机是否当前在线（基于内存中的会话管理器）
+            if (log.getHostId() != null && !log.getHostId().isEmpty()) {
+                boolean isOnline = sessionManager.isEngineOnline(log.getHostId());
+                // 使用onlineStatus字段标记在线状态（前端可以根据此字段显示"在线"或"离线"）
+                log.setOnlineStatus(isOnline ? "在线" : "离线");
+            } else {
+                log.setOnlineStatus("离线");
+            }
+            return log;
+        }).collect(Collectors.toList());
+        
+        return getDataTable(enhancedList);
     }
 
     @PreAuthorize("@ss.hasPermi('business:host:connection:query')")
