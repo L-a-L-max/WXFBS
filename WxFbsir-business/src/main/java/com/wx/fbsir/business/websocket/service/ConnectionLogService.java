@@ -221,6 +221,9 @@ public class ConnectionLogService {
 
     /**
      * 更新连接断开状态（包含统计信息，仅在断开时写入一次）
+     * 
+     * ⚠️ 重要：此方法使用异步执行，可能有延迟
+     * 如果需要立即更新数据库，请使用 updateDisconnectedWithStatsSync
      *
      * @param sessionId       会话ID
      * @param closeCode       关闭状态码
@@ -236,18 +239,45 @@ public class ConnectionLogService {
     public void updateDisconnectedWithStats(String sessionId, Integer closeCode, String closeReason,
                                              int status, long messageSent, long messageReceived,
                                              int heartbeatCount, int errorCount, String lastError) {
+        updateDisconnectedWithStatsSync(sessionId, closeCode, closeReason, status, 
+            messageSent, messageReceived, heartbeatCount, errorCount, lastError);
+    }
+
+    /**
+     * 更新连接断开状态（同步版本，立即执行）
+     * 
+     * 用于连接断开时立即更新数据库，确保前端能实时看到状态变化
+     *
+     * @param sessionId       会话ID
+     * @param closeCode       关闭状态码
+     * @param closeReason     关闭原因
+     * @param status          断开状态
+     * @param messageSent     发送消息数
+     * @param messageReceived 接收消息数
+     * @param heartbeatCount  心跳次数
+     * @param errorCount      错误次数
+     * @param lastError       最后错误信息
+     */
+    public void updateDisconnectedWithStatsSync(String sessionId, Integer closeCode, String closeReason,
+                                                 int status, long messageSent, long messageReceived,
+                                                 int heartbeatCount, int errorCount, String lastError) {
         if (connectionLogMapper == null) {
+            log.error("[连接记录] Mapper未注入，无法更新数据库");
             return;
         }
 
         try {
-            connectionLogMapper.updateDisconnected(sessionId, status, closeCode, closeReason,
+            int updateCount = connectionLogMapper.updateDisconnected(sessionId, status, closeCode, closeReason,
                 messageSent, messageReceived, heartbeatCount, errorCount, lastError);
             
-            log.debug("[记录] 断开 - {}", sessionId);
+            if (updateCount == 0) {
+                log.warn("[连接记录] 更新影响行数为0，SessionID可能不存在: {}", sessionId);
+            } else {
+                log.debug("[连接记录] 断开状态更新成功 - SessionID: {}, Status: {}", sessionId, status);
+            }
 
         } catch (Exception e) {
-            log.error("[连接记录] 更新断开失败 - SessionID: {}, 错讯: {}", sessionId, e.getMessage(), e);
+            log.error("[连接记录] 更新断开状态失败 - SessionID: {}, 错误: {}", sessionId, e.getMessage(), e);
         }
     }
 
