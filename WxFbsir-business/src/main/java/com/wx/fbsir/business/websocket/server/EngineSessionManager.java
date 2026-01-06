@@ -97,16 +97,23 @@ public class EngineSessionManager {
             return null;
         }
 
-        String sessionId = session.getId();
-        // 临时 engineId，注册后会更新
-        String tempEngineId = "pending-" + sessionId;
-        
-        EngineSession engineSession = new EngineSession(tempEngineId, session);
-        sessionMap.put(sessionId, engineSession);
-        
-        log.debug("[会话] 新连接 - SessionID: {}, 剩余槽位: {}", sessionId, connectionSemaphore.availablePermits());
-        
-        return engineSession;
+        try {
+            String sessionId = session.getId();
+            // 临时 engineId，注册后会更新
+            String tempEngineId = "pending-" + sessionId;
+            
+            EngineSession engineSession = new EngineSession(tempEngineId, session);
+            sessionMap.put(sessionId, engineSession);
+            
+            log.debug("[会话] 新连接 - SessionID: {}, 剩余槽位: {}", sessionId, connectionSemaphore.availablePermits());
+            
+            return engineSession;
+        } catch (Exception e) {
+            // 如果添加会话失败，必须释放Semaphore许可，避免资源泄漏
+            connectionSemaphore.release();
+            log.error("[会话管理] 添加会话失败 - SessionID: {}, 错误: {}", session.getId(), e.getMessage());
+            throw e;
+        }
     }
 
     /**
@@ -144,21 +151,21 @@ public class EngineSessionManager {
             }
         }
 
-        // 更新会话信息
-        session.setVersion(version);
-        session.setCapabilities(capabilities);
-        session.setStatus(EngineSession.SessionStatus.REGISTERED);
-        session.updateHeartbeatTime();
-
-        // 更新映射
-        engineIdToSessionId.put(engineId, sessionId);
-        
         // 创建新的 EngineSession 对象（因为 engineId 是 final）
+        // 注意：统计数据会重置，这在注册阶段是可接受的，因为实际统计从注册后开始
         EngineSession newSession = new EngineSession(engineId, session.getSession());
         newSession.setVersion(version);
         newSession.setCapabilities(capabilities);
         newSession.setStatus(EngineSession.SessionStatus.REGISTERED);
         newSession.updateHeartbeatTime();
+        
+        // 如果原session标记为正常关闭，保留此标记（这是关键状态）
+        if (session.isNormalClose()) {
+            newSession.markAsNormalClose();
+        }
+
+        // 更新映射
+        engineIdToSessionId.put(engineId, sessionId);
         sessionMap.put(sessionId, newSession);
         
         return true;
