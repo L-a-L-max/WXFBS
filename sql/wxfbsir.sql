@@ -189,6 +189,7 @@ insert into sys_menu values('3', '系统监控', '0', '3', 'monitor',          n
 insert into sys_menu values('4', '系统工具', '0', '4', 'tool',             null, '', '', 1, 0, 'M', '0', '0', '', 'tool',     'admin', sysdate(), '', null, '系统工具目录');
 insert into sys_menu values('6', '积分管理', '0', '6', 'points', null, '', '', 1, 0, 'M', '0', '0', '', 'money', 'admin', sysdate(), '', null, '积分管理目录');
 insert into sys_menu values('7', '主机管理', '0', '7', 'host', null, '', '', 1, 0, 'M', '0', '0', '', 'server', 'admin', sysdate(), '', null, '主机管理目录');
+insert into sys_menu values('8', 'gitee管理', '0', '8', 'gitee', null, '', '', 1, 0, 'M', '0', '0', '', 'gitee', 'admin', sysdate(), '', null, 'gitee管理目录');
 -- 二级菜单（ID范围：100-499）
 -- 内容管理子菜单（parent_id=1，业务功能从118开始）
 insert into sys_menu values('118',  '日更助手', '1',   '1', 'daily-assistant', 'business/content/dailyassistant/index', '', '', 1, 0, 'C', '0', '0', 'business:daily:view',     'edit',          'admin', sysdate(), '', null, '日更助手菜单');
@@ -223,6 +224,9 @@ insert into sys_menu values('123', '主机ID白名单', '7', '1', 'whitelist', '
 insert into sys_menu values('124', 'IP黑名单', '7', '2', 'blacklist', 'business/host/blacklist/index', '', '', 1, 0, 'C', '0', '0', 'business:host:blacklist:view', 'lock', 'admin', sysdate(), '', null, 'IP黑名单管理菜单');
 insert into sys_menu values('125', '连接记录与在线', '7', '3', 'connection', 'business/host/connection/index', '', '', 1, 0, 'C', '0', '0', 'business:host:connection:view', 'monitor', 'admin', sysdate(), '', null, '主机连接记录与在线列表管理菜单');
 insert into sys_menu values('126', 'WebSocket调试', '7', '4', 'debug', 'business/debug/index', '', '', 1, 0, 'C', '0', '0', 'business:debug:view', 'bug', 'admin', sysdate(), '', null, 'WebSocket调试工具，用于开发测试');
+-- gitee管理子菜单（parent_id=8）
+insert into sys_menu values('127',  '使用统计', '8',   '1', 'usage-report', 'business/gitee/giteeUsageReport', '', '', 1, 0, 'C', '0', '0', 'business:gitee:usage:list', 'chart', 'admin', sysdate(), '', null, 'Gitee模块使用统计菜单');
+insert into sys_menu values('128',  'gitee分析', '8',  '2', 'gitee-analysis', 'business/gitee/giteeAnalysis', '', '', 1, 0, 'C', '0', '0', 'business:gitee:analysis:view', 'chart', 'admin', sysdate(), '', null, 'Gitee分析菜单');
 -- 三级菜单（ID范围：500-999）
 insert into sys_menu values('500',  '操作日志', '108', '1', 'operlog',    'monitor/operlog/index',    '', '', 1, 0, 'C', '0', '0', 'monitor:operlog:list',    'form',          'admin', sysdate(), '', null, '操作日志菜单');
 insert into sys_menu values('501',  '登录日志', '108', '2', 'logininfor', 'monitor/logininfor/index', '', '', 1, 0, 'C', '0', '0', 'monitor:logininfor:list', 'logininfor',    'admin', sysdate(), '', null, '登录日志菜单');
@@ -642,7 +646,9 @@ insert into sys_role_menu values ('10', '6');    -- 积分管理
 insert into sys_role_menu values ('10', '120');  -- 积分总览
 insert into sys_role_menu values ('10', '1070');  -- 积分查询
 insert into sys_role_menu values ('10', '1071');  -- 明细查询
-insert into sys_role_menu values ('10', '1072');  -- 规则查询;
+insert into sys_role_menu values ('10', '1072');  -- 规则查询
+insert into sys_role_menu values ('10', '8');    -- gitee管理
+insert into sys_role_menu values ('10', '128');  -- gitee分析
 
 -- ----------------------------
 -- 8、角色和部门关联表  角色1-N部门
@@ -1158,7 +1164,74 @@ INSERT INTO `wx_points_rule` (`rule_code`, `rule_name`, `points_value`, `limit_t
 ('TEMPLATE_PUBLISH', '模板上架', 50, NULL, NULL, NULL, '0', 4, '用户上架模板到市场奖励', 'admin', NOW()),
 ('TEMPLATE_BUY', '模板购买', 0, NULL, NULL, NULL, '0', 5, '购买模板时扣减', 'admin', NOW()),
 ('TEMPLATE_REWARD', '模板分成', 0, NULL, NULL, NULL, '0', 6, '模板被购买时的作者分成', 'admin', NOW()),
-('ADMIN_GRANT', '管理员发放', 0, NULL, NULL, NULL, '0', 7, '管理员给用户发放积分', 'admin', NOW());
+('ADMIN_GRANT', '管理员发放', 0, NULL, NULL, NULL, '0', 7, '管理员给用户发放积分', 'admin', NOW()),
+('GITEE_ANALYSIS', 'gitee分析', -1, '2', NULL, NULL, '0', 2, 'gitee分析', 'admin', NOW());
+
+-- =============================================
+-- 业务模块：Gitee管理
+-- =============================================
+
+-- ----------------------------
+-- 27、Gitee绑定表
+-- ----------------------------
+drop table if exists gitee_bind;
+create table gitee_bind (
+  bind_id           bigint(20)      not null auto_increment    comment '绑定ID',
+  user_id           bigint(20)      not null                   comment '用户ID',
+  gitee_user_id     varchar(64)     not null                   comment 'Gitee用户ID',
+  gitee_username    varchar(100)    not null                   comment 'Gitee用户名',
+  gitee_avatar      varchar(255)    default ''                 comment 'Gitee头像',
+  bind_time         datetime                                   comment '绑定时间',
+  primary key (bind_id),
+  unique key uk_gitee_bind_user (user_id),
+  unique key uk_gitee_bind_gitee (gitee_user_id),
+  key idx_gitee_bind_user (user_id),
+  constraint fk_gitee_bind_user foreign key (user_id) references sys_user (user_id) on delete cascade
+) engine=innodb comment = 'Gitee绑定表';
+
+-- 删除用户时同步清理Gitee绑定（软删场景）
+-- 注意：触发器由应用层处理，避免 MySQL 权限问题
+-- 在 Java 代码中删除用户时，同时执行：DELETE FROM gitee_bind WHERE user_id = ?
+
+-- ----------------------------
+-- 28、Gitee评测报告表
+-- ----------------------------
+drop table if exists gitee_analysis_report;
+create table gitee_analysis_report (
+  report_id         bigint(20)      not null auto_increment    comment '报告ID',
+  user_id           bigint(20)      not null                   comment '用户ID',
+  profile_score     int(10)         default null               comment '形象评分',
+  profile_level     varchar(10)     default ''                 comment '形象等级',
+  community_score   int(10)         default null               comment '社区评分',
+  community_level   varchar(10)     default ''                 comment '社区等级',
+  tech_score        int(10)         default null               comment '技术评分',
+  tech_level        varchar(10)     default ''                 comment '技术等级',
+  total_score       int(10)         default null               comment '综合评分',
+  total_level       varchar(10)     default ''                 comment '综合等级',
+  report_time       datetime                                   comment '评测时间',
+  primary key (report_id),
+  key idx_gitee_report_user (user_id),
+  constraint fk_gitee_report_user foreign key (user_id) references sys_user (user_id)
+) engine=innodb comment = 'Gitee评测报告表';
+
+-- ----------------------------
+-- 29、Gitee模块使用统计报表
+-- ----------------------------
+drop table if exists gitee_usage_report;
+create table gitee_usage_report (
+  report_id               bigint(20)      not null auto_increment    comment '报表ID',
+  report_date             date            not null                   comment '统计日期',
+  new_bind_count          int(10)         default 0                  comment '当日新增绑定用户数',
+  daily_evaluation_count  int(10)         default 0                  comment '当日评测总次数',
+  daily_active_user_count int(10)         default 0                  comment '当日活跃评测用户数',
+  total_bind_count        int(10)         default 0                  comment '累计绑定用户数',
+  score_distribution      text                                      comment '评分区间分布(JSON)',
+  create_time             datetime                                  comment '创建时间',
+  update_time             datetime                                  comment '更新时间',
+  primary key (report_id),
+  unique key uk_gitee_usage_date (report_date),
+  key idx_gitee_usage_date (report_date)
+) engine=innodb comment = 'Gitee模块使用统计报表';
 
 -- ========================================
 -- Engine WebSocket 通信相关数据库表
@@ -1169,7 +1242,7 @@ INSERT INTO `wx_points_rule` (`rule_code`, `rule_name`, `points_value`, `limit_t
 SET FOREIGN_KEY_CHECKS = 0;
 
 -- ----------------------------
--- 27、主机白名单表
+-- 30、主机白名单表
 -- ----------------------------
 DROP TABLE IF EXISTS `ws_host_whitelist`;
 CREATE TABLE `ws_host_whitelist` (
@@ -1203,7 +1276,7 @@ INSERT INTO `ws_host_whitelist` (`host_id`, `host_name`, `owner_name`, `is_team`
 ('engine-prod-001', '生产节点-运维组', '运维组', 1, '运维团队', 1, '生产环境主节点');
 
 -- ----------------------------
--- 28、IP黑名单表
+-- 31、IP黑名单表
 -- ----------------------------
 DROP TABLE IF EXISTS `ws_ip_blacklist`;
 CREATE TABLE `ws_ip_blacklist` (
@@ -1229,7 +1302,7 @@ CREATE TABLE `ws_ip_blacklist` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='WebSocket IP黑名单表';
 
 -- ----------------------------
--- 29、WebSocket连接记录表
+-- 32、WebSocket连接记录表
 -- ----------------------------
 DROP TABLE IF EXISTS `ws_connection_log`;
 CREATE TABLE `ws_connection_log` (
@@ -1275,7 +1348,7 @@ CREATE TABLE `ws_connection_log` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='WebSocket连接记录表';
 
 -- ----------------------------
--- 30、连接统计视图
+-- 33、连接统计视图
 -- ----------------------------
 DROP VIEW IF EXISTS `v_ws_connection_stats`;
 CREATE VIEW `v_ws_connection_stats` AS
@@ -1294,7 +1367,7 @@ WHERE del_flag = 0
 GROUP BY DATE(connect_time);
 
 -- ----------------------------
--- 31、可疑连接视图
+-- 34、可疑连接视图
 -- ----------------------------
 DROP VIEW IF EXISTS `v_ws_suspicious_connections`;
 CREATE VIEW `v_ws_suspicious_connections` AS
@@ -1311,7 +1384,7 @@ GROUP BY device_id
 HAVING COUNT(DISTINCT host_id) > 1;
 
 -- ----------------------------
--- 32、团队主机统计视图
+-- 35、团队主机统计视图
 -- ----------------------------
 DROP VIEW IF EXISTS `v_ws_team_stats`;
 CREATE VIEW `v_ws_team_stats` AS

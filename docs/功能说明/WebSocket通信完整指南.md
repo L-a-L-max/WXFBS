@@ -403,7 +403,7 @@ public void handleTask(EngineMessage message) {
 
 **深入学习**:
 - [第12章：流式输出 vs 单次输出完整指南](#12-流式输出-vs-单次输出完整指南)
-- [Playwright框架完整指南](./Playwright框架完整指南.md)
+- [Playwright框架完整指南](Playwright框架完整指南.md)
 
 ---
 
