@@ -43,4 +43,32 @@ AES-256-GCM加密算法配置和使用说明。
 
 ---
 
-**最后更新：** 2025-12-11
+### [Gitee用户开源相关能力分析](./gitee用户开源相关能力分析.md)
+Gitee OAuth授权、能力评测与运营统计的功能说明。
+
+**代码位置：**
+- 后端：`WxFbsir-business/src/main/java/com/wx/fbsir/business/gitee/`
+- 前端：`WxFbsir-ui/src/views/business/gitee/`
+- 接口：`WxFbsir-ui/src/api/business/gitee/`
+
+---
+
+### [Playwright框架完整指南](./Playwright框架完整指南.md)
+Engine 端浏览器自动化能力与最佳实践指南。
+
+**代码位置：**
+- Engine：`WxFbsir-engine/src/main/java/com/wx/fbsir/engine/playwright/`
+- 能力示例：`WxFbsir-engine/src/main/java/com/wx/fbsir/engine/controller/`
+
+---
+
+### [WebSocket通信完整指南](./WebSocket通信完整指南.md)
+Admin 与 Engine 的 WebSocket 通信协议与实现说明。
+
+**代码位置：**
+- Engine：`WxFbsir-engine/src/main/java/com/wx/fbsir/engine/websocket/`
+- 主服务：`WxFbsir-business/src/main/java/com/wx/fbsir/business/websocket/`
+
+---
+
+**最后更新：** 2026-01-07

@@ -1,7 +1,7 @@
 <h1 align="center" style="margin: 30px 0 30px; font-weight: bold;">福帮手</h1>
 <h4 align="center">助力中小团队深耕AI机遇</h4>
 <p align="center">
-	<a href="https://gitee.com/U3W-AI/RuoYi-Vue"><img src="https://img.shields.io/badge/WxFbsir-v1.1.8-brightgreen.svg"></a>
+	<a href="https://gitee.com/U3W-AI/RuoYi-Vue"><img src="https://img.shields.io/badge/WxFbsir-v1.1.9-brightgreen.svg"></a>
 	<a href="https://www.fbsir.com"><img src="https://img.shields.io/badge/website-www.fbsir.com-blue.svg"></a>
 </p>
 
@@ -30,7 +30,7 @@
 
 同时集成Swagger API文档自动生成，提升开发效率。
 
-PlayWright应用及WebSocket集成框架，将RPA与AI一炉同炼，为人机协同和智能资产的挖掘提供更多创意空间。
+Playwright应用及Websocket集成框架，将RPA与AI一炉同炼，为人机协同和智能资产的挖掘提供更多创意空间。
 
 
 ### ✨ **特色模块之日更助手**
@@ -52,21 +52,37 @@ PlayWright应用及WebSocket集成框架，将RPA与AI一炉同炼，为人机�
 ## 快速开始
 
 ### 环境要求
-- JDK 17+
-- MySQL 8.0+
-- Redis 6.0+（可选）
-- Node.js 18+
+- 必需：JDK 17+（推荐 OpenJDK 17）
+- 必需：Maven 3.8+
+- 必需：MySQL 8.0+
+- 必需：Node.js 18+（推荐 LTS）
+- 必需：npm 9+ 或 pnpm 8+
+- 可选：Redis 6.0+（缓存/会话）
+- 系统：Windows 10+ / macOS 10.15+ / Linux
+- 资源：内存 8GB+（推荐 16GB），硬盘可用空间 10GB+
+- 工具：IntelliJ IDEA 2023+ / Eclipse、VS Code / WebStorm、Navicat / DBeaver / MySQL Workbench
 
-### 技术选型与版本要求
+### 前端技术栈
+| 层级 | 技术选型 | 版本要求 | 用途 |
+|------|----------|----------|------|
+| 运行环境 | Node.js | 18+ | 前端构建/运行 |
+| 包管理 | npm / pnpm | 9+ / 8+ | 前端依赖管理 |
+| 前端框架 | Vue.js | 3.5.16 | 前端框架 |
+| 路由 | Vue Router | 4.5.1 | 前端路由 |
+| 状态管理 | Pinia | 3.0.2 | 状态管理 |
+| UI | Element Plus | 2.10.7 | 组件库 |
+| 构建工具 | Vite | 6.3.5 | 前端构建 |
+| 图表 | ECharts | 5.6.0 | 可视化图表 |
+| 富文本 | @vueup/vue-quill | 1.2.0 | 富文本编辑 |
+| HTTP | Axios | 1.9.0 | HTTP 请求 |
 
+### 后端技术栈
 | 层级 | 技术选型 | 版本要求 | 用途 |
 |------|----------|----------|------|
 | 语言 | Java | 17+ | 后端开发 |
 | 构建 | Maven | 3.8+ | 后端构建 |
 | 数据 | MySQL | 8.0+ | 主数据库 |
 | 缓存 | Redis | 6.0+ | 缓存 / 会话（可选） |
-| 运行环境 | Node.js | 18+ | 前端构建/运行 |
-| 包管理 | npm / pnpm | 9+ / 8+ | 前端依赖管理 |
 | 后端框架 | Spring Boot | 3.5.4（主服务），3.3.6（engine） | 应用框架 |
 | ORM | MyBatis Spring Boot Starter | 3.0.4 | ORM 框架 |
 | 分页 | PageHelper | 2.1.1 | 分页插件 |
@@ -79,14 +95,6 @@ PlayWright应用及WebSocket集成框架，将RPA与AI一炉同炼，为人机�
 | WebSocket | Spring Boot WebSocket | 随 Spring Boot BOM | 实时通信 |
 | 自动化 | Playwright | 1.49.0 | 引擎自动化 |
 | WebSocket | Java-WebSocket | 1.5.7 | WebSocket 客户端 |
-| 前端框架 | Vue.js | 3.5.16 | 前端框架 |
-| 路由 | Vue Router | 4.5.1 | 前端路由 |
-| 状态管理 | Pinia | 3.0.2 | 状态管理 |
-| UI | Element Plus | 2.10.7 | 组件库 |
-| 构建工具 | Vite | 6.3.5 | 前端构建 |
-| 图表 | ECharts | 5.6.0 | 可视化图表 |
-| 富文本 | @vueup/vue-quill | 1.2.0 | 富文本编辑 |
-| HTTP | Axios | 1.9.0 | HTTP 请求 |
 
 ### 快速部署
 
@@ -119,8 +127,12 @@ npm run dev
 
 - **[部署文档](./部署文档.md)** - 完整的部署指南（包含元器工作流配置）
 - **[项目结构说明](./项目结构说明.md)** - 项目目录结构和模块说明
-- **[README.md](docs/README.md)** - 文档中心
 - **[常见问题 (FAQ)](./docs/FAQ.md)** - 常见问题解答
+- **[代码合并PR规范](./docs/代码合并PR规范.md)** - PR 合并与提交流程
+- **[代码规范](./docs/代码规范.md)** - 代码风格与质量规范
+- **[文档规范总结](./docs/文档规范总结.md)** - 文档编写规范汇总
+- **[权限控制规范](./docs/权限控制规范.md)** - 权限与鉴权规范
+- **[功能说明](./docs/功能说明)** - 功能说明目录
 
 ## 贡献指南
 
@@ -143,4 +155,4 @@ npm run dev
 本项目后台管理系统基于 **若依(RuoYi)** 框架进行二次开发，感谢若依团队提供的优秀开源框架。
 
 
-文档更新日期：2026年1月7日 15：00  文档版本：1.1.9D
+文档更新日期：2026年1月7日 18：00  文档版本：1.1.9D
