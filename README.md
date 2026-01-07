@@ -1,7 +1,7 @@
 <h1 align="center" style="margin: 30px 0 30px; font-weight: bold;">福帮手</h1>
 <h4 align="center">助力中小团队深耕AI机遇</h4>
 <p align="center">
-	<a href="https://gitee.com/U3W-AI/RuoYi-Vue"><img src="https://img.shields.io/badge/WxFbsir-v1.1.9-brightgreen.svg"></a>
+	<a href="https://gitee.com/U3W-AI/RuoYi-Vue"><img src="https://img.shields.io/badge/WxFbsir-v1.1.8-brightgreen.svg"></a>
 	<a href="https://www.fbsir.com"><img src="https://img.shields.io/badge/website-www.fbsir.com-blue.svg"></a>
 </p>
 
@@ -17,11 +17,11 @@
 
 **完善的运营支撑体系**
 
-内置积分系统：支持积分规则配置、积分实现和积分管理
+内置积分系统：支持积分规则配置、积分实现和用户积分管理
 
-完整的用户管理体系和权限控制。
+三级权限管理体系：超级管理员、管理员、只读权限分级控制
 
-强大的后台管理系统和微信生态能力资源衔接机制。
+完整的后台管理系统：基于若依(RuoYi)框架二次开发
 
 
 🏗️ **技术架构特点**
@@ -30,7 +30,7 @@
 
 同时集成Swagger API文档自动生成，提升开发效率。
 
-Playwright应用及Websocket集成框架，将RPA与AI一炉同炼，为人机协同和智能资产的挖掘提供更多创意空间。
+PlayWright应用及WebSocket集成框架，将RPA与AI一炉同炼，为人机协同和智能资产的挖掘提供更多创意空间。
 
 
 ### ✨ **特色模块之日更助手**
@@ -44,9 +44,9 @@ Playwright应用及Websocket集成框架，将RPA与AI一炉同炼，为人机�
 支持Gitee用户在首页授权登录，并通过Gitee接口，拉取在开源社区的参与情况数据，进行用户画像和能力分析。
 
 
-### ✨ **特色功能之腾讯元器自动化工具链**
+### ✨ **特色模块之潜力眼（内测）**
 
-福帮手主机引擎支持Playwright能力管理，并提供Playwright实现示例，如登录状态检查、工作流导航等元器控制器。
+基于元器工作流智能体，实现简历分析功能，支持简历上传和解析，支持企业微信侧以工作台应用模式进行双向对话。
 
 
 ## 快速开始
@@ -56,6 +56,37 @@ Playwright应用及Websocket集成框架，将RPA与AI一炉同炼，为人机�
 - MySQL 8.0+
 - Redis 6.0+（可选）
 - Node.js 18+
+
+### 技术选型与版本要求
+
+| 层级 | 技术选型 | 版本要求 | 用途 |
+|------|----------|----------|------|
+| 语言 | Java | 17+ | 后端开发 |
+| 构建 | Maven | 3.8+ | 后端构建 |
+| 数据 | MySQL | 8.0+ | 主数据库 |
+| 缓存 | Redis | 6.0+ | 缓存 / 会话（可选） |
+| 运行环境 | Node.js | 18+ | 前端构建/运行 |
+| 包管理 | npm / pnpm | 9+ / 8+ | 前端依赖管理 |
+| 后端框架 | Spring Boot | 3.5.4（主服务），3.3.6（engine） | 应用框架 |
+| ORM | MyBatis Spring Boot Starter | 3.0.4 | ORM 框架 |
+| 分页 | PageHelper | 2.1.1 | 分页插件 |
+| 数据源 | Druid | 1.2.23 | 连接池 |
+| 安全 | Spring Security | 随 Spring Boot BOM | 安全框架 |
+| 认证 | JJWT | 0.9.1 | Token 认证 |
+| 文档 | SpringDoc OpenAPI | 2.8.9 | API 文档 |
+| 验证码 | Kaptcha | 2.3.3 | 图形验证码 |
+| JSON | Fastjson2 | 2.0.58 | JSON 处理 |
+| WebSocket | Spring Boot WebSocket | 随 Spring Boot BOM | 实时通信 |
+| 自动化 | Playwright | 1.49.0 | 引擎自动化 |
+| WebSocket | Java-WebSocket | 1.5.7 | WebSocket 客户端 |
+| 前端框架 | Vue.js | 3.5.16 | 前端框架 |
+| 路由 | Vue Router | 4.5.1 | 前端路由 |
+| 状态管理 | Pinia | 3.0.2 | 状态管理 |
+| UI | Element Plus | 2.10.7 | 组件库 |
+| 构建工具 | Vite | 6.3.5 | 前端构建 |
+| 图表 | ECharts | 5.6.0 | 可视化图表 |
+| 富文本 | @vueup/vue-quill | 1.2.0 | 富文本编辑 |
+| HTTP | Axios | 1.9.0 | HTTP 请求 |
 
 ### 快速部署
 
@@ -112,4 +143,4 @@ npm run dev
 本项目后台管理系统基于 **若依(RuoYi)** 框架进行二次开发，感谢若依团队提供的优秀开源框架。
 
 
-文档更新日期：2026年1月7日 9:30  文档版本：1.1.9C
+文档更新日期：2026年1月7日 15：00  文档版本：1.1.9D
