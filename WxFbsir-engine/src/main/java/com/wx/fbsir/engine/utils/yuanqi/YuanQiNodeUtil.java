@@ -106,16 +106,18 @@ public class YuanQiNodeUtil {
     /**
      * 编辑大模型节点
      * 
-     * 操作流程：
+     * 操作流程（根据实际元器平台UI修正）：
      * 1. 等待工作流画布加载完成
-     * 2. 定位并点击指定节点
-     * 3. 打开节点配置面板
-     * 4. 填充模型参数（ModelName、Temperature、TopP、MaxTokens）
-     * 5. 填充提示词
-     * 6. 保存配置
+     * 2. 定位并点击指定节点（通过节点名称如"混元大模型"、"DeepSeek大模型"）
+     * 3. 等待右侧配置面板出现
+     * 4. 选择模型（如果需要）
+     * 5. 点击"高级设置"打开参数弹窗
+     * 6. 填充Temperature、TopP、MaxTokens（MaxTokens可选，部分模型没有）
+     * 7. 点击确定关闭弹窗
+     * 8. 填充提示词
      * 
      * @param page 工作流编辑页面
-     * @param nodeName 节点名称
+     * @param nodeName 节点名称（如"精调大模型"、"混元大模型"）
      * @param config 配置参数（modelName, temperature, topP, maxTokens, prompt）
      * @return 编辑结果
      */
@@ -144,72 +146,187 @@ public class YuanQiNodeUtil {
                 return new NodeEditResult(false, "未找到节点: " + nodeName, nodeName);
             }
             
-            // 单击选中节点
+            // 单击选中节点，打开右侧配置面板
             log.debug("[元器节点编辑] 点击选中节点");
             node.first().click();
-            page.waitForTimeout(1000);
-            
-            // 步骤3：双击打开配置面板
-            log.debug("[元器节点编辑] 步骤3: 打开节点配置面板");
-            node.first().dblclick();
             page.waitForTimeout(2000);
             
-            // 步骤4：填充配置参数
-            log.debug("[元器节点编辑] 步骤4: 填充配置参数");
+            // 步骤3：等待右侧配置面板出现
+            log.debug("[元器节点编辑] 步骤3: 等待配置面板出现");
+            page.waitForTimeout(1000);
             
-            // 填充模型名称
+            // 步骤4：选择模型（如果需要）
             if (config.containsKey("modelName")) {
                 String modelName = String.valueOf(config.get("modelName"));
-                log.debug("[元器节点编辑] 选择模型: {}", modelName);
+                log.debug("[元器节点编辑] 步骤4: 选择模型: {}", modelName);
                 boolean modelSelected = selectModel(page, modelName);
                 if (!modelSelected) {
                     log.warn("[元器节点编辑] 模型选择失败: {}", modelName);
                 }
             }
             
-            // 填充Temperature
-            if (config.containsKey("temperature")) {
-                Object tempValue = config.get("temperature");
-                log.debug("[元器节点编辑] 设置Temperature: {}", tempValue);
-                fillParameter(page, "temperature", tempValue);
+            // 步骤5：点击"高级设置"打开参数弹窗
+            boolean hasAdvancedParams = config.containsKey("temperature") || 
+                                        config.containsKey("topP") || 
+                                        config.containsKey("maxTokens");
+            if (hasAdvancedParams) {
+                log.debug("[元器节点编辑] 步骤5: 点击高级设置");
+                boolean advancedOpened = openAdvancedSettings(page);
+                
+                if (advancedOpened) {
+                    // 步骤6：填充高级参数
+                    log.debug("[元器节点编辑] 步骤6: 填充高级参数");
+                    
+                    // 填充温度（Temperature）
+                    if (config.containsKey("temperature")) {
+                        Object tempValue = config.get("temperature");
+                        log.debug("[元器节点编辑] 设置温度: {}", tempValue);
+                        fillAdvancedParameter(page, "温度", tempValue);
+                    }
+                    
+                    // 填充TopP
+                    if (config.containsKey("topP")) {
+                        Object topPValue = config.get("topP");
+                        log.debug("[元器节点编辑] 设置TopP: {}", topPValue);
+                        fillAdvancedParameter(page, "Top P", topPValue);
+                    }
+                    
+                    // 填充最大回复Token（可选，部分模型没有此参数）
+                    if (config.containsKey("maxTokens")) {
+                        Object maxTokensValue = config.get("maxTokens");
+                        log.debug("[元器节点编辑] 设置最大回复Token: {}", maxTokensValue);
+                        boolean filled = fillAdvancedParameter(page, "最大回复Token", maxTokensValue);
+                        if (!filled) {
+                            log.info("[元器节点编辑] 当前模型不支持最大回复Token参数，跳过");
+                        }
+                    }
+                    
+                    // 步骤7：点击确定关闭弹窗
+                    log.debug("[元器节点编辑] 步骤7: 关闭高级设置弹窗");
+                    closeAdvancedSettings(page);
+                } else {
+                    log.warn("[元器节点编辑] 未找到高级设置按钮，跳过高级参数设置");
+                }
             }
             
-            // 填充TopP
-            if (config.containsKey("topP")) {
-                Object topPValue = config.get("topP");
-                log.debug("[元器节点编辑] 设置TopP: {}", topPValue);
-                fillParameter(page, "topP", topPValue);
-            }
-            
-            // 填充MaxTokens
-            if (config.containsKey("maxTokens")) {
-                Object maxTokensValue = config.get("maxTokens");
-                log.debug("[元器节点编辑] 设置MaxTokens: {}", maxTokensValue);
-                fillParameter(page, "maxTokens", maxTokensValue);
-            }
-            
-            // 填充提示词（不记录具体内容到日志，保护敏感信息）
+            // 步骤8：填充提示词（不记录具体内容到日志，保护敏感信息）
             if (config.containsKey("prompt")) {
                 String prompt = String.valueOf(config.get("prompt"));
-                log.debug("[元器节点编辑] 填充提示词 (长度: {} 字符)", prompt.length());
+                log.debug("[元器节点编辑] 步骤8: 填充提示词 (长度: {} 字符)", prompt.length());
                 fillPrompt(page, prompt);
             }
             
-            // 步骤5：保存配置
-            log.debug("[元器节点编辑] 步骤5: 保存节点配置");
-            boolean saved = saveNodeConfig(page);
-            
-            if (saved) {
-                log.info("[元器节点编辑] 节点配置保存成功: {}", nodeName);
-                return new NodeEditResult(true, "节点配置已保存", nodeName);
-            } else {
-                log.warn("[元器节点编辑] 节点配置保存失败: {}", nodeName);
-                return new NodeEditResult(false, "保存配置失败", nodeName);
-            }
+            log.info("[元器节点编辑] 节点配置完成: {}", nodeName);
+            return new NodeEditResult(true, "节点配置已完成", nodeName);
             
         } catch (Exception e) {
             log.error("[元器节点编辑] 编辑失败 - 节点: {}", nodeName, e);
             return new NodeEditResult(false, "编辑失败: " + e.getMessage(), nodeName);
+        }
+    }
+    
+    /**
+     * 打开高级设置弹窗
+     */
+    private boolean openAdvancedSettings(Page page) {
+        try {
+            // 查找"高级设置"链接或按钮
+            Locator advancedBtn = page.getByText("高级设置");
+            if (advancedBtn.count() > 0) {
+                advancedBtn.first().click();
+                page.waitForTimeout(1000);
+                log.debug("[元器高级设置] 已打开高级设置弹窗");
+                return true;
+            }
+            
+            // 备选：查找设置图标
+            Locator settingsIcon = page.locator("[class*='setting'], [class*='config']").first();
+            if (settingsIcon.count() > 0) {
+                settingsIcon.click();
+                page.waitForTimeout(1000);
+                return true;
+            }
+            
+            return false;
+        } catch (Exception e) {
+            log.warn("[元器高级设置] 打开失败: {}", e.getMessage());
+            return false;
+        }
+    }
+    
+    /**
+     * 关闭高级设置弹窗
+     */
+    private void closeAdvancedSettings(Page page) {
+        try {
+            // 查找确定按钮
+            Locator confirmBtn = page.getByText("确定").first();
+            if (confirmBtn.count() > 0 && confirmBtn.isVisible()) {
+                confirmBtn.click();
+                page.waitForTimeout(500);
+                log.debug("[元器高级设置] 已关闭高级设置弹窗");
+                return;
+            }
+            
+            // 备选：查找关闭按钮
+            Locator closeBtn = page.locator("[class*='close'], button:has-text('取消')").first();
+            if (closeBtn.count() > 0 && closeBtn.isVisible()) {
+                closeBtn.click();
+                page.waitForTimeout(500);
+            }
+        } catch (Exception e) {
+            log.warn("[元器高级设置] 关闭失败: {}", e.getMessage());
+        }
+    }
+    
+    /**
+     * 填充高级设置参数（在弹窗中）
+     * 参数名称使用中文，如"温度"、"Top P"、"最大回复Token"
+     */
+    private boolean fillAdvancedParameter(Page page, String paramLabel, Object value) {
+        try {
+            // 在弹窗中查找参数标签对应的输入框
+            // 元器平台使用滑块+输入框的组合，输入框在标签右侧
+            
+            // 策略1：通过标签文本定位相邻的输入框
+            Locator labelLocator = page.getByText(paramLabel).first();
+            if (labelLocator.count() > 0) {
+                // 查找同一行的输入框
+                Locator input = page.locator("input[type='number'], input[type='text']")
+                    .filter(new Locator.FilterOptions().setHas(page.getByText(paramLabel)));
+                
+                if (input.count() == 0) {
+                    // 备选：查找标签后面的输入框
+                    input = labelLocator.locator("xpath=following::input[1]");
+                }
+                
+                if (input.count() > 0) {
+                    input.first().click();
+                    input.first().fill("");
+                    input.first().fill(String.valueOf(value));
+                    log.debug("[元器参数填充] {} = {}", paramLabel, value);
+                    return true;
+                }
+            }
+            
+            // 策略2：通过包含参数名的容器查找
+            Locator container = page.locator("div:has-text('" + paramLabel + "')").first();
+            if (container.count() > 0) {
+                Locator input = container.locator("input").first();
+                if (input.count() > 0) {
+                    input.click();
+                    input.fill("");
+                    input.fill(String.valueOf(value));
+                    log.debug("[元器参数填充] {} = {} (容器策略)", paramLabel, value);
+                    return true;
+                }
+            }
+            
+            log.warn("[元器参数填充] 未找到参数输入框: {}", paramLabel);
+            return false;
+        } catch (Exception e) {
+            log.warn("[元器参数填充] 填充失败 - 参数: {}, 错误: {}", paramLabel, e.getMessage());
+            return false;
         }
     }
     
@@ -279,20 +396,23 @@ public class YuanQiNodeUtil {
     /**
      * 发布工作流
      * 
-     * 操作流程：
-     * 1. 点击发布按钮
-     * 2. 等待确认弹窗（如果有）
-     * 3. 点击确认按钮
-     * 4. 等待发布完成
+     * 操作流程（根据实际元器平台UI修正）：
+     * 1. 点击右上角"发布"按钮，跳转到发布页面（/publish URL）
+     * 2. 等待发布页面加载完成
+     * 3. 滚动到页面底部
+     * 4. 点击"确认"按钮
+     * 5. 等待发布完成，检查结果
      * 
-     * @param page 工作流编辑页面
+     * 注意：发布页面是独立的页面，URL格式为 /v2#/app/knowledge/publish?appid=xxx
+     * 
+     * @param page 工作流管理页面或编辑页面
      * @return 发布结果
      */
     public PublishResult publishWorkflow(Page page) {
         try {
             log.info("[元器工作流发布] 开始发布");
             
-            // 步骤1：点击发布按钮
+            // 步骤1：点击发布按钮（跳转到发布页面）
             log.debug("[元器工作流发布] 步骤1: 点击发布按钮");
             Locator publishButton = findPublishButton(page);
             if (publishButton == null || publishButton.count() == 0) {
@@ -300,29 +420,65 @@ public class YuanQiNodeUtil {
             }
             
             publishButton.first().click();
+            page.waitForTimeout(3000);
+            
+            // 步骤2：等待发布页面加载
+            log.debug("[元器工作流发布] 步骤2: 等待发布页面加载");
+            page.waitForLoadState();
             page.waitForTimeout(2000);
             
-            // 步骤2：处理确认弹窗（如果有）
-            log.debug("[元器工作流发布] 步骤2: 处理确认弹窗");
-            Locator confirmButton = page.locator("button:has-text('确认'), button:has-text('确定'), button:has-text('发布')").first();
-            if (confirmButton.count() > 0 && confirmButton.isVisible()) {
-                log.debug("[元器工作流发布] 点击确认按钮");
-                confirmButton.click();
-                page.waitForTimeout(3000);
+            // 检查是否已跳转到发布页面
+            String currentUrl = page.url();
+            log.debug("[元器工作流发布] 当前URL: {}", currentUrl);
+            
+            // 步骤3：滚动到页面底部（确认按钮在底部）
+            log.debug("[元器工作流发布] 步骤3: 滚动到页面底部");
+            page.evaluate("window.scrollTo(0, document.body.scrollHeight)");
+            page.waitForTimeout(1000);
+            
+            // 步骤4：点击确认按钮
+            log.debug("[元器工作流发布] 步骤4: 点击确认按钮");
+            Locator confirmButton = page.getByText("确认").first();
+            if (confirmButton.count() == 0 || !confirmButton.isVisible()) {
+                // 备选：查找其他确认按钮
+                confirmButton = page.locator("button:has-text('确认'), button:has-text('确定')").first();
             }
             
-            // 步骤3：等待发布完成
-            log.debug("[元器工作流发布] 步骤3: 等待发布完成");
-            page.waitForTimeout(5000);
+            if (confirmButton.count() > 0 && confirmButton.isVisible()) {
+                confirmButton.click();
+                page.waitForTimeout(5000);
+                log.debug("[元器工作流发布] 已点击确认按钮");
+            } else {
+                log.warn("[元器工作流发布] 未找到确认按钮");
+                return new PublishResult(false, "未找到确认按钮");
+            }
             
-            // 检查是否有成功提示
-            Locator successTip = page.locator(".t-message--success, .el-message--success, :has-text('发布成功')");
+            // 步骤5：等待发布完成，检查结果
+            log.debug("[元器工作流发布] 步骤5: 等待发布完成");
+            page.waitForTimeout(3000);
+            
+            // 检查是否有成功提示（"智能体已提交至审核"或"发布成功"）
+            Locator successTip = page.getByText("已提交至审核");
+            if (successTip.count() == 0) {
+                successTip = page.getByText("发布成功");
+            }
+            if (successTip.count() == 0) {
+                successTip = page.locator(".t-message--success, .el-message--success");
+            }
+            
             boolean hasSuccessTip = successTip.count() > 0;
             
             if (hasSuccessTip) {
-                log.info("[元器工作流发布] 发布成功");
-                return new PublishResult(true, "发布成功");
+                log.info("[元器工作流发布] 发布成功/已提交审核");
+                return new PublishResult(true, "发布成功，已提交审核");
             } else {
+                // 检查是否在发布详情页面（表示发布流程已完成）
+                Locator publishDetail = page.getByText("发布详情");
+                if (publishDetail.count() > 0) {
+                    log.info("[元器工作流发布] 发布操作已完成");
+                    return new PublishResult(true, "发布操作已完成");
+                }
+                
                 log.info("[元器工作流发布] 发布操作已执行，请确认结果");
                 return new PublishResult(true, "发布操作已执行");
             }
@@ -335,34 +491,46 @@ public class YuanQiNodeUtil {
     
     /**
      * 查找节点
+     * 
+     * 根据实际元器平台UI，节点通过名称标识，如"混元大模型"、"DeepSeek大模型"、"精调大模型"等
      * 使用多种选择器策略，提高容错性
      */
     private Locator findNode(Page page, String nodeName) {
-        // 策略1：通过节点类型和文本内容
-        Locator node = page.locator("[data-node-type='llm']:has-text('" + nodeName + "')");
+        log.debug("[元器节点定位] 开始查找节点: {}", nodeName);
+        
+        // 策略1：通过getByText精确匹配节点名称（推荐）
+        // 元器平台节点显示名称如"混元大模型"、"DeepSeek大模型"
+        Locator node = page.getByText(nodeName, new Page.GetByTextOptions().setExact(true));
         if (node.count() > 0) {
-            log.debug("[元器节点定位] 策略1成功: data-node-type");
+            log.debug("[元器节点定位] 策略1成功: getByText精确匹配");
             return node;
         }
         
-        // 策略2：通过节点名称类
-        node = page.locator(".node-name:has-text('" + nodeName + "'), .node-title:has-text('" + nodeName + "')");
-        if (node.count() > 0) {
-            log.debug("[元器节点定位] 策略2成功: node-name/node-title");
-            return node;
-        }
-        
-        // 策略3：通过文本匹配
+        // 策略2：通过getByText模糊匹配
         node = page.getByText(nodeName, new Page.GetByTextOptions().setExact(false));
         if (node.count() > 0) {
-            log.debug("[元器节点定位] 策略3成功: getByText");
+            log.debug("[元器节点定位] 策略2成功: getByText模糊匹配");
             return node;
         }
         
-        // 策略4：通过包含文本的div
+        // 策略3：通过节点名称类（如果平台使用了特定class）
+        node = page.locator(".node-name:has-text('" + nodeName + "'), .node-title:has-text('" + nodeName + "'), .node-label:has-text('" + nodeName + "')");
+        if (node.count() > 0) {
+            log.debug("[元器节点定位] 策略3成功: node-name/node-title/node-label");
+            return node;
+        }
+        
+        // 策略4：通过画布中的节点容器查找
+        node = page.locator("[class*='node']:has-text('" + nodeName + "'), [class*='canvas'] :has-text('" + nodeName + "')");
+        if (node.count() > 0) {
+            log.debug("[元器节点定位] 策略4成功: 节点容器");
+            return node;
+        }
+        
+        // 策略5：通过包含文本的div（最宽松的匹配）
         node = page.locator("div:has-text('" + nodeName + "')").first();
         if (node.count() > 0) {
-            log.debug("[元器节点定位] 策略4成功: div:has-text");
+            log.debug("[元器节点定位] 策略5成功: div:has-text");
             return node;
         }
         
