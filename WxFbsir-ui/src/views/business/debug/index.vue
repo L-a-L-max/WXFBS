@@ -104,6 +104,7 @@
 
 <script>
 import { ref, reactive, onMounted, onBeforeUnmount, nextTick, computed } from 'vue';
+import { useRoute } from 'vue-router';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import { Link, Promotion, Delete, Download } from '@element-plus/icons-vue';
 import { getToken } from '@/utils/auth';
@@ -118,6 +119,8 @@ export default {
     Download
   },
   setup() {
+    const route = useRoute();
+    
     // WebSocket连接
     const ws = ref(null);
     const isConnected = ref(false);
@@ -449,8 +452,25 @@ export default {
     // 生命周期
     onMounted(() => {
       initWebSocket();
-      // 加载默认示例
-      form.messageJson = JSON.stringify(examples.complex, null, 2);
+      
+      // 检查URL参数，支持从主机应用页面跳转时预填充
+      const payloadParam = route.query.payload;
+      if (payloadParam) {
+        try {
+          // URL参数中的payload是经过encodeURIComponent编码的JSON字符串
+          const decodedPayload = decodeURIComponent(payloadParam);
+          // 验证是否为有效JSON
+          JSON.parse(decodedPayload);
+          form.messageJson = decodedPayload;
+          ElMessage.success('已加载预设配置');
+        } catch (e) {
+          console.warn('URL参数解析失败，使用默认示例:', e);
+          form.messageJson = JSON.stringify(examples.complex, null, 2);
+        }
+      } else {
+        // 加载默认示例
+        form.messageJson = JSON.stringify(examples.complex, null, 2);
+      }
     });
 
     onBeforeUnmount(() => {
