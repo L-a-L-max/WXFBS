@@ -268,7 +268,7 @@ export default {
     const goToConsole = (app) => {
       const payloadStr = encodeURIComponent(JSON.stringify(app.defaultPayload, null, 2));
       router.push({
-        path: '/business/debug',
+        path: '/host/debug',
         query: {
           type: app.messageType,
           payload: payloadStr
