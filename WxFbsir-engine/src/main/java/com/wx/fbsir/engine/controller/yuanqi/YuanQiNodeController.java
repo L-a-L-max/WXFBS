@@ -102,7 +102,6 @@ public class YuanQiNodeController extends StreamTaskHelper {
     @StreamCapability(
         type = "YUANQI_EDIT_NODE",
         description = "编辑元器工作流大模型节点",
-        timeout = 120000L,
         progressInterval = 3000
     )
     public void handleEditNode(EngineMessage message) {
@@ -267,7 +266,6 @@ public class YuanQiNodeController extends StreamTaskHelper {
     @StreamCapability(
         type = "YUANQI_DEBUG_WORKFLOW",
         description = "调试元器工作流",
-        timeout = 180000L,
         progressInterval = 5000
     )
     public void handleDebugWorkflow(EngineMessage message) {
@@ -398,7 +396,6 @@ public class YuanQiNodeController extends StreamTaskHelper {
     @StreamCapability(
         type = "YUANQI_PUBLISH_WORKFLOW",
         description = "发布元器工作流",
-        timeout = 60000L,
         progressInterval = 3000
     )
     public void handlePublishWorkflow(EngineMessage message) {
