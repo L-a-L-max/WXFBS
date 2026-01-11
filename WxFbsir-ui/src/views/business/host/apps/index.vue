@@ -170,9 +170,9 @@ export default {
           type: 'YUANQI_NAVIGATE_WORKFLOW',
           engineId: 'engine-001',
           payload: {
-            spaceName: '福帮手开源',
-            agentName: '123',
-            workflowName: '分析助手-高优先级-多模型'
+            spaceName: '个人空间',
+            agentName: '日更助手',
+            workflowName: '日更助手-高优先级'
           }
         }
       },
@@ -190,16 +190,17 @@ export default {
           type: 'YUANQI_EDIT_NODE',
           engineId: 'engine-001',
           payload: {
-            spaceName: '福帮手开源',
-            agentName: '123',
-            workflowName: '分析助手-高优先级-多模型',
-            nodeName: '精调大模型',
+            spaceName: '个人空间',
+            agentName: '日更助手',
+            workflowName: '日更助手-高优先级',
+            nodeName: '混元大模型',
+            strategy: '',
             config: {
-              modelName: 'hunyuan-2.0-instruct-20251111',
+              modelName: '混元2.0 Instruct',
               temperature: 0.7,
               topP: 0.6,
               maxTokens: 4000,
-              prompt: '请根据用户输入生成高质量的内容...'
+              prompt: '创作 700-900 字公众号文章，标题用《》包裹单独成行。开篇用真实感强的生活场景或个人经历引入，中间分 2-3 层逻辑推进，将核心观点融入故事线，穿插细节描写和轻幽默桥段，加入 1-2 个贴近读者的生活化案例，结尾结合读者需求引发共鸣并设计互动提问，按场景自然分段，语言活泼口语化，适度用网络热词增强传播感，不使用任何特殊符号。'
             }
           }
         }
@@ -218,9 +219,9 @@ export default {
           type: 'YUANQI_DEBUG_WORKFLOW',
           engineId: 'engine-001',
           payload: {
-            spaceName: '福帮手开源',
-            agentName: '123',
-            workflowName: '分析助手-高优先级-多模型',
+            spaceName: '个人空间',
+            agentName: '日更助手',
+            workflowName: '日更助手-高优先级',
             debugInput: {
               article_topic: '人工智能发展趋势'
             }
