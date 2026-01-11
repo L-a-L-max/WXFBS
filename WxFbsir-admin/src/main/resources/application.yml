@@ -7,7 +7,7 @@ wxfbsir:
   # 版权年份
   copyrightYear: 2025
   # 文件路径 示例（ Windows配置D:/WxFbsir/uploadPath，Linux配置 /home/WxFbsir/uploadPath）
-  profile: ${WXFBSIR_FILE_PATH:D:/WxFbsir/uploadPath}
+  profile: D:\AAAWK_GC\upload
   # 获取ip地址开关
   addressEnabled: false
   # 验证码类型 math 数字计算 char 字符验证
@@ -91,11 +91,11 @@ spring:
     # redis 配置
     redis:
       # 地址
-      host: ${WXFBSIR_REDIS_HOST:127.0.0.1}
+      host: 192.168.150.128
       # 端口，默认为6379
-      port: ${WXFBSIR_REDIS_PORT:6379}
+      port: 6379
       # 数据库索引
-      database: ${WXFBSIR_REDIS_DATABASE:0}
+      database: 0
       # 密码
       password: ${WXFBSIR_REDIS_PASSWORD:}
       # 连接超时时间（减少到5秒，快速失败）
@@ -188,10 +188,10 @@ aes:
 gitee:
   oauth:
     # OAuth Client ID（生产环境建议使用环境变量：GITEE_OAUTH_CLIENT_ID）
-    client-id: ${GITEE_OAUTH_CLIENT_ID:}
+    client-id: f2a54c6fa1fbf76d57785ec586dac0741de8e521afbf1288d5c615f80d4f6ea8
     # OAuth Client Secret（生产环境建议使用环境变量：GITEE_OAUTH_CLIENT_SECRET）
-    client-secret: ${GITEE_OAUTH_CLIENT_SECRET:}
+    client-secret: 3b1185c403eedb135d556c23de7e23807c9e31f8395befe5b1b85eb67e02a96e
     # 前端地址（OAuth完成后跳转）
-    frontend-url: ${GITEE_OAUTH_FRONTEND_URL:}
+    frontend-url: http://localhost:80
     # OAuth回调地址（与Gitee应用配置保持一致）
-    callback-url: ${GITEE_OAUTH_CALLBACK_URL:}
+    callback-url: http://localhost:8080/auth
