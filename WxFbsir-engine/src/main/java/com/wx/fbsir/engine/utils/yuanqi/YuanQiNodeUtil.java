@@ -394,94 +394,114 @@ public class YuanQiNodeUtil {
     }
     
     /**
-     * 发布工作流
+     * 发布工作流（从智能体详情页）
      * 
-     * 操作流程（根据实际元器平台UI修正）：
-     * 1. 点击右上角"发布"按钮，跳转到发布页面（/publish URL）
-     * 2. 等待发布页面加载完成
+     * 操作流程（根据实际元器平台UI）：
+     * 1. 检查右上角"发布"按钮是否可点击
+     *    - 如果按钮为灰色/禁用状态，返回"暂无可发布的工作流"
+     * 2. 点击"发布"按钮，进入发布详情页
      * 3. 滚动到页面底部
-     * 4. 点击"确认"按钮
-     * 5. 等待发布完成，检查结果
+     * 4. 点击底部的"发布"按钮
+     * 5. 等待发布完成，检查"已发布"状态（10-30秒）
      * 
-     * 注意：发布页面是独立的页面，URL格式为 /v2#/app/knowledge/publish?appid=xxx
+     * 注意：此方法应在智能体详情页调用，不是工作流编辑页
      * 
-     * @param page 工作流管理页面或编辑页面
+     * @param page 智能体详情页面
      * @return 发布结果
      */
     public PublishResult publishWorkflow(Page page) {
         try {
             log.info("[元器工作流发布] 开始发布");
             
-            // 步骤1：点击发布按钮（跳转到发布页面）
-            log.debug("[元器工作流发布] 步骤1: 点击发布按钮");
+            // 步骤1：检查发布按钮状态
+            log.debug("[元器工作流发布] 步骤1: 检查发布按钮状态");
             Locator publishButton = findPublishButton(page);
             if (publishButton == null || publishButton.count() == 0) {
                 return new PublishResult(false, "未找到发布按钮");
             }
             
+            // 检查按钮是否为禁用状态
+            boolean isDisabled = false;
+            try {
+                Locator firstButton = publishButton.first();
+                String disabledAttr = firstButton.getAttribute("disabled");
+                String className = firstButton.getAttribute("class");
+                isDisabled = disabledAttr != null || 
+                             (className != null && (className.contains("disabled") || className.contains("gray")));
+            } catch (Exception e) {
+                log.debug("[元器工作流发布] 无法检测按钮状态: {}", e.getMessage());
+            }
+            
+            if (isDisabled) {
+                log.info("[元器工作流发布] 发布按钮为禁用状态，暂无可发布的工作流");
+                return new PublishResult(false, "暂无可发布的工作流");
+            }
+            
+            // 步骤2：点击发布按钮
+            log.debug("[元器工作流发布] 步骤2: 点击发布按钮");
             publishButton.first().click();
             page.waitForTimeout(3000);
             
-            // 步骤2：等待发布页面加载
-            log.debug("[元器工作流发布] 步骤2: 等待发布页面加载");
+            // 步骤3：等待发布页面加载
+            log.debug("[元器工作流发布] 步骤3: 等待发布页面加载");
             page.waitForLoadState();
             page.waitForTimeout(2000);
             
-            // 检查是否已跳转到发布页面
             String currentUrl = page.url();
             log.debug("[元器工作流发布] 当前URL: {}", currentUrl);
             
-            // 步骤3：滚动到页面底部（确认按钮在底部）
-            log.debug("[元器工作流发布] 步骤3: 滚动到页面底部");
+            // 步骤4：滚动到页面底部
+            log.debug("[元器工作流发布] 步骤4: 滚动到页面底部");
             page.evaluate("window.scrollTo(0, document.body.scrollHeight)");
             page.waitForTimeout(1000);
+            page.evaluate("window.scrollTo(0, document.body.scrollHeight)");
+            page.waitForTimeout(500);
             
-            // 步骤4：点击确认按钮
-            log.debug("[元器工作流发布] 步骤4: 点击确认按钮");
-            Locator confirmButton = page.getByText("确认").first();
-            if (confirmButton.count() == 0 || !confirmButton.isVisible()) {
-                // 备选：查找其他确认按钮
-                confirmButton = page.locator("button:has-text('确认'), button:has-text('确定')").first();
+            // 步骤5：点击底部发布按钮
+            log.debug("[元器工作流发布] 步骤5: 点击底部发布按钮");
+            Locator bottomPublishButton = page.locator("button:has-text('发布')").last();
+            if (bottomPublishButton.count() == 0 || !bottomPublishButton.isVisible()) {
+                bottomPublishButton = page.getByText("发布").last();
             }
             
-            if (confirmButton.count() > 0 && confirmButton.isVisible()) {
-                confirmButton.click();
+            if (bottomPublishButton.count() > 0 && bottomPublishButton.isVisible()) {
+                bottomPublishButton.click();
                 page.waitForTimeout(5000);
-                log.debug("[元器工作流发布] 已点击确认按钮");
+                log.debug("[元器工作流发布] 已点击发布按钮");
             } else {
-                log.warn("[元器工作流发布] 未找到确认按钮");
-                return new PublishResult(false, "未找到确认按钮");
+                // 备选：查找确认按钮
+                Locator confirmButton = page.locator("button:has-text('确认'), button:has-text('确定')").first();
+                if (confirmButton.count() > 0 && confirmButton.isVisible()) {
+                    confirmButton.click();
+                    page.waitForTimeout(5000);
+                } else {
+                    log.warn("[元器工作流发布] 未找到发布/确认按钮");
+                    return new PublishResult(false, "未找到发布确认按钮");
+                }
             }
             
-            // 步骤5：等待发布完成，检查结果
-            log.debug("[元器工作流发布] 步骤5: 等待发布完成");
-            page.waitForTimeout(3000);
-            
-            // 检查是否有成功提示（"智能体已提交至审核"或"发布成功"）
-            Locator successTip = page.getByText("已提交至审核");
-            if (successTip.count() == 0) {
-                successTip = page.getByText("发布成功");
-            }
-            if (successTip.count() == 0) {
-                successTip = page.locator(".t-message--success, .el-message--success");
-            }
-            
-            boolean hasSuccessTip = successTip.count() > 0;
-            
-            if (hasSuccessTip) {
-                log.info("[元器工作流发布] 发布成功/已提交审核");
-                return new PublishResult(true, "发布成功，已提交审核");
-            } else {
-                // 检查是否在发布详情页面（表示发布流程已完成）
-                Locator publishDetail = page.getByText("发布详情");
-                if (publishDetail.count() > 0) {
-                    log.info("[元器工作流发布] 发布操作已完成");
-                    return new PublishResult(true, "发布操作已完成");
+            // 步骤6：等待发布完成，检查"已发布"状态（最多等待30秒）
+            log.debug("[元器工作流发布] 步骤6: 等待发布完成");
+            for (int i = 0; i < 6; i++) {
+                page.waitForTimeout(5000);
+                
+                // 检查"已发布"状态
+                Locator publishedStatus = page.getByText("已发布");
+                if (publishedStatus.count() > 0) {
+                    log.info("[元器工作流发布] 发布成功，状态: 已发布");
+                    return new PublishResult(true, "发布成功");
                 }
                 
-                log.info("[元器工作流发布] 发布操作已执行，请确认结果");
-                return new PublishResult(true, "发布操作已执行");
+                // 检查成功提示
+                Locator successTip = page.locator("[class*='success'], [class*='message--success']");
+                if (successTip.count() > 0) {
+                    log.info("[元器工作流发布] 发布成功");
+                    return new PublishResult(true, "发布成功");
+                }
             }
+            
+            log.info("[元器工作流发布] 发布操作已执行，请确认结果");
+            return new PublishResult(true, "发布操作已执行");
             
         } catch (Exception e) {
             log.error("[元器工作流发布] 发布失败", e);
@@ -682,9 +702,11 @@ public class YuanQiNodeUtil {
     
     /**
      * 查找运行按钮
+     * 根据实际元器平台UI，调试面板的执行按钮文本为"去调试"
      */
     private Locator findRunButton(Page page) {
         String[] selectors = {
+            "button:has-text('去调试')",
             "button:has-text('运行')",
             "button:has-text('执行')",
             "button:has-text('Run')",
@@ -770,5 +792,74 @@ public class YuanQiNodeUtil {
         }
         
         return null;
+    }
+    
+    /**
+     * 导航到智能体详情页（用于发布功能）
+     * 
+     * 导航流程（根据实际元器平台UI）：
+     * 1. 点击"个人空间"按钮
+     * 2. 选择指定空间
+     * 3. 展开"我的智能体"菜单
+     * 4. 点击指定智能体卡片
+     * 
+     * @param page 元器首页
+     * @param spaceName 空间名称（如"个人空间"、"福帮手开源"）
+     * @param agentName 智能体名称（如"日更助手"、"123"）
+     * @return 是否导航成功
+     */
+    public boolean navigateToAgentDetail(Page page, String spaceName, String agentName) {
+        try {
+            log.info("[元器导航] 导航到智能体详情页 - 空间: {}, 智能体: {}", spaceName, agentName);
+            
+            // 步骤1：点击个人空间按钮
+            log.debug("[元器导航] 步骤1: 点击个人空间按钮");
+            Locator spaceButton = page.locator("div.spaceBtn, [class*='space-btn']").first();
+            if (spaceButton.count() == 0) {
+                spaceButton = page.getByText("个人空间").first();
+            }
+            
+            if (spaceButton.count() > 0) {
+                spaceButton.click();
+                page.waitForTimeout(1000);
+            }
+            
+            // 步骤2：选择空间
+            log.debug("[元器导航] 步骤2: 选择空间: {}", spaceName);
+            Locator spaceOption = page.getByText(spaceName, new Page.GetByTextOptions().setExact(true));
+            if (spaceOption.count() > 0) {
+                spaceOption.first().click();
+                page.waitForTimeout(1500);
+            }
+            
+            // 步骤3：展开智能体列表
+            log.debug("[元器导航] 步骤3: 展开智能体列表");
+            Locator myAgentMenu = page.locator("[class*='menu-item']:has-text('我的智能体'), div:has-text('我的智能体')").first();
+            if (myAgentMenu.count() > 0) {
+                myAgentMenu.click();
+                page.waitForTimeout(1000);
+            }
+            
+            // 步骤4：点击智能体
+            log.debug("[元器导航] 步骤4: 点击智能体: {}", agentName);
+            Locator agentCard = page.locator("[class*='card']:has-text('" + agentName + "'), [class*='agent']:has-text('" + agentName + "')").first();
+            if (agentCard.count() == 0) {
+                agentCard = page.getByText(agentName, new Page.GetByTextOptions().setExact(false)).first();
+            }
+            
+            if (agentCard.count() > 0) {
+                agentCard.click();
+                page.waitForTimeout(2000);
+                log.info("[元器导航] 已进入智能体详情页");
+                return true;
+            }
+            
+            log.warn("[元器导航] 未找到智能体: {}", agentName);
+            return false;
+            
+        } catch (Exception e) {
+            log.error("[元器导航] 导航失败", e);
+            return false;
+        }
     }
 }
